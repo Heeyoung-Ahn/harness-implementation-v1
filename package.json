@@ -1,0 +1,11 @@
+{
+  "name": "harness-implementation-v1",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "test": "node --test"
+  }
+}
