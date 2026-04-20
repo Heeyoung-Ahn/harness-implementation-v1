@@ -18,7 +18,7 @@ test("builds a fresh context restoration read model from designated summary sour
     operatorSection: [
       "- Implement `DEV-03` context restoration read model.",
       "- Keep stale diagnostics and source trace in the read model.",
-      "- Source packet: `PKT-01_DEV-03_CONTEXT_RESTORATION_READ_MODEL.md`."
+      "- Source packet: `reference/packets/PKT-01_DEV-03_CONTEXT_RESTORATION_READ_MODEL.md`."
     ]
   });
 
@@ -32,34 +32,34 @@ test("builds a fresh context restoration read model from designated summary sour
     releaseGateState: "open",
     currentFocus: "Build context restoration read model",
     releaseGoal: "First ship baseline",
-    sourceRef: "ARCHITECTURE_GUIDE.md"
+    sourceRef: ".agents/artifacts/ARCHITECTURE_GUIDE.md"
   });
   store.recordDecision({
     decisionId: "DEC-03",
     title: "Finalize context restoration load order",
     decisionNeeded: true,
     impactSummary: "PMW reads this contract on first view",
-    sourceRef: "ARCHITECTURE_GUIDE.md"
+    sourceRef: ".agents/artifacts/ARCHITECTURE_GUIDE.md"
   });
   store.recordGateRisk({
     riskId: "RISK-03",
     title: "Read model not yet implemented",
     severity: "high",
-    sourceRef: "IMPLEMENTATION_PLAN.md"
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
   });
   store.upsertWorkItem({
     workItemId: "DEV-03",
     title: "Context restoration read model",
     status: "in_progress",
     nextAction: "Implement designated summary parser",
-    sourceRef: "IMPLEMENTATION_PLAN.md"
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
   });
   store.appendHandoff({
     handoffId: "handoff-03",
     handoffSummary: "DEV-03 is ready for implementation.",
     fromRole: "planner",
     toRole: "developer",
-    sourceRef: "IMPLEMENTATION_PLAN.md"
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
   });
 
   writeGeneratedStateDocs({ store, outputDir: repoRoot });
@@ -104,14 +104,14 @@ test("falls back to needs source when operator next action section is missing", 
     releaseGateState: "open",
     currentFocus: "Build context restoration read model",
     releaseGoal: "First ship baseline",
-    sourceRef: "ARCHITECTURE_GUIDE.md"
+    sourceRef: ".agents/artifacts/ARCHITECTURE_GUIDE.md"
   });
   store.upsertWorkItem({
     workItemId: "DEV-03",
     title: "Context restoration read model",
     status: "in_progress",
     nextAction: "Implement designated summary parser",
-    sourceRef: "IMPLEMENTATION_PLAN.md"
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
   });
 
   writeGeneratedStateDocs({ store, outputDir: repoRoot });
@@ -148,14 +148,14 @@ test("surfaces stale diagnostics when generated docs drift from DB truth", () =>
     releaseGateState: "open",
     currentFocus: "Build context restoration read model",
     releaseGoal: "First ship baseline",
-    sourceRef: "ARCHITECTURE_GUIDE.md"
+    sourceRef: ".agents/artifacts/ARCHITECTURE_GUIDE.md"
   });
   store.recordDecision({
     decisionId: "DEC-03",
     title: "Finalize context restoration load order",
     decisionNeeded: true,
     impactSummary: "PMW reads this contract on first view",
-    sourceRef: "ARCHITECTURE_GUIDE.md"
+    sourceRef: ".agents/artifacts/ARCHITECTURE_GUIDE.md"
   });
 
   writeGeneratedStateDocs({ store, outputDir: repoRoot });
@@ -164,7 +164,7 @@ test("surfaces stale diagnostics when generated docs drift from DB truth", () =>
     riskId: "RISK-03",
     title: "Generated docs are stale",
     severity: "high",
-    sourceRef: "IMPLEMENTATION_PLAN.md"
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
   });
 
   const model = buildContextRestorationReadModel({
@@ -183,8 +183,9 @@ test("surfaces stale diagnostics when generated docs drift from DB truth", () =>
 });
 
 function seedRepoFiles(repoRoot, { operatorSection = null } = {}) {
-  fs.writeFileSync(path.join(repoRoot, "REQUIREMENTS.md"), "# REQUIREMENTS\n", "utf8");
-  fs.writeFileSync(path.join(repoRoot, "ARCHITECTURE_GUIDE.md"), "# ARCHITECTURE\n", "utf8");
+  fs.mkdirSync(path.join(repoRoot, ".agents", "artifacts"), { recursive: true });
+  fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "REQUIREMENTS.md"), "# REQUIREMENTS\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "ARCHITECTURE_GUIDE.md"), "# ARCHITECTURE\n", "utf8");
 
   const implementationPlanContent = [
     "# Implementation Plan",

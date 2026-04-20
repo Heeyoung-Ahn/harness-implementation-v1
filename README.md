@@ -1,22 +1,34 @@
 # harness-implementation-v1
 
-이 폴더는 `repo_harness_template` prototype에서 검증한 경험과 설계 계약만 가져와, 구현을 백지에서 다시 시작하는 thin workspace입니다.
+This repository now operates its harness from the same standardized structure that ships in `standard-template/`.
 
-## 포함 범위
-- `REQUIREMENTS.md`
-- `ARCHITECTURE_GUIDE.md`
-- `IMPLEMENTATION_PLAN.md`
-- `UI_DESIGN.md`
-- `PROTOTYPE_REFERENCE.md`
+## Standardized Root
 
-## 의도적으로 제외한 것
-- 기존 PMW 코드
-- 기존 runtime / validator / migration 스크립트
-- 기존 harness workflow / handoff / review / deploy 체계
-- starter scaffold 전체
+- `AGENTS.md`
+- `PROJECT_WORKFLOW_MANUAL.md`
+- `.agents/`
+- `reference/`
+- `src/`
+- `test/`
+- `templates/`
+- `standard-template/`
+- `package.json`
 
-## 시작 순서
-1. `PROTOTYPE_REFERENCE.md`로 carry-forward contract를 읽는다.
-2. `REQUIREMENTS.md`를 승인 가능한 baseline으로 다듬는다.
-3. `ARCHITECTURE_GUIDE.md`, `IMPLEMENTATION_PLAN.md`, `UI_DESIGN.md`를 같은 기준선으로 맞춘다.
-4. 그 다음에만 구현을 시작한다.
+## Live Harness Truth
+
+- live operational artifacts: `.agents/artifacts/*`
+- generated operational summaries: `.agents/runtime/generated-state-docs/*`
+- non-core reference material: `reference/*`
+
+## Reference Subdirectories
+
+- `reference/artifacts/`: non-core artifact documents
+- `reference/packets/`: task-level approval packets and templates
+- `reference/planning/`: planning baselines and carry-forward inputs
+- `reference/reports/`: design reviews and supporting reports
+- `reference/mockups/`: mockups and visual review assets
+- `reference/legacy/`: migrated or superseded legacy harness material
+
+## Rule
+
+Root-level harness documents are intentionally minimized. New harness material should be placed under `.agents/` or `reference/` according to its role.

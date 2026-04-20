@@ -46,7 +46,7 @@ export function writeGeneratedStateDocs({
     docs: docs.map((doc) => ({
       name: doc.name,
       checksum: calculateChecksum(doc.content),
-      path: path.resolve(outputDir, doc.name),
+      path: resolveGeneratedDocWritePaths({ outputDir, docName: doc.name })[0],
       paths: resolveGeneratedDocWritePaths({ outputDir, docName: doc.name })
     }))
   };

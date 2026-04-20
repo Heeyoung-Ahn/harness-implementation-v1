@@ -4,7 +4,7 @@
 - Open work items: 6
 - Open blocked or at-risk items: 0
 - Recent handoffs captured: 2
-- Generated at: 2026-04-19T13:50:46.328Z
+- Generated at: 2026-04-20T02:31:31.533Z
 
 ## Blocked / At Risk Summary
 - 0 open blocker or risks require attention.
@@ -18,12 +18,12 @@
 ## Work Item Detail
 | ID | Title | Status | Next Action |
 |---|---|---|---|
-| DEV-05 | Validator / migration / cutover tooling | in_progress | Define validator coverage, migration preview, rollback path, and cutover preflight entrypoints. |
-| DEV-04 | PMW read surface | done | Closed after browser verification passed at http://127.0.0.1:4173. |
+| BASELINE-01 | Requirements / architecture / implementation / UI baseline sync | done | Closed |
+| DEV-01 | DB foundation | done | Closed |
 | DEV-02 | Generated state docs and drift validator | done | Closed |
 | DEV-03 | Context restoration read model | done | Closed |
-| DEV-01 | DB foundation | done | Closed |
-| BASELINE-01 | Requirements / architecture / implementation / UI baseline sync | done | Closed |
+| DEV-04 | PMW read surface | done | Closed after browser verification passed at http://127.0.0.1:4173. |
+| DEV-05 | Validator / migration / cutover tooling | in_progress | Define validator coverage, migration preview, rollback path, and cutover preflight entrypoints. |
 
 ## Handoff Log
 - 2026-04-19T13:50:46.328Z: DEV-04 browser verification passed; start DEV-05 validator / migration / cutover tooling.
@@ -31,5 +31,5 @@
 
 ## Generation Metadata
 - Generated docs: CURRENT_STATE.md, TASK_LIST.md
-- Source revision: 2026-04-19T13:50:46.328Z
+- Source revision: 2026-04-20T02:31:31.533Z
 - Sync status: fresh at generation time

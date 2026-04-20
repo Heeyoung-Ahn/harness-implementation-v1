@@ -11,13 +11,13 @@ import {
 } from "../state/harness-paths.js";
 
 const FILES = {
-  requirements: "REQUIREMENTS.md",
-  architecture: "ARCHITECTURE_GUIDE.md",
-  plan: "IMPLEMENTATION_PLAN.md",
-  ui: "UI_DESIGN.md",
-  packet: "PKT-01_DEV-04_PMW_READ_SURFACE.md",
-  active: "codex/project-context/active-state.md",
-  preventive: "codex/project-context/preventive-memory.md"
+  requirements: ".agents/artifacts/REQUIREMENTS.md",
+  architecture: ".agents/artifacts/ARCHITECTURE_GUIDE.md",
+  plan: ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+  ui: "reference/artifacts/UI_DESIGN.md",
+  packet: "reference/packets/PKT-01_DEV-04_PMW_READ_SURFACE.md",
+  active: ".agents/artifacts/CURRENT_STATE.md",
+  preventive: ".agents/artifacts/PREVENTIVE_MEMORY.md"
 };
 const FILE_KEYS = new Map(Object.entries(FILES).map(([key, value]) => [value, key]));
 const DOMAINS = ["기준선 정렬", "상태 저장소", "상태 문서·복원", "PMW 읽기 화면", "검증·컷오버", "운영 품질"];

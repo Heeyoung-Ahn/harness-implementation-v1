@@ -4,7 +4,7 @@
 PMW는 dashboard보다 reading desk에 가깝게 설계한다. 사용자는 첫 화면에서 `무엇을 결정해야 하는지`, `무엇이 막고 있는지`, `현재 무엇을 하고 있는지`, `다음에 무엇을 해야 하는지`를 먼저 읽어야 한다. 이때 결정은 최대한 쉽게 내려야 하지만, 근거 없는 압축이 되면 안 된다. 디자인 목업은 분위기용 이미지가 아니라 실제 구현 로직과 데이터 계약이 반영된 설계 산출물이어야 한다.
 
 ## Rough vs Detailed Design
-- 최초 `UI_DESIGN.md`와 상위 mockup은 rough baseline일 수 있다.
+- 최초 `reference/artifacts/UI_DESIGN.md`와 상위 mockup은 rough baseline일 수 있다.
 - rough baseline은 전체 정보구조, tone, source-to-surface contract, 우선순위만 승인한다.
 - 실제 구현 직전에는 작업 단위별 상세 화면 설계가 다시 필요하다.
 - 특히 사용자가 직접 체감하는 `프로그램 기능과 UI/UX`는 task-level detailed design과 human sync 없이 코드로 먼저 확정하지 않는다.

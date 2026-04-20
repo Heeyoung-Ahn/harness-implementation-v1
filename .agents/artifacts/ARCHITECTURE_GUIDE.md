@@ -20,7 +20,7 @@
 ## Non-Negotiable Rules
 - hot-state와 AI가 반복적으로 조회해야 하는 운영 신호는 DB single write surface로 유지한다.
 - context docs는 사람이 충분히 이해하고 승인할 수 있는 Markdown canonical truth로 유지한다.
-- `REQUIREMENTS.md`는 가장 사용자 친화적인 기준 문서이며, 사용자 최종 확정 전에는 downstream baseline 문서를 새 기준선으로 sync하지 않는다.
+- `.agents/artifacts/REQUIREMENTS.md`는 가장 사용자 친화적인 기준 문서이며, 사용자 최종 확정 전에는 downstream baseline 문서를 새 기준선으로 sync하지 않는다.
 - 사용자가 결정을 내려야 하는 문서와 surface는 `권장 결론`, `핵심 근거`, `예외 조건`, `fallback`을 함께 제공해 raw trade-off 재해석 부담을 줄인다.
 - rough baseline 승인만으로 사용자가 직접 체감하는 `프로그램 기능과 UI/UX`를 코드에서 확정하지 않는다.
 - 실제 구현은 task-level packet이 상세 동작, 상태, 화면, edge case, acceptance, approval boundary를 닫은 뒤에만 시작한다.
@@ -49,7 +49,7 @@
 - 각 실제 구현 작업은 별도의 task-level packet으로 다시 닫는다.
 - task-level packet은 최소 `goal`, `in-scope/out-of-scope`, `detailed behavior`, `screen/state changes`, `data/source impact`, `edge cases`, `acceptance`, `human approval boundary`를 포함한다.
 - 사용자가 직접 체감하는 `프로그램 기능과 UI/UX`를 다루는 packet은 상세 기능 기획 또는 상세 화면 설계 없이 구현하지 않는다.
-- task-level packet 기본 형식은 `PKT-01_WORK_ITEM_PACKET_TEMPLATE.md`를 따른다.
+- task-level packet 기본 형식은 `reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md`를 따른다.
 - 구현 중 packet과 실제 코드가 어긋나면 코드로 밀어붙이지 않고 packet을 다시 열어 human sync를 먼저 수행한다.
 
 ## Context Restoration Flow

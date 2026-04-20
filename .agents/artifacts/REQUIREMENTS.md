@@ -1,7 +1,7 @@
 # Requirements
 
 ## Summary
-이 프로젝트의 목표는 하네스가 스스로 유지·개선 가능한 운영 구조를 가지면서, 최종사용자가 PMW 첫 화면과 핵심 아티팩트만으로 현재 판단 지점을 빠르게 이해할 수 있게 하는 것이다. `REQUIREMENTS.md`는 전체 문서 중 가장 사용자 친화적인 기준 문서로 유지하며, `PLN-00_DEEP_INTERVIEW.md`와 `PLN-01_REQUIREMENTS_FREEZE.md`를 통해 first-ship baseline이 닫힌 상태로 관리한다.
+이 프로젝트의 목표는 하네스가 스스로 유지·개선 가능한 운영 구조를 가지면서, 최종사용자가 PMW 첫 화면과 핵심 아티팩트만으로 현재 판단 지점을 빠르게 이해할 수 있게 하는 것이다. `.agents/artifacts/REQUIREMENTS.md`는 전체 문서 중 가장 사용자 친화적인 기준 문서로 유지하며, `reference/planning/PLN-00_DEEP_INTERVIEW.md`와 `reference/planning/PLN-01_REQUIREMENTS_FREEZE.md`를 통해 first-ship baseline이 닫힌 상태로 관리한다.
 
 ## Project Goal
 
@@ -31,8 +31,8 @@
 5. progressive elaboration: 최초 requirements, architecture, implementation plan, UI design은 러프한 기준선일 수 있지만, 실제 작업 단위에 들어갈 때는 더 구체적인 task-level planning과 design agreement를 거쳐야 한다.
 
 ## Authoring And Approval Workflow
-1. `REQUIREMENTS.md` 작성은 구현에 필요한 이슈, 제약, 승인 기준, 보안 기대치가 닫히거나 명시적으로 deferred 될 때까지 deep interview를 진행한다.
-2. 사용자의 최종 확정 전에는 `ARCHITECTURE_GUIDE.md`, `IMPLEMENTATION_PLAN.md`, `UI_DESIGN.md`를 새 기준선으로 작성하거나 sync하지 않는다.
+1. `.agents/artifacts/REQUIREMENTS.md` 작성은 구현에 필요한 이슈, 제약, 승인 기준, 보안 기대치가 닫히거나 명시적으로 deferred 될 때까지 deep interview를 진행한다.
+2. 사용자의 최종 확정 전에는 `.agents/artifacts/ARCHITECTURE_GUIDE.md`, `.agents/artifacts/IMPLEMENTATION_PLAN.md`, `reference/artifacts/UI_DESIGN.md`를 새 기준선으로 작성하거나 sync하지 않는다.
 3. requirements 확정 후에만 architecture, implementation, UI 문서를 같은 turn에서 같은 기준선으로 정렬한다.
 4. 디자인 목업은 시각 참고 자료가 아니라 실제 구현 로직, source-to-surface mapping, 상태 전이, read-only 경계를 반영하는 설계 입력물이어야 한다.
 5. requirements 변경이 승인되면 downstream 문서와 mockup도 같은 변경 요청 범위 안에서 다시 맞춘다.
@@ -63,7 +63,7 @@
 ## Acceptance
 - deep interview가 구현 핵심 이슈를 닫거나, deferred 항목은 owner와 follow-up rule이 기록된다.
 - 사용자가 결정을 내려야 하는 문서는 권장 결론과 충분한 근거를 함께 제공하고, 예외 조건과 defer fallback을 분리해 보여 준다.
-- `REQUIREMENTS.md`가 사용자 최종 확정된 뒤에만 architecture / implementation / UI baseline 문서가 작성되거나 재정렬된다.
+- `.agents/artifacts/REQUIREMENTS.md`가 사용자 최종 확정된 뒤에만 architecture / implementation / UI baseline 문서가 작성되거나 재정렬된다.
 - 최초 requirements, architecture, implementation plan, UI design은 러프 기준선으로 승인될 수 있지만, 이것만으로 세부 구현이 자동 승인된 것으로 간주하지 않는다.
 - 각 구현 작업은 task-level 상세 기획과 필요한 경우 상세 화면 설계를 거쳐야 하며, 특히 사용자가 직접 체감하는 `프로그램 기능과 UI/UX`는 인간 협의 또는 승인 후 구현된다.
 - 하네스가 세션 전환 후에도 핵심 상태, 판단 근거, 다음 행동을 source trace와 함께 복원할 수 있다.

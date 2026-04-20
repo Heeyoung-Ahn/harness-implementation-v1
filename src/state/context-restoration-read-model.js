@@ -5,7 +5,7 @@ import { validateGeneratedStateDocs } from "./drift-validator.js";
 import { CURRENT_STATE_DOC, TASK_LIST_DOC } from "./generate-state-docs.js";
 import { resolveArtifactPath, resolveGeneratedDocReadPath } from "./harness-paths.js";
 
-export const IMPLEMENTATION_PLAN_DOC = "IMPLEMENTATION_PLAN.md";
+export const IMPLEMENTATION_PLAN_DOC = ".agents/artifacts/IMPLEMENTATION_PLAN.md";
 export const OPERATOR_NEXT_ACTION_SECTION = "## Operator Next Action";
 
 const SURFACE_SECTIONS = {

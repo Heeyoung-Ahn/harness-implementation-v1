@@ -26,52 +26,48 @@ test("writes deterministic generated docs and validates them successfully", () =
     releaseGateState: "open",
     currentFocus: "Build generated docs and validator",
     releaseGoal: "First ship baseline",
-    sourceRef: "REQUIREMENTS.md"
+    sourceRef: ".agents/artifacts/REQUIREMENTS.md"
   });
   store.recordDecision({
     decisionId: "DEC-01",
     title: "Choose generated doc structure",
     decisionNeeded: true,
     impactSummary: "Impacts PMW source mapping",
-    sourceRef: "ARCHITECTURE_GUIDE.md"
+    sourceRef: ".agents/artifacts/ARCHITECTURE_GUIDE.md"
   });
   store.recordGateRisk({
     riskId: "RISK-01",
     title: "Validator shape still missing",
     severity: "medium",
-    sourceRef: "IMPLEMENTATION_PLAN.md"
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
   });
   store.upsertWorkItem({
     workItemId: "DEV-02",
     title: "Generated docs",
     status: "in_progress",
     nextAction: "Implement writer",
-    sourceRef: "IMPLEMENTATION_PLAN.md"
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
   });
   store.appendHandoff({
     handoffId: "handoff-01",
     handoffSummary: "Generated docs work has started",
-    sourceRef: "IMPLEMENTATION_PLAN.md"
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
   });
   store.upsertArtifact({
     artifactId: "requirements",
-    path: "REQUIREMENTS.md",
+    path: ".agents/artifacts/REQUIREMENTS.md",
     category: "canonical_doc",
     title: "Requirements",
-    sourceRef: "REQUIREMENTS.md"
+    sourceRef: ".agents/artifacts/REQUIREMENTS.md"
   });
 
   writeGeneratedStateDocs({ store, outputDir: repoRoot });
 
-  const currentState = fs.readFileSync(path.join(repoRoot, CURRENT_STATE_DOC), "utf8");
-  const taskList = fs.readFileSync(path.join(repoRoot, TASK_LIST_DOC), "utf8");
-  const generatedCurrentState = fs.readFileSync(generatedDocPath(repoRoot, CURRENT_STATE_DOC), "utf8");
-  const generatedTaskList = fs.readFileSync(generatedDocPath(repoRoot, TASK_LIST_DOC), "utf8");
+  const currentState = fs.readFileSync(generatedDocPath(repoRoot, CURRENT_STATE_DOC), "utf8");
+  const taskList = fs.readFileSync(generatedDocPath(repoRoot, TASK_LIST_DOC), "utf8");
   assert.match(currentState, /## Current Focus Summary/);
   assert.match(currentState, /## Decision Required Summary/);
   assert.match(taskList, /## Blocked \/ At Risk Summary/);
-  assert.equal(generatedCurrentState, currentState);
-  assert.equal(generatedTaskList, taskList);
 
   const result = validateGeneratedStateDocs({
     store,
@@ -100,7 +96,7 @@ test("treats empty-state placeholder rows as zero-count detail", () => {
     releaseGateState: "open",
     currentFocus: "Build generated docs and validator",
     releaseGoal: "First ship baseline",
-    sourceRef: "REQUIREMENTS.md"
+    sourceRef: ".agents/artifacts/REQUIREMENTS.md"
   });
 
   writeGeneratedStateDocs({ store, outputDir: repoRoot });
@@ -132,20 +128,20 @@ test("detects tampered generated docs, missing sections, and stale freshness", (
     releaseGateState: "open",
     currentFocus: "Build generated docs and validator",
     releaseGoal: "First ship baseline",
-    sourceRef: "REQUIREMENTS.md"
+    sourceRef: ".agents/artifacts/REQUIREMENTS.md"
   });
   store.recordDecision({
     decisionId: "DEC-01",
     title: "Choose generated doc structure",
     decisionNeeded: true,
     impactSummary: "Impacts PMW source mapping",
-    sourceRef: "ARCHITECTURE_GUIDE.md"
+    sourceRef: ".agents/artifacts/ARCHITECTURE_GUIDE.md"
   });
   store.recordGateRisk({
     riskId: "RISK-01",
     title: "Validator shape still missing",
     severity: "medium",
-    sourceRef: "IMPLEMENTATION_PLAN.md"
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
   });
 
   writeGeneratedStateDocs({ store, outputDir: repoRoot });
@@ -161,7 +157,7 @@ test("detects tampered generated docs, missing sections, and stale freshness", (
     title: "Generated docs",
     status: "in_progress",
     nextAction: "Implement writer",
-    sourceRef: "IMPLEMENTATION_PLAN.md"
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
   });
 
   const result = validateGeneratedStateDocs({
@@ -195,13 +191,13 @@ test("detects unresolved source refs and utf8 bom issues", () => {
     releaseGateState: "open",
     currentFocus: "Build generated docs and validator",
     releaseGoal: "First ship baseline",
-    sourceRef: "MISSING_SOURCE.md"
+    sourceRef: ".agents/artifacts/MISSING_SOURCE.md"
   });
   store.recordGateRisk({
     riskId: "RISK-01",
     title: "Validator shape still missing",
     severity: "medium",
-    sourceRef: "IMPLEMENTATION_PLAN.md"
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
   });
 
   writeGeneratedStateDocs({ store, outputDir: repoRoot });
@@ -224,12 +220,13 @@ test("detects unresolved source refs and utf8 bom issues", () => {
 });
 
 function seedRepoFiles(repoRoot) {
+  fs.mkdirSync(path.join(repoRoot, ".agents", "artifacts"), { recursive: true });
   for (const fileName of [
     "REQUIREMENTS.md",
     "ARCHITECTURE_GUIDE.md",
     "IMPLEMENTATION_PLAN.md"
   ]) {
-    fs.writeFileSync(path.join(repoRoot, fileName), `# ${fileName}\n`, "utf8");
+    fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", fileName), `# ${fileName}\n`, "utf8");
   }
 }
 

@@ -36,7 +36,7 @@
 - The product architecture is `repo-local DB truth + Markdown canonical docs + generated docs + read-only PMW`.
 - First-ship DB scope starts with `release_state`, `work_item_registry`, `decision_registry`, `gate_risk_registry`, `handoff_log`, `artifact_index`, and `generation_state`.
 - First-ship generated docs are `CURRENT_STATE.md` and `TASK_LIST.md`.
-- `IMPLEMENTATION_PLAN.md > ## Operator Next Action` is the canonical next-action source for the read model.
+- `.agents/artifacts/IMPLEMENTATION_PLAN.md > ## Operator Next Action` is the canonical next-action source for the read model.
 - First-ship PMW mandatory scope is low-noise hero, compact 4-card rail, active detail, drawer-based artifact viewer, thin settings, and a secondary diagnostics layer.
 
 ## Non-Goals
