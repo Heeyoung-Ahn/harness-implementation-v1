@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
+import { resolveGeneratedDocWritePaths, writeSecondaryFile } from "./harness-paths.js";
 import { GENERATED_DOCS } from "./operating-state-store.js";
 
 export const CURRENT_STATE_DOC = "CURRENT_STATE.md";
@@ -12,26 +13,27 @@ export function writeGeneratedStateDocs({
   outputDir = process.cwd(),
   sourceRevision
 }) {
-  const generationTimestamp = maxIsoTimestamp([
-    new Date().toISOString(),
-    store.getLatestOperationalTimestamp()
-  ]);
-  const currentStateDoc = buildCurrentStateDoc(store);
-  const taskListDoc = buildTaskListDoc(store);
+  const generationTimestamp = getProjectionTimestamp(store);
+  const resolvedSourceRevision = sourceRevision ?? buildSourceRevision(store);
+  const currentStateDoc = buildCurrentStateDoc(store, { generatedAt: generationTimestamp });
+  const taskListDoc = buildTaskListDoc(store, { generatedAt: generationTimestamp });
   const docs = [
     { name: CURRENT_STATE_DOC, content: currentStateDoc },
     { name: TASK_LIST_DOC, content: taskListDoc }
   ];
 
   for (const doc of docs) {
-    const targetPath = path.resolve(outputDir, doc.name);
-    fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-    fs.writeFileSync(targetPath, doc.content, "utf8");
+    const [primaryPath, ...secondaryPaths] = resolveGeneratedDocWritePaths({ outputDir, docName: doc.name });
+    fs.mkdirSync(path.dirname(primaryPath), { recursive: true });
+    fs.writeFileSync(primaryPath, doc.content, "utf8");
+    for (const targetPath of secondaryPaths) {
+      writeSecondaryFile(targetPath, doc.content);
+    }
     store.refreshProjection({
       projectionName: doc.name,
       checksum: calculateChecksum(doc.content),
       generatedAt: generationTimestamp,
-      sourceRevision: sourceRevision ?? buildSourceRevision(store),
+      sourceRevision: resolvedSourceRevision,
       freshnessState: "fresh",
       metadata: {
         bytes: Buffer.byteLength(doc.content, "utf8"),
@@ -44,15 +46,15 @@ export function writeGeneratedStateDocs({
     docs: docs.map((doc) => ({
       name: doc.name,
       checksum: calculateChecksum(doc.content),
-      path: path.resolve(outputDir, doc.name)
+      path: path.resolve(outputDir, doc.name),
+      paths: resolveGeneratedDocWritePaths({ outputDir, docName: doc.name })
     }))
   };
 }
 
-export function buildCurrentStateDoc(store) {
+export function buildCurrentStateDoc(store, { generatedAt = getProjectionTimestamp(store) } = {}) {
   const releaseState = store.getReleaseState("current");
   const openDecisions = store.listDecisions({ status: "open", decisionNeeded: true });
-  const generatedAt = new Date().toISOString();
 
   return [
     "# CURRENT_STATE",
@@ -83,15 +85,14 @@ export function buildCurrentStateDoc(store) {
     "## Generation Metadata",
     `- Generated docs: ${GENERATED_DOCS.join(", ")}`,
     `- Source revision: ${buildSourceRevision(store)}`,
-    `- Sync status: fresh at generation time`
+    "- Sync status: fresh at generation time"
   ].join("\n");
 }
 
-export function buildTaskListDoc(store) {
+export function buildTaskListDoc(store, { generatedAt = getProjectionTimestamp(store) } = {}) {
   const openRisks = store.listGateRisks({ status: "open" });
   const workItems = store.listWorkItems();
   const handoffs = store.listRecentHandoffs(10);
-  const generatedAt = new Date().toISOString();
 
   return [
     "# TASK_LIST",
@@ -118,7 +119,7 @@ export function buildTaskListDoc(store) {
     "## Generation Metadata",
     `- Generated docs: ${GENERATED_DOCS.join(", ")}`,
     `- Source revision: ${buildSourceRevision(store)}`,
-    `- Sync status: fresh at generation time`
+    "- Sync status: fresh at generation time"
   ].join("\n");
 }
 
@@ -127,11 +128,11 @@ export function calculateChecksum(content) {
 }
 
 function buildSourceRevision(store) {
-  return store.getLatestMutationTimestamp() ?? "empty-store";
+  return store.getLatestOperationalTimestamp() ?? "empty-store";
 }
 
-function maxIsoTimestamp(values) {
-  return values.filter(Boolean).sort().at(-1);
+function getProjectionTimestamp(store) {
+  return store.getLatestOperationalTimestamp() ?? store.getLatestMutationTimestamp() ?? new Date().toISOString();
 }
 
 function formatCount(count, noun) {

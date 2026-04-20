@@ -1,0 +1,6 @@
+.codex
+.harness/
+backup/
+reference/repo_harness_template/
+pmw-server.log
+pmw-server.err.log

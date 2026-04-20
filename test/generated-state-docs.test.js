@@ -65,9 +65,45 @@ test("writes deterministic generated docs and validates them successfully", () =
 
   const currentState = fs.readFileSync(path.join(repoRoot, CURRENT_STATE_DOC), "utf8");
   const taskList = fs.readFileSync(path.join(repoRoot, TASK_LIST_DOC), "utf8");
+  const generatedCurrentState = fs.readFileSync(generatedDocPath(repoRoot, CURRENT_STATE_DOC), "utf8");
+  const generatedTaskList = fs.readFileSync(generatedDocPath(repoRoot, TASK_LIST_DOC), "utf8");
   assert.match(currentState, /## Current Focus Summary/);
   assert.match(currentState, /## Decision Required Summary/);
   assert.match(taskList, /## Blocked \/ At Risk Summary/);
+  assert.equal(generatedCurrentState, currentState);
+  assert.equal(generatedTaskList, taskList);
+
+  const result = validateGeneratedStateDocs({
+    store,
+    outputDir: repoRoot,
+    repoRoot
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.cutoverReady, true);
+  assert.deepEqual(result.findings, []);
+
+  store.close();
+});
+
+test("treats empty-state placeholder rows as zero-count detail", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-generated-docs-empty-"));
+  seedRepoFiles(repoRoot);
+
+  const store = createOperatingStateStore({
+    dbPath: path.join(repoRoot, ".harness", "operating_state.sqlite"),
+    now: createClock("2026-04-17T14:30:00.000Z")
+  });
+
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "Build generated docs and validator",
+    releaseGoal: "First ship baseline",
+    sourceRef: "REQUIREMENTS.md"
+  });
+
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
 
   const result = validateGeneratedStateDocs({
     store,
@@ -115,7 +151,7 @@ test("detects tampered generated docs, missing sections, and stale freshness", (
   writeGeneratedStateDocs({ store, outputDir: repoRoot });
 
   fs.writeFileSync(
-    path.join(repoRoot, CURRENT_STATE_DOC),
+    generatedDocPath(repoRoot, CURRENT_STATE_DOC),
     "# CURRENT_STATE\n\n## Current Focus Summary\n- Tampered summary only\n",
     "utf8"
   );
@@ -170,7 +206,7 @@ test("detects unresolved source refs and utf8 bom issues", () => {
 
   writeGeneratedStateDocs({ store, outputDir: repoRoot });
 
-  const taskListPath = path.join(repoRoot, TASK_LIST_DOC);
+  const taskListPath = generatedDocPath(repoRoot, TASK_LIST_DOC);
   const taskListBuffer = fs.readFileSync(taskListPath);
   fs.writeFileSync(taskListPath, Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), taskListBuffer]));
 
@@ -195,6 +231,10 @@ function seedRepoFiles(repoRoot) {
   ]) {
     fs.writeFileSync(path.join(repoRoot, fileName), `# ${fileName}\n`, "utf8");
   }
+}
+
+function generatedDocPath(repoRoot, docName) {
+  return path.join(repoRoot, ".agents", "runtime", "generated-state-docs", docName);
 }
 
 function createClock(startIso) {

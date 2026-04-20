@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { resolveGeneratedDocReadPath } from "./harness-paths.js";
 import { CURRENT_STATE_DOC, TASK_LIST_DOC, calculateChecksum } from "./generate-state-docs.js";
 
 const REQUIRED_SECTIONS = {
@@ -14,8 +15,8 @@ export function validateGeneratedStateDocs({
   repoRoot = outputDir
 }) {
   const findings = [];
-  const currentStatePath = path.resolve(outputDir, CURRENT_STATE_DOC);
-  const taskListPath = path.resolve(outputDir, TASK_LIST_DOC);
+  const currentStatePath = resolveGeneratedDocReadPath({ outputDir, docName: CURRENT_STATE_DOC });
+  const taskListPath = resolveGeneratedDocReadPath({ outputDir, docName: TASK_LIST_DOC });
 
   const currentStateContent = readUtf8File(currentStatePath, findings);
   const taskListContent = readUtf8File(taskListPath, findings);
@@ -173,8 +174,9 @@ function validateRiskParity(store, content, findings) {
 }
 
 function validateSourceRefs(store, repoRoot, findings) {
+  const releaseState = store.getReleaseState("current");
   const entries = [
-    ...wrapSourceRefs("release_state", store.getReleaseState("current") ? [store.getReleaseState("current")] : []),
+    ...wrapSourceRefs("release_state", releaseState ? [releaseState] : []),
     ...wrapSourceRefs("work_item_registry", store.listWorkItems()),
     ...wrapSourceRefs("decision_registry", store.listDecisions()),
     ...wrapSourceRefs("gate_risk_registry", store.listGateRisks()),
@@ -257,7 +259,12 @@ function countTableRows(content, sectionHeading) {
     return 0;
   }
 
-  return lines.length - 2;
+  const dataRows = lines.slice(2);
+  if (dataRows.length === 1 && isEmptyPlaceholderRow(dataRows[0])) {
+    return 0;
+  }
+
+  return dataRows.length;
 }
 
 function sliceSection(content, sectionHeading) {
@@ -288,4 +295,13 @@ function wrapSourceRefs(rowType, rows) {
       "unknown",
     sourceRef: row.sourceRef ?? null
   }));
+}
+
+function isEmptyPlaceholderRow(row) {
+  const cells = row
+    .split("|")
+    .map((cell) => cell.trim())
+    .filter(Boolean);
+
+  return cells[0] === "-";
 }

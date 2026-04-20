@@ -6,6 +6,8 @@
     "node": ">=24.0.0"
   },
   "scripts": {
-    "test": "node --test"
+    "test": "node --test test/*.test.js",
+    "test:reference": "node --test reference/repo_harness_template/tools/project-monitor-web/test/*.js",
+    "pmw:start": "node src/pmw/server.js"
   }
 }

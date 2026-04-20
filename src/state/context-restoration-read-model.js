@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { validateGeneratedStateDocs } from "./drift-validator.js";
 import { CURRENT_STATE_DOC, TASK_LIST_DOC } from "./generate-state-docs.js";
+import { resolveArtifactPath, resolveGeneratedDocReadPath } from "./harness-paths.js";
 
 export const IMPLEMENTATION_PLAN_DOC = "IMPLEMENTATION_PLAN.md";
 export const OPERATOR_NEXT_ACTION_SECTION = "## Operator Next Action";
@@ -45,9 +46,9 @@ export function buildContextRestorationReadModel({
   const latestHandoff = store.listRecentHandoffs(1)[0] ?? null;
   const generationStates = store.listGenerationStates();
 
-  const currentStateContent = readIfExists(path.resolve(outputDir, CURRENT_STATE_DOC));
-  const taskListContent = readIfExists(path.resolve(outputDir, TASK_LIST_DOC));
-  const implementationPlanContent = readIfExists(path.resolve(repoRoot, IMPLEMENTATION_PLAN_DOC));
+  const currentStateContent = readIfExists(resolveGeneratedDocReadPath({ outputDir, docName: CURRENT_STATE_DOC }));
+  const taskListContent = readIfExists(resolveGeneratedDocReadPath({ outputDir, docName: TASK_LIST_DOC }));
+  const implementationPlanContent = readIfExists(resolveArtifactPath(repoRoot, "plan"));
 
   const decisionSurface = buildDecisionSurface({
     sectionContent: sliceSection(currentStateContent, SURFACE_SECTIONS.decisionRequired.summaryHeading),
