@@ -23,7 +23,7 @@
 - PLN-02 post-approval architecture / implementation / UI sync
 - DSG-01 rough mockup and global behavior contract
 - PKT-01 per-work-item planning and design approval contract using `reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md`
-- Current active packet candidate: `reference/packets/PKT-01_DEV-04_PMW_READ_SURFACE.md`
+- Current active packet candidate: `reference/packets/PKT-01_DEV-05_VALIDATOR_MIGRATION_CUTOVER.md`
 - DEV-01 DB schema and store foundation
 - DEV-02 generated state docs and drift validator
 - DEV-03 context restoration read model
