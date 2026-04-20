@@ -1,8 +1,14 @@
+import fs from "node:fs";
 import path from "node:path";
 
 import { validateGeneratedStateDocs } from "./drift-validator.js";
 import { CURRENT_STATE_DOC, TASK_LIST_DOC } from "./generate-state-docs.js";
-import { GENERATED_DOCS_DIR, ARTIFACT_PATHS } from "./harness-paths.js";
+import {
+  ARTIFACT_PATHS,
+  CUTOVER_REPORT_JSON,
+  CUTOVER_REPORT_MARKDOWN,
+  GENERATED_DOCS_DIR
+} from "./harness-paths.js";
 import { createOperatingStateStore, DEFAULT_DB_PATH } from "./operating-state-store.js";
 
 export const STANDARD_PATH_MIGRATIONS = {
@@ -118,6 +124,26 @@ export function runCutoverPreflight({ repoRoot = process.cwd(), outputDir = repo
       blockers
     };
   });
+}
+
+export function writeCutoverReport({ repoRoot = process.cwd(), outputDir = repoRoot, dbPath = DEFAULT_DB_PATH } = {}) {
+  const preflight = runCutoverPreflight({ repoRoot, outputDir, dbPath });
+  const root = path.resolve(repoRoot);
+  const markdownPath = path.resolve(root, CUTOVER_REPORT_MARKDOWN);
+  const jsonPath = path.resolve(root, CUTOVER_REPORT_JSON);
+
+  fs.mkdirSync(path.dirname(markdownPath), { recursive: true });
+  fs.writeFileSync(markdownPath, buildCutoverReportMarkdown(preflight), "utf8");
+  fs.writeFileSync(jsonPath, `${JSON.stringify(preflight, null, 2)}
+`, "utf8");
+
+  return {
+    ok: preflight.ok,
+    cutoverReady: preflight.cutoverReady,
+    markdownPath,
+    jsonPath,
+    preflight
+  };
 }
 
 function withStore({ dbPath, repoRoot }, callback) {
@@ -240,10 +266,53 @@ function buildRollbackBundle({ repoRoot, dbPath }) {
       path.resolve(root, ARTIFACT_PATHS.requirements),
       path.resolve(root, ARTIFACT_PATHS.architecture),
       path.resolve(root, ARTIFACT_PATHS.plan),
+      path.resolve(root, ARTIFACT_PATHS.progress),
       path.resolve(root, ARTIFACT_PATHS.active),
       path.resolve(root, ARTIFACT_PATHS.preventive)
     ]
   };
+}
+
+function buildCutoverReportMarkdown(preflight) {
+  const lines = [
+    "# Cutover Precheck",
+    "",
+    "## Summary",
+    preflight.cutoverReady
+      ? "The standardized harness is cutover-ready for the current repo snapshot."
+      : "The standardized harness is not cutover-ready for the current repo snapshot.",
+    "",
+    "## Result",
+    `- Ready: ${preflight.cutoverReady ? "yes" : "no"}`,
+    `- Validator ok: ${preflight.validator.ok ? "yes" : "no"}`,
+    `- Migration preview changes: ${preflight.migrationPreview.changeCount}`,
+    `- Blocker count: ${preflight.blockers.length}`,
+    "",
+    "## Validator Findings"
+  ];
+
+  const findings = preflight.validator.findings?.length
+    ? preflight.validator.findings.map((finding) => `- [${finding.severity}] ${finding.code}: ${finding.message}`)
+    : ["- none"];
+  lines.push(...findings, "", "## Migration Preview");
+
+  const changes = preflight.migrationPreview.changes?.length
+    ? preflight.migrationPreview.changes.map((change) => `- ${change.table}:${change.rowId} ${change.field} -> ${change.to}`)
+    : ["- no pending path normalization changes"];
+  lines.push(...changes, "", "## Blockers");
+
+  const blockers = preflight.blockers.length
+    ? preflight.blockers.map((blocker) => `- ${blocker.code}: ${blocker.message}`)
+    : ["- none"];
+  lines.push(...blockers, "", "## Rollback Bundle");
+
+  lines.push(
+    `- DB: ${preflight.rollbackBundle.dbPath}`,
+    ...preflight.rollbackBundle.generatedDocs.map((item) => `- Generated doc: ${item}`),
+    ...preflight.rollbackBundle.liveArtifacts.map((item) => `- Live artifact: ${item}`)
+  );
+
+  return `${lines.join("\n")}\n`;
 }
 
 function resolveDbPath(repoRoot, dbPath) {

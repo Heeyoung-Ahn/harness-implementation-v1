@@ -14,6 +14,7 @@ const FILES = {
   requirements: ".agents/artifacts/REQUIREMENTS.md",
   architecture: ".agents/artifacts/ARCHITECTURE_GUIDE.md",
   plan: ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+  progress: ".agents/artifacts/PROJECT_PROGRESS.md",
   ui: "reference/artifacts/UI_DESIGN.md",
   packet: "reference/packets/PKT-01_DEV-04_PMW_READ_SURFACE.md",
   active: ".agents/artifacts/CURRENT_STATE.md",
@@ -28,10 +29,11 @@ export function buildPmwReadSurface({ store, repoRoot = process.cwd(), outputDir
   const model = readModel ?? buildContextRestorationReadModel({ store, repoRoot: root, outputDir: out });
   const req = read(resolve(FILES.requirements, root, out));
   const plan = read(resolve(FILES.plan, root, out));
+  const progressText = read(resolve(FILES.progress, root, out));
   const packet = read(resolve(FILES.packet, root, out));
   const workItems = store.listWorkItems();
   const current = workItems.find((item) => active(item.status)) ?? workItems[0] ?? null;
-  const progress = buildProgress(workItems, model);
+  const progress = buildProgress(workItems, model, progressText);
   const artifacts = buildArtifacts({ root, out, model });
   const generatedDocPaths = [
     ...resolveGeneratedDocWritePaths({ outputDir: out, docName: CURRENT_STATE_DOC }),
@@ -44,14 +46,38 @@ export function buildPmwReadSurface({ store, repoRoot = process.cwd(), outputDir
     header: [
       { label: "Current Lane", title: current?.title ?? model.surfaces.currentFocus.headline, body: `${model.releaseState.currentStage} / ${model.releaseState.releaseGateState}` },
       { label: "Next Gate", title: model.surfaces.nextAction.headline, body: model.surfaces.nextAction.supportingText },
-      { label: "Return Point", title: "PKT-01 DEV-04", body: model.recentHandoff.status === "ready" ? model.recentHandoff.headline : "DEV-04 packet / 구현 계획 문서로 복귀한다." }
+      { label: "Return Point", title: model.recentHandoff.status === "ready" ? "Latest Handoff" : "Current Packet", body: model.recentHandoff.status === "ready" ? model.recentHandoff.headline : "현재 packet과 구현 계획 문서로 복귀한다." }
     ],
     overview: {
-      initial: "purpose",
+      initial: "progress",
       views: {
-        purpose: { label: "프로젝트 목적", leftLabel: "추진목적", left: ordered(section(req, "### 추진목적")), rightLabel: "기대효과", right: ordered(section(req, "### 기대효과")), docs: presentPaths(root, out, [FILES.requirements, FILES.active]) },
-        approach: { label: "프로젝트 진행 방안", leftLabel: "진행계획", left: ordered(section(plan, "## Phase Plan")), rightLabel: "승인 · 운영 규칙", right: bullets(section(packet, "## Approval Rule")), docs: presentPaths(root, out, [FILES.plan, FILES.ui, FILES.packet]) },
-        progress: { label: "프로젝트 진행 현황", summaryLabel: "진행현황 요약", percent: progress.percent, keys: progress.keys, domainLabel: "도메인별 진행현황", domains: progress.domains, docs: presentPaths(root, out, [CURRENT_STATE_DOC, TASK_LIST_DOC, FILES.packet]) }
+        purpose: {
+          label: "프로젝트 목적",
+          leftLabel: "추진목적",
+          left: ordered(section(req, "### 추진목적")),
+          rightLabel: "기대효과",
+          right: ordered(section(req, "### 기대효과")),
+          docs: presentPaths(root, out, [FILES.requirements, FILES.active])
+        },
+        approach: {
+          label: "프로젝트 진행 방안",
+          leftLabel: "진행계획",
+          left: ordered(section(plan, "## Phase Plan")),
+          rightLabel: "승인 · 운영 규칙",
+          right: bullets(section(packet, "## Approval Rule")),
+          docs: presentPaths(root, out, [FILES.plan, FILES.ui, FILES.packet])
+        },
+        progress: {
+          label: "프로젝트 진행 현황",
+          summaryLabel: "진행현황 요약",
+          percent: progress.percent,
+          keys: progress.keys,
+          domainLabel: "도메인별 진행현황",
+          domains: progress.domains,
+          tableLabel: "전체 작업표",
+          rows: progress.rows,
+          docs: presentPaths(root, out, [FILES.progress, CURRENT_STATE_DOC, TASK_LIST_DOC, FILES.packet])
+        }
       }
     },
     cards: [
@@ -76,10 +102,11 @@ export function buildPmwReadSurface({ store, repoRoot = process.cwd(), outputDir
 function presentPaths(root, out, refs) {
   return refs.filter((item) => exists(item, root, out)).map((item) => displayPath(item, root, out));
 }
+
 export function renderPmwHtml(surface) {
   const data = JSON.stringify(surface).replaceAll("<", "\\u003c");
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(surface.title)}</title><style>
-body{margin:0;background:#f5f1e8;color:#1f231d;font:14px/1.6 "Segoe UI",sans-serif}main{max-width:1440px;margin:20px auto;padding:18px}.panel,.top{background:#fffcf6;border:1px solid rgba(60,53,40,.12);border-radius:24px;padding:18px;box-shadow:0 12px 30px rgba(54,45,33,.06)}.top{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}.meta,.nav,.cards,.lower,.doc-cols,.keys{display:grid;gap:12px}.meta{grid-template-columns:repeat(3,1fr)}.cards{grid-template-columns:repeat(2,1fr)}.lower{grid-template-columns:1.4fr .8fr;margin-top:16px}.doc-cols{grid-template-columns:repeat(2,1fr)}.chip,.tab,.btn,.badge,.tone{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;font-size:12px;font-weight:700;padding:8px 12px;border:1px solid rgba(60,53,40,.12);background:#fff}.badge.fresh,.tone.done{background:rgba(31,90,73,.09);color:#1f5a49}.badge.stale,.tone.review{background:rgba(139,93,24,.12);color:#8b5d18}.tone.todo,.chip{background:rgba(60,53,40,.07);color:#616760}.tab.active,.btn.active{background:#1f5a49;color:#f8f4eb}.eyebrow{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#616760}.title{font:700 46px/1.02 Georgia,serif;margin:10px 0}.section{margin-top:16px}.head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}.head h2{margin:0;font:700 28px/1.1 Georgia,serif}.card,.meta-card,.box,li.doc,li.setting,li.diag{background:#fff;border:1px solid rgba(60,53,40,.12);border-radius:18px;padding:14px}.card h3{margin:0;font:700 22px/1.15 Georgia,serif}.card{display:grid;gap:12px;min-height:220px}.card[data-tone="decision"]{background:rgba(139,67,49,.06)}.card[data-tone="issue"]{background:rgba(139,93,24,.06)}.card[data-tone="active"]{background:rgba(31,90,73,.05)}.card[data-tone="next"]{background:rgba(60,53,40,.04)}.list,.settings,.diagnostics,.docs,.domain-list{list-style:none;margin:0;padding:0;display:grid;gap:10px}.nav{grid-template-columns:repeat(3,1fr)}.two{display:grid;grid-template-columns:1fr .9fr;gap:12px}.overview-label{font-size:24px;font-weight:800;margin-bottom:12px}.bar{height:10px;background:rgba(60,53,40,.08);border-radius:999px;overflow:hidden}.bar span{display:block;height:100%;background:linear-gradient(90deg,#2c6d59,#88a98f)}.keys{grid-template-columns:repeat(2,1fr)}.domain{display:grid;grid-template-columns:.45fr 1fr;gap:12px;align-items:start}.doc-btn{display:grid;gap:6px;text-align:left;width:100%;background:#fff;border:1px solid rgba(60,53,40,.12);border-radius:16px;padding:12px}.doc-btn.active{background:#1f5a49;color:#fff}.preview{margin-top:14px}.preview h3{margin:0 0 8px;font:700 24px/1.1 Georgia,serif}pre{margin:0;white-space:pre-wrap;font:inherit}.hidden{display:none}@media(max-width:1100px){.top,.lower,.two,.cards,.meta,.doc-cols,.nav,.keys,.domain{grid-template-columns:1fr!important}}</style></head><body><main>
+body{margin:0;background:#f5f1e8;color:#1f231d;font:14px/1.6 "Segoe UI",sans-serif}main{max-width:1440px;margin:20px auto;padding:18px}.panel,.top{background:#fffcf6;border:1px solid rgba(60,53,40,.12);border-radius:24px;padding:18px;box-shadow:0 12px 30px rgba(54,45,33,.06)}.top{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}.meta,.nav,.cards,.lower,.doc-cols,.keys{display:grid;gap:12px}.meta{grid-template-columns:repeat(3,1fr)}.cards{grid-template-columns:repeat(2,1fr)}.lower{grid-template-columns:1.4fr .8fr;margin-top:16px}.doc-cols{grid-template-columns:repeat(2,1fr)}.chip,.tab,.btn,.badge,.tone{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;font-size:12px;font-weight:700;padding:8px 12px;border:1px solid rgba(60,53,40,.12);background:#fff}.badge.fresh,.tone.done{background:rgba(31,90,73,.09);color:#1f5a49}.badge.stale,.tone.review{background:rgba(139,93,24,.12);color:#8b5d18}.tone.todo,.chip{background:rgba(60,53,40,.07);color:#616760}.tab.active,.btn.active{background:#1f5a49;color:#f8f4eb}.eyebrow{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#616760}.title{font:700 46px/1.02 Georgia,serif;margin:10px 0}.section{margin-top:16px}.head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}.head h2{margin:0;font:700 28px/1.1 Georgia,serif}.card,.meta-card,.box,li.doc,li.setting,li.diag{background:#fff;border:1px solid rgba(60,53,40,.12);border-radius:18px;padding:14px}.card h3{margin:0;font:700 22px/1.15 Georgia,serif}.card{display:grid;gap:12px;min-height:220px}.card[data-tone="decision"]{background:rgba(139,67,49,.06)}.card[data-tone="issue"]{background:rgba(139,93,24,.06)}.card[data-tone="active"]{background:rgba(31,90,73,.05)}.card[data-tone="next"]{background:rgba(60,53,40,.04)}.list,.settings,.diagnostics,.docs,.domain-list{list-style:none;margin:0;padding:0;display:grid;gap:10px}.nav{grid-template-columns:repeat(3,1fr)}.two{display:grid;grid-template-columns:1fr .9fr;gap:12px}.overview-label{font-size:24px;font-weight:800;margin-bottom:12px}.bar{height:10px;background:rgba(60,53,40,.08);border-radius:999px;overflow:hidden}.bar span{display:block;height:100%;background:linear-gradient(90deg,#2c6d59,#88a98f)}.keys{grid-template-columns:repeat(2,1fr)}.domain{display:grid;grid-template-columns:.45fr 1fr;gap:12px;align-items:start}.table-wrap{overflow:auto}.progress-board{width:100%;border-collapse:collapse}.progress-board th,.progress-board td{padding:10px 12px;border-bottom:1px solid rgba(60,53,40,.12);text-align:left;vertical-align:top}.progress-board th{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#616760}.progress-board tbody tr:last-child td{border-bottom:none}.doc-btn{display:grid;gap:6px;text-align:left;width:100%;background:#fff;border:1px solid rgba(60,53,40,.12);border-radius:16px;padding:12px}.doc-btn.active{background:#1f5a49;color:#fff}.preview{margin-top:14px}.preview h3{margin:0 0 8px;font:700 24px/1.1 Georgia,serif}pre{margin:0;white-space:pre-wrap;font:inherit}.hidden{display:none}@media(max-width:1100px){.top,.lower,.two,.cards,.meta,.doc-cols,.nav,.keys,.domain{grid-template-columns:1fr!important}}</style></head><body><main>
 <div class="top"><div><div class="eyebrow">Project Monitor Workspace</div><div class="title">${esc(surface.title)}</div><div style="display:flex;gap:10px;flex-wrap:wrap"><button id="refresh" class="btn" type="button">새로고침</button><span class="badge ${esc(surface.freshness.status)}">${esc(surface.freshness.label)}</span></div></div><div id="meta" class="meta"></div></div>
 <section class="panel section"><div class="head"><div><div class="eyebrow">Project Overview</div><h2>프로젝트 개요</h2></div><button id="toggle" class="btn active" type="button">개요 접기</button></div><div id="overview-shell"><div id="nav" class="nav"></div><div id="overview"></div></div></section>
 <section class="panel section"><div class="head"><div><div class="eyebrow">Current Situation</div><h2>현재 진행 상황</h2></div><span class="chip">카드 안에서 바로 읽기</span></div><div id="cards" class="cards"></div></section>
@@ -91,7 +118,7 @@ let artifactKey = s.artifacts.initial;
 const q = (selector) => document.querySelector(selector);
 function badge(text, className){ const el = document.createElement("span"); el.className = className; el.textContent = text; return el; }
 function renderMeta(){ const box = q("#meta"); box.innerHTML = ""; s.header.forEach((item)=>{ const card = document.createElement("div"); card.className = "meta-card"; const eyebrow = document.createElement("div"); eyebrow.className = "eyebrow"; eyebrow.textContent = item.label; const title = document.createElement("strong"); title.textContent = item.title; const body = document.createElement("p"); body.textContent = item.body; card.append(eyebrow, title, body); box.append(card); }); }
-function renderOverview(){ const nav = q("#nav"); const box = q("#overview"); nav.innerHTML = ""; box.innerHTML = ""; Object.entries(s.overview.views).forEach(([key, view])=>{ const button = document.createElement("button"); button.type = "button"; button.className = "tab" + (key === overviewKey ? " active" : ""); button.textContent = view.label; button.onclick = ()=>{ overviewKey = key; renderOverview(); }; nav.append(button); }); const view = s.overview.views[overviewKey]; if (overviewKey === "progress") { const top = document.createElement("div"); top.className = "box"; const label = document.createElement("div"); label.className = "overview-label"; label.textContent = view.summaryLabel; const bar = document.createElement("div"); bar.className = "bar"; const span = document.createElement("span"); span.style.width = String(Number(view.percent) || 0) + "%"; bar.append(span); const keys = document.createElement("div"); keys.className = "keys"; view.keys.forEach((item)=>{ const keyBox = document.createElement("div"); keyBox.className = "box"; const strong = document.createElement("strong"); strong.textContent = item.label; const value = document.createElement("div"); value.textContent = item.value; keyBox.append(strong, value); keys.append(keyBox); }); top.append(label, bar, keys); const bottom = document.createElement("div"); bottom.className = "box"; bottom.style.marginTop = "12px"; const domainLabel = document.createElement("div"); domainLabel.className = "overview-label"; domainLabel.textContent = view.domainLabel; const domainList = document.createElement("ul"); domainList.className = "domain-list"; view.domains.forEach((item)=>{ const li = document.createElement("li"); li.className = "domain"; const left = document.createElement("div"); left.style.display = "flex"; left.style.gap = "8px"; left.style.flexWrap = "wrap"; const name = document.createElement("strong"); name.textContent = item.label; left.append(name, badge(item.statusLabel, "tone " + item.tone)); const note = document.createElement("div"); note.textContent = item.note; li.append(left, note); domainList.append(li); }); const docs = document.createElement("div"); docs.style.marginTop = "12px"; docs.style.display = "flex"; docs.style.gap = "8px"; docs.style.flexWrap = "wrap"; view.docs.forEach((doc)=>docs.append(badge(doc, "chip"))); bottom.append(domainLabel, domainList, docs); box.append(top, bottom); return; } const grid = document.createElement("div"); grid.className = "two"; const left = document.createElement("div"); left.className = "box"; const leftLabel = document.createElement("div"); leftLabel.className = "overview-label"; leftLabel.textContent = view.leftLabel; const leftList = document.createElement("ul"); leftList.className = "list"; view.left.forEach((item)=>{ const li = document.createElement("li"); li.className = "doc"; li.textContent = item; leftList.append(li); }); left.append(leftLabel, leftList); const right = document.createElement("div"); right.className = "box"; const rightLabel = document.createElement("div"); rightLabel.className = "overview-label"; rightLabel.textContent = view.rightLabel; const rightList = document.createElement("ul"); rightList.className = "list"; view.right.forEach((item)=>{ const li = document.createElement("li"); li.className = "doc"; li.textContent = item; rightList.append(li); }); const docs = document.createElement("div"); docs.style.marginTop = "12px"; docs.style.display = "flex"; docs.style.gap = "8px"; docs.style.flexWrap = "wrap"; view.docs.forEach((doc)=>docs.append(badge(doc, "chip"))); right.append(rightLabel, rightList, docs); grid.append(left, right); box.append(grid); }
+function renderOverview(){ const nav = q("#nav"); const box = q("#overview"); nav.innerHTML = ""; box.innerHTML = ""; Object.entries(s.overview.views).forEach(([key, view])=>{ const button = document.createElement("button"); button.type = "button"; button.className = "tab" + (key === overviewKey ? " active" : ""); button.textContent = view.label; button.onclick = ()=>{ overviewKey = key; renderOverview(); }; nav.append(button); }); const view = s.overview.views[overviewKey]; if (overviewKey === "progress") { const top = document.createElement("div"); top.className = "box"; const label = document.createElement("div"); label.className = "overview-label"; label.textContent = view.summaryLabel; const bar = document.createElement("div"); bar.className = "bar"; const span = document.createElement("span"); span.style.width = String(Number(view.percent) || 0) + "%"; bar.append(span); const keys = document.createElement("div"); keys.className = "keys"; view.keys.forEach((item)=>{ const keyBox = document.createElement("div"); keyBox.className = "box"; const strong = document.createElement("strong"); strong.textContent = item.label; const value = document.createElement("div"); value.textContent = item.value; keyBox.append(strong, value); keys.append(keyBox); }); top.append(label, bar, keys); const bottom = document.createElement("div"); bottom.className = "box"; bottom.style.marginTop = "12px"; const domainLabel = document.createElement("div"); domainLabel.className = "overview-label"; domainLabel.textContent = view.domainLabel; const domainList = document.createElement("ul"); domainList.className = "domain-list"; view.domains.forEach((item)=>{ const li = document.createElement("li"); li.className = "domain"; const left = document.createElement("div"); left.style.display = "flex"; left.style.gap = "8px"; left.style.flexWrap = "wrap"; const name = document.createElement("strong"); name.textContent = item.label; left.append(name, badge(item.statusLabel, "tone " + item.tone)); const note = document.createElement("div"); note.textContent = item.note; li.append(left, note); domainList.append(li); }); const docs = document.createElement("div"); docs.style.marginTop = "12px"; docs.style.display = "flex"; docs.style.gap = "8px"; docs.style.flexWrap = "wrap"; view.docs.forEach((doc)=>docs.append(badge(doc, "chip"))); bottom.append(domainLabel, domainList, docs); const board = document.createElement("div"); board.className = "box"; board.style.marginTop = "12px"; const boardLabel = document.createElement("div"); boardLabel.className = "overview-label"; boardLabel.textContent = view.tableLabel; if (view.rows.length) { const wrap = document.createElement("div"); wrap.className = "table-wrap"; const table = document.createElement("table"); table.className = "progress-board"; const head = document.createElement("thead"); const headRow = document.createElement("tr"); ["Phase","Task ID","Task","Status","Notes"].forEach((title)=>{ const th = document.createElement("th"); th.textContent = title; headRow.append(th); }); head.append(headRow); const body = document.createElement("tbody"); view.rows.forEach((row)=>{ const tr = document.createElement("tr"); [row.phase, row.id, row.task, row.statusLabel, row.notes].forEach((value, index)=>{ const td = document.createElement("td"); if (index === 3) { td.append(badge(value, "tone " + row.tone)); } else { td.textContent = value; } tr.append(td); }); body.append(tr); }); table.append(head, body); wrap.append(table); board.append(boardLabel, wrap); } else { const empty = document.createElement("div"); empty.textContent = "PROJECT_PROGRESS 문서를 먼저 채운다."; board.append(boardLabel, empty); } box.append(top, bottom, board); return; } const grid = document.createElement("div"); grid.className = "two"; const left = document.createElement("div"); left.className = "box"; const leftLabel = document.createElement("div"); leftLabel.className = "overview-label"; leftLabel.textContent = view.leftLabel; const leftList = document.createElement("ul"); leftList.className = "list"; view.left.forEach((item)=>{ const li = document.createElement("li"); li.className = "doc"; li.textContent = item; leftList.append(li); }); left.append(leftLabel, leftList); const right = document.createElement("div"); right.className = "box"; const rightLabel = document.createElement("div"); rightLabel.className = "overview-label"; rightLabel.textContent = view.rightLabel; const rightList = document.createElement("ul"); rightList.className = "list"; view.right.forEach((item)=>{ const li = document.createElement("li"); li.className = "doc"; li.textContent = item; rightList.append(li); }); const docs = document.createElement("div"); docs.style.marginTop = "12px"; docs.style.display = "flex"; docs.style.gap = "8px"; docs.style.flexWrap = "wrap"; view.docs.forEach((doc)=>docs.append(badge(doc, "chip"))); right.append(rightLabel, rightList, docs); grid.append(left, right); box.append(grid); }}
 function renderCards(){ const box = q("#cards"); box.innerHTML = ""; s.cards.forEach((item)=>{ const card = document.createElement("article"); card.className = "card"; card.dataset.tone = item.tone; const top = document.createElement("div"); top.style.display = "flex"; top.style.justifyContent = "space-between"; top.style.gap = "8px"; top.append(badge(item.tone, "badge " + item.tone)); const eyebrow = document.createElement("div"); eyebrow.className = "eyebrow"; eyebrow.textContent = item.label; top.append(eyebrow); const title = document.createElement("h3"); title.textContent = item.title; const summary = document.createElement("p"); summary.textContent = item.summary; const list = document.createElement("ul"); list.className = "list"; item.points.forEach((point)=>{ const li = document.createElement("li"); li.className = "doc"; li.textContent = point; list.append(li); }); const docs = document.createElement("div"); docs.style.display = "flex"; docs.style.gap = "8px"; docs.style.flexWrap = "wrap"; item.docs.forEach((doc)=>docs.append(badge(doc, "chip"))); card.append(top, title, summary, list, docs); box.append(card); }); }
 function renderArtifactButtons(target, items){ target.innerHTML = ""; items.forEach((item)=>{ const button = document.createElement("button"); button.type = "button"; button.className = "doc-btn" + (item.key === artifactKey ? " active" : ""); button.onclick = ()=>{ artifactKey = item.key; renderArtifacts(); renderArtifact(); }; const title = document.createElement("strong"); title.textContent = item.title; const summary = document.createElement("span"); summary.textContent = item.summary; button.append(title, summary); target.append(button); }); }
 function renderArtifacts(){ renderArtifactButtons(q("#live"), s.artifacts.live); renderArtifactButtons(q("#contracts"), s.artifacts.contracts); }
@@ -102,21 +129,76 @@ renderMeta(); renderOverview(); renderCards(); renderArtifacts(); renderArtifact
 </script></body></html>`;
 }
 
-function buildProgress(workItems, model) {
+function buildProgress(workItems, model, progressText) {
+  const rows = parseProgressRows(progressText);
   const groups = new Map(DOMAINS.map((label) => [label, []]));
   const extra = [];
   for (const item of workItems) (groups.get(item.domainHint) ?? extra).push(item);
   const domains = DOMAINS.map((label) => summarize(label, groups.get(label)));
   if (extra.length) domains.push(summarize("미분류", extra));
-  const done = workItems.filter((item) => doneStatus(item.status)).length;
-  const percent = workItems.length ? Math.round((done / workItems.length) * 100) : 0;
-  return { percent, domains, keys: [{ label: "진척률", value: workItems.length ? `약 ${percent}%` : "등록된 work item 없음" }, { label: "주요 결과", value: domains.filter((item) => item.tone === "done").map((item) => item.label).slice(0, 3).join(", ") || "완료된 도메인이 아직 없다." }, { label: "현재 게이트", value: model.surfaces.nextAction.headline }, { label: "진행 중 도메인", value: domains.filter((item) => item.tone === "review").map((item) => item.label).slice(0, 3).join(", ") || "현재 진행 중인 도메인이 없다." }] };
+  const total = rows.length || workItems.length;
+  const done = rows.length
+    ? rows.filter((item) => item.tone === "done").length
+    : workItems.filter((item) => doneStatus(item.status)).length;
+  const activeRows = rows.filter((item) => item.tone === "review").length;
+  const waitingRows = rows.filter((item) => item.tone === "todo").length;
+  const percent = total ? Math.round((done / total) * 100) : 0;
+  return {
+    percent,
+    rows,
+    domains,
+    keys: [
+      { label: "진척률", value: total ? `약 ${percent}%` : "등록된 work item 없음" },
+      { label: "완료 / 전체", value: total ? `${done} / ${total}` : "0 / 0" },
+      { label: "현재 게이트", value: model.surfaces.nextAction.headline },
+      { label: "진행 / 대기", value: `${activeRows} / ${waitingRows}` }
+    ]
+  };
 }
-function summarize(label, items = []) { if (!items.length) return { label, statusLabel: "미착수", tone: "todo", note: "해당 도메인 work item이 아직 없다." }; const done = items.filter((item) => doneStatus(item.status)).length, reviewing = items.filter((item) => active(item.status)).length, tone = done === items.length ? "done" : reviewing ? "review" : "todo", statusLabel = done === items.length ? "완료" : reviewing ? "진행 중" : "대기", note = items.slice(0, 2).map((item) => `${item.title}${item.nextAction ? `: ${item.nextAction}` : ""}`).join(" · "); return { label, statusLabel, tone, note }; }
-function card(tone, label, surface) { return { tone, label, title: surface.headline, summary: surface.supportingText ?? "needs source", points: points(surface), docs: docs(surface.sourceTrace) }; }
-function focusCard(model) { const detail = model.surfaces.currentFocus.detail ?? {}; const pointsList = [detail.currentStage && `현재 stage: ${detail.currentStage}`, detail.releaseGateState && `gate state: ${detail.releaseGateState}`, detail.releaseGoal && `release goal: ${detail.releaseGoal}`].filter(Boolean); return { tone: "active", label: "지금 진행 중인 작업", title: model.surfaces.currentFocus.headline, summary: model.surfaces.currentFocus.supportingText ?? "현재 focus source를 확인한다.", points: pointsList.length ? pointsList : points(model.surfaces.currentFocus), docs: docs(model.surfaces.currentFocus.sourceTrace) }; }
-function points(surface) { const values = surface.items?.map((item) => item.title ?? item.nextAction ?? item.id) ?? surface.summaryLines?.slice(1) ?? [surface.supportingText ?? "추가 detail이 없다."]; return values.filter(Boolean).slice(0, 3); }
-function docs(trace = []) { const values = trace.map((item) => item.path).filter(Boolean).slice(0, 3); return values.length ? values : ["needs source"]; }
+
+function summarize(label, items = []) {
+  if (!items.length) {
+    return { label, statusLabel: "미착수", tone: "todo", note: "해당 도메인 work item이 아직 없다." };
+  }
+  const done = items.filter((item) => doneStatus(item.status)).length;
+  const reviewing = items.filter((item) => active(item.status)).length;
+  const tone = done === items.length ? "done" : reviewing ? "review" : "todo";
+  const statusLabel = done === items.length ? "완료" : reviewing ? "진행 중" : "대기";
+  const note = items.slice(0, 2).map((item) => `${item.title}${item.nextAction ? `: ${item.nextAction}` : ""}`).join(" · ");
+  return { label, statusLabel, tone, note };
+}
+
+function card(tone, label, surface) {
+  return { tone, label, title: surface.headline, summary: surface.supportingText ?? "needs source", points: points(surface), docs: docs(surface.sourceTrace) };
+}
+
+function focusCard(model) {
+  const detail = model.surfaces.currentFocus.detail ?? {};
+  const pointsList = [
+    detail.currentStage && `현재 stage: ${detail.currentStage}`,
+    detail.releaseGateState && `gate state: ${detail.releaseGateState}`,
+    detail.releaseGoal && `release goal: ${detail.releaseGoal}`
+  ].filter(Boolean);
+  return {
+    tone: "active",
+    label: "지금 진행 중인 작업",
+    title: model.surfaces.currentFocus.headline,
+    summary: model.surfaces.currentFocus.supportingText ?? "현재 focus source를 확인한다.",
+    points: pointsList.length ? pointsList : points(model.surfaces.currentFocus),
+    docs: docs(model.surfaces.currentFocus.sourceTrace)
+  };
+}
+
+function points(surface) {
+  const values = surface.items?.map((item) => item.title ?? item.nextAction ?? item.id) ?? surface.summaryLines?.slice(1) ?? [surface.supportingText ?? "추가 detail이 없다."];
+  return values.filter(Boolean).slice(0, 3);
+}
+
+function docs(trace = []) {
+  const values = trace.map((item) => item.path).filter(Boolean).slice(0, 3);
+  return values.length ? values : ["needs source"];
+}
+
 function buildArtifacts({ root, out, model }) {
   const live = [
     fileArtifact("active-state", "Active State", "지속 업데이트 문서", FILES.active, root, out),
@@ -132,6 +214,7 @@ function buildArtifacts({ root, out, model }) {
       : null,
     fileArtifact("current-state", "CURRENT_STATE", "지속 업데이트 문서", CURRENT_STATE_DOC, root, out),
     fileArtifact("task-list", "TASK_LIST", "지속 업데이트 문서", TASK_LIST_DOC, root, out),
+    fileArtifact("project-progress", "PROJECT PROGRESS", "지속 업데이트 문서", FILES.progress, root, out),
     fileArtifact("preventive-memory", "Preventive Memory", "지속 업데이트 문서", FILES.preventive, root, out)
   ].filter(Boolean);
   const contracts = [
@@ -211,6 +294,80 @@ function list(text, pattern) {
     .map((line) => line.trim())
     .filter((line) => pattern.test(line))
     .map((line) => line.replace(pattern, "").trim());
+}
+
+function parseProgressRows(text) {
+  const table = parseMarkdownTable(text);
+  return table.map((row) => {
+    const status = pick(row, ["Status", "상태"]) ?? "todo";
+    return {
+      phase: pick(row, ["Phase", "구분"]) ?? "Unspecified",
+      id: pick(row, ["Task ID", "ID", "작업 ID"]) ?? "n/a",
+      task: pick(row, ["Task", "작업"]) ?? "Untitled task",
+      status,
+      statusLabel: normalizeStatusLabel(status),
+      tone: statusTone(status),
+      notes: pick(row, ["Notes", "진행 상황", "비고"]) ?? "",
+      source: pick(row, ["Source", "기준 문서", "문서"]) ?? ""
+    };
+  });
+}
+
+function parseMarkdownTable(text) {
+  const lines = (text ?? "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("|") && line.endsWith("|"));
+  if (lines.length < 2) {
+    return [];
+  }
+  const headers = splitTableRow(lines[0]);
+  const rows = [];
+  for (const line of lines.slice(2)) {
+    const values = splitTableRow(line);
+    if (!values.some(Boolean)) {
+      continue;
+    }
+    rows.push(Object.fromEntries(headers.map((header, index) => [header, values[index] ?? ""])));
+  }
+  return rows;
+}
+
+function splitTableRow(line) {
+  return line
+    .slice(1, -1)
+    .split("|")
+    .map((value) => value.trim());
+}
+
+function pick(row, keys) {
+  for (const key of keys) {
+    if (row[key]) {
+      return row[key];
+    }
+  }
+  return null;
+}
+
+function normalizeStatusLabel(status) {
+  if (statusTone(status) === "done") {
+    return "완료";
+  }
+  if (statusTone(status) === "review") {
+    return "진행 중";
+  }
+  return "대기";
+}
+
+function statusTone(status) {
+  const value = String(status ?? "").trim().toLowerCase();
+  if (["done", "completed", "closed", "released", "complete", "approved"].includes(value)) {
+    return "done";
+  }
+  if (["in_progress", "in progress", "active", "review", "testing", "partial", "partially_done"].includes(value)) {
+    return "review";
+  }
+  return "todo";
 }
 
 function docTitle(text) {

@@ -12,6 +12,7 @@
     "harness:validate": "node src/state/dev05-cli.js validate",
     "harness:migration-preview": "node src/state/dev05-cli.js migration-preview",
     "harness:migration-apply": "node src/state/dev05-cli.js migration-apply",
-    "harness:cutover-preflight": "node src/state/dev05-cli.js cutover-preflight"
+    "harness:cutover-preflight": "node src/state/dev05-cli.js cutover-preflight",
+    "harness:cutover-report": "node src/state/dev05-cli.js cutover-report"
   }
 }

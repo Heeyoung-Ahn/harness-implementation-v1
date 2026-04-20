@@ -1,7 +1,7 @@
 # PKT-01 DEV-05 Validator Migration Cutover
 
 ## Purpose
-This packet closes the first-ship tooling contract for validator, migration preview, and cutover preflight on top of the standardized repository harness structure.
+This packet closes the first-ship tooling contract for validator, migration preview, cutover preflight, and cutover evidence reporting on top of the standardized repository harness structure.
 
 ## Approval Rule
 - This packet defines operator-facing tooling and cutover rules before extending the harness release lane.
@@ -15,9 +15,11 @@ This packet closes the first-ship tooling contract for validator, migration prev
 | Migration mode | approve preview-first | source refs and artifact paths must be reviewed before cutover changes are accepted | approved |
 | Cutover gate | approve | cutover must fail on validator errors or unresolved path migration preview changes | approved |
 | Rollback expectation | approve | operators need a concrete rollback bundle before cutover can be considered safe | approved |
+| Cutover evidence report | approve | operators should be able to persist the preflight result without re-running ad-hoc inspection | approved |
 
 ## 1. Goal
 - expose validator, migration preview, and cutover preflight as explicit tooling entrypoints
+- expose cutover report generation as an explicit tooling entrypoint
 - keep the standardized `.agents` / `reference` path contract enforceable in code
 - ensure the cutover lane is blocked when generated docs drift or source refs still point to pre-standardized paths
 - provide a concrete rollback bundle definition that an operator can follow without reconstructing the flow from memory
@@ -33,13 +35,14 @@ This packet closes the first-ship tooling contract for validator, migration prev
 - current problem:
   the harness has validator logic, but it is not yet exposed as a clean operator tooling lane. migration status and cutover readiness still require code knowledge or ad-hoc inspection.
 - expected outcome:
-  the operator can run a validator command, inspect a migration preview, and run one cutover preflight command that returns an explicit ready/not-ready result plus rollback guidance.
+  the operator can run a validator command, inspect a migration preview, run one cutover preflight command, and persist the result as a reusable cutover evidence report.
 
 ## 4. In Scope
 - validator command entrypoint
 - standardized path migration preview
 - optional migration apply helper for source-ref and artifact-path normalization
 - cutover preflight command
+- cutover report command that writes markdown and json evidence files
 - rollback bundle description
 - tests for the new tooling behavior
 
@@ -65,7 +68,7 @@ This packet closes the first-ship tooling contract for validator, migration prev
 - inputs:
   `.harness/operating_state.sqlite`, `.agents/artifacts/*`, `.agents/runtime/generated-state-docs/*`, `reference/*`
 - outputs:
-  structured JSON result for validator, migration preview, migration apply, and cutover preflight
+  structured JSON result for validator, migration preview, migration apply, cutover preflight, and cutover report
 - rollback bundle:
   DB path, generated docs paths, and core live artifact paths
 - edge cases:
@@ -84,6 +87,7 @@ This packet closes the first-ship tooling contract for validator, migration prev
 - operator can inspect a migration preview showing which repo-relative paths still need normalization
 - cutover preflight fails when validator findings block cutover
 - cutover preflight fails when migration preview still contains unresolved path changes
+- cutover report writes reusable markdown/json evidence files
 - rollback bundle includes the repo-local DB and generated docs paths
 - tests cover both passing and failing DEV-05 scenarios
 
@@ -99,6 +103,7 @@ This packet closes the first-ship tooling contract for validator, migration prev
 - unit test migration preview detection for legacy paths
 - unit test migration apply normalizes the store
 - unit test cutover preflight success and failure cases
+- unit test cutover report generation
 
 ## 12. Reopen Trigger
 - cutover starts mutating remote systems

@@ -3,7 +3,8 @@ import {
   applyMigration,
   buildMigrationPreview,
   runCutoverPreflight,
-  runValidator
+  runValidator,
+  writeCutoverReport
 } from "./dev05-tooling.js";
 
 const command = process.argv[2];
@@ -15,11 +16,12 @@ const commands = {
   validate: () => runValidator({ repoRoot, outputDir, dbPath }),
   "migration-preview": () => buildMigrationPreview({ repoRoot, dbPath }),
   "migration-apply": () => applyMigration({ repoRoot, dbPath }),
-  "cutover-preflight": () => runCutoverPreflight({ repoRoot, outputDir, dbPath })
+  "cutover-preflight": () => runCutoverPreflight({ repoRoot, outputDir, dbPath }),
+  "cutover-report": () => writeCutoverReport({ repoRoot, outputDir, dbPath })
 };
 
 if (!command || !commands[command]) {
-  process.stderr.write("Usage: node src/state/dev05-cli.js <validate|migration-preview|migration-apply|cutover-preflight>\n");
+  process.stderr.write("Usage: node src/state/dev05-cli.js <validate|migration-preview|migration-apply|cutover-preflight|cutover-report>\n");
   process.exit(1);
 }
 

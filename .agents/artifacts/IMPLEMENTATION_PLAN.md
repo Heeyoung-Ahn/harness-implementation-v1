@@ -112,6 +112,7 @@
 
 ## Operator Next Action
 - Start DEV-05 validator / migration / cutover tooling from the browser-verified DEV-04 PMW baseline.
-- Define validator coverage, migration preview, rollback path, and cutover preflight entrypoints in code and docs.
+- Define validator coverage, migration preview, rollback path, cutover preflight, and cutover report entrypoints in code and docs.
 - Keep the PMW read surface read-only and preserve the verified overview tabs, fixed 4-card grid, artifact preview, and diagnostics hierarchy while DEV-05 is implemented.
+- Add a canonical whole-project progress board and surface it in PMW without duplicating truth across files.
 - Run tooling tests and preflight verification before any cutover decision.

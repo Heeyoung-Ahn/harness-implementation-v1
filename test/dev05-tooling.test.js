@@ -8,7 +8,8 @@ import {
   applyMigration,
   buildMigrationPreview,
   runCutoverPreflight,
-  runValidator
+  runValidator,
+  writeCutoverReport
 } from "../src/state/dev05-tooling.js";
 import { createOperatingStateStore } from "../src/state/operating-state-store.js";
 import { writeGeneratedStateDocs } from "../src/state/generate-state-docs.js";
@@ -122,6 +123,37 @@ test("cutover preflight fails when validator errors or migration changes remain"
   assert.equal(preflight.blockers.some((item) => item.code === "required_section_missing"), true);
 });
 
+test("cutover report writes markdown and json evidence files", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-cutover-report-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-04-20T04:30:00.000Z") });
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "DEV-05 tooling",
+    releaseGoal: "Cutover report",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+  store.upsertWorkItem({
+    workItemId: "DEV-05",
+    title: "validator / migration / cutover tooling",
+    status: "in_progress",
+    nextAction: "Write cutover report",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  store.close();
+
+  const report = writeCutoverReport({ repoRoot, dbPath, outputDir: repoRoot });
+  assert.equal(report.cutoverReady, true);
+  assert.equal(fs.existsSync(report.markdownPath), true);
+  assert.equal(fs.existsSync(report.jsonPath), true);
+  assert.match(fs.readFileSync(report.markdownPath, "utf8"), /# Cutover Precheck/);
+  assert.match(fs.readFileSync(report.markdownPath, "utf8"), /Ready: yes/);
+});
+
 function seedStandardRepo(repoRoot) {
   fs.mkdirSync(path.join(repoRoot, ".agents", "artifacts"), { recursive: true });
   fs.mkdirSync(path.join(repoRoot, ".agents", "runtime", "generated-state-docs"), { recursive: true });
@@ -132,6 +164,7 @@ function seedStandardRepo(repoRoot) {
   fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "REQUIREMENTS.md"), "# Requirements\n", "utf8");
   fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "ARCHITECTURE_GUIDE.md"), "# Architecture\n", "utf8");
   fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "IMPLEMENTATION_PLAN.md"), "# Implementation Plan\n\n## Operator Next Action\n- Run DEV-05 tooling.\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "PROJECT_PROGRESS.md"), "# Project Progress\n", "utf8");
   fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"), "# Current State\n", "utf8");
   fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "PREVENTIVE_MEMORY.md"), "# Preventive Memory\n", "utf8");
   fs.writeFileSync(path.join(repoRoot, "reference", "artifacts", "UI_DESIGN.md"), "# UI Design\n", "utf8");

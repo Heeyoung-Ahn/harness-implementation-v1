@@ -2,11 +2,15 @@ import fs from "node:fs";
 import path from "node:path";
 
 export const GENERATED_DOCS_DIR = ".agents/runtime/generated-state-docs";
+export const RUNTIME_REPORTS_DIR = ".agents/runtime/reports";
+export const CUTOVER_REPORT_MARKDOWN = `${RUNTIME_REPORTS_DIR}/CUTOVER_PRECHECK.md`;
+export const CUTOVER_REPORT_JSON = `${RUNTIME_REPORTS_DIR}/CUTOVER_PRECHECK.json`;
 
 export const ARTIFACT_PATHS = {
   requirements: ".agents/artifacts/REQUIREMENTS.md",
   architecture: ".agents/artifacts/ARCHITECTURE_GUIDE.md",
   plan: ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+  progress: ".agents/artifacts/PROJECT_PROGRESS.md",
   ui: "reference/artifacts/UI_DESIGN.md",
   packet: "reference/packets/PKT-01_DEV-04_PMW_READ_SURFACE.md",
   active: ".agents/artifacts/CURRENT_STATE.md",
