@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "engine": "sqlite",
+  "defaultDbPath": ".harness/operating_state.sqlite",
+  "tables": [
+    {
+      "name": "release_state",
+      "primaryKey": "release_id",
+      "kind": "mutable",
+      "fields": [
+        "release_id",
+        "current_stage",
+        "release_gate_state",
+        "current_focus",
+        "release_goal",
+        "source_ref",
+        "updated_by",
+        "metadata_json",
+        "version",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "work_item_registry",
+      "primaryKey": "work_item_id",
+      "kind": "mutable",
+      "fields": [
+        "work_item_id",
+        "title",
+        "status",
+        "next_action",
+        "source_ref",
+        "domain_hint",
+        "risk_hint",
+        "owner",
+        "metadata_json",
+        "version",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "decision_registry",
+      "primaryKey": "decision_id",
+      "kind": "mutable",
+      "fields": [
+        "decision_id",
+        "title",
+        "decision_needed",
+        "impact_summary",
+        "no_response_behavior",
+        "due_at",
+        "source_ref",
+        "status",
+        "metadata_json",
+        "version",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "gate_risk_registry",
+      "primaryKey": "risk_id",
+      "kind": "mutable",
+      "fields": [
+        "risk_id",
+        "title",
+        "severity",
+        "status",
+        "unblock_condition",
+        "next_escalation",
+        "source_ref",
+        "metadata_json",
+        "version",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "handoff_log",
+      "primaryKey": "handoff_id",
+      "kind": "append_only",
+      "fields": [
+        "handoff_id",
+        "created_at",
+        "handoff_summary",
+        "from_role",
+        "to_role",
+        "source_ref",
+        "supersedes_handoff_id",
+        "payload_json"
+      ]
+    },
+    {
+      "name": "artifact_index",
+      "primaryKey": "artifact_id",
+      "kind": "mutable",
+      "fields": [
+        "artifact_id",
+        "path",
+        "category",
+        "title",
+        "source_ref",
+        "render_hash",
+        "metadata_json",
+        "version",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "generation_state",
+      "primaryKey": "projection_name",
+      "kind": "mutable",
+      "fields": [
+        "projection_name",
+        "checksum",
+        "generated_at",
+        "source_revision",
+        "freshness_state",
+        "metadata_json",
+        "version",
+        "created_at",
+        "updated_at"
+      ]
+    }
+  ],
+  "commandSurface": [
+    "setReleaseState",
+    "upsertWorkItem",
+    "transitionWorkItem",
+    "recordDecision",
+    "recordGateRisk",
+    "appendHandoff",
+    "upsertArtifact",
+    "refreshProjection"
+  ]
+}

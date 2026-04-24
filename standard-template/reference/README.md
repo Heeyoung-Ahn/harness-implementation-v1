@@ -2,14 +2,24 @@
 
 This folder contains non-core harness material that sits outside the constitutional load order.
 
-## Contains
+## Kickoff essentials
 
-- `artifacts/`: non-core artifact documents
-- `packets/`: task-level approval packets and packet templates
-- `planning/`: deep-interview and planning baselines
-- `reports/`: design reviews and supporting reports
-- `mockups/`: visual review assets
-- `legacy/`: migrated or superseded material when archival access is still needed
+At project kickoff, most people only need:
+
+- `planning/PLN-00_DEEP_INTERVIEW.md`
+- `planning/PLN-01_REQUIREMENTS_FREEZE.md`
+- `packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md`
+- the artifact templates that the active task explicitly needs
+
+## Other contents
+
+- `artifacts/`: optional artifact templates used when the task needs them
+- `profiles/`: optional profile packages for explicitly activated project types
+- `packets/`: task-level approval packet templates and created packets
+- `planning/`: kickoff interview and requirements-freeze materials
+- `reports/`: optional review or transfer report material
+- `mockups/`: optional visual review assets
+- `legacy/`: old or superseded reference material
 - `skills/`: optional skill packs
 
 ## Rule

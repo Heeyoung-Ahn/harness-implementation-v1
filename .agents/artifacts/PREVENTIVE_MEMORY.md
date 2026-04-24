@@ -2,17 +2,58 @@
 
 This file keeps thin, durable prevention rules for repeated process or quality issues.
 
+## Promotion Decision Rules
+
+- Record only repeated friction with explicit trigger, impact, and source / evidence.
+- Promotion candidates must declare a proposed target layer: `core`, `optional profile`, `project packet`, or `note-only`.
+- Promotion status uses `proposed`, `pending-review`, `approved`, `rejected`, or `promoted`.
+- `pending-review` or `unknown` classification keeps the candidate as memory only and does not authorize baseline or starter changes.
+- Approved promotion must link to a concrete follow-up item, target artifact, or explicit `note-only` / `rejected` disposition.
+
 ## Active Preventive Rules
 
 - Rule ID: PMW-ORIENTATION-001
 - Repeated Mistake / Trigger: During long-running work, interruptions, stale generated state, or side topics make the operator lose the whole picture, current lane, why-now context, or return point.
 - Preventive Rule: Before closing any PMW-facing work item, ensure the repo-local operating state is backfilled, regenerate the designated docs, and verify that the PMW first view exposes `current lane`, `next gate / why now`, and `return point` while also answering `결정해야 할 것`, `막힌 것`, and `다음 작업` within 30 seconds.
 - Check Method: Run `npm.cmd test`, start `npm.cmd run pmw:start`, and compare the browser-rendered PMW at `http://127.0.0.1:4173` against the approved packet contract, including the header/meta strip, fixed 4-card grid, artifact preview, and diagnostics hierarchy.
+- Promotion Origin: Standardized into the baseline during DEV-04 / TST-02 / REV-01 closeout.
+- Linked Follow-Up Item: none
 - Source / Evidence: User feedback on 2026-04-19 in this repo and `C:\Newface\10 Antigravity\14 wmbs`, plus DEV-04 browser verification evidence in `.harness\pmw-home.png`, `.harness\pmw-full.png`, and `.harness\pmw-dev05.png`.
 
 ## Promotion Candidates
 
-None yet.
+- Candidate ID: SIM-MULTI-PROFILE-001
+- Issue Pattern: 하나의 실제 work item이 admin-grid UX, spreadsheet-backed authoritative source, later delivery profile까지 동시에 필요로 하지만, current packet contract와 validator가 사실상 single active profile 중심으로 작동한다.
+- Why It Matters: WBMS류 프로젝트에서 operator가 profile 하나를 누락하거나 work item을 부자연스럽게 쪼개게 되면 required evidence와 hold rule이 부분적으로만 적용된다.
+- Proposed Target Layer: core
+- Proposed Target Artifact / Follow-Up Item: `PKT-01_WORK_ITEM_PACKET_TEMPLATE.md`, profile activation contract, `src/state/drift-validator.js`의 multi-profile support follow-up lane
+- Promotion Status: promoted
+- Human Review Boundary: closed by the approved `SIM-01` remediation lane on 2026-04-23.
+- Linked Follow-Up Item: `SIM-01` (closed 2026-04-23)
+- Needed Refinement: packet header/data model을 `Active profile dependencies`와 per-profile evidence matrix로 바꿀지, 또는 profile composition artifact를 둘지 판정 필요
+- Source / Evidence: `reference/artifacts/STANDARD_HARNESS_WBMS_SIMULATION_REPORT.md`
+
+- Candidate ID: SIM-TASK-PACKET-REGISTRATION-002
+- Issue Pattern: concrete packet evidence validator enforcement가 `artifact_index` category `task_packet` 수동 등록에 의존한다.
+- Why It Matters: packet은 만들었지만 등록을 빼먹은 상태에서 operator가 validator를 신뢰하면 핵심 hold rule이 검사되지 않은 채 지나갈 수 있다.
+- Proposed Target Layer: core
+- Proposed Target Artifact / Follow-Up Item: validator에 active packet 미등록 fail rule 또는 designated packet directory auto-discovery follow-up lane
+- Promotion Status: promoted
+- Human Review Boundary: closed by the approved `SIM-02` remediation lane on 2026-04-23.
+- Linked Follow-Up Item: `SIM-02` (closed 2026-04-23)
+- Needed Refinement: active packet의 canonical discovery source를 어디로 둘지 결정 필요
+- Source / Evidence: `reference/artifacts/STANDARD_HARNESS_WBMS_SIMULATION_REPORT.md`
+
+- Candidate ID: SIM-SOURCE-WAVE-LEDGER-003
+- Issue Pattern: 하나의 workbook 또는 새 기획 문서 변경이 여러 open packet에 동시에 영향을 주는 상황에서 impacted packet set을 project-level로 닫는 표준 artifact가 없다.
+- Why It Matters: packet A만 reopen되고 packet B/C가 stale source로 계속 진행되는 parallel drift가 생길 수 있다.
+- Proposed Target Layer: core
+- Proposed Target Artifact / Follow-Up Item: authoritative source wave impact ledger 또는 multi-packet rebaseline gate follow-up lane
+- Promotion Status: promoted
+- Human Review Boundary: closed by the approved `SIM-03` remediation lane on 2026-04-23.
+- Linked Follow-Up Item: `SIM-03` (closed 2026-04-23)
+- Needed Refinement: authoritative source intake와 별도 project-level source-wave ledger의 경계는 reusable contract로 닫혔다.
+- Source / Evidence: `reference/artifacts/STANDARD_HARNESS_WBMS_SIMULATION_REPORT.md`
 
 ## Entry Format
 
@@ -22,6 +63,8 @@ None yet.
 - Repeated Mistake / Trigger:
 - Preventive Rule:
 - Check Method:
+- Promotion Origin:
+- Linked Follow-Up Item:
 - Source / Evidence:
 
 ### Promotion Candidates
@@ -29,5 +72,9 @@ None yet.
 - Candidate ID:
 - Issue Pattern:
 - Why It Matters:
+- Proposed Target Layer:
+- Proposed Target Artifact / Follow-Up Item:
+- Promotion Status:
+- Human Review Boundary:
 - Needed Refinement:
 - Source / Evidence:

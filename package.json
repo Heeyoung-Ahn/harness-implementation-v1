@@ -8,6 +8,7 @@
   "scripts": {
     "test": "node --test test/*.test.js",
     "test:reference": "node --test reference/repo_harness_template/tools/project-monitor-web/test/*.js",
+    "harness:init": "node .agents/scripts/init-project.js",
     "pmw:start": "node src/pmw/server.js",
     "harness:validate": "node src/state/dev05-cli.js validate",
     "harness:migration-preview": "node src/state/dev05-cli.js migration-preview",

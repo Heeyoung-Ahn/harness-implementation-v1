@@ -5,6 +5,7 @@ This repository now operates its harness from the same standardized structure th
 ## Standardized Root
 
 - `AGENTS.md`
+- `INIT_STANDARD_HARNESS.cmd`
 - `PROJECT_WORKFLOW_MANUAL.md`
 - `.agents/`
 - `reference/`
@@ -32,3 +33,9 @@ This repository now operates its harness from the same standardized structure th
 ## Rule
 
 Root-level harness documents are intentionally minimized. New harness material should be placed under `.agents/` or `reference/` according to its role.
+
+## Starter Bootstrap
+
+- Copy the contents of `standard-template/` into the new project root.
+- Run `INIT_STANDARD_HARNESS.cmd` or `npm run harness:init` in that new repo.
+- The bootstrap flow replaces starter placeholders, seeds `.harness/operating_state.sqlite`, and writes fresh generated state docs for PMW.

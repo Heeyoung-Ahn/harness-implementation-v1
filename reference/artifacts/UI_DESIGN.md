@@ -9,6 +9,13 @@ PMW는 dashboard보다 reading desk에 가깝게 설계한다. 사용자는 첫 
 - 실제 구현 직전에는 작업 단위별 상세 화면 설계가 다시 필요하다.
 - 특히 사용자가 직접 체감하는 `프로그램 기능과 UI/UX`는 task-level detailed design과 human sync 없이 코드로 먼저 확정하지 않는다.
 
+## Product UX Archetype Contract
+- user-facing 작업의 기본 reference surface는 `reference/artifacts/PRODUCT_UX_ARCHETYPE.md` 또는 승인된 동등 artifact다.
+- 각 user-facing packet은 selected archetype과 그 archetype을 고른 이유를 먼저 선언한다.
+- selected archetype이 `unknown`이거나 deviation status가 `pending`이면 design hold를 유지한다.
+- archetype contract는 core에서 제품 유형과 deviation rule만 제공하고, 실제 화면별 copy, one-off interaction, project-specific layout detail은 packet과 detailed design에서 닫는다.
+- 반복되는 archetype package가 커지면 optional profile로 분리하고, core에는 catalog와 approval boundary만 남긴다.
+
 ## Must Preserve
 - `Decision Required`, `Blocked / At Risk`, `Current Focus`, `Next Action` 4-surface
 - strong surface는 short summary만 노출
@@ -27,11 +34,13 @@ PMW는 dashboard보다 reading desk에 가깝게 설계한다. 사용자는 첫 
 
 ## Mockup Contract
 - mockup component 이름과 설명은 implementation plan vocabulary와 맞춘다.
+- mockup은 선택한 UX archetype의 정보 우선순위와 interaction bias를 실제 surface에 반영해야 한다.
 - 카드, detail, viewer, settings는 실제 데이터 흐름과 read-only 경계를 반영한다.
 - 결정 카드와 패널은 사용자가 raw trade-off를 다시 해석하지 않게, 권장 결론과 근거가 함께 보이도록 설계한다.
 - rough mockup 승인만으로 최종 화면 구현 승인이 된 것으로 간주하지 않는다.
 - 실제 구현 전에는 task-level detailed design에서 레이아웃, 상태, 문구, interaction, empty/error case, source trace fallback을 다시 닫아야 한다.
 - task-level detailed design 정리는 `PKT-01_WORK_ITEM_PACKET_TEMPLATE.md`를 기본 형식으로 사용한다.
+- archetype에서 벗어나는 navigation, density, write affordance, decision ordering은 approved deviation으로 기록한다.
 - 사용자가 직접 체감하는 `프로그램 기능과 UI/UX` 변경은 상세 디자인 확인 없이 훅 구현하고 나중에 롤백하는 흐름을 허용하지 않는다.
 - placeholder interaction만 있는 화면은 승인 가능한 목업으로 보지 않는다.
 - design review는 시각 품질뿐 아니라 source-to-surface mapping과 상태 전이를 함께 확인한다.

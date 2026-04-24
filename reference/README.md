@@ -5,6 +5,7 @@ This folder contains non-core harness material that sits outside the constitutio
 ## Contains
 
 - `artifacts/`: non-core artifact documents
+- `profiles/`: optional profile packages for explicitly activated project types
 - `packets/`: task-level approval packets and packet templates
 - `planning/`: deep-interview and planning baselines
 - `reports/`: design reviews, transfer notes, and structure reports
