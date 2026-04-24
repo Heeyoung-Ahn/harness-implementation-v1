@@ -7,16 +7,17 @@
 개발자가 아니고, 새 프로젝트 kickoff만 시작하려면 아래 순서만 먼저 따르면 된다.
 
 1. `START_HERE.md`를 연다.
-2. `INIT_STANDARD_HARNESS.cmd` 또는 `npm run harness:init`를 실행한다.
-3. `.agents/artifacts/CURRENT_STATE.md`, `.agents/artifacts/REQUIREMENTS.md`, `reference/planning/PLN-00_DEEP_INTERVIEW.md`, `reference/planning/PLN-01_REQUIREMENTS_FREEZE.md`만 먼저 본다.
-4. kickoff 미팅 내용을 `PLN-00`과 `REQUIREMENTS.md`에 정리한다.
-5. requirements를 닫은 뒤에만 첫 task packet을 연다.
+2. Node.js 24 이상이 설치되어 있는지 확인한다.
+3. `INIT_STANDARD_HARNESS.cmd` 또는 `npm run harness:init`를 실행한다.
+4. `.agents/artifacts/CURRENT_STATE.md`, `.agents/artifacts/REQUIREMENTS.md`, `reference/planning/PLN-00_DEEP_INTERVIEW.md`, `reference/planning/PLN-01_REQUIREMENTS_FREEZE.md`만 먼저 본다.
+5. kickoff 미팅 내용을 `PLN-00`과 `REQUIREMENTS.md`에 정리한다.
+6. requirements를 닫은 뒤에만 첫 task packet을 연다.
 
 처음에는 `src/`, `test/`, `.agents/runtime/*`, `reference/skills/*`, `reference/mockups/*`, `reference/reports/*`를 열지 않아도 된다.
 
 ## 0-1. 초기화 전에 준비할 입력
 
-`INIT_STANDARD_HARNESS.cmd`를 실행하기 전에 아래 5가지만 정리해 두면 시작이 훨씬 쉽다.
+`INIT_STANDARD_HARNESS.cmd`를 실행하기 전에 Node.js 24 이상과 아래 5가지만 정리해 두면 시작이 훨씬 쉽다.
 
 1. 프로젝트 이름
 2. 최종사용자 목표
@@ -28,9 +29,9 @@
 
 ## 1. 이 저장소와 템플릿의 관계
 
-- 현재 저장소는 `표준 하네스 자체를 설계하고 개선하는 작업 공간`이다.
-- `standard-template/`는 새 프로젝트에 복사해서 쓰는 `배포용 starter template`이다.
-- 새 프로젝트에서는 보통 `standard-template/` 내용을 프로젝트 루트에 복사한 뒤 작업을 시작한다.
+- 이 템플릿은 새 프로젝트 레포 루트에 복사해서 쓰는 `표준 하네스 starter`다.
+- 복사 후 `INIT_STANDARD_HARNESS.cmd` 또는 `npm run harness:init`를 실행하면 starter placeholder, repo-local DB, generated docs가 해당 프로젝트 기준으로 초기화된다.
+- 표준 하네스 자체를 개선하는 작업과 프로젝트별 업무 수행은 분리해서 다룬다.
 
 ## 2. 무엇이 core이고 무엇이 reference인가
 
@@ -51,11 +52,12 @@
 1. `standard-template/` 내용을 새 프로젝트 루트에 복사한다.
    폴더 자체가 아니라 **폴더 안의 내용물**을 복사한다.
 2. `AGENTS.md`와 `.agents/rules/workspace.md`는 그대로 둔다.
-3. `INIT_STANDARD_HARNESS.cmd` 또는 `npm run harness:init`를 실행해서 starter placeholder, repo-local DB, generated docs를 초기화한다.
-4. `START_HERE.md` 기준으로 kickoff 문서만 먼저 읽는다.
-5. 초기화 스크립트가 채우지 않은 프로젝트별 상세 baseline을 보완한다.
-6. `reference/*`는 프로젝트에 필요한 범위만 읽는다. 처음부터 전부 읽지 않는다.
-7. optional profile이 필요한 프로젝트인지 먼저 판단하고, 필요할 때만 명시적으로 활성화한다.
+3. Node.js 24 이상이 설치되어 있는지 확인한다.
+4. `INIT_STANDARD_HARNESS.cmd` 또는 `npm run harness:init`를 실행해서 starter placeholder, repo-local DB, generated docs를 초기화한다.
+5. `START_HERE.md` 기준으로 kickoff 문서만 먼저 읽는다.
+6. 초기화 스크립트가 채우지 않은 프로젝트별 상세 baseline을 보완한다.
+7. `reference/*`는 프로젝트에 필요한 범위만 읽는다. 처음부터 전부 읽지 않는다.
+8. optional profile이 필요한 프로젝트인지 먼저 판단하고, 필요할 때만 명시적으로 활성화한다.
 
 ## 4. 세션 시작 시 읽는 순서
 

@@ -4,7 +4,7 @@ import path from "node:path";
 import { writeGeneratedStateDocs } from "./generate-state-docs.js";
 import { createOperatingStateStore } from "./operating-state-store.js";
 
-export const STARTER_PACKAGE_NAME = "harness-implementation-v1";
+export const STARTER_PACKAGE_NAME = "standard-harness-starter";
 export const KNOWN_PROFILES = {
   "PRF-01": {
     label: "PRF-01 admin grid application profile",

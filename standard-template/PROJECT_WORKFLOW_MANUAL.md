@@ -33,11 +33,12 @@
 
 1. `standard-template/` 폴더 안의 내용물을 새 프로젝트 레포 루트에 복사한다.
 2. `AGENTS.md`와 `.agents/rules/workspace.md`는 그대로 둔다.
-3. `INIT_STANDARD_HARNESS.cmd` 또는 `npm run harness:init`를 실행한다.
-4. `START_HERE.md` 순서대로 kickoff baseline을 만든다.
-5. `PLN-00`, `REQUIREMENTS`, `PLN-01`을 먼저 닫는다.
-6. requirements 승인 뒤에만 architecture / implementation / UI baseline을 맞춘다.
-7. 실제 기능 작업은 `PKT-01_WORK_ITEM_PACKET_TEMPLATE.md`로 packet을 연 뒤 시작한다.
+3. Node.js 24 이상이 설치되어 있는지 확인한다.
+4. `INIT_STANDARD_HARNESS.cmd` 또는 `npm run harness:init`를 실행한다.
+5. `START_HERE.md` 순서대로 kickoff baseline을 만든다.
+6. `PLN-00`, `REQUIREMENTS`, `PLN-01`을 먼저 닫는다.
+7. requirements 승인 뒤에만 architecture / implementation / UI baseline을 맞춘다.
+8. 실제 기능 작업은 `PKT-01_WORK_ITEM_PACKET_TEMPLATE.md`로 packet을 연 뒤 시작한다.
 
 ## 기획팀 빠른 시작 경로
 

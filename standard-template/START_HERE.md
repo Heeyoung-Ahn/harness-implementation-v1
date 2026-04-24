@@ -5,6 +5,7 @@
 
 ## 1. 시작 전에 준비할 것
 
+- Node.js 24 이상
 - 프로젝트 이름
 - 이 프로젝트를 왜 만드는지 한 줄 설명
 - 최종사용자가 얻어야 하는 핵심 효과
@@ -17,8 +18,9 @@
 ## 2. 가장 먼저 할 일
 
 1. 새 프로젝트 레포 루트에 `standard-template/` 내용물을 복사한다.
-2. 프로젝트 루트에서 [INIT_STANDARD_HARNESS.cmd](INIT_STANDARD_HARNESS.cmd)를 실행한다.
-3. 화면에 나오는 질문에 맞게 `프로젝트 이름`, `사용자 목표`, `운영 목표`, `첫 승인 목표`, `active profile`을 입력한다.
+2. Node.js 24 이상이 설치되어 있는지 확인한다.
+3. 프로젝트 루트에서 [INIT_STANDARD_HARNESS.cmd](INIT_STANDARD_HARNESS.cmd)를 실행한다.
+4. 화면에 나오는 질문에 맞게 `프로젝트 이름`, `사용자 목표`, `운영 목표`, `첫 승인 목표`, `active profile`을 입력한다.
 
 초기화가 끝나면 starter placeholder, repo-local DB, generated docs가 프로젝트 기준으로 바뀐다.
 

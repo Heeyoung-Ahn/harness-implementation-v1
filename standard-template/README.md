@@ -15,7 +15,8 @@
 ## 첫 사용 순서
 
 1. `standard-template/` 폴더 자체가 아니라, **폴더 안의 내용물 전체**를 새 프로젝트 레포 루트에 복사한다.
-2. 프로젝트 루트에서 `INIT_STANDARD_HARNESS.cmd`를 실행하거나 `npm run harness:init`를 실행한다.
-3. `START_HERE.md`를 따라 kickoff baseline을 만든다.
+2. Node.js 24 이상이 설치되어 있는지 확인한다.
+3. 프로젝트 루트에서 `INIT_STANDARD_HARNESS.cmd`를 실행하거나 `npm run harness:init`를 실행한다.
+4. `START_HERE.md`를 따라 kickoff baseline을 만든다.
 
 초기화가 끝나면 starter placeholder가 프로젝트 전용 내용으로 바뀌고, `.harness/operating_state.sqlite`와 generated docs가 새 프로젝트 기준으로 생성된다.

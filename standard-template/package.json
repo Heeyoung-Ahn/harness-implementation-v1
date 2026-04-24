@@ -1,5 +1,5 @@
 {
-  "name": "harness-implementation-v1",
+  "name": "standard-harness-starter",
   "private": true,
   "type": "module",
   "engines": {
