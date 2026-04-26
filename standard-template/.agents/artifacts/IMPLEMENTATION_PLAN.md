@@ -12,7 +12,7 @@
 3. requirements 승인 뒤 architecture / implementation / UI 기준선을 맞춘다.
 4. 첫 work item packet을 열고 구현 전 상세 범위를 닫는다.
 5. packet 기준으로 구현과 canonical doc sync를 진행한다.
-6. generated docs, validator, PMW read surface를 확인한다.
+6. generated docs, validator, PMW export, separate PMW read surface를 확인한다.
 7. deploy/test/cutover가 있으면 topology와 rollback 경계를 닫는다.
 8. packet exit quality gate, security review, release review를 진행한다.
 
@@ -125,14 +125,20 @@
 - `PRF-01`: 내부 운영자/관리자가 dense record grid를 search/filter/sort하며 row action, detail view, bulk operation을 반복 수행하는 제품일 때만 활성화한다.
 - `PRF-02`: spreadsheet가 planning, field mapping, backlog, operational source-of-truth의 authoritative input surface일 때만 활성화한다.
 - `PRF-03`: transfer boundary가 airgapped이거나 manual-transfer / removable-media / offline bundle handoff가 반복되는 delivery work일 때만 활성화한다.
+- `PRF-04`: Excel/VBA/MariaDB와 수작업 운영 절차가 기존 production logic인 legacy replacement일 때만 활성화한다.
+- `PRF-05`: Python/Django backoffice 제품을 구현하며 source root, version, migration, DB, service/admin/test convention이 필요한 경우 활성화한다.
+- `PRF-06`: 상태전이, 승인, 권한, 감사, 예외/reopen/rollback 규칙이 핵심인 workflow application일 때 활성화한다.
+- `PRF-07`: lightweight web/app 또는 작은 내부 도구처럼 전체 업무시스템 게이트가 과한 프로젝트일 때 활성화한다.
+- `PRF-08`: Android native app, Gradle/AGP, signing, permissions, device/emulator test, release channel이 필요한 프로젝트일 때 활성화한다.
+- `PRF-09`: Node/frontend web app, package/build/test/env/deploy 경계가 필요한 프로젝트일 때 활성화한다.
 
 ## Current Iteration
 - [현재 단계 목표]
 
 ## Validation Commands
 - `npm test`
-- `npm run pmw:start`
 - `npm run harness:validate`
+- `npm run harness:pmw-export`
 - `npm run harness:migration-preview`
 - `npm run harness:cutover-preflight`
 - `npm run harness:cutover-report`

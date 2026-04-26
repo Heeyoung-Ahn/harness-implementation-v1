@@ -1,10 +1,10 @@
 # TASK_LIST
 
 ## Technical Facts
-- Open work items: 26
+- Open work items: 27
 - Open blocked or at-risk items: 0
 - Recent handoffs captured: 10
-- Generated at: 2026-04-24T04:01:28.896Z
+- Generated at: 2026-04-26T03:15:19.903Z
 
 ## Blocked / At Risk Summary
 - 0 open blocker or risks require attention.
@@ -18,6 +18,7 @@
 ## Work Item Detail
 | ID | Title | Status | Next Action |
 |---|---|---|---|
+| PLN-06 | Standalone Business Harness V1.1 implementation | closed | Copy standard-template into the first real project and run harness:init. |
 | REV-04 | Standard-template real-world readiness review | done | No active review action; reopen only if a new starter usability blocker appears. |
 | DEV-06 | Standard-template hardening | done | Preserve the hardened starter surface and reopen only if copied-starter usability drifts. |
 | REV-02 | Standard harness generalization review | done | Closed on 2026-04-23; preserve concrete task_packet validator enforcement and starter contract sync as part of the reusable baseline. |
@@ -46,18 +47,18 @@
 | DEV-04 | PMW read surface | done | Closed after browser verification passed at http://127.0.0.1:4173. |
 
 ## Handoff Log
+- 2026-04-26T03:15:19.903Z: PLN-06 V1.1 closed with standalone runtime layout, command UX, profile evidence gates, validator/reporting hardening, and synchronized standard-template.
+- 2026-04-26T03:06:16.099Z: PLN-06 requirements approved; implementation packet opened and V1.1 runtime/layout/profile/validator work is in progress.
+- 2026-04-26T02:22:53.237Z: Refined PLN-06 requirements with priority boundaries, command levels, validator enforcement levels, sync classification, state vocabulary, command output, profile activation, and packet readiness contracts.
+- 2026-04-26T02:13:52.088Z: Opened PLN-06 requirements-first lane after rolling back premature partial implementation changes.
 - 2026-04-24T04:01:28.896Z: DEV-06 and REV-04 are closed; preserve the real-world-ready starter and reopen only if copied-starter usability drifts.
 - 2026-04-23T18:30:00+09:00: Closed REV-02 after extending validator coverage to artifact_index category task_packet, syncing starter contracts/manual, and confirming no open generalization review finding remains.
 - 2026-04-23T14:01:07.573Z: Added copied-starter initialization automation plus explicit pre-bootstrap validator guidance so a new project can run one bootstrap entrypoint, seed repo-local DB/generated docs, and get a clear starter_bootstrap_pending message before initialization instead of raw generation-state errors.
 - 2026-04-23T13:45:00+09:00: Closed DSG-02 after defining the standard UX archetype reference, selected archetype/deviation evidence rule, and design hold condition; OPS-02 is now active.
 - 2026-04-23T13:18:36.307Z: Closed REV-03 after confirming SIM-01, SIM-02, and SIM-03 introduced no open reusable drift, starter placeholders remained starter-safe, and root/starter validation stayed clean.
 - 2026-04-23T13:10:00+09:00: Closed PLN-05 after defining the standard authoritative source intake reference, disposition rule, conflict/implementation-impact reporting requirement, and planning hold condition; DSG-02 is now active.
-- 2026-04-23T13:03:20.464Z: Closed SIM-03 after adding the reusable AUTHORITATIVE_SOURCE_WAVE_LEDGER artifact, packet-level shared-source wave evidence, validator ledger parity enforcement, and starter synchronization; REV-03 is now active.
-- 2026-04-23T12:30:00+09:00: Closed PLN-04 after defining the standard domain foundation reference, schema impact hold rule, existing-schema intake expectation, and packet evidence fields; PLN-05 is now active.
-- 2026-04-23T12:02:13.575Z: Closed SIM-02 after making validator discover current-contract concrete packet candidates in reference/packets, fail on missing or wrong-category task_packet registration, and ignore legacy packet files outside the current contract; SIM-03 is now active.
-- 2026-04-23T11:48:35.459Z: Closed SIM-01 after making packet/template/profile contracts multi-profile aware, extending validator enforcement to the declared profile-set union, adding concrete packet drift coverage, and synchronizing the starter; SIM-02 is now active.
 
 ## Generation Metadata
 - Generated docs: CURRENT_STATE.md, TASK_LIST.md
-- Source revision: 2026-04-24T04:01:28.896Z
+- Source revision: 2026-04-26T03:15:19.903Z
 - Sync status: fresh at generation time

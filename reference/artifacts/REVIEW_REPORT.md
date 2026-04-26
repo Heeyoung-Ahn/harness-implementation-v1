@@ -2,6 +2,67 @@
 
 Use this artifact when the project enters a formal review gate.
 
+## 2026-04-26 PLN-06 V1.1 Closeout Review
+
+- Scope: standalone business-system harness V1.1 for real Excel/VBA-MariaDB replacement projects.
+- Result: approved.
+- No essential readiness item from `reference/planning/PLN-06_STANDALONE_BUSINESS_HARNESS_V1_1.md` was deferred.
+- Implemented:
+  - harness runtime moved out of root `src/` into `.harness/runtime/`
+  - harness tests moved out of root `test/` into `.harness/test/`
+  - root `package.json` and starter `package.json` kept as harness command wrappers
+  - repository layout ownership contract added
+  - truth hierarchy synchronized across agent/workspace/manual/architecture surfaces
+  - structured task truth added
+  - `doctor`, `status`, `next`, `explain`, and `validation-report` commands added
+  - validation report Markdown/JSON persistence added
+  - PRF-04 legacy Excel/VBA-MariaDB replacement profile added
+  - PRF-05 Python/Django backoffice profile added
+  - PRF-06 workflow/approval application profile added
+  - packet template evidence expanded for product source root, legacy replacement, Django, workflow/approval readiness
+  - validator extended for path safety, harness-owned paths, structured task truth, active profiles, new profile markers, concrete packet evidence, and root/starter sync drift
+  - root and `standard-template/` synchronized for reusable runtime, test, rule, packet, profile, and layout assets
+- Verification:
+  - root `npm test`: 30/30 pass
+  - `standard-template/` `npm test`: 30/30 pass
+  - root `npm run harness:validate`: pass
+  - `standard-template/` `npm run harness:validate`: intentionally returns only `starter_bootstrap_pending`
+  - `npm run harness:doctor`: pass
+  - `npm run harness:status`: pass
+  - `npm run harness:next`: pass
+  - `npm run harness:explain`: pass
+  - `npm run harness:validation-report`: persisted `.agents/artifacts/VALIDATION_REPORT.md` and `.agents/artifacts/VALIDATION_REPORT.json`
+  - `npm run harness:migration-preview`: pass, 0 changes
+  - `npm run harness:cutover-preflight`: pass
+  - `npm run harness:cutover-report`: pass
+- Residual risk:
+  - Advanced semantic validation of project-specific approval matrices, financial mappings, and migration automation remains document-only/optional by approved PLN-06 boundary.
+- Status: done
+
+## 2026-04-26 V1.1 Cross-Project Profile Hardening Addendum
+
+- Scope: post-review hardening for using the standard harness across lightweight web/app projects, Android native apps, Node-root package projects, and existing complex business-system replacements.
+- Implemented:
+  - `PRF-07_LIGHTWEIGHT_WEB_APP_PROFILE.md` for lightweight web apps, simple internal tools, and small apps where legacy/workflow/migration gates would be too heavy.
+  - `PRF-08_ANDROID_NATIVE_APP_PROFILE.md` for Android native work with Gradle/AGP, namespace, SDK, signing, permissions, device/emulator test, and release-channel evidence.
+  - profile evidence templates for legacy intake, migration/reconciliation, Django conventions, workflow state, approval/role/audit, lightweight app baseline, and Android app baseline.
+  - packet template fields and human approval rows for lightweight and Android evidence.
+  - validator profile registry, packet required-field enforcement, fixture coverage, and root/starter sync paths for PRF-07/08 and new evidence templates.
+  - package ownership policy for projects that also need root `package.json`.
+  - starter DB packaging policy and removal of `standard-template/.harness/operating_state.sqlite` from the reusable starter.
+  - bootstrap state vocabulary alignment from `planning` to `kickoff_interview`.
+- Verification:
+  - root `npm test`: 32/32 pass
+  - `standard-template/` `npm test`: 32/32 pass
+  - root `npm run harness:validate`: pass
+  - root `npm run harness:doctor`: pass
+  - root `npm run harness:status`: pass
+  - root `npm run harness:validation-report`: persisted `.agents/artifacts/VALIDATION_REPORT.md` and `.agents/artifacts/VALIDATION_REPORT.json`
+  - root `npm run harness:cutover-preflight`: pass
+  - `standard-template/` `npm run harness:validate`: intentionally returns only `starter_bootstrap_pending` before initialization
+- Result: approved.
+- Status: done
+
 ## 2026-04-22 SEC-01 Kickoff
 
 - Scope: release-bound security review and remediation for the cutover-ready standardized harness baseline.

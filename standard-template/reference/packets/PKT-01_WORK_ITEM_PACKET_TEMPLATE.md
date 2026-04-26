@@ -145,6 +145,68 @@
 - Table / column naming compatibility:
 - Data operation / ownership compatibility:
 - Migration / rollback / cutover compatibility:
+- Product source root:
+- Product test root:
+- Product runtime requirements:
+- Harness/product boundary exceptions:
+- Legacy system source inventory:
+- VBA module / macro / function inventory:
+- MariaDB schema snapshot:
+- Query / view / procedure / trigger inventory:
+- Scheduled / manual operator steps:
+- Current import / export / report paths:
+- Source-of-truth ownership:
+- Migration / reconciliation plan:
+- Parallel-run / reconciliation evidence:
+- Python / Django version policy:
+- Supported-version / security-support rationale:
+- Dependency manager:
+- Django project / module boundary:
+- Django app / module boundary:
+- Settings / environment policy:
+- Migration policy:
+- DB compatibility policy:
+- Transaction / service boundary:
+- Auth / permission / admin boundary:
+- Background job boundary:
+- Test convention:
+- Static / media / admin customization boundary:
+- State machine artifact:
+- Approval rule matrix:
+- Role / permission matrix:
+- Audit event spec:
+- Exception / rollback / reopen rule:
+- Runtime / framework:
+- Rendering / app mode:
+- Data persistence boundary:
+- Auth / user identity requirement:
+- Deployment target:
+- External API / integration boundary:
+- Lightweight acceptance:
+- Android package namespace:
+- Kotlin / Java policy:
+- Gradle / AGP version:
+- minSdk / targetSdk:
+- Signing policy:
+- Build variants / flavors:
+- Permissions policy:
+- Local storage policy:
+- Network security / API boundary:
+- Navigation structure:
+- Offline / sync policy:
+- Notification policy:
+- Privacy / data policy:
+- Device / emulator test plan:
+- Release channel:
+- Package ownership policy:
+- Node.js product runtime policy:
+- Package manager:
+- Framework / bundler:
+- Build command:
+- Test command:
+- Environment variable policy:
+- API / backend boundary:
+- Static asset / routing policy:
 
 ## 10. Acceptance
 - [사용자가 확인 가능한 acceptance 1]
@@ -161,6 +223,9 @@
 | Optional profile evidence approval | yes / no | [owner] | pending | [profile paths / required evidence / composition] |
 | Spreadsheet source mapping approval | yes / no | [owner] | pending | [workbook/sheet/range/header trace] |
 | Airgapped transfer package approval | yes / no | [owner] | pending | [bundle / checksum / handoff] |
+| Lightweight app baseline approval | yes / no | [owner] | pending | [runtime / deploy target / acceptance] |
+| Android build and release boundary approval | yes / no | [owner] | pending | [namespace / SDK / signing / device test / release channel] |
+| Node/frontend package boundary approval | yes / no | [owner] | pending | [package ownership / runtime / build / deploy] |
 | Detailed function agreement | yes / no | [owner] | pending | [비고] |
 | Detailed UI/UX agreement | yes / no | [owner] | pending | [비고] |
 | UX archetype / deviation approval | yes / no | [owner] | pending | [reference path / selected archetype] |

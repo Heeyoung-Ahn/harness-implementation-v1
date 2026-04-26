@@ -7,7 +7,7 @@ import {
   initializeProjectStarter,
   normalizeActiveProfiles,
   slugifyProjectName
-} from "../../src/state/init-project.js";
+} from "../../.harness/runtime/state/init-project.js";
 
 const MIN_NODE_MAJOR = 24;
 
@@ -19,7 +19,7 @@ Options:
   --user-goal <text>         Primary user goal
   --ops-goal <text>          Primary operator goal
   --approval-goal <text>     First approval target
-  --profiles <list>          Comma-separated optional profiles (PRF-01,PRF-02,PRF-03 or none)
+  --profiles <list>          Comma-separated optional profiles (PRF-01..PRF-09 or none)
   --force                    Reinitialize an already-edited starter repo
   --non-interactive          Do not prompt; fill missing values with defaults
   --help                     Show this message

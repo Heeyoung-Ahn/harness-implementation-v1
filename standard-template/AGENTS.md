@@ -15,9 +15,12 @@ This file is the Codex entry point for the standard multi-IDE, multi-agent harne
 
 ## Truth Contract
 
-- `.agents/artifacts/*` is the live operational truth layer.
-- `.agents/runtime/generated-state-docs/*` is derived output.
+- `.agents/artifacts/*` is the governance Markdown truth layer.
+- `.harness/operating_state.sqlite` is hot operational DB state.
+- `.agents/runtime/generated-state-docs/*` is derived output and must not be edited manually.
+- PMW is a read-only surface and is never write authority.
 - `reference/*` is optional reference material and must not be treated as mandatory runtime input.
+- If derived output conflicts with governance Markdown, reconcile the DB/generation path before gate close.
 
 ## Entry Rule
 

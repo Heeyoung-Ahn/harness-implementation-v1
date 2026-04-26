@@ -3,7 +3,7 @@
 이 문서는 spreadsheet-backed planning 또는 operational input을 표준 optional profile로 다루기 위한 reference다. workbook, sheet, tab, range, header mapping이 실제 requirements, architecture, implementation, active packet에 직접 영향을 주는 프로젝트에서는 이 문서 또는 동등하게 승인된 artifact를 explicit profile dependency 없이 건너뛰지 않는다.
 
 ## Approval Rule
-- 이 profile은 requirements의 `Active Profile Selection`, architecture의 active profile 기록, task packet의 `Active profile dependencies`에 `PRF-02`가 포함될 때만 활성이다.
+- 이 profile은 requirements의 `Active Profile Selection`, architecture의 active profile 기록, task packet의 `Active profile dependency`가 모두 `PRF-02`로 맞을 때만 활성이다.
 - `PRF-02` active packet은 이 문서 경로 또는 승인된 동등 artifact 경로를 `Active profile references`에 포함해 인용한다.
 - `Source spreadsheet artifact`, `Workbook / sheet / tab / range trace`, `Header / column mapping`, `Row key / record identity rule`, `Source snapshot / version`, `Transformation / normalization assumptions`, `Reconciliation / overwrite rule`, `Profile deviation / exception`이 비어 있으면 planning hold를 유지한다.
 - profile은 spreadsheet traceability와 source-governance bias만 제공한다. 실제 workbook name, tab layout, formula detail, project-specific columns, import script, business translation rule은 project packet에 남긴다.

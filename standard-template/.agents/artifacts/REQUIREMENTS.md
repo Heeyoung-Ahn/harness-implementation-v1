@@ -25,6 +25,31 @@
 ## Active Profile Selection
 - [활성화할 optional profile이 있으면 적는다. 없으면 none]
 
+## V1.1 Standalone Harness Baseline
+- 하네스 runtime은 `.harness/runtime/*`에 있고, 하네스 테스트는 `.harness/test/*`에 있다.
+- 제품 코드는 `src/`, `app/`, `backend/`, `frontend/`, `server/` 등 프로젝트가 선택한 경로를 사용할 수 있다.
+- Node.js 24+는 하네스 runtime 요구사항이며, 제품 앱 runtime 요구사항이 아니다.
+- `reference/artifacts/REPOSITORY_LAYOUT_OWNERSHIP.md`를 layout ownership 기준으로 사용한다.
+- `.agents/artifacts/ACTIVE_PROFILES.md`가 active optional profile 선언의 stable artifact다.
+
+## V1.2 Installable Harness / PMW Baseline
+- installer는 프로젝트명, 대상 폴더, active profile을 받아 새 repo 폴더를 만들고 standard-template 복사, harness init, PMW export, PMW registry registration을 수행한다.
+- PMW는 별도 앱이며 project registry에서 복수 프로젝트를 add/remove/archive/select 한다.
+- 표준 하네스는 `.agents/runtime/project-manifest.json`과 `.agents/runtime/pmw-read-model.json`만 PMW용으로 관리한다.
+- PMW는 `.agents/.harness/task/profile/validation truth`를 직접 수정하지 않는다.
+- canonical manual은 `HARNESS_MANUAL.md`와 `PMW_MANUAL.md`다.
+
+## Optional Profile Catalog
+- `PRF-01`: admin grid application
+- `PRF-02`: authoritative spreadsheet source
+- `PRF-03`: airgapped delivery
+- `PRF-04`: legacy Excel/VBA-MariaDB replacement
+- `PRF-05`: Python/Django backoffice
+- `PRF-06`: workflow/approval application
+- `PRF-07`: lightweight web/app
+- `PRF-08`: Android native app
+- `PRF-09`: Node/frontend web app
+
 ## Layer Activation Contract
 - `Core`는 모든 프로젝트에서 기본 활성 계층이다.
 - `Optional Profile`은 실제 반복 유형이 확인되고, `Active Profile Selection`에 명시되며, 관련 packet 또는 downstream artifact가 그 dependency를 다시 적을 때만 활성화한다.
@@ -102,6 +127,12 @@
 38. `PRF-03`이 활성화된 transfer-bound 또는 airgapped delivery 작업은 `reference/profiles/PRF-03_AIRGAPPED_DELIVERY_PROFILE.md` 또는 동등한 approved airgapped-delivery profile reference 없이 `Ready For Code`로 올리지 않는다.
 39. `PRF-03` active packet은 최소 `Active profile references`, `Transfer package / bundle artifact`, `Transfer medium / handoff channel`, `Checksum / integrity evidence`, `Offline dependency bundle status`, `Ingress verification / import step`, `Rollback package / recovery bundle`, `Manual custody / operator handoff`, `Profile deviation / exception`을 남긴다.
 40. project-specific host/path, removable-media 절차, site operator step, custom import script, one-off rollback runbook detail은 `PRF-03` profile 기본값으로 승격하지 않고 project packet에 둔다.
+41. `PRF-04`가 활성화된 legacy Excel/VBA-MariaDB replacement 작업은 workbook inventory, workbook/sheet/range/header mapping, VBA module/macro/function inventory, MariaDB schema snapshot, operator step, import/export/report path, source-of-truth ownership, migration/reconciliation, and parallel-run evidence 없이 `Ready For Code`로 올리지 않는다.
+42. `PRF-05`가 활성화된 Python/Django backoffice 작업은 product source root, Python/Django version policy, supported-version/security-support rationale, dependency manager, app/module boundary, settings/environment policy, migration policy, DB compatibility, service/transaction boundary, auth/permission/admin boundary, background job boundary, test convention 없이 `Ready For Code`로 올리지 않는다.
+43. `PRF-06`이 활성화된 workflow/approval application 작업은 state machine, approval rule matrix, role/permission matrix, audit event spec, exception/rollback/reopen rule 없이 `Ready For Code`로 올리지 않는다.
+44. `PRF-07`이 활성화된 lightweight web/app 작업은 product source root, runtime/framework, rendering/app mode, data persistence boundary, auth/user identity, deployment target, external API/integration boundary, lightweight acceptance 없이 `Ready For Code`로 올리지 않는다.
+45. `PRF-08`이 활성화된 Android native app 작업은 product source root, package namespace, Kotlin/Java policy, Gradle/AGP version, minSdk/targetSdk, signing policy, build variants/flavors, permissions, local storage, network/API boundary, navigation, offline/sync, notification, privacy/data policy, device/emulator test plan, release channel 없이 `Ready For Code`로 올리지 않는다.
+46. `PRF-09`가 활성화된 Node/frontend web app 작업은 product source root, package ownership policy, Node.js product runtime policy, package manager, framework/bundler, build command, test command, environment variable policy, API/backend boundary, static asset/routing policy, deployment target 없이 `Ready For Code`로 올리지 않는다.
 
 ## In Scope
 - repo-local DB truth for hot-state and operational metadata
@@ -128,6 +159,12 @@
 - `reference/profiles/PRF-01_ADMIN_GRID_APPLICATION_PROFILE.md` 기반의 admin grid application optional profile package
 - `reference/profiles/PRF-02_AUTHORITATIVE_SPREADSHEET_SOURCE_PROFILE.md` 기반의 authoritative spreadsheet source optional profile package
 - `reference/profiles/PRF-03_AIRGAPPED_DELIVERY_PROFILE.md` 기반의 airgapped delivery optional profile package
+- `reference/profiles/PRF-04_LEGACY_EXCEL_VBA_MARIADB_REPLACEMENT_PROFILE.md` 기반의 legacy replacement optional profile package
+- `reference/profiles/PRF-05_PYTHON_DJANGO_BACKOFFICE_PROFILE.md` 기반의 Python/Django backoffice optional profile package
+- `reference/profiles/PRF-06_WORKFLOW_APPROVAL_APPLICATION_PROFILE.md` 기반의 workflow/approval optional profile package
+- `reference/profiles/PRF-07_LIGHTWEIGHT_WEB_APP_PROFILE.md` 기반의 lightweight web/app optional profile package
+- `reference/profiles/PRF-08_ANDROID_NATIVE_APP_PROFILE.md` 기반의 Android native app optional profile package
+- `reference/profiles/PRF-09_NODE_FRONTEND_WEB_APP_PROFILE.md` 기반의 Node/frontend web app optional profile package
 - security review process
 - validator / migration / cutover contract
 - active profile과 required evidence를 `artifact_index`의 `task_packet` registration까지 확인하는 profile-aware validator
@@ -171,6 +208,12 @@
 - `PRF-03`을 활성화한 transfer-bound 또는 airgapped delivery 작업은 `reference/profiles/PRF-03_AIRGAPPED_DELIVERY_PROFILE.md` 또는 승인된 동등 artifact 경로를 packet에 남긴다.
 - `PRF-03` active packet에는 transfer package / bundle artifact, transfer medium / handoff channel, checksum / integrity evidence, offline dependency bundle status, ingress verification / import step, rollback package / recovery bundle, manual custody / operator handoff, profile deviation / exception이 정리된다.
 - project-specific host/path/removable-media 절차/site operator/custom import script/one-off rollback detail은 `PRF-03` profile 기본값이 아니라 project packet detail로 남는다.
+- `PRF-04` active packet에는 legacy source inventory, workbook/sheet/range/header trace, VBA inventory, MariaDB schema snapshot, import/export/report paths, source-of-truth ownership, migration/reconciliation plan, parallel-run evidence가 정리된다.
+- `PRF-05` active packet에는 Python/Django version policy, dependency manager, app/module boundary, settings/environment, migration, DB compatibility, service/transaction, auth/permission/admin, background job, test convention evidence가 정리된다.
+- `PRF-06` active packet에는 state machine, approval rule matrix, role/permission matrix, audit event spec, exception/rollback/reopen rule이 정리된다.
+- `PRF-07` active packet에는 product source root, runtime/framework, rendering/app mode, data persistence boundary, auth/user identity, deployment target, external API/integration boundary, lightweight acceptance가 정리된다.
+- `PRF-08` active packet에는 Android namespace, Kotlin/Java policy, Gradle/AGP version, minSdk/targetSdk, signing, variants/flavors, permissions, storage, network/API, navigation, offline/sync, notification, privacy/data, device/emulator test, release channel이 정리된다.
+- `PRF-09` active packet에는 package ownership, Node product runtime, package manager, framework/bundler, build/test command, environment variable policy, API/backend boundary, static asset/routing, deployment target이 정리된다.
 - authoritative source가 있는 작업은 source trace와 disposition 없이 완료되지 않는다.
 - authoritative source 영향이 있는 planning baseline과 active packet은 source intake reference path와 disposition을 남긴다.
 - source intake reference에는 conflict summary, current implementation impact, required rework / defer가 정리된다.

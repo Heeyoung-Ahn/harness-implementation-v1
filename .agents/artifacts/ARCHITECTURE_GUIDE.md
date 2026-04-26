@@ -1,7 +1,26 @@
 # Architecture Guide
 
 ## Summary
-아키텍처는 `DB truth + Markdown truth + generated docs + read-only PMW`의 4층 runtime 구조를 기본값으로 유지한다. follow-up baseline에서는 이 runtime 구조를 `core / optional profile / project packet` 3층 activation 모델로 감싸, 복잡한 프로젝트의 반복 실패 패턴을 표준 계약과 선택형 profile로 일반화한다.
+아키텍처는 `Governance Markdown truth + hot operational DB state + generated operational docs + read-only PMW`의 4층 runtime 구조를 기본값으로 유지한다. follow-up baseline에서는 이 runtime 구조를 `core / optional profile / project packet` 3층 activation 모델로 감싸, 복잡한 프로젝트의 반복 실패 패턴을 표준 계약과 선택형 profile로 일반화한다.
+
+## Truth Hierarchy And Conflict Rule
+1. Governance Markdown truth: `.agents/artifacts/*.md`
+2. Hot operational DB state: `.harness/operating_state.sqlite`
+3. Generated operational docs: `.agents/runtime/generated-state-docs/*`
+4. PMW read-only surface
+
+Conflict rules:
+- Governance Markdown wins over generated docs.
+- DB hot-state must be reconciled to governance truth before gate close.
+- Generated docs are never edited manually.
+- PMW is never write authority.
+
+## Repository Layout Ownership
+- Harness runtime code lives under `.harness/runtime/*`.
+- Harness tests live under `.harness/test/*`.
+- Root `src/`, `app/`, `backend/`, `frontend/`, `server/`, and product test paths are free for downstream application code.
+- Root `package.json` is a harness command wrapper unless a project intentionally extends it; Node.js 24+ is a harness runtime requirement only.
+- The canonical layout contract is `reference/artifacts/REPOSITORY_LAYOUT_OWNERSHIP.md`.
 
 ## Activation Layers
 - `Core`: 모든 복잡한 프로젝트에 공통인 operating contract, gate, validator, review boundary

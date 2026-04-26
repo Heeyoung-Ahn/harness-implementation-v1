@@ -1,12 +1,17 @@
 # Task List
 
 ## Current Release Target
-- Preserve the approved generalized standard harness baseline and keep the now real-world-ready `standard-template/` ready for copied-project kickoff use.
+- Complete V1.1 as a standalone production-ready standard harness template for large Excel/VBA-MariaDB business-system replacement projects, with no assumed follow-up lane for essential readiness.
 
 ## Active Locks
-- none
+| Task ID | Scope | Owner | Status | Started At | Notes |
+|---|---|---|---|---|---|
+| - | None | - | clear | - | PLN-06 is closed. |
 
 ## Active Tasks
+| Task ID | Title | Scope | Owner | Status | Priority | Depends On | Verification |
+|---|---|---|---|---|---|---|---|
+| - | None | - | closed | - | - | - | - |
 - Preserve the approved release-ready baseline as the last known good snapshot while the generalized follow-up baseline remains the current reusable standard.
 - Preserve the approved generalized standard harness baseline, including concrete `task_packet` validator enforcement, as the current reusable baseline.
 - Keep the now real-world-ready `standard-template/` synchronized with future reusable core changes.
@@ -20,7 +25,20 @@
 - Keep `standard-template/` synchronized with every reusable standard harness change so the deployable starter stays current.
 - Keep `.agents/artifacts/PROJECT_PROGRESS.md`, generated docs, PMW read surface, and active live artifacts aligned with the current reusable baseline.
 
+## Blocked Tasks
+| Task ID | Blocker | Owner | Status | Unblock Condition | Verification |
+|---|---|---|---|---|---|
+| - | None | - | clear | - | - |
+
+## Completed Tasks
+| Task ID | Title | Completed At | Verification | Notes |
+|---|---|---|---|---|
+| PLN-06-REQ | PLN-06 requirements sharpening | 2026-04-26 | user approval | P0/P1/P2, validator levels, command contract, sync contract, state vocabulary, profile/packet readiness added. |
+| PLN-06 | Standalone Business Harness V1.1 implementation | 2026-04-26 | root/starter tests, validator, operator commands, validation report, review closeout | No essential readiness item deferred. |
+
 ## Handoff Log
+- 2026-04-26: Premature partial runtime relocation was rolled back. Opened `PLN-06` requirements-first lane for V1.1 standalone business-system harness readiness. The user requires this lane to deliver all essential readiness work in one pass, not as a partial step with future follow-up assumptions.
+- 2026-04-26: Refined `PLN-06` requirements with P0/P1/P2 boundaries, command behavior levels, validator enforcement levels, root/starter sync classification, state vocabulary, command output, profile activation, and packet readiness contracts before implementation.
 - 2026-04-24: Closed `DEV-06` and `REV-04`; preserve the real-world-ready starter surface and reopen only if a new copied-starter usability blocker appears.
 - 2026-04-24: Opened `DEV-06` standard-template hardening to close the launcher preflight gap, recover green shipped tests, harden formal review/test templates, and decide placeholder-script disposition before declaring the starter real-world-ready.
 - 2026-04-23: Cleaned the shipped `standard-template/` for real project kickoff use by removing self-referential harness-build docs, rewriting planner-facing kickoff docs, aligning `INIT_STANDARD_HARNESS` output with the new onboarding path, and making PMW fall back to generic starter artifacts when legacy DEV-04/05 packet docs are absent.

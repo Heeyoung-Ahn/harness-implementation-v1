@@ -3,7 +3,7 @@
 이 문서는 transfer-bound 또는 airgapped delivery work를 표준 optional profile로 다루기 위한 reference다. manual-transfer, removable media, offline dependency bundle, ingress-side manual execution이 반복되는 프로젝트에서는 이 문서 또는 동등하게 승인된 artifact를 explicit profile dependency 없이 건너뛰지 않는다.
 
 ## Approval Rule
-- 이 profile은 requirements의 `Active Profile Selection`, architecture의 active profile 기록, task packet의 `Active profile dependencies`에 `PRF-03`이 포함될 때만 활성이다.
+- 이 profile은 requirements의 `Active Profile Selection`, architecture의 active profile 기록, task packet의 `Active profile dependency`가 모두 `PRF-03`으로 맞을 때만 활성이다.
 - `PRF-03` active packet은 이 문서 경로 또는 승인된 동등 artifact 경로를 `Active profile references`에 포함해 인용한다.
 - `Transfer package / bundle artifact`, `Transfer medium / handoff channel`, `Checksum / integrity evidence`, `Offline dependency bundle status`, `Ingress verification / import step`, `Rollback package / recovery bundle`, `Manual custody / operator handoff`, `Profile deviation / exception`이 비어 있으면 planning hold를 유지한다.
 - profile은 transfer-governance와 bundle discipline만 제공한다. 실제 host/path, media handling step, operator runbook, import script, site-specific rollback detail은 project packet에 남긴다.

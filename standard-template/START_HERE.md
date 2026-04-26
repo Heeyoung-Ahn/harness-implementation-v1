@@ -5,7 +5,7 @@
 
 ## 1. 시작 전에 준비할 것
 
-- Node.js 24 이상
+- Node.js 24 이상. 이는 하네스 runtime 실행용 요구사항이며, 제품 앱의 Python/Django/Node 등 런타임 요구사항은 별도로 정한다.
 - 프로젝트 이름
 - 이 프로젝트를 왜 만드는지 한 줄 설명
 - 최종사용자가 얻어야 하는 핵심 효과
@@ -17,14 +17,15 @@
 
 ## 2. 가장 먼저 할 일
 
-1. 새 프로젝트 레포 루트에 `standard-template/` 내용물을 복사한다.
-2. Node.js 24 이상이 설치되어 있는지 확인한다.
-3. 프로젝트 루트에서 [INIT_STANDARD_HARNESS.cmd](INIT_STANDARD_HARNESS.cmd)를 실행한다.
-4. 화면에 나오는 질문에 맞게 `프로젝트 이름`, `사용자 목표`, `운영 목표`, `첫 승인 목표`, `active profile`을 입력한다.
+1. 가능하면 상위 저장소의 installer로 새 프로젝트를 생성한다.
+2. 수동 설치라면 새 프로젝트 레포 루트에 `standard-template/` 내용물을 복사한다.
+3. Node.js 24 이상이 설치되어 있는지 확인한다.
+4. 프로젝트 루트에서 [INIT_STANDARD_HARNESS.cmd](INIT_STANDARD_HARNESS.cmd)를 실행한다.
+5. 화면에 나오는 질문에 맞게 `프로젝트 이름`, `사용자 목표`, `운영 목표`, `첫 승인 목표`, `active profile`을 입력한다.
 
 초기화가 끝나면 starter placeholder, repo-local DB, generated docs가 프로젝트 기준으로 바뀐다.
 
-`INIT_STANDARD_HARNESS.cmd`를 쓰기 어렵다면 `npm run harness:init`를 실행해도 된다.
+`INIT_STANDARD_HARNESS.cmd`를 쓰기 어렵다면 `npm run harness:init`를 실행해도 된다. 전체 운영 매뉴얼은 `HARNESS_MANUAL.md`, PMW 연결은 `PMW_MANUAL.md`를 기준으로 본다.
 
 ## 3. 처음에는 이 문서만 연다
 
@@ -36,8 +37,8 @@
 
 ## 4. 처음에는 열지 않아도 되는 것
 
-- `src/`
-- `test/`
+- `.harness/runtime/*`
+- `.harness/test/*`
 - `.agents/runtime/*`
 - `reference/skills/*`
 - `reference/mockups/*`
@@ -59,6 +60,12 @@
 - `PRF-01`: 운영자용 표/그리드 화면이 많은 프로젝트
 - `PRF-02`: 엑셀/스프레드시트가 사실상 기준 문서인 프로젝트
 - `PRF-03`: 폐쇄망, 수동 반입, 파일 전달 절차가 있는 프로젝트
+- `PRF-04`: Excel/VBA/MariaDB 기반 기존 업무시스템을 웹앱으로 대체하는 프로젝트
+- `PRF-05`: Python/Django backoffice 구조로 구현하는 프로젝트
+- `PRF-06`: 상태전이, 승인, 권한, 감사가 핵심인 workflow/approval 프로젝트
+- `PRF-07`: 가벼운 웹앱, 단순 내부 도구, 작은 앱처럼 전체 업무시스템 게이트가 과한 프로젝트
+- `PRF-08`: Android native 앱, Gradle/AGP, signing, permissions, device test, release channel이 필요한 프로젝트
+- `PRF-09`: Node.js, frontend, SPA/SSR/static web app처럼 package/build/test/deploy 경계가 필요한 프로젝트
 
 잘 모르겠으면 일단 `none`으로 시작해도 된다.
 필요가 확인되면 requirements와 packet에서 나중에 명시적으로 활성화한다.

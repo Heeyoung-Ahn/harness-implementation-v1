@@ -6,13 +6,19 @@
     "node": ">=24.0.0"
   },
   "scripts": {
-    "test": "node --test test/*.test.js",
+    "test": "node --test .harness/test/*.test.js",
     "harness:init": "node .agents/scripts/init-project.js",
-    "pmw:start": "node src/pmw/server.js",
-    "harness:validate": "node src/state/dev05-cli.js validate",
-    "harness:migration-preview": "node src/state/dev05-cli.js migration-preview",
-    "harness:migration-apply": "node src/state/dev05-cli.js migration-apply",
-    "harness:cutover-preflight": "node src/state/dev05-cli.js cutover-preflight",
-    "harness:cutover-report": "node src/state/dev05-cli.js cutover-report"
+    "harness:validate": "node .harness/runtime/state/dev05-cli.js validate",
+    "harness:doctor": "node .harness/runtime/state/dev05-cli.js doctor",
+    "harness:status": "node .harness/runtime/state/dev05-cli.js status",
+    "harness:next": "node .harness/runtime/state/dev05-cli.js next",
+    "harness:explain": "node .harness/runtime/state/dev05-cli.js explain",
+    "harness:validation-report": "node .harness/runtime/state/dev05-cli.js validation-report",
+    "harness:pmw-export": "node .harness/runtime/state/dev05-cli.js pmw-export",
+    "harness:project-manifest": "node .harness/runtime/state/dev05-cli.js project-manifest",
+    "harness:migration-preview": "node .harness/runtime/state/dev05-cli.js migration-preview",
+    "harness:migration-apply": "node .harness/runtime/state/dev05-cli.js migration-apply",
+    "harness:cutover-preflight": "node .harness/runtime/state/dev05-cli.js cutover-preflight",
+    "harness:cutover-report": "node .harness/runtime/state/dev05-cli.js cutover-report"
   }
 }

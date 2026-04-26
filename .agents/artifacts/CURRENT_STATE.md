@@ -1,12 +1,12 @@
 # Current State
 
 ## Snapshot
-- Current Stage: planning
-- Current Focus: preserve the approved generalized standard harness baseline and the now real-world-ready `standard-template/` until a new approved lane opens
-- Current Release Goal: keep the reusable standard harness baseline stable while maintaining a copied-starter surface that is ready for real project kickoff
+- Current Stage: closed
+- Current Focus: `PLN-06` standalone business-system harness V1.1 is implemented and verified
+- Current Release Goal: complete a production-ready standalone standard harness template in this lane, suitable for replacing large Excel/VBA-MariaDB business systems with web applications
 
 ## Next Recommended Agent
-- Planner or maintainer preserving the approved baseline until a new lane opens
+- Starter user or planner beginning the first real project from `standard-template/`
 
 ## Must Read Next
 - `.agents/artifacts/REQUIREMENTS.md`
@@ -14,11 +14,17 @@
 - `.agents/artifacts/IMPLEMENTATION_PLAN.md`
 - `.agents/artifacts/TASK_LIST.md`
 - `.agents/artifacts/PROJECT_PROGRESS.md`
+- `reference/planning/PLN-06_STANDALONE_BUSINESS_HARNESS_V1_1.md`
 - `reference/artifacts/REVIEW_REPORT.md`
 - `.agents/runtime/generated-state-docs/CURRENT_STATE.md`
 - `.agents/runtime/generated-state-docs/TASK_LIST.md`
 
 ## Open Decisions / Blockers
+- `PLN-06` requirements were reviewed and approved by the user on 2026-04-26; implementation is now authorized under `reference/packets/PKT-01_PLN-06_STANDALONE_BUSINESS_HARNESS_V1_1_IMPLEMENTATION.md`.
+- `PLN-06` implementation closed on 2026-04-26 with root/starter tests passing, validator clean, command UX verified, validation report persisted, and review closeout recorded.
+- The user explicitly rejected a partial "move some files now, finish later" approach. The V1.1 lane must plan and deliver all required changes needed for real business-system project use before closeout.
+- Target downstream projects are Excel/VBA-MariaDB replacements for budget management, asset management, and corporate accounting management. The standard template must support this class of projects without embedding project-specific budget/accounting schema in core.
+- `PLN-06` requirements were sharpened with P0/P1/P2 scope, essential vs optional boundary, command acceptance levels, validator enforcement levels, root/starter sync classification, workflow state vocabulary, command output contract, profile activation contract, and packet readiness contract.
 - No active blocker is open. `DEV-06` and `REV-04` closed on 2026-04-24 after launcher/runtime preflight enforcement, green root/starter tests, starter review/test template hardening, and placeholder-script cleanup were verified.
 - The 2026-04-23 WBMS simulation found three reusable follow-up gaps: `SIM-01` multi-profile packet composition, `SIM-02` task-packet registration enforcement, and `SIM-03` shared-source rebaseline control.
 - `SIM-01` closed on 2026-04-23 after redefining packet/profile citations around `Active profile dependencies`, `Active profile references`, and `Profile composition rationale`, and after extending validator enforcement from a single active profile to the declared profile-set union.
@@ -45,6 +51,10 @@
 - The generalized standard harness follow-up baseline is closed; keep the reusable contracts stable until a new approved lane opens.
 
 ## Latest Handoff Summary
+- 2026-04-26: User approved `PLN-06` requirements and authorized implementation. Opened a concrete implementation packet, moved into `in_execution`, and began V1.1 changes with no essential readiness deferral allowed.
+- 2026-04-26: Closed `PLN-06` V1.1 after moving harness runtime/test ownership under `.harness/`, adding standalone command UX, validation reports, structured task truth, layout ownership, active profile contract, PRF-04/05/06, packet readiness evidence, validator enforcement, and synchronized `standard-template/`.
+- 2026-04-26: Rolled back the premature partial runtime relocation and opened `PLN-06` as a requirements-first lane for a standalone, production-ready V1.1 standard harness template aimed at large Excel/VBA-MariaDB business-system replacement projects. Implementation is on hold until `PLN-06` requirements are explicitly closed.
+- 2026-04-26: Refined `PLN-06` to reduce scope ambiguity before implementation by adding P0/P1/P2 boundaries, command behavior levels, validator must-fail/warn/document-only levels, root/starter sync classification, state vocabulary, command output, profile activation, and packet readiness contracts.
 - 2026-04-24: Closed `DEV-06` and `REV-04` after enforcing Node 24+ preflight in the launcher and JS init path, restoring green root/starter tests by seeding profile-aware validator fixtures in the read-model tests, replacing the shipped starter review/test stubs with usable templates, removing placeholder-only helper scripts from root and starter, and verifying that untouched copied starters still fail only with `starter_bootstrap_pending`.
 - 2026-04-24: Opened `DEV-06` standard-template hardening as the active implementation lane to make the shipped starter real-world-ready by fixing launcher runtime preflight enforcement, restoring green starter tests, hardening review/test artifact templates, and deciding placeholder-script disposition before closeout.
 - 2026-04-23: Cleaned the shipped `standard-template/` for real project kickoff use by deleting self-referential harness-build docs, rewriting first-run onboarding and starter state docs for non-developer planners, aligning `INIT_STANDARD_HARNESS` outputs with the new kickoff wording, and making PMW fall back to generic starter artifacts when legacy DEV-04/05 packet docs are absent.

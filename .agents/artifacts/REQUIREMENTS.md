@@ -5,6 +5,8 @@
 
 2026-04-22 기준 first-ship standardized harness baseline은 release-ready로 닫혀 있다. 현재 follow-up 방향은 특정 프로젝트 사례를 core에 박아 넣지 않고, 복잡한 프로젝트에서 반복되는 실패 패턴을 `core / optional profile / project packet` 3층 구조로 일반화하는 것이다.
 
+2026-04-26 현재 `PLN-06`은 닫혔고, V1.2 upgrade는 `standard-template/`을 installable project generator로 확장하고 PMW를 별도 installable multi-project read-only monitor로 분리하는 방향이다. 추가 hardening은 lightweight web/app, Android native app, Node/frontend web app을 표준 profile로 다룰 수 있게 한다.
+
 ## Project Goal
 
 ### 추진목적
@@ -15,6 +17,11 @@
 5. read-only 기본값을 유지하면서도 future write boundary를 명확히 예약한다.
 6. 복잡한 프로젝트에서 반복되는 실패 패턴을 표준 계약과 게이트로 흡수한다.
 7. 특정 도메인, 특정 기술스택, 특정 운영환경 편향 없이 재사용 가능한 표준 하네스를 유지한다.
+8. Excel/VBA-MariaDB 기반 legacy 업무시스템 대체 프로젝트에서 source intake, schema compatibility, migration/reconciliation, approval/audit gate를 누락하지 않게 만든다.
+9. 하네스 runtime이 제품 코드 경로와 충돌하지 않게 하여 실제 프로젝트가 `src/`, `app/`, `backend/`, `frontend/`, `server/` 등 원하는 구조를 선택할 수 있게 한다.
+10. OMX 같은 외부 실행 오케스트레이터 없이도 환경 점검, 현재 상태 설명, 다음 행동 추천, validation report 저장을 자체 제공한다.
+11. 표준 하네스 설치기는 프로젝트명/폴더/profile을 받아 새 repo를 만들고 PMW registry까지 연결한다.
+12. PMW는 표준 하네스와 분리된 read-only multi-project monitor로 운영한다.
 
 ### 기대효과
 1. 상태 변경 시 수정 비용과 정합도 유지 비용을 줄인다.
@@ -22,11 +29,27 @@
 3. AI는 데이터베이스 기반의 구조화된 상태를 더 쉽게 이해하고, 사람은 Markdown 기반의 설명과 맥락을 더 쉽게 검토한다.
 4. 개발 완료 단위마다 리팩터링과 보안 점검을 포함해 누적 품질 저하를 줄인다.
 5. 중도 스키마 혼란, source 누락, 환경 혼선, 제품 성격과 맞지 않는 UI drift를 표준 운영 규칙으로 줄인다.
+6. 기존 Excel/VBA/MariaDB 운영 로직이 새 웹앱 설계에 빠지거나 잘못 해석되는 위험을 source inventory와 reconciliation gate로 줄인다.
+7. starter를 복사한 프로젝트가 하네스 소스와 제품 소스를 혼동하지 않고 바로 실무 kickoff를 시작할 수 있다.
 
 ### 최종사용자
 - PMW 첫 화면에서 현재 판단 지점과 운영 상태를 빠르게 읽어야 하는 사용자
 - 하네스를 유지·개선하는 AI 에이전트
 - 승인, 리뷰, 운영 맥락을 관리하는 사람 운영자
+- Excel/VBA-MariaDB 기반 기존 업무시스템을 웹앱으로 대체하려는 프로젝트 PM, 기획자, 개발자, 현업 승인자
+
+## Closed PLN-06 Requirements
+- `PLN-06` authoritative planning source: `reference/planning/PLN-06_STANDALONE_BUSINESS_HARNESS_V1_1.md`
+- `PLN-06` goal: finish all essential V1.1 standalone business-system harness readiness in one lane.
+- `PLN-06` target project class: budget management, asset management, corporate accounting management, and similar internal business systems currently operated with Excel/VBA and MariaDB.
+- `PLN-06` implementation status: closed on 2026-04-26 after requirements approval, implementation packet execution, root/starter verification, validation report persistence, and review closeout.
+- `PLN-06` core boundary: do not add project-specific budget/accounting/asset schema, screen names, account mappings, approval chains, or operating policies to core.
+- `PLN-06` required deliverables: repository layout ownership, harness/product code separation, standalone command UX, structured task truth, truth hierarchy, legacy source intake profile, Python/Django backoffice profile, workflow/approval profile, validator/reporting hardening, starter synchronization, and review evidence.
+- `PLN-06` essential boundary: P0/P1 readiness must close in this lane; P2 examples, CI templates, advanced PMW polish, semantic business-rule validation, and advanced migration automation may remain optional if they are not required to safely start the target projects.
+- `PLN-06` command boundary: init/test/validate/PMW/migration/cutover preserve or wrap existing behavior; doctor/status/next/explain must provide useful working summaries; validation-report must persist Markdown and JSON artifacts.
+- `PLN-06` validator boundary: must-fail checks, warn-acceptable checks, and document-only checks are defined in `reference/planning/PLN-06_STANDALONE_BUSINESS_HARNESS_V1_1.md` and must guide implementation priority.
+- `PLN-06` sync boundary: reusable root changes must be classified as sync, root-only, generated, or starter-owned before closeout.
+- `PLN-06` added contracts: workflow state vocabulary, command output contract, profile activation contract, and packet readiness contract.
 
 ## Layer Model
 - `Core`: 모든 복잡한 프로젝트에 공통으로 필요한 표준 계약, 게이트, validator enforcement
@@ -114,6 +137,14 @@
 39. `PRF-03`이 활성화된 transfer-bound 또는 airgapped delivery 작업은 `reference/profiles/PRF-03_AIRGAPPED_DELIVERY_PROFILE.md` 또는 동등한 approved airgapped-delivery profile reference 없이 `Ready For Code`로 올리지 않는다.
 40. `PRF-03` active packet은 최소 `Active profile reference`, `Transfer package / bundle artifact`, `Transfer medium / handoff channel`, `Checksum / integrity evidence`, `Offline dependency bundle status`, `Ingress verification / import step`, `Rollback package / recovery bundle`, `Manual custody / operator handoff`, `Profile deviation / exception`을 남긴다.
 41. project-specific host/path, removable-media 절차, site operator step, custom import script, one-off rollback runbook detail은 `PRF-03` profile 기본값으로 승격하지 않고 project packet에 둔다.
+42. `PRF-04`가 활성화된 legacy Excel/VBA-MariaDB replacement 작업은 workbook inventory, workbook/sheet/range/header mapping, VBA module/macro/function inventory, MariaDB schema snapshot, operator step, import/export/report path, source-of-truth ownership, migration/reconciliation, parallel-run evidence 없이 `Ready For Code`로 올리지 않는다.
+43. `PRF-05`가 활성화된 Python/Django backoffice 작업은 product source root, Python/Django version policy, supported-version/security-support rationale, dependency manager, app/module boundary, settings/environment policy, migration policy, DB compatibility, service/transaction boundary, auth/permission/admin boundary, background job boundary, test convention 없이 `Ready For Code`로 올리지 않는다.
+44. `PRF-06`이 활성화된 workflow/approval application 작업은 state machine, approval rule matrix, role/permission matrix, audit event spec, exception/rollback/reopen rule 없이 `Ready For Code`로 올리지 않는다.
+45. `PRF-07`이 활성화된 lightweight web/app 작업은 product source root, runtime/framework, rendering/app mode, data persistence boundary, auth/user identity, deployment target, external API/integration boundary, lightweight acceptance 없이 `Ready For Code`로 올리지 않는다.
+46. `PRF-08`이 활성화된 Android native app 작업은 product source root, package namespace, Kotlin/Java policy, Gradle/AGP version, minSdk/targetSdk, signing policy, build variants/flavors, permissions, local storage, network/API boundary, navigation, offline/sync, notification, privacy/data policy, device/emulator test plan, release channel 없이 `Ready For Code`로 올리지 않는다.
+47. `PRF-09`가 활성화된 Node/frontend web app 작업은 product source root, package ownership policy, Node.js product runtime policy, package manager, framework/bundler, build command, test command, environment variable policy, API/backend boundary, static asset/routing policy, deployment target 없이 `Ready For Code`로 올리지 않는다.
+47. lightweight profile은 실제 legacy replacement, workflow/approval, data migration, regulated/audit-heavy, or mobile release requirements를 숨기는 용도로 쓰지 않는다. 그런 요구가 생기면 stronger profile을 추가하고 packet을 rebaseline한다.
+48. Android signing secrets, keystore paths, store account details, package-specific namespace, and release-track details는 reusable profile 기본값이 아니라 secured project artifact 또는 project packet에 둔다.
 
 ## In Scope
 - repo-local DB truth for hot-state and AI가 빠르게 이해해야 하는 운영 메타데이터
@@ -145,6 +176,17 @@
 - 코드와 스크립트, dependency, cutover 절차를 포함한 security review process
 - validator / migration / cutover contract
 - active profile과 required evidence를 함께 확인하는 profile-aware validator
+- `PLN-06` standalone command UX: doctor, status, next, explain, validation-report
+- `PLN-06` repository layout ownership contract separating harness-owned paths from project-owned product code paths
+- `PLN-06` legacy Excel/VBA-MariaDB replacement profile and evidence requirements
+- `PLN-06` Python/Django backoffice profile and evidence requirements
+- `PLN-06` workflow/approval application profile and evidence requirements
+- `PLN-06` task-list structured table contract and validator/reporting support
+- `PLN-06` validation report persistence as operational evidence
+- `PLN-06` workflow state vocabulary shared by live artifacts, DB, generated docs, PMW, and validator output
+- `PLN-06` command output contract with exit code, human summary, findings, and next action
+- `PLN-06` active profile declaration contract
+- `PLN-06` packet readiness contract before `Ready For Code`
 
 ## Out of Scope
 - 기존 코드 재사용
@@ -155,6 +197,10 @@
 - 특정 도메인 스키마나 특정 제품 UI를 core 기본값으로 고정하는 것
 - 특정 기술스택, 특정 DB, 특정 배포 구조를 core 기본값으로 고정하는 것
 - project-specific delivery procedure를 표준 core contract로 승격하는 것
+- OMX integration, `.omx` state, tmux/team runtime, MCP bridge, or external orchestration dependency
+- budget-management-specific, asset-management-specific, or corporate-accounting-specific schema and policy details in core
+- a mandatory `backend/frontend` product layout
+- closing V1.1 with essential production-readiness work deferred to a later lane
 
 ## Acceptance
 - deep interview가 구현 핵심 이슈를 닫거나, deferred 항목은 owner와 follow-up rule이 기록된다.
@@ -222,6 +268,18 @@
 - release / cutover 전에 security review가 수행되고 critical finding이 남지 않는다.
 - improvement candidate는 human review를 거쳐야만 core/profile/project follow-up item 또는 baseline update로 승격된다.
 - 재사용 가능한 표준 하네스 변경은 `standard-template/`의 대응 starter, code, test, reference 자산이 함께 갱신될 때만 완료로 본다.
+- `PLN-06` requirements are explicitly approved before implementation starts.
+- V1.1 keeps the harness standalone and does not require OMX or any external execution runtime.
+- V1.1 does not reserve root `src/`, root `test/`, or root product package ownership in a way that blocks normal product source layouts.
+- V1.1 can start a real Excel/VBA-MariaDB replacement project and force legacy workbook, VBA, MariaDB schema, operator workflow, migration, reconciliation, and rollback evidence before `Ready For Code`.
+- V1.1 includes reusable Python/Django backoffice and workflow/approval profiles without embedding project-specific budget/accounting/asset details in core.
+- V1.1 provides operator-facing doctor/status/next/explain/validation-report commands and persists validation evidence.
+- V1.1 implements the `PLN-06` must-fail validator items and documents any warn-only or document-only items according to the enforcement table.
+- V1.1 provides a sync classification for changed root/starter files and passes root/starter sync validation for reusable assets.
+- V1.1 defines stable workflow states and uses them consistently in new or updated status/next/explain surfaces.
+- V1.1 blocks `Ready For Code` for packets missing product source root, active profile evidence, required legacy/Django/workflow evidence, testable acceptance, or unresolved `unknown` data-impact classification.
+- V1.1 root and `standard-template/` are synchronized and verified before the lane closes.
+- V1.1 closeout review confirms no essential readiness requirement from `reference/planning/PLN-06_STANDALONE_BUSINESS_HARNESS_V1_1.md` was deferred.
 
 ## PLN-00 Decision Baseline
 - Minimal DB start scope: `approve`

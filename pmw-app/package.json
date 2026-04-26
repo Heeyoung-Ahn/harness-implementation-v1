@@ -1,0 +1,13 @@
+{
+  "name": "standard-harness-pmw",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "start": "node runtime/server.js",
+    "test": "node --test test/*.test.js",
+    "registry": "node runtime/project-registry.js"
+  }
+}

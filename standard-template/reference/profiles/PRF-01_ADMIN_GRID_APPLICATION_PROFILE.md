@@ -3,7 +3,7 @@
 이 문서는 grid-heavy administrative application의 표준 optional profile reference다. 내부 운영자/관리자가 많은 레코드를 search, filter, sort, inspect, update, bulk-handle 하는 제품을 다룰 때는 이 문서 또는 동등하게 승인된 artifact를 explicit profile dependency 없이 건너뛰지 않는다.
 
 ## Approval Rule
-- 이 profile은 requirements의 `Active Profile Selection`, architecture의 active profile 기록, task packet의 `Active profile dependencies`에 `PRF-01`이 포함될 때만 활성이다.
+- 이 profile은 requirements의 `Active Profile Selection`, architecture의 active profile 기록, task packet의 `Active profile dependency`가 모두 `PRF-01`로 맞을 때만 활성이다.
 - `PRF-01` active packet은 이 문서 경로 또는 승인된 동등 artifact 경로를 `Active profile references`에 포함해 인용한다.
 - `Primary admin entity / surface`, `Grid interaction model`, `Search / filter / sort / pagination behavior`, `Row action / bulk action rule`, `Edit / save pattern`, `Profile deviation / exception`이 비어 있으면 planning/design hold를 유지한다.
 - profile은 grid-first reusable bias만 제공한다. 실제 column set, permission matrix, export/report format, entity-specific wording, one-off workflow는 project packet에 남긴다.

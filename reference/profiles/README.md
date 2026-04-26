@@ -13,3 +13,9 @@ This folder contains reusable optional profile packages that extend the standard
 - `PRF-01_ADMIN_GRID_APPLICATION_PROFILE.md`: grid-heavy administrative application profile
 - `PRF-02_AUTHORITATIVE_SPREADSHEET_SOURCE_PROFILE.md`: spreadsheet-backed authoritative source profile
 - `PRF-03_AIRGAPPED_DELIVERY_PROFILE.md`: transfer-bound or airgapped delivery profile
+- `PRF-04_LEGACY_EXCEL_VBA_MARIADB_REPLACEMENT_PROFILE.md`: legacy Excel/VBA-MariaDB business-system replacement profile
+- `PRF-05_PYTHON_DJANGO_BACKOFFICE_PROFILE.md`: Python/Django backoffice profile
+- `PRF-06_WORKFLOW_APPROVAL_APPLICATION_PROFILE.md`: workflow, approval, permission, and audit-heavy application profile
+- `PRF-07_LIGHTWEIGHT_WEB_APP_PROFILE.md`: lightweight web/app profile for small apps and simple internal tools
+- `PRF-08_ANDROID_NATIVE_APP_PROFILE.md`: Android native app profile for Gradle, signing, permissions, device test, and release boundaries
+- `PRF-09_NODE_FRONTEND_WEB_APP_PROFILE.md`: Node/frontend web app profile for package ownership, build, test, environment, API, and deploy boundaries

@@ -1,6 +1,11 @@
 .codex
-.harness/
+.harness/*
+!.harness/runtime/
+!.harness/runtime/**
+!.harness/test/
+!.harness/test/**
 backup/
+.tmp/
 pmw-server.log
 pmw-server.err.log
 .agents/runtime/reports/
