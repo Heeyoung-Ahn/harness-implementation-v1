@@ -184,20 +184,26 @@ starter top-level 문서는 현재 아래만 유지한다.
 - `packaging/*`
 - root manuals
 - starter manual이 실제 사용법을 바꾸는 경우 starter docs
+- release baseline label source: root/starter `.harness/runtime/state/release-baseline.js`
+- root SSOT release docs: `.agents/artifacts/CURRENT_STATE.md`, `TASK_LIST.md`, `PROJECT_PROGRESS.md`, `IMPLEMENTATION_PLAN.md`, `REQUIREMENTS.md`, `reference/artifacts/REVIEW_REPORT.md`
 
 검증:
 
 - `package:release`
 - `package:windows-exe`
 - installer/PMW smoke
+- root `harness:validation-report`
+- root/starter release-baseline validator tests
 
 ## 5. 추가 lane을 열 때 체크리스트
 
 1. 이번 변경이 `maintainer-only / reusable harness / release-only` 중 무엇인지 먼저 분류한다.
 2. reusable harness 변경이면 root와 `standard-template/` 반영 범위를 먼저 고정한다.
 3. 사용자 설치 흐름이 바뀌면 `reference/manuals/*`를 같이 갱신한다.
-4. source 안정화 전에는 `dist/windows-exe-v1.2/`를 다시 만들지 않는다.
-5. `dist/`를 직접 수정하지 않는다.
+4. 유지보수 레포의 release baseline이 바뀌면 루트 SSOT, DB hot-state, generated docs, validation report, packaging/manuals, shared release-baseline constant를 같은 lane에서 같이 닫는다.
+5. reusable harness 변경이면 root와 `standard-template/`를 같이 갱신하고, release-only 변경이면 `installer/`, `pmw-app/`, `packaging/`, manuals를 갱신한다. copied project에 복사되는 guardrail이면 starter runtime/test도 같이 갱신한다.
+6. source 안정화 전에는 `dist/windows-exe-v1.2/`를 다시 만들지 않는다.
+7. `dist/`를 직접 수정하지 않는다.
 
 ## 6. GitHub 공개 기준
 
@@ -211,5 +217,6 @@ starter top-level 문서는 현재 아래만 유지한다.
 
 - 새 프로젝트에 복사되는가: `standard-template/`까지 본다.
 - installer/PMW 자체가 바뀌는가: `installer/`, `pmw-app/`, `packaging/`를 본다.
+- release label/버전명이 바뀌는가: shared release-baseline constant, root SSOT, DB/generated docs, manuals, packaging을 같이 본다.
 - 문서가 설치된 프로젝트에서 읽히는가: `reference/manuals/`와 starter docs를 본다.
 - generated 결과만 바뀌는가: source를 고치지 않고 generated output만 손대지 않는다.

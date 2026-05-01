@@ -1,10 +1,10 @@
 # TASK_LIST
 
 ## Technical Facts
-- Open work items: 27
+- Open work items: 31
 - Open blocked or at-risk items: 0
 - Recent handoffs captured: 10
-- Generated at: 2026-04-26T03:15:19.903Z
+- Generated at: 2026-05-01T15:30:23.913Z
 
 ## Blocked / At Risk Summary
 - 0 open blocker or risks require attention.
@@ -18,6 +18,10 @@
 ## Work Item Detail
 | ID | Title | Status | Next Action |
 |---|---|---|---|
+| PLN-07 | V1.3 PMW operator console and workflow-contract planning | in_progress | Select the next V1.3 PMW operator-console / workflow-contract planning step now that DEV-08 packet exit is approved. |
+| DEV-08 | Workflow contracts and handoff routing packet | done | Closed on 2026-05-02 after Reviewer approved packet exit closeout; no open DEV-08 finding remains. |
+| DEV-07 | PMW V1.3 operator console first-view implementation | done | Closed after Reviewer re-check; preserve DEV-07 evidence while Planner selects the next PLN-07 step. |
+| REL-02 | V1.2 installable harness / PMW baseline reconciliation | closed | Preserve the V1.2 release-baseline alignment across SSOT, DB, generated docs, manuals, and packaging. |
 | PLN-06 | Standalone Business Harness V1.1 implementation | closed | Copy standard-template into the first real project and run harness:init. |
 | REV-04 | Standard-template real-world readiness review | done | No active review action; reopen only if a new starter usability blocker appears. |
 | DEV-06 | Standard-template hardening | done | Preserve the hardened starter surface and reopen only if copied-starter usability drifts. |
@@ -47,18 +51,18 @@
 | DEV-04 | PMW read surface | done | Closed after browser verification passed at http://127.0.0.1:4173. |
 
 ## Handoff Log
-- 2026-04-26T03:15:19.903Z: PLN-06 V1.1 closed with standalone runtime layout, command UX, profile evidence gates, validator/reporting hardening, and synchronized standard-template.
-- 2026-04-26T03:06:16.099Z: PLN-06 requirements approved; implementation packet opened and V1.1 runtime/layout/profile/validator work is in progress.
-- 2026-04-26T02:22:53.237Z: Refined PLN-06 requirements with priority boundaries, command levels, validator enforcement levels, sync classification, state vocabulary, command output, profile activation, and packet readiness contracts.
-- 2026-04-26T02:13:52.088Z: Opened PLN-06 requirements-first lane after rolling back premature partial implementation changes.
-- 2026-04-24T04:01:28.896Z: DEV-06 and REV-04 are closed; preserve the real-world-ready starter and reopen only if copied-starter usability drifts.
-- 2026-04-23T18:30:00+09:00: Closed REV-02 after extending validator coverage to artifact_index category task_packet, syncing starter contracts/manual, and confirming no open generalization review finding remains.
-- 2026-04-23T14:01:07.573Z: Added copied-starter initialization automation plus explicit pre-bootstrap validator guidance so a new project can run one bootstrap entrypoint, seed repo-local DB/generated docs, and get a clear starter_bootstrap_pending message before initialization instead of raw generation-state errors.
-- 2026-04-23T13:45:00+09:00: Closed DSG-02 after defining the standard UX archetype reference, selected archetype/deviation evidence rule, and design hold condition; OPS-02 is now active.
-- 2026-04-23T13:18:36.307Z: Closed REV-03 after confirming SIM-01, SIM-02, and SIM-03 introduced no open reusable drift, starter placeholders remained starter-safe, and root/starter validation stayed clean.
-- 2026-04-23T13:10:00+09:00: Closed PLN-05 after defining the standard authoritative source intake reference, disposition rule, conflict/implementation-impact reporting requirement, and planning hold condition; DSG-02 is now active.
+- 2026-05-01T15:30:23.913Z: [reviewer -> planner] DEV-08 packet exit approved | no open finding remains | select next PLN-07 V1.3 planning step
+- 2026-05-01T15:24:57.075Z: [tester -> reviewer] DEV-08 PMW next-task owner/workflow re-verification passed | Action Board PLN-07 routes planner/plan.md | review packet exit closeout
+- 2026-05-01T15:18:34.608Z: [developer -> tester] DEV-08 PMW next-task owner/workflow remediation completed | root/starter tests passed | verify Action Board nextTask route parity and PMW evidence
+- 2026-05-01T15:07:29.957Z: [reviewer -> developer] DEV-08 packet exit review found PMW next-task owner/workflow mismatch | fix Action Board routing and add root/starter regression coverage
+- 2026-05-01T15:00:36.764Z: [tester -> reviewer] DEV-08 Tester re-verification passed | PM workflow routing and remediation evidence clean | review packet exit gate and closeout readiness
+- 2026-05-01T14:47:28.550Z: [developer -> tester] DEV-08 PM workflow addition completed | root/starter tests and validator passed | verify PM workflow contract, PM routing, and root/starter sync
+- 2026-05-01T14:38:12.257Z: [developer -> tester] DEV-08 route ambiguity and missing-workflow diagnostic remediation completed | root/starter tests and validator passed | re-verify negative routing cases and PMW diagnostics
+- 2026-05-01T14:29:44.239Z: [tester -> developer] DEV-08 verification found route ambiguity and missing-workflow diagnostic gaps | positive tests passed | remediate alias matching and read-model route diagnostics
+- 2026-05-01T14:19:34.003Z: [developer -> tester] DEV-08 workflow contracts and handoff routing implemented | root/starter tests and validator passed | verify contract parsing, route behavior, and PMW/handoff evidence
+- 2026-05-01T13:58:09.680Z: [planner -> planner] DEV-08 detailed agreement recommended | Ready For Code remains pending | user should approve or adjust before developer handoff
 
 ## Generation Metadata
 - Generated docs: CURRENT_STATE.md, TASK_LIST.md
-- Source revision: 2026-04-26T03:15:19.903Z
+- Source revision: 2026-05-01T15:30:23.913Z
 - Sync status: fresh at generation time

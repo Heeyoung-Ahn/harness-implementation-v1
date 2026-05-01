@@ -15,6 +15,8 @@ import {
 } from "./harness-paths.js";
 import { looksLikeStarterPlaceholder } from "./init-project.js";
 import { createOperatingStateStore, DEFAULT_DB_PATH } from "./operating-state-store.js";
+import { RELEASE_BASELINE, isInstallableReleaseMaintainerRepo } from "./release-baseline.js";
+import { resolveHandoffExecution } from "./workflow-routing.js";
 
 export const STANDARD_PATH_MIGRATIONS = {
   "REQUIREMENTS.md": ARTIFACT_PATHS.requirements,
@@ -77,7 +79,7 @@ export function runDoctor({ repoRoot = process.cwd(), outputDir = repoRoot, dbPa
       summary: failed.length === 0 ? "Harness doctor passed." : "Harness doctor found blocking issues.",
       checks,
       validation,
-      nextAction: failed[0]?.recovery ?? warned[0]?.recovery ?? recommendNextActionFromState(store, validation)
+      nextAction: failed[0]?.recovery ?? warned[0]?.recovery ?? recommendNextActionFromState(store, validation, repoRoot)
     };
   });
 }
@@ -87,7 +89,9 @@ export function buildHarnessStatus({ repoRoot = process.cwd(), outputDir = repoR
     const validation = runValidator({ repoRoot, outputDir, dbPath });
     const releaseState = store.getReleaseState("current");
     const workItems = store.listWorkItems();
-    const openWorkItems = workItems.filter((item) => !isClosedStatus(item.status));
+    const latestHandoff = store.listRecentHandoffs(1)[0] ?? null;
+    const handoff = resolveHandoffExecution({ repoRoot, workItems, latestHandoff });
+    const primaryWorkItem = handoff.task;
     const blockers = store.listGateRisks({ status: "open" });
     const decisions = store.listDecisions({ status: "open", decisionNeeded: true });
     const activeProfiles = readActiveProfileSummary(repoRoot);
@@ -98,12 +102,23 @@ export function buildHarnessStatus({ repoRoot = process.cwd(), outputDir = repoR
       gateState: releaseState?.releaseGateState ?? "unknown",
       focus: releaseState?.currentFocus ?? "unknown",
       releaseGoal: releaseState?.releaseGoal ?? "unknown",
-      openWorkItems: openWorkItems.length,
+      openWorkItems: workItems.filter((item) => !isClosedStatus(item.status)).length,
       openBlockers: blockers.length,
       openDecisions: decisions.length,
       activeProfiles,
+      assignment: primaryWorkItem
+        ? {
+            workItemId: primaryWorkItem.workItemId,
+            title: primaryWorkItem.title,
+            status: primaryWorkItem.status,
+            owner: primaryWorkItem.owner ?? "unassigned",
+            nextAction: primaryWorkItem.nextAction ?? "not recorded"
+          }
+        : null,
+      handoff: handoff.handoff,
+      nextOwner: handoff.owner,
       validation: summarizeValidation(validation),
-      nextAction: recommendNextActionFromState(store, validation)
+      nextAction: recommendNextActionFromState(store, validation, repoRoot)
     };
   });
 }
@@ -111,11 +126,53 @@ export function buildHarnessStatus({ repoRoot = process.cwd(), outputDir = repoR
 export function recommendNextAction({ repoRoot = process.cwd(), outputDir = repoRoot, dbPath = DEFAULT_DB_PATH } = {}) {
   return withStore({ dbPath, repoRoot }, (store) => {
     const validation = runValidator({ repoRoot, outputDir, dbPath });
+    const workItems = store.listWorkItems();
+    const latestHandoff = store.listRecentHandoffs(1)[0] ?? null;
+    const handoff = resolveHandoffExecution({ repoRoot, workItems, latestHandoff });
+    const primaryWorkItem = handoff.task;
     return {
       ok: validation.ok,
       command: "next",
-      nextAction: recommendNextActionFromState(store, validation),
+      nextAction: recommendNextActionFromState(store, validation, repoRoot),
+      nextOwner: handoff.owner,
+      nextTask: primaryWorkItem
+        ? {
+            workItemId: primaryWorkItem.workItemId,
+            title: primaryWorkItem.title,
+            status: primaryWorkItem.status
+          }
+        : null,
       validation: summarizeValidation(validation)
+    };
+  });
+}
+
+export function resolveHandoff({ repoRoot = process.cwd(), outputDir = repoRoot, dbPath = DEFAULT_DB_PATH } = {}) {
+  return withStore({ dbPath, repoRoot }, (store) => {
+    const validation = runValidator({ repoRoot, outputDir, dbPath });
+    const workItems = store.listWorkItems();
+    const latestHandoff = store.listRecentHandoffs(1)[0] ?? null;
+    const handoff = resolveHandoffExecution({
+      repoRoot,
+      workItems,
+      latestHandoff,
+      includeWorkflowDetails: true
+    });
+
+    return {
+      ok: handoff.routeStatus === "ready",
+      command: "handoff",
+      routeStatus: handoff.routeStatus,
+      resolvedBy: handoff.resolvedBy,
+      nextOwner: handoff.owner,
+      workflow: handoff.workflow,
+      workflowDetails: handoff.workflowDetails,
+      currentStateNextAgent: handoff.currentStateNextAgent,
+      nextTask: handoff.task,
+      recentHandoff: handoff.handoff,
+      commandHints: handoff.commandHints,
+      validation: summarizeValidation(validation),
+      nextAction: recommendNextActionFromState(store, validation, repoRoot)
     };
   });
 }
@@ -145,7 +202,7 @@ export function explainCurrentBlockers({ repoRoot = process.cwd(), outputDir = r
       command: "explain",
       summary: blockers.length === 0 ? "No current blocker is recorded." : `${blockers.length} blocker(s) require attention.`,
       blockers,
-      nextAction: blockers[0]?.recovery ?? recommendNextActionFromState(store, validation)
+      nextAction: blockers[0]?.recovery ?? recommendNextActionFromState(store, validation, repoRoot)
     };
   });
 }
@@ -159,7 +216,7 @@ export function writeValidationReport({ repoRoot = process.cwd(), outputDir = re
   const report = {
     ok: validation.ok,
     command: "validation-report",
-    validatorVersion: "v1.1",
+    validatorVersion: RELEASE_BASELINE.validatorVersion,
     executedAt: new Date().toISOString(),
     profileSummary: status.activeProfiles,
     findings: validation.findings,
@@ -528,7 +585,7 @@ function summarizeValidation(validation) {
   };
 }
 
-function recommendNextActionFromState(store, validation) {
+function recommendNextActionFromState(store, validation, repoRoot = process.cwd()) {
   const firstError = validation.findings.find((finding) => finding.severity === "error");
   if (firstError) {
     return recoveryForFinding(firstError);
@@ -546,7 +603,10 @@ function recommendNextActionFromState(store, validation) {
 
   const releaseState = store.getReleaseState("current");
   if (isClosedStatus(releaseState?.currentStage)) {
-    return "V1.1 is closed. Start the next real project by copying standard-template and running harness:init.";
+    if (isInstallableReleaseMaintainerRepo(repoRoot)) {
+      return RELEASE_BASELINE.closedNextAction;
+    }
+    return "The current release is closed. Review the latest handoff and open the next approved lane.";
   }
 
   const activeWork = store.listWorkItems().find((item) => !isClosedStatus(item.status));

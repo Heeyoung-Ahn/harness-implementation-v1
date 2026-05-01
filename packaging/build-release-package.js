@@ -1,9 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { RELEASE_BASELINE } from "../.harness/runtime/state/release-baseline.js";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const packageRoot = path.join(repoRoot, "dist", "standard-harness-v1.2");
+const packageRoot = path.join(repoRoot, "dist", RELEASE_BASELINE.releasePackageDirectory);
 const payloadRoot = path.join(packageRoot, ".package");
 
 if (fs.existsSync(packageRoot)) {

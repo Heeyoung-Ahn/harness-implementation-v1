@@ -1,7 +1,7 @@
 # Task List
 
 ## Current Release Target
-- Close the kickoff baseline so the first approved project packet can open safely
+- Close the kickoff baseline so the first approved project packet can open safely on top of the copied V1.2 installable standard harness baseline
 
 ## Active Locks
 | Task ID | Scope | Owner | Status | Started At | Notes |

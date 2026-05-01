@@ -20,6 +20,14 @@ This file keeps thin, durable prevention rules for repeated process or quality i
 - Linked Follow-Up Item: none
 - Source / Evidence: User feedback on 2026-04-19 in this repo and `C:\Newface\10 Antigravity\14 wmbs`, plus DEV-04 browser verification evidence in `.harness\pmw-home.png`, `.harness\pmw-full.png`, and `.harness\pmw-dev05.png`.
 
+- Rule ID: REL-BASELINE-001
+- Repeated Mistake / Trigger: Installable release surfaces (`standard-template/`, `installer/`, `pmw-app/`, `packaging/`, manuals, `dist/`) move to a new baseline label while root SSOT, DB hot-state, generated docs, or validator messages still describe the previous release.
+- Preventive Rule: Any lane that changes the installable payload, separate PMW behavior, packaging label, or release manual must update the shared release-baseline constant, root `.agents/artifacts/*`, `.harness/operating_state.sqlite`, generated docs, validation report, and the matching starter runtime/test guardrail in the same lane. Closeout is blocked if maintainer release surfaces and SSOT disagree.
+- Check Method: Run root `npm.cmd test`, `npm.cmd run harness:validation-report`, `node --test pmw-app/test/*.test.js`, and `npm.cmd test` in `standard-template/`; review validator findings for `release_baseline_*` codes.
+- Promotion Origin: Standardized into the baseline during `REL-02` closeout on 2026-04-27.
+- Linked Follow-Up Item: none
+- Source / Evidence: commit `b225956` shipped installable V1.2 surfaces while root SSOT and DB remained on V1.1 until `REL-02` reconciliation on 2026-04-27.
+
 ## Promotion Candidates
 
 - Candidate ID: SIM-MULTI-PROFILE-001

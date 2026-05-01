@@ -1,7 +1,7 @@
 # Project Progress
 
 ## Summary
-This board is the canonical whole-project tracker for the standardized harness baseline and its approved follow-up generalization lane. PMW reads this file directly to show the overall execution table.
+This board is the canonical whole-project tracker for the V1.2 installable harness / separate PMW baseline and the active V1.3 planning follow-up. PMW reads this file directly to show the overall execution table, including the active `PLN-07` lane and the closed `DEV-07` first-view implementation packet.
 
 ## Progress Board
 | Phase | Task ID | Task | Status | Notes | Source |
@@ -17,6 +17,16 @@ This board is the canonical whole-project tracker for the standardized harness b
 | Build | DEV-04 | PMW read surface | done | Standardized PMW read-only surface is browser-verified. | reference/packets/PKT-01_DEV-04_PMW_READ_SURFACE.md |
 | Build | DEV-05 | Validator / migration / cutover tooling | done | Validator, migration preview/apply, cutover preflight, and cutover report are implemented and verified against the standardized harness contract on 2026-04-22. | reference/packets/PKT-01_DEV-05_VALIDATOR_MIGRATION_CUTOVER.md |
 | Build | DEV-06 | Standard-template hardening | done | Closed on 2026-04-24 after enforcing Node 24 preflight in the launcher and JS init path, restoring green root/starter tests, replacing starter review/test stubs with usable templates, and deleting placeholder-only helper scripts from root and starter. | reference/packets/PKT-01_DEV-06_STANDARD_TEMPLATE_HARDENING.md |
+| Profile | PRF-04 | Legacy Excel/VBA-MariaDB replacement profile | done | Closed on 2026-04-26 as part of the approved standalone business-system harness baseline. | reference/packets/PKT-01_PLN-06_STANDALONE_BUSINESS_HARNESS_V1_1_IMPLEMENTATION.md |
+| Profile | PRF-05 | Python/Django backoffice profile | done | Closed on 2026-04-26 as part of the approved standalone business-system harness baseline. | reference/packets/PKT-01_PLN-06_STANDALONE_BUSINESS_HARNESS_V1_1_IMPLEMENTATION.md |
+| Profile | PRF-06 | Workflow/approval application profile | done | Closed on 2026-04-26 as part of the approved standalone business-system harness baseline. | reference/packets/PKT-01_PLN-06_STANDALONE_BUSINESS_HARNESS_V1_1_IMPLEMENTATION.md |
+| Profile | PRF-07 | Lightweight web/app profile | done | Closed on 2026-04-26 in the cross-project profile hardening addendum. | reference/artifacts/REVIEW_REPORT.md |
+| Profile | PRF-08 | Android native app profile | done | Closed on 2026-04-26 in the cross-project profile hardening addendum. | reference/artifacts/REVIEW_REPORT.md |
+| Profile | PRF-09 | Node/frontend web app profile | done | Closed on 2026-04-26 in the cross-project profile hardening addendum. | reference/artifacts/REVIEW_REPORT.md |
+| Release | REL-02 | V1.2 installable harness / PMW baseline reconciliation | done | Closed on 2026-04-27 after reconciling already-implemented installable packaging, separate PMW, PRF-07/08/09 hardening, SSOT/DB truth, and release-baseline validator coverage. | reference/artifacts/REVIEW_REPORT.md |
+| Planning | PLN-07 | V1.3 PMW operator console / workflow-contract planning | in_progress | Opened on 2026-04-27 to promote the approved V1.3 direction into canonical planning state while preserving the V1.2 installable baseline; `DEV-08` is now closed and Planner should select the next V1.3 planning step. | reference/planning/PLN-07_PMW_V1_3_OPERATOR_CONSOLE_DRAFT.md |
+| Packet | DEV-07 | PMW V1.3 operator console first view | done | Closed on 2026-05-01 after tester verification, user testing, Developer remediation of the artifact-preview path-boundary finding, sibling-prefix escape regression coverage, and Reviewer re-check approval. | reference/packets/PKT-01_DEV-07_PMW_V1_3_OPERATOR_CONSOLE_FIRST_VIEW.md |
+| Packet | DEV-08 | Workflow contracts and handoff routing | done | Closed on 2026-05-02 after Reviewer approved packet exit closeout for workflow contracts, PM routing, root/starter sync, and PMW Action Board `nextTask` source-owner route evidence. | reference/packets/PKT-01_DEV-08_WORKFLOW_CONTRACTS_AND_HANDOFF_ROUTING.md |
 | Security | SEC-01 | Security review and remediation | done | Release-bound security review closed on 2026-04-22 after remediating rollback bundle presence enforcement in cutover preflight and re-running clean validator, migration preview, cutover preflight, and cutover report evidence. | .agents/artifacts/IMPLEMENTATION_PLAN.md |
 | Test | TST-01 | Generated docs parity | done | Automated parity coverage exists and the latest targeted plus full test runs were green on 2026-04-22. | .agents/artifacts/IMPLEMENTATION_PLAN.md |
 | Test | TST-02 | PMW browser UX / 30-second comprehension check | done | 2026-04-22 headless Chrome evidence showed the header and the 4-card current-situation grid in the initial browser view after the overview switched to a collapsed-by-default first view. | reference/packets/PKT-01_DEV-04_PMW_READ_SURFACE.md |

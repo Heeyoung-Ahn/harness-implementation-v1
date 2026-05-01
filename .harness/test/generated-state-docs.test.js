@@ -11,6 +11,7 @@ import {
   writeGeneratedStateDocs
 } from "../runtime/state/generate-state-docs.js";
 import { validateGeneratedStateDocs } from "../runtime/state/drift-validator.js";
+import { RELEASE_BASELINE } from "../runtime/state/release-baseline.js";
 import {
   seedProfileAwareValidatorFixtures,
   writeConcreteTaskPacketFixture
@@ -670,6 +671,45 @@ test("ignores legacy packet files that do not match the current concrete packet 
   store.close();
 });
 
+test("detects release baseline drift between maintainer SSOT and installable release surfaces", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-release-baseline-drift-"));
+  seedRepoFiles(repoRoot);
+  seedMaintainerReleaseFiles(repoRoot, { stale: true });
+
+  const store = createOperatingStateStore({
+    dbPath: path.join(repoRoot, ".harness", "operating_state.sqlite"),
+    now: createClock("2026-04-27T01:00:00.000Z")
+  });
+
+  store.setReleaseState({
+    currentStage: "closed",
+    releaseGateState: "closed",
+    currentFocus: "PLN-06 standalone business-system harness V1.1 is implemented and verified",
+    releaseGoal: "Production-ready standalone standard harness template for Excel/VBA-MariaDB replacement projects is ready for real project kickoff",
+    sourceRef: ".agents/artifacts/CURRENT_STATE.md",
+    metadata: {
+      lane: "PLN-06",
+      workflowState: "closed",
+      releaseBaseline: "V1.1"
+    }
+  });
+
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+
+  const result = validateGeneratedStateDocs({
+    store,
+    outputDir: repoRoot,
+    repoRoot
+  });
+
+  const codes = new Set(result.findings.map((finding) => finding.code));
+  assert.equal(result.ok, false);
+  assert.equal(codes.has("release_baseline_state_drift"), true);
+  assert.equal(codes.has("release_baseline_marker_missing"), true);
+
+  store.close();
+});
+
 function seedRepoFiles(repoRoot) {
   fs.mkdirSync(path.join(repoRoot, ".agents", "artifacts"), { recursive: true });
   for (const fileName of [
@@ -680,6 +720,62 @@ function seedRepoFiles(repoRoot) {
     fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", fileName), `# ${fileName}\n`, "utf8");
   }
   seedProfileAwareValidatorFixtures(repoRoot);
+}
+
+function seedMaintainerReleaseFiles(repoRoot, { stale = false } = {}) {
+  fs.mkdirSync(path.join(repoRoot, "installer"), { recursive: true });
+  fs.mkdirSync(path.join(repoRoot, "pmw-app"), { recursive: true });
+  fs.mkdirSync(path.join(repoRoot, "packaging"), { recursive: true });
+  fs.mkdirSync(path.join(repoRoot, "reference", "manuals"), { recursive: true });
+  fs.mkdirSync(path.join(repoRoot, "reference", "artifacts"), { recursive: true });
+
+  fs.writeFileSync(path.join(repoRoot, "installer", "install-harness.js"), "// harness installer\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, "pmw-app", "install-pmw.js"), "// pmw installer\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, "packaging", "build-windows-exe-installers.js"), "// release build\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, "packaging", "build-release-package.js"), "// release build\n", "utf8");
+  fs.writeFileSync(
+    path.join(repoRoot, "reference", "manuals", "HARNESS_MANUAL.md"),
+    `# Harness Manual\n\n${RELEASE_BASELINE.label} installable harness baseline.\n`,
+    "utf8"
+  );
+  fs.writeFileSync(
+    path.join(repoRoot, "reference", "manuals", "PMW_MANUAL.md"),
+    `# PMW Manual\n\n${RELEASE_BASELINE.label} separate PMW baseline.\n`,
+    "utf8"
+  );
+
+  if (stale) {
+    fs.writeFileSync(
+      path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"),
+      "# Current State\n\n## Snapshot\n- Current Focus: PLN-06 standalone business-system harness V1.1 is implemented and verified\n",
+      "utf8"
+    );
+    fs.writeFileSync(
+      path.join(repoRoot, ".agents", "artifacts", "TASK_LIST.md"),
+      "# Task List\n\n## Current Release Target\n- Complete V1.1 as a standalone production-ready standard harness template.\n",
+      "utf8"
+    );
+    fs.writeFileSync(
+      path.join(repoRoot, ".agents", "artifacts", "PROJECT_PROGRESS.md"),
+      "# Project Progress\n\n## Summary\nTrack the whole-project tracker here.\n",
+      "utf8"
+    );
+    fs.writeFileSync(
+      path.join(repoRoot, ".agents", "artifacts", "IMPLEMENTATION_PLAN.md"),
+      "# Implementation Plan\n\n## Summary\nPLN-06 V1.1 lane is closed.\n",
+      "utf8"
+    );
+    fs.writeFileSync(
+      path.join(repoRoot, ".agents", "artifacts", "REQUIREMENTS.md"),
+      "# Requirements\n\n## Summary\nV1.2 upgrade is still only a direction.\n",
+      "utf8"
+    );
+    fs.writeFileSync(
+      path.join(repoRoot, "reference", "artifacts", "REVIEW_REPORT.md"),
+      "# Review Report\n\n## 2026-04-26 PLN-06 V1.1 Closeout Review\n",
+      "utf8"
+    );
+  }
 }
 
 function generatedDocPath(repoRoot, docName) {

@@ -1,10 +1,10 @@
 # Validation Report
 
 ## Summary
-- Executed at: 2026-04-26T05:53:10.084Z
-- Validator version: v1.1
+- Executed at: 2026-05-01T15:32:21.638Z
+- Validator version: v1.2
 - Gate decision: pass
-- Next action: V1.1 is closed. Start the next real project by copying standard-template and running harness:init.
+- Next action: Select the next V1.3 PMW operator-console / workflow-contract planning step now that DEV-08 packet exit is approved.
 
 ## Active Profiles
 - Source: .agents/artifacts/ACTIVE_PROFILES.md

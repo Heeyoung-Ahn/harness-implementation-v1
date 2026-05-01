@@ -8,6 +8,7 @@ import {
   buildHarnessStatus,
   explainCurrentBlockers,
   recommendNextAction,
+  resolveHandoff,
   runDoctor,
   runCutoverPreflight,
   runValidator,
@@ -25,6 +26,7 @@ const commands = {
   doctor: () => runDoctor({ repoRoot, outputDir, dbPath }),
   status: () => buildHarnessStatus({ repoRoot, outputDir, dbPath }),
   next: () => recommendNextAction({ repoRoot, outputDir, dbPath }),
+  handoff: () => resolveHandoff({ repoRoot, outputDir, dbPath }),
   explain: () => explainCurrentBlockers({ repoRoot, outputDir, dbPath }),
   "validation-report": () => writeValidationReport({ repoRoot, outputDir, dbPath }),
   "pmw-export": () => writeProjectExport({ repoRoot, outputDir, dbPath }),
@@ -37,7 +39,7 @@ const commands = {
 
 if (!command || !commands[command]) {
   process.stderr.write(
-    "Usage: node .harness/runtime/state/dev05-cli.js <validate|doctor|status|next|explain|validation-report|pmw-export|project-manifest|migration-preview|migration-apply|cutover-preflight|cutover-report>\n"
+    "Usage: node .harness/runtime/state/dev05-cli.js <validate|doctor|status|next|handoff|explain|validation-report|pmw-export|project-manifest|migration-preview|migration-apply|cutover-preflight|cutover-report>\n"
   );
   process.exit(1);
 }
@@ -47,7 +49,7 @@ process.stdout.write(`${formatResult(result)}\n`);
 process.exit(result.ok === false || result.cutoverReady === false ? 1 : 0);
 
 function formatResult(result) {
-  if (["doctor", "status", "next", "explain", "validation-report"].includes(result.command)) {
+  if (["doctor", "status", "next", "handoff", "explain", "validation-report"].includes(result.command)) {
     return `${formatHumanSummary(result)}\n\n${JSON.stringify(result, null, 2)}`;
   }
 
@@ -65,11 +67,20 @@ function formatHumanSummary(result) {
   }
 
   if (result.command === "status") {
+    const lastHandoff = result.handoff
+      ? `${result.handoff.createdAt} ${result.handoff.fromRole} -> ${result.handoff.toRole} | ${result.handoff.summary}`
+      : "none recorded";
+    const assignment = result.assignment
+      ? `${result.assignment.owner}: [${result.assignment.workItemId}] ${result.assignment.title} (${result.assignment.status})`
+      : "none";
     return [
       "Harness Status",
       `- Stage: ${result.stage}`,
       `- Gate: ${result.gateState}`,
       `- Focus: ${result.focus}`,
+      `- Last handoff: ${lastHandoff}`,
+      `- Current assignment: ${assignment}`,
+      `- Next owner: ${result.nextOwner ?? "unassigned"}`,
       `- Open blockers: ${result.openBlockers}`,
       `- Open decisions: ${result.openDecisions}`,
       `- Validation: ${result.validation.ok ? "pass" : "fail"} (${result.validation.blockingFindingCount} blocker(s))`,
@@ -78,9 +89,30 @@ function formatHumanSummary(result) {
   }
 
   if (result.command === "next") {
+    const nextTask = result.nextTask
+      ? `[${result.nextTask.workItemId}] ${result.nextTask.title} (${result.nextTask.status})`
+      : "none";
     return [
       "Harness Next",
       `- Validation: ${result.validation.ok ? "pass" : "fail"}`,
+      `- Next owner: ${result.nextOwner ?? "unassigned"}`,
+      `- Next task: ${nextTask}`,
+      `- Next action: ${result.nextAction}`
+    ].join("\n");
+  }
+
+  if (result.command === "handoff") {
+    const nextTask = result.nextTask
+      ? `[${result.nextTask.workItemId}] ${result.nextTask.title} (${result.nextTask.status})`
+      : "none";
+    return [
+      "Harness Handoff",
+      `- Result: ${result.ok ? "ready" : result.routeStatus}`,
+      `- Next owner: ${result.nextOwner ?? "unassigned"}`,
+      `- Route: ${result.workflow}`,
+      `- Resolved by: ${result.resolvedBy}`,
+      `- Next task: ${nextTask}`,
+      `- Command hint: ${result.commandHints.npm} | ${result.commandHints.portable}`,
       `- Next action: ${result.nextAction}`
     ].join("\n");
   }

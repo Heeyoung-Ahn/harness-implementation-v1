@@ -2,6 +2,110 @@
 
 Use this artifact when the project enters a formal review gate.
 
+## 2026-05-02 DEV-08 Packet Exit Closeout Review
+
+- Scope: packet exit closeout review for `DEV-08` workflow contracts, handoff routing remediation, PM workflow addition, root/starter parity, and PMW route-context evidence.
+- Entry condition:
+  - Tester re-verification passed on 2026-05-01.
+  - DB hot-state and PMW export route the current active task to Reviewer for packet closeout.
+- Evidence reviewed:
+  - `reference/packets/PKT-01_DEV-08_WORKFLOW_CONTRACTS_AND_HANDOFF_ROUTING.md`
+  - `.harness/runtime/state/context-restoration-read-model.js`
+  - `.harness/runtime/state/workflow-routing.js`
+  - `.agents/runtime/pmw-read-model.json`
+  - `.agents/artifacts/CURRENT_STATE.md`
+  - `.agents/artifacts/TASK_LIST.md`
+  - `.agents/artifacts/VALIDATION_REPORT.md`
+  - `reference/artifacts/WALKTHROUGH.md`
+- Finding:
+  - PMW Action Board `nextTask` derives `owner` and `workflow` from the current `handoffExecution` instead of the `nextTaskSource` owner.
+  - Current PMW evidence shows `nextTask.taskId: PLN-07` with `owner: reviewer` and `.agents/workflows/review.md`, while canonical `PLN-07` remains planner-owned.
+  - This can mislead the operator about the next lane after DEV-08 and conflicts with the DEV-08 route-context acceptance target.
+- Required remediation:
+  - Make `nextTask` owner/workflow derive from `nextTaskSource.owner` using the same route contract as handoff routing.
+  - Keep root and `standard-template` synchronized.
+  - Add root/starter regression coverage for an active task routed to Reviewer while the next task is Planner-owned.
+  - Rerun root/starter tests, validator, handoff, PMW export, and validation report.
+- Developer remediation:
+  - `.harness/runtime/state/context-restoration-read-model.js` now renders real `nextTask` owner/workflow from `nextTaskSource.owner` and `workflowForOwner()`.
+  - `standard-template/.harness/runtime/state/context-restoration-read-model.js` is synchronized with the same fix.
+  - Root and `standard-template` regression tests cover a reviewer-routed active task followed by planner-owned `PLN-07`.
+  - Verification passed with root/starter targeted read-model tests 5/5 and root/starter full `npm.cmd test` 36/36.
+- Tester re-verification:
+  - PMW Action Board now shows `currentTask: DEV-08`, `owner: tester`, `workflow: .agents/workflows/test.md`.
+  - PMW Action Board now shows `nextTask: PLN-07`, `owner: planner`, `workflow: .agents/workflows/plan.md`.
+  - Root and `standard-template` targeted read-model tests passed 5/5 each; root and `standard-template` full `npm.cmd test` passed 36/36 each.
+  - Root validator, handoff, PMW export, validation report, and status checks passed with no validator findings.
+- Packet exit decision:
+  - approved
+- Reviewer re-check:
+  - No blocking or non-blocking finding was found in the DEV-08 packet exit re-check.
+  - PMW Action Board source parity is now aligned: `currentTask` routes to `DEV-08` / `reviewer` / `.agents/workflows/review.md`, and `nextTask` routes to `PLN-07` / `planner` / `.agents/workflows/plan.md`.
+  - Root and `standard-template` targeted read-model tests passed 5/5 each; root and `standard-template` full `npm.cmd test` passed 36/36 each.
+  - Root validator, handoff, and PMW export passed with no validator findings.
+  - Residual debt disposition: none for the reviewed DEV-08 scope.
+- Next handoff:
+  - Planner should select the next `PLN-07` V1.3 PMW operator-console / workflow-contract planning step.
+- Status: done
+
+## 2026-05-01 DEV-07 PMW V1.3 First-View Review
+
+- Scope: formal review of `DEV-07` after tester verification and user browser testing completed for the PMW V1.3 first-view operator console.
+- Entry condition:
+  - Tester verification passed and was recorded in `reference/artifacts/WALKTHROUGH.md`.
+  - PMW server tests, read-model tests, root tests, and validator were green before review.
+- Evidence reviewed:
+  - `reference/packets/PKT-01_DEV-07_PMW_V1_3_OPERATOR_CONSOLE_FIRST_VIEW.md`
+  - `pmw-app/runtime/server.js`
+  - `pmw-app/test/server.test.js`
+  - `.harness/runtime/state/context-restoration-read-model.js`
+  - `.agents/artifacts/CURRENT_STATE.md`
+  - `.agents/artifacts/TASK_LIST.md`
+  - `reference/artifacts/WALKTHROUGH.md`
+- Finding:
+  - `pmw-app/runtime/server.js` checks artifact preview containment with `absolutePath.startsWith(repoRoot)`.
+  - A selected project rooted at a path such as `C:\repo\app` can be bypassed by a resolved sibling path such as `C:\repo\app-private\...`, because that sibling string still starts with `C:\repo\app`.
+  - The subsequent `fs.existsSync()` and `fs.readFileSync()` calls can then preview files outside the selected project when the crafted sibling-prefix path exists.
+- Risk:
+  - PMW artifact preview is intended to expose selected-project artifacts only. This bug weakens the separate project boundary and can disclose adjacent local files from the same operator machine.
+- Required remediation:
+  - Replace the prefix check with a segment-aware containment check, for example `path.relative(repoRoot, absolutePath)` rejecting `..`, absolute relatives, and same-prefix siblings.
+  - Add PMW server regression coverage for an artifact path that tries to escape into a sibling directory with the same prefix.
+  - Rerun `npm.cmd test` in `pmw-app`, the PMW read-surface tests, root `npm.cmd test`, and `npm.cmd run harness:validate`.
+- Developer remediation:
+  - `pmw-app/runtime/server.js` now uses a segment-aware `path.relative()` containment helper before reading artifact preview files.
+  - `pmw-app/test/server.test.js` now seeds an `alpha-project-private` sibling and verifies `../alpha-project-private/SECRET.md` is rejected.
+  - Verification passed with `npm.cmd test` in `pmw-app`, targeted PMW/read-model tests, root `npm.cmd test`, and `npm.cmd run harness:validate`.
+- Reviewer re-check:
+  - Segment-aware containment rejects sibling-prefix escape attempts before `fs.readFileSync()`.
+  - Regression coverage directly exercises the prior sibling-prefix escape shape.
+  - Re-check evidence passed with `npm.cmd test` in `pmw-app`, targeted PMW/read-model tests, root `npm.cmd test`, and `npm.cmd run harness:validate`.
+- Result: approved.
+- Status: done
+
+## 2026-04-27 V1.2 Installable Harness / PMW Baseline Reconciliation
+
+- Scope: reconcile the already-implemented V1.2 installable harness baseline across maintainer SSOT, DB hot-state, generated docs, separate PMW packaging, starter guardrails, and release scripts.
+- Root cause:
+  - commit `b225956` implemented installable release surfaces across `standard-template/`, `installer/`, `pmw-app/`, `packaging/`, and `reference/manuals/`, but no release-maintenance lane updated root `.agents/artifacts/*` or `.harness/operating_state.sqlite`
+  - release label strings were duplicated across runtime and packaging surfaces without a shared release-baseline source
+  - validator coverage did not yet fail when maintainer release surfaces and root SSOT diverged
+- Implemented:
+  - shared release-baseline constants for root and starter runtime/test surfaces
+  - release-baseline validator enforcement for maintainer repos
+  - canonical V1.2 updates in `CURRENT_STATE`, `TASK_LIST`, `PROJECT_PROGRESS`, `IMPLEMENTATION_PLAN`, `REQUIREMENTS`, and this review report
+  - starter kickoff status-doc updates confirming copied projects originate from the V1.2 installable baseline
+  - packaging scripts switched to the shared release-baseline directories instead of duplicated literals
+  - maintenance-map guidance tightened so reusable changes, root-only release changes, starter sync, and `dist/` regeneration have an explicit decision rule
+- Verification:
+  - root `npm test`
+  - `standard-template/` `npm test`
+  - `node --test pmw-app/test/*.test.js`
+  - root `npm run harness:validation-report`
+  - release-baseline validator tests in root and starter
+- Result: approved.
+- Status: done
+
 ## 2026-04-26 PLN-06 V1.1 Closeout Review
 
 - Scope: standalone business-system harness V1.1 for real Excel/VBA-MariaDB replacement projects.

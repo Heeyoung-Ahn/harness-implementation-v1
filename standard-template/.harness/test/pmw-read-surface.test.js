@@ -6,6 +6,7 @@ import path from "node:path";
 
 import { createOperatingStateStore } from "../runtime/state/operating-state-store.js";
 import { writePmwProjectExport } from "../runtime/state/project-manifest.js";
+import { RELEASE_BASELINE } from "../runtime/state/release-baseline.js";
 
 test("writePmwProjectExport writes a PMW-readable manifest and read model without embedding PMW app code", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "pmw-export-"));
@@ -19,7 +20,7 @@ test("writePmwProjectExport writes a PMW-readable manifest and read model withou
     currentStage: "planning",
     releaseGateState: "open",
     currentFocus: "Close PLN-00 and PLN-01 before implementation",
-    releaseGoal: "Installable V1.2 standard harness",
+    releaseGoal: `Installable ${RELEASE_BASELINE.label} standard harness`,
     sourceRef: ".agents/artifacts/CURRENT_STATE.md",
     metadata: {
       projectName: "PMW Export Smoke",
@@ -53,7 +54,11 @@ function seedRepo(repoRoot) {
   fs.mkdirSync(path.join(repoRoot, ".agents", "artifacts"), { recursive: true });
   fs.mkdirSync(path.join(repoRoot, ".agents", "runtime"), { recursive: true });
   fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "ACTIVE_PROFILES.md"), "# Active Profiles\n\n| Profile ID | Activation Reason | Required Evidence | Evidence Status | Owner | Activated At | Applies To Packets |\n| --- | --- | --- | --- | --- | --- | --- |\n| PRF-07 | smoke | baseline | ready | harness | 2026-04-26 | PLN-01 |\n| PRF-09 | smoke | baseline | ready | harness | 2026-04-26 | PLN-01 |\n", "utf8");
-  fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"), "# Current State\n\n## Snapshot\n- V1.2 installable harness smoke state.\n", "utf8");
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"),
+    `# Current State\n\n## Snapshot\n- ${RELEASE_BASELINE.label} installable harness smoke state.\n`,
+    "utf8"
+  );
   fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "TASK_LIST.md"), "# Task List\n\n## Active Tasks\n- PLN-01 active.\n", "utf8");
   fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "REQUIREMENTS.md"), "# Requirements\n\n## Summary\nInstallable standard harness and separate PMW.\n", "utf8");
   fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "IMPLEMENTATION_PLAN.md"), "# Implementation Plan\n\n## Operator Next Action\n- Confirm the initial project baseline.\n", "utf8");

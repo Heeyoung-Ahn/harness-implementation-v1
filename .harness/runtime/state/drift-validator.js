@@ -3,6 +3,15 @@ import path from "node:path";
 
 import { resolveGeneratedDocReadPath } from "./harness-paths.js";
 import { CURRENT_STATE_DOC, TASK_LIST_DOC, calculateChecksum } from "./generate-state-docs.js";
+import {
+  RELEASE_BASELINE,
+  ROOT_RELEASE_BASELINE_MARKERS,
+  isInstallableReleaseMaintainerRepo
+} from "./release-baseline.js";
+import {
+  WORKFLOW_CONTRACT_SECTIONS,
+  findMissingWorkflowContractSections
+} from "./workflow-routing.js";
 
 const REQUIRED_SECTIONS = {
   [CURRENT_STATE_DOC]: ["## Current Focus Summary", "## Decision Required Summary", "## Decision Required Detail"],
@@ -14,6 +23,17 @@ const SOURCE_WAVE_LEDGER_PATH = "reference/artifacts/AUTHORITATIVE_SOURCE_WAVE_L
 const ACTIVE_PROFILES_PATH = ".agents/artifacts/ACTIVE_PROFILES.md";
 const TASK_LIST_PATH = ".agents/artifacts/TASK_LIST.md";
 const REPOSITORY_LAYOUT_PATH = "reference/artifacts/REPOSITORY_LAYOUT_OWNERSHIP.md";
+const WORKFLOW_CONTRACT_PATHS = [
+  ".agents/workflows/deploy.md",
+  ".agents/workflows/design.md",
+  ".agents/workflows/dev.md",
+  ".agents/workflows/docu.md",
+  ".agents/workflows/handoff.md",
+  ".agents/workflows/pm.md",
+  ".agents/workflows/plan.md",
+  ".agents/workflows/review.md",
+  ".agents/workflows/test.md"
+];
 const TASK_PACKET_DIRECTORY = "reference/packets";
 const TASK_PACKET_ARTIFACT_CATEGORY = "task_packet";
 const TASK_PACKET_DISCOVERY_EXCLUDED_FILES = new Set([
@@ -469,7 +489,9 @@ export function validateGeneratedStateDocs({
   validateActiveProfiles(repoRoot, findings);
   validateProfileAwareContracts(repoRoot, findings);
   validateRegisteredTaskPackets(store, repoRoot, findings);
+  validateWorkflowContracts(repoRoot, findings);
   validateStarterSync(repoRoot, findings);
+  validateReleaseBaselineConsistency(store, repoRoot, findings);
 
   const blockingFindings = findings.filter((finding) => finding.severity === "error");
   const cutoverReady = blockingFindings.length === 0;
@@ -804,6 +826,68 @@ function validateActiveProfiles(repoRoot, findings) {
   }
 }
 
+function validateWorkflowContracts(repoRoot, findings) {
+  const roots = [
+    {
+      label: "root",
+      rootPath: repoRoot,
+      displayPrefix: ""
+    }
+  ];
+  const starterRoot = path.resolve(repoRoot, "standard-template");
+
+  if (fs.existsSync(path.resolve(starterRoot, ".agents", "workflows"))) {
+    roots.push({
+      label: "standard-template",
+      rootPath: starterRoot,
+      displayPrefix: "standard-template"
+    });
+  }
+
+  for (const root of roots) {
+    validateWorkflowContractRoot(root, findings);
+  }
+}
+
+function validateWorkflowContractRoot({ label, rootPath, displayPrefix }, findings) {
+  const workflowDir = path.resolve(rootPath, ".agents", "workflows");
+  if (!fs.existsSync(workflowDir)) {
+    return;
+  }
+
+  for (const relativePath of WORKFLOW_CONTRACT_PATHS) {
+    const absolutePath = path.resolve(rootPath, relativePath);
+    const displayPath = displayPrefix
+      ? path.posix.join(displayPrefix, relativePath)
+      : relativePath;
+
+    if (!fs.existsSync(absolutePath)) {
+      findings.push({
+        code: "workflow_contract_file_missing",
+        severity: "error",
+        path: displayPath,
+        root: label,
+        message: `${displayPath} is required for supported handoff routing.`
+      });
+      continue;
+    }
+
+    const content = fs.readFileSync(absolutePath, "utf8");
+    const missingSections = findMissingWorkflowContractSections(content);
+    for (const section of missingSections) {
+      findings.push({
+        code: "workflow_contract_section_missing",
+        severity: "error",
+        path: displayPath,
+        root: label,
+        section,
+        expectedSections: WORKFLOW_CONTRACT_SECTIONS,
+        message: `${displayPath} is missing required workflow contract section ${section}.`
+      });
+    }
+  }
+}
+
 function validateStarterSync(repoRoot, findings) {
   const starterRoot = path.resolve(repoRoot, "standard-template");
   if (!fs.existsSync(starterRoot)) {
@@ -824,6 +908,8 @@ function validateStarterSync(repoRoot, findings) {
     ".harness/runtime/state/operating_state.schema.json",
     ".harness/runtime/state/operating-state-store.js",
     ".harness/runtime/state/project-manifest.js",
+    ".harness/runtime/state/release-baseline.js",
+    ".harness/runtime/state/workflow-routing.js",
     ".harness/test/context-restoration-read-model.test.js",
     ".harness/test/dev05-tooling.test.js",
     ".harness/test/generated-state-docs.test.js",
@@ -853,6 +939,7 @@ function validateStarterSync(repoRoot, findings) {
     "reference/profiles/PRF-07_LIGHTWEIGHT_WEB_APP_PROFILE.md",
     "reference/profiles/PRF-08_ANDROID_NATIVE_APP_PROFILE.md",
     "reference/profiles/PRF-09_NODE_FRONTEND_WEB_APP_PROFILE.md",
+    ...WORKFLOW_CONTRACT_PATHS,
     REPOSITORY_LAYOUT_PATH
   ];
 
@@ -877,6 +964,60 @@ function validateStarterSync(repoRoot, findings) {
         message: `Root and standard-template differ for reusable sync path ${relativePath}.`
       });
     }
+  }
+}
+
+function validateReleaseBaselineConsistency(store, repoRoot, findings) {
+  if (!isInstallableReleaseMaintainerRepo(repoRoot)) {
+    return;
+  }
+
+  const releaseState = store.getReleaseState("current");
+  if (!releaseState) {
+    findings.push({
+      code: "release_baseline_state_missing",
+      severity: "error",
+      message: "Maintainer release repo is missing the current release_state row."
+    });
+    return;
+  }
+
+  const releaseBaseline = releaseState.metadata?.releaseBaseline;
+  if (
+    releaseBaseline !== RELEASE_BASELINE.label ||
+    !String(releaseState.currentFocus ?? "").includes(RELEASE_BASELINE.label) ||
+    !String(releaseState.releaseGoal ?? "").includes(RELEASE_BASELINE.label)
+  ) {
+    findings.push({
+      code: "release_baseline_state_drift",
+      severity: "error",
+      path: ".harness/operating_state.sqlite",
+      expectedReleaseBaseline: RELEASE_BASELINE.label,
+      actualReleaseBaseline: releaseBaseline ?? "missing",
+      message:
+        "Maintainer release baseline is implemented, but release_state still points at a different or missing baseline label."
+    });
+  }
+
+  for (const requirement of ROOT_RELEASE_BASELINE_MARKERS) {
+    const absolutePath = path.resolve(repoRoot, requirement.relativePath);
+    const content = readRequiredUtf8File({
+      filePath: absolutePath,
+      findings,
+      missingCode: "release_baseline_artifact_missing",
+      missingMessage: `Missing required release-baseline artifact ${requirement.relativePath}.`
+    });
+    if (content == null || content.includes(requirement.marker)) {
+      continue;
+    }
+
+    findings.push({
+      code: "release_baseline_marker_missing",
+      severity: "error",
+      path: requirement.relativePath,
+      expectedMarker: requirement.marker,
+      message: `${requirement.relativePath} does not declare the current ${RELEASE_BASELINE.label} release baseline marker.`
+    });
   }
 }
 

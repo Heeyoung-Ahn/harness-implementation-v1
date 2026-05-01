@@ -13,6 +13,7 @@
     "harness:doctor": "node .harness/runtime/state/dev05-cli.js doctor",
     "harness:status": "node .harness/runtime/state/dev05-cli.js status",
     "harness:next": "node .harness/runtime/state/dev05-cli.js next",
+    "harness:handoff": "node .harness/runtime/state/dev05-cli.js handoff",
     "harness:explain": "node .harness/runtime/state/dev05-cli.js explain",
     "harness:validation-report": "node .harness/runtime/state/dev05-cli.js validation-report",
     "harness:pmw-export": "node .harness/runtime/state/dev05-cli.js pmw-export",

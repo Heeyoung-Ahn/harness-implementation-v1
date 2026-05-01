@@ -7,6 +7,10 @@
 
 2026-04-26 `PLN-06` is closed as the standalone business-system harness V1.1 lane. It made `standard-template/` a standalone production-ready governance harness for large Excel/VBA-MariaDB business-system replacement projects, with no essential readiness item deferred.
 
+2026-04-27 `REL-02` is closed as the V1.2 installable harness / PMW baseline reconciliation lane. It reconciled the already-implemented installer, separate PMW app, packaging, manuals, and PRF-07/08/09 profile hardening into canonical SSOT, DB hot-state, generated docs, and validator enforcement.
+
+2026-04-27 `PLN-07` is now open as the V1.3 PMW operator-console and workflow-contract planning lane. It preserves the V1.2 installable baseline while promoting the approved V1.3 operator-console, command-catalog, handoff-launch, and agent-role workflow-contract direction into canonical planning state.
+
 ## Follow-Up Phase Plan
 1. approved release-ready baseline을 보존하면서 follow-up planning lane을 연다.
 2. `PLN-03`으로 core / optional profile / project packet activation contract를 정의한다.
@@ -55,6 +59,9 @@
 - REV-01 architecture / review gate
 
 ### Active Follow-Up Tasks
+- PLN-07 V1.3 PMW operator console and workflow-contract planning
+- DEV-07 PMW V1.3 operator console first-view packet
+- DEV-08 workflow contracts and handoff routing packet
 - PLN-03 core / optional profile / project packet activation contract
 - PLN-04 domain foundation gate
 - PLN-05 authoritative source contract
@@ -164,6 +171,208 @@ Complete all essential V1.1 readiness work in one lane so the deployable `standa
 - Added PRF-04 legacy Excel/VBA-MariaDB replacement, PRF-05 Python/Django backoffice, and PRF-06 workflow/approval application profiles.
 - Extended packet evidence and validator enforcement for V1.1 must-fail items and root/starter sync drift.
 - Verification passed with root/starter tests, root validator, starter bootstrap-pending validator guidance, operator commands, validation report, migration preview, cutover preflight, and cutover report.
+
+## V1.2 Installable Harness / PMW Baseline
+
+### Goal
+Close the already-implemented installable release baseline as canonical truth so the maintainer repo, starter payload, release packaging, manuals, DB hot-state, and generated outputs all agree on one reusable V1.2 contract.
+
+### Status
+- Closed: reconciled, verified, and guarded on 2026-04-27.
+- Implementation source: commit `b225956` already shipped the installable baseline on 2026-04-26, but SSOT and DB truth still described `PLN-06` V1.1 until `REL-02`.
+
+### Input
+- commit `b225956` release surfaces in `standard-template/`, `installer/`, `pmw-app/`, `packaging/`, and `reference/manuals/`
+- root `.agents/artifacts/*`
+- `.harness/operating_state.sqlite`
+- `.agents/runtime/generated-state-docs/*`
+- `reference/artifacts/maintenance/ROOT_STANDARD_HARNESS_MAINTENANCE_MAP.md`
+
+### Required Output
+- shared release-baseline constant for root and starter runtime
+- root and starter validator enforcement that fails on release-baseline drift in maintainer repos
+- canonical V1.2 state/docs/review closeout across `.agents/artifacts/*`
+- synchronized starter-facing status docs proving the copied starter comes from the V1.2 baseline
+- regenerated DB-derived state docs, PMW export, and validation report
+- explicit maintainer rule for when reusable changes require starter sync versus packaging/manual/dist regeneration
+
+### Exit Criteria
+- maintainer SSOT, DB hot-state, generated docs, validation report, manuals, and release packaging all reference the same V1.2 baseline
+- root and `standard-template/` share the same runtime guardrail and test coverage for release-baseline drift
+- release label / directory names are sourced from shared release-baseline metadata instead of duplicated ad hoc strings
+- future maintainer release-surface drift fails validation before closeout
+
+### Closeout
+- Closed on 2026-04-27.
+- Added `.harness/runtime/state/release-baseline.js` and `standard-template/.harness/runtime/state/release-baseline.js` as the shared release-label source for validator messaging and packaging output directories.
+- Extended root and starter `drift-validator.js` so maintainer repos fail on SSOT, DB, review artifact, and release-baseline marker drift.
+- Updated root status docs from `PLN-06` V1.1 to `REL-02` V1.2 and synchronized starter kickoff docs so they explicitly inherit the V1.2 installable baseline.
+- Regenerated DB-derived docs, PMW export, and validation report after aligning hot-state to the same baseline.
+
+### Root Cause
+- commit `b225956` implemented the installable release surfaces, but no matching release-maintenance lane updated root `.agents/artifacts/*` or `.harness/operating_state.sqlite`
+- release version strings were duplicated across packaging/runtime/manual surfaces without a shared baseline source
+- validator coverage enforced starter sync and packet/profile contracts, but it did not yet enforce release-baseline consistency for maintainer release surfaces
+
+## PLN-07 V1.3 PMW Operator Console And Workflow-Contract Planning
+
+### Goal
+Promote the approved V1.3 PMW direction into canonical planning state without breaking the V1.2 installable baseline, separate PMW deployment model, reusable root/starter sync rules, or current approved profile catalog.
+
+### Status
+- Open: approved on 2026-04-27 and now active as the planner-owned lane.
+- Current next artifact: draft and sign off `reference/packets/PKT-01_DEV-07_PMW_V1_3_OPERATOR_CONSOLE_FIRST_VIEW.md` before any new PMW implementation lane opens.
+
+### Input
+- User-approved V1.3 direction on 2026-04-27.
+- `reference/planning/PLN-07_PMW_V1_3_OPERATOR_CONSOLE_DRAFT.md`
+- `reference/packets/PKT-01_DEV-07_PMW_V1_3_OPERATOR_CONSOLE_FIRST_VIEW.md`
+- `.agents/artifacts/REQUIREMENTS.md`
+- `.agents/artifacts/CURRENT_STATE.md`
+- `.agents/artifacts/TASK_LIST.md`
+
+### Required Output
+- canonical requirements wording that redefines PMW as an independently installable multi-project operator console
+- approved phase-1 PMW command-catalog split between launcher commands and terminal-only guided commands
+- explicit workflow-contract expectations for `Planner`, `Designer`, `Developer`, `Tester`, `Reviewer`, `Deployer`, `Documenter`, and `Handoff`
+- handoff-as-baton planning contract that preserves routeable next workflow execution
+- a concrete `DEV-07` packet that freezes the V1.3 PMW first-view hierarchy, artifact drill-down, and operator-command panel before implementation
+- a concrete `DEV-08` packet that freezes workflow-contract and handoff-routing implementation scope before implementation
+- root/starter runtime contract updates that export the phase-1 command guidance to PMW
+- synchronized canonical docs, DB hot-state, generated docs, and PMW export for the active planning baseline
+
+### Exit Criteria
+- canonical requirements, current state, task list, and implementation plan all describe the same `PLN-07` planning baseline
+- PMW remains independently installable, multi-project, and non-authoritative with respect to canonical writes
+- V1.3 phase-1 command scope is explicit and no arbitrary shell boundary is introduced
+- workflow-contract expectations make planner/tester responsibility boundaries explicit before any implementation lane opens
+- `DEV-07` is closed and `DEV-08` is registered as the next planner-owned packet before developer work begins
+- validator and exported PMW state remain clean after the planning baseline changes
+
+## DEV-07 PMW V1.3 Operator Console First View
+
+### Goal
+Freeze the first concrete V1.3 PMW implementation packet so the operator-console first view, artifact drill-down, and phase-1 command-panel hierarchy are explicit before a developer-owned lane starts coding.
+
+### Status
+- Closed: Reviewer re-check approved the PMW artifact-preview path-boundary remediation on 2026-05-01.
+- Approved: detailed function agreement, detailed UI/UX agreement, `Ready For Code`, tester verification, user testing, and packet exit review are all closed.
+- Active owner: none; active work returns to `Planner` for the next `PLN-07` planning step.
+
+### Input
+- `reference/packets/PKT-01_DEV-07_PMW_V1_3_OPERATOR_CONSOLE_FIRST_VIEW.md`
+- `reference/planning/PLN-07_PMW_V1_3_OPERATOR_CONSOLE_DRAFT.md`
+- `.agents/artifacts/REQUIREMENTS.md`
+- `.agents/artifacts/CURRENT_STATE.md`
+- `.agents/artifacts/TASK_LIST.md`
+- `reference/packets/PKT-01_DEV-04_PMW_READ_SURFACE.md`
+
+### Required Output
+- approved PMW first-view hierarchy for project header, Project Overview Band, Action Board cards, Re-entry Baton, artifact drill-down, and command panel
+- approved terminology set of `Project Overview Band`, `Action Board`, and `Re-entry Baton`
+- explicit split between phase-1 launcher commands and terminal-only guided commands
+- visible handoff/re-entry requirements for next owner, next task, route, and required SSOT
+- packet registration and planning-state sync so validator and PMW both surface the same next work item
+
+### Exit Criteria
+- `PKT-01_DEV-07_PMW_V1_3_OPERATOR_CONSOLE_FIRST_VIEW.md` remains validator-clean and registered as a `task_packet`
+- planning SSOT, DB hot-state, generated docs, and PMW export all identify `DEV-07` as closed and keep `PLN-07` as the active planning lane
+- the packet has explicit user `Ready For Code` sign-off, tester/user verification, Developer remediation evidence, and Reviewer closeout approval
+
+### Developer Handoff
+- Completed PMW read-model and `pmw-app/` first-view implementation for the approved `Project Overview Band`, `Action Board`, `Re-entry Baton`, artifact library/preview, command-panel split, and session-scoped command result surface.
+- Verification passed on 2026-04-30 with `node --test pmw-app/test/*.test.js`, `node --test .harness/test/pmw-read-surface.test.js .harness/test/context-restoration-read-model.test.js`, full root `npm test`, `npm run harness:validate`, `npm run harness:pmw-export`, and `npm run harness:validation-report`.
+- Tester verification and user browser testing passed on 2026-05-01 for PMW scan order, first-view readability, section navigation, artifact preview behavior, command split, and diagnostics hierarchy.
+- Reviewer inspection on 2026-05-01 found a PMW artifact-preview path-boundary defect in `pmw-app/runtime/server.js`.
+- Developer remediation on 2026-05-01 replaced prefix containment with segment-aware path containment and added sibling-prefix escape regression coverage.
+- Reviewer re-check on 2026-05-01 approved the remediation; no open DEV-07 review finding remains.
+
+## DEV-08 Workflow Contracts And Handoff Routing
+
+### Goal
+Define the next `PLN-07` implementation packet so workflow Markdown role contracts and handoff routing behavior are explicit before developer-owned implementation starts.
+
+### Status
+- Closed: Reviewer approved packet exit closeout on 2026-05-02.
+- `Ready For Code`: approved on 2026-05-01.
+- Active owner: none; active work returns to `Planner` for the next `PLN-07` planning step.
+
+### Input
+- `reference/packets/PKT-01_DEV-08_WORKFLOW_CONTRACTS_AND_HANDOFF_ROUTING.md`
+- `reference/planning/PLN-07_PMW_V1_3_OPERATOR_CONSOLE_DRAFT.md`
+- `.agents/artifacts/REQUIREMENTS.md`
+- `.agents/artifacts/CURRENT_STATE.md`
+- `.agents/artifacts/TASK_LIST.md`
+
+### Required Output
+- explicit implementation scope for workflow Markdown role contracts
+- handoff route precedence and unsupported-route behavior
+- required SSOT, next owner, next task, blocker/risk, and next-first-action surface contract
+- approval boundary that prevents developer handoff until detailed agreement and `Ready For Code` are approved
+
+### Exit Criteria
+- packet is registered as a `task_packet`
+- `Ready For Code` decision is explicit and approved
+- no change expands V1.3 phase-1 PMW launcher scope
+- validator remains clean after planning-state sync
+- Tester verifies PM workflow contract/routing, workflow contract parsing, route behavior, validator coverage, and root/starter synchronization
+
+### Developer Handoff
+- Implemented workflow contract parsing for the explicit role-contract sections in `.agents/workflows/*.md`, while keeping legacy `purpose/readFirst/doSteps/stopWhen` output aliases for compatibility.
+- Added route support for `Designer` -> `.agents/workflows/design.md` and `Handoff` -> `.agents/workflows/handoff.md`.
+- Added validator coverage for missing required workflow contract files/sections and added root/starter sync coverage for `workflow-routing.js` and all workflow Markdown files.
+- Synchronized the same runtime and test changes into `standard-template/`.
+- Verification passed on 2026-05-01 with targeted `.harness/test/dev05-tooling.test.js`, full root `npm.cmd test`, full `standard-template` `npm.cmd test`, `npm.cmd run harness:validate`, `npm.cmd run harness:handoff`, `npm.cmd run harness:pmw-export`, and `npm.cmd run harness:validation-report`.
+
+### Tester Handoff
+- Positive verification passed on 2026-05-01: root `npm.cmd test` 33/33, `standard-template` `npm.cmd test` 33/33, `npm.cmd run harness:validate` clean, `npm.cmd run harness:handoff` ready, `npm.cmd run harness:pmw-export` pass, and `npm.cmd run harness:validation-report` pass.
+- Negative route verification failed: `workflowForOwner("developer/tester")` resolves to `.agents/workflows/test.md` instead of explicit `manual_selection_required`.
+- Negative route verification failed: `workflowForOwner("contest owner")` resolves to `.agents/workflows/test.md` because aliases are matched by substring.
+- PMW/read-model diagnostic verification found a gap: `resolveHandoffExecution` reports missing workflow files as `ready` when called without `includeWorkflowDetails`, while the details-enabled path reports `workflow_missing`.
+- Developer should remediate alias matching, ambiguity detection, and read-model route diagnostics, then add root and `standard-template` regression tests for the negative cases.
+
+### Developer Remediation
+- Replaced substring alias matching with boundary-aware ASCII alias matching and explicit `manual_selection_required` behavior when multiple workflow routes match one owner value.
+- Made `resolveHandoffExecution` inspect workflow details for route status even when callers do not request full workflow details, so missing workflow files no longer report `ready`.
+- Updated PMW/read-model handoff diagnostics to request workflow details and expose `workflowDetailsExists` plus `workflowMissingSections`.
+- Added root and `standard-template` regression tests for ambiguous `developer/tester`, substring false positive `contest owner`, positive role routes, and missing workflow diagnostics.
+- Verification passed on 2026-05-01 with root targeted tests, `standard-template` targeted tests, full root `npm.cmd test` 35/35, full `standard-template` `npm.cmd test` 35/35, `npm.cmd run harness:validate`, `npm.cmd run harness:handoff`, `npm.cmd run harness:pmw-export`, and `npm.cmd run harness:validation-report`.
+- Added the user-requested `Project Manager` workflow contract in root and `standard-template`, PM route aliases for `Project Manager` / `PM`, validator coverage for `.agents/workflows/pm.md`, and regression coverage that rejects `npm` substring false positives.
+- PM workflow addition verification passed on 2026-05-01 with root targeted tests, `standard-template` targeted tests, full root `npm.cmd test` 35/35, full `standard-template` `npm.cmd test` 35/35, and `npm.cmd run harness:validate`.
+
+### Tester Re-Verification
+- Re-verified PM route behavior manually: `Project Manager` and `PM` route to `.agents/workflows/pm.md`; `npm launcher`, `developer/tester`, and `contest owner` route to `manual_selection_required`.
+- Re-verified missing-workflow diagnostics manually: `resolveHandoffExecution(..., includeWorkflowDetails: false)` reports `workflow_missing` for a missing PM workflow file.
+- Re-ran root targeted route/read-model tests and `standard-template` targeted route/read-model tests: both 15/15 pass.
+- Re-ran full root `npm.cmd test` and full `standard-template` `npm.cmd test`: both 35/35 pass.
+- Re-ran `npm.cmd run harness:validate`, `npm.cmd run harness:handoff`, and `npm.cmd run harness:pmw-export`: all passed with validator findings `[]`.
+- Result: Tester re-verification passed; DEV-08 is ready for Reviewer closeout.
+
+### Reviewer Closeout Finding
+- Packet exit review on 2026-05-02 found that `buildActionBoard()` renders `nextTask` with `handoffExecution.owner` and `handoffExecution.workflow` instead of the `nextTaskSource` owner/workflow.
+- Current PMW evidence shows `PLN-07` as `owner: reviewer` and `.agents/workflows/review.md` while the canonical `PLN-07` work item remains planner-owned.
+- This violates the DEV-08 PMW/CLI route-context acceptance target because a non-current next task can display the wrong owner workflow.
+- Developer should derive `nextTask` owner/workflow from `nextTaskSource.owner` using the same routing contract used by handoff, synchronize root and `standard-template`, and add root/starter regression coverage.
+
+### Developer Remediation 2026-05-02
+- Updated PMW Action Board `nextTask` rendering so a real next work item uses `nextTaskSource.owner` and the shared `workflowForOwner()` route contract rather than the current `handoffExecution` owner/workflow.
+- Synchronized the same runtime change into `standard-template`.
+- Added root and `standard-template` regression coverage for a reviewer-routed active task followed by a planner-owned `PLN-07` next task; the expected `nextTask` route is `.agents/workflows/plan.md`.
+- Verification passed with root targeted `context-restoration-read-model.test.js` 5/5, `standard-template` targeted `context-restoration-read-model.test.js` 5/5, root `npm.cmd test` 36/36, and `standard-template` `npm.cmd test` 36/36.
+
+### Tester Re-Verification 2026-05-02
+- PMW Action Board evidence now shows `currentTask` as `DEV-08` / `tester` / `.agents/workflows/test.md` and `nextTask` as `PLN-07` / `planner` / `.agents/workflows/plan.md`.
+- Root and `standard-template` targeted `context-restoration-read-model.test.js` runs passed 5/5 each.
+- Root and `standard-template` full `npm.cmd test` runs passed 36/36 each.
+- Root validator, handoff, PMW export, validation report, and status checks passed with validator findings `[]`.
+- No Tester-discovered remediation item remains; Reviewer should re-check packet exit closeout.
+
+### Reviewer Closeout 2026-05-02
+- No blocking or non-blocking review finding was found in the DEV-08 closeout re-check.
+- Source parity is approved: PMW Action Board `nextTask` now derives `PLN-07` owner/workflow from the next task source and renders `planner` / `.agents/workflows/plan.md`.
+- Residual debt disposition is `none` for the reviewed DEV-08 scope.
+- Reviewer re-ran root/starter targeted read-model tests, root/starter full tests, validator, handoff, and PMW export; all passed.
+- DEV-08 packet exit is approved and the active lane returns to `PLN-07` planning.
 
 ## SIM-01 Execution
 ### Goal
@@ -600,6 +809,7 @@ transfer-bound or airgapped delivery 환경에서 반복되는 bundle handoff와
 8. 구현 후 `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`를 사용해 packet exit quality gate reference, source parity, residual debt disposition, UX/topology/schema conformance, validation/security/cleanup evidence, deferred follow-up item을 정리하고, 반복 friction이 보이면 `.agents/artifacts/PREVENTIVE_MEMORY.md`에 improvement candidate reference, proposed target layer, promotion status, linked follow-up item을 남긴 뒤 closeout hold 조건이 없을 때만 security review와 validator check를 함께 닫는다.
 
 ## Operator Next Action
-- `PLN-06` is closed.
-- Start the first real project by copying `standard-template/` into a new project repo and running `INIT_STANDARD_HARNESS.cmd` or `npm run harness:init`.
-- Choose optional profiles explicitly during kickoff, especially PRF-04 for Excel/VBA-MariaDB replacement, PRF-05 for Python/Django backoffice, and PRF-06 for workflow/approval applications when applicable.
+- `DEV-08` packet exit closeout is approved.
+- Planner should select the next `PLN-07` V1.3 PMW operator-console / workflow-contract planning step.
+- Preserve the separate installable PMW boundary, read-only canonical authority boundary, and approved command split while planning this packet.
+- Do not expand phase-1 launcher scope beyond `status`, `next`, `explain`, `validate`, `handoff`, and `pmw-export`.

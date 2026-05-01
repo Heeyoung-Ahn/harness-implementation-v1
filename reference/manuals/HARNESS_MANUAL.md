@@ -1,122 +1,132 @@
-# Standard Harness User Manual
+# 표준 하네스 통합 매뉴얼 V1.2
 
-이 문서는 V1.2 표준 하네스의 공식 사용자 매뉴얼이다. 설치 패키지를 받은 사용자는 이 문서와 `PMW_MANUAL.md`만 먼저 읽으면 된다.
+이 문서는 표준 하네스와 PMW를 하나의 흐름으로 설명하는 공식 통합 매뉴얼이다.
 
-## 1. 하네스의 철학
+이 매뉴얼 하나로 다음을 끝내는 것을 목표로 한다.
 
-표준 하네스는 코드 생성 템플릿이 아니라 `프로젝트 운영 구조`다. 목표는 AI와 사람이 같은 기준으로 현재 상태, 다음 행동, 승인 경계, 검증 결과를 복원하게 만드는 것이다.
+- 하네스와 PMW가 왜 필요한지 이해
+- 새 프로젝트 설치 및 첫 실행
+- 표준 업무절차(SOP)로 개발 시작
+- 검증, 배포, 운영, 변경 대응
+- PMW를 이용한 멀티 프로젝트 모니터링
 
-핵심 철학은 네 가지다.
+## 1. 먼저 이해해야 할 핵심
 
-1. Truth를 분리한다.
-   - 사람이 승인하고 읽는 기준은 `.agents/artifacts/*` Markdown이다.
-   - 빠르게 갱신되는 운영 상태는 `.harness/operating_state.sqlite`에 둔다.
-   - generated docs와 PMW 화면은 파생 산출물이다.
-   - 파생 산출물이 truth와 다르면 파생물을 직접 고치지 않고 생성 경로를 고친다.
+### 1.1 왜 바이브 코딩이 무너지나
 
-2. 시작 전에 판단 경계를 닫는다.
-   - requirements, architecture, packet 없이 바로 구현하지 않는다.
-   - DB 설계, 화면 UX, cutover, 보안 risk acceptance처럼 되돌리기 어려운 결정은 사람 확인 지점으로 남긴다.
+아이디어 자체보다 실행 과정에서 품질이 무너지는 이유는 반복적으로 비슷하다.
 
-3. 프로젝트 유형별 반복 실패를 profile로 흡수한다.
-   - 모든 프로젝트에 무거운 업무 시스템 규칙을 강제하지 않는다.
-   - lightweight app, Android native, Node/frontend app처럼 성격이 다른 프로젝트는 optional profile을 켠다.
-   - 실제 화면명, 테이블명, 배포 경로 같은 고유 내용은 project packet에서만 닫는다.
+1. 무엇을 만들지보다 무엇을 안 만들지가 불명확함
+2. 승인 기준 없이 구현이 먼저 시작됨
+3. 요구사항 변경이 문서/코드에 동시에 반영되지 않음
+4. 누가 봐도 같은 답이 나와야 하는 검증 기준이 없음
+5. 여러 프로젝트를 동시에 볼 때 현재 상태가 섞임
 
-4. PMW는 읽기 전용이다.
-   - PMW는 여러 프로젝트의 상태를 보여주는 monitor다.
-   - PMW가 `.agents/*`, `.harness/*`, task packet, profile, validation truth를 직접 수정하지 않는다.
-   - 프로젝트는 PMW가 읽을 `project-manifest`와 `pmw-read-model`만 export한다.
+표준 하네스는 이 문제를 "운영 구조"로 해결한다.
 
-## 2. 패키지 구성
+### 1.2 하네스 엔지니어링이란
 
-Windows exe 배포판의 핵심 파일은 두 개다.
+하네스 엔지니어링은 코드 생성 기법이 아니라, 프로젝트 운영의 기준선을 만드는 방법이다.
 
-- `StandardHarnessSetup.exe`: 새 프로젝트 하네스 설치 파일
-- `StandardHarnessPMWSetup.exe`: PMW 설치 파일
+핵심은 5가지다.
 
-운영자 참고용으로 `HARNESS_MANUAL.md`, `PMW_MANUAL.md`도 함께 배포할 수 있다.
+1. Truth 분리: 무엇이 정본인지 고정
+2. 단계 통제: 준비 안 된 작업이 코드로 들어가지 않게 차단
+3. 검증 자동화: 누락/충돌/드리프트를 조기 발견
+4. 승인 경계: 사람이 결정해야 할 지점을 명확화
+5. 복원 가능성: 중단 후에도 현재 상태를 빠르게 재구성
 
-이전 폴더형 패키지를 쓰는 경우 전면 파일은 네 개다.
+### 1.3 하네스와 PMW의 역할 차이
 
-- `INSTALL_HARNESS.cmd`: 새 프로젝트 하네스 설치 파일
-- `HARNESS_MANUAL.md`: 이 문서
-- `INSTALL_PMW.cmd`: PMW 설치 파일
-- `PMW_MANUAL.md`: PMW 사용자 매뉴얼
+- 표준 하네스: 각 프로젝트 안에서 계획, 구현, 검증, 배포를 관리하는 운영 틀
+- PMW: 여러 프로젝트의 상태를 읽어서 보여주는 별도 모니터 앱
 
-나머지 템플릿과 실행 코드는 패키지 내부 `.package/` 폴더에 포함된다. `.package/`는 사용자가 직접 편집하지 않는다.
+가장 중요한 원칙:
 
-두 exe 모두 portable Node.js runtime을 포함한다. 따라서 대상 PC에 Node.js/npm이 없어도 설치와 기본 실행이 가능하다.
+`PMW는 read-only다. 프로젝트를 직접 수정하지 않는다.`
 
-최초 사용자는 보통 아래 순서로 진행한다.
+## 2. Truth Contract (절대 기준)
 
-1. `StandardHarnessPMWSetup.exe`로 PMW를 설치한다.
-2. `StandardHarnessSetup.exe`로 새 프로젝트를 만든다.
-3. 새 프로젝트 폴더에서 `HARNESS.cmd test`, `HARNESS.cmd status`를 실행한다.
-4. PMW를 열어 프로젝트가 등록되었는지 확인한다.
+프로젝트에서 무엇이 기준인지 먼저 고정한다.
 
-## 3. 설치 전 준비
+- governance Markdown truth: `.agents/artifacts/*`
+- hot operational DB state: `.harness/operating_state.sqlite`
+- generated docs: `.agents/runtime/generated-state-docs/*`
+- PMW: read-only projection
 
-- Windows 기준 사용을 우선 지원한다.
-- exe 설치판은 Node.js runtime을 포함한다.
-- source checkout에서 직접 개발하거나 `npm` 명령을 쓰려면 Node.js 24 이상이 필요하다.
-- 설치할 새 프로젝트 이름과 폴더를 정한다.
-- optional profile이 필요한지 대략 판단한다. 모르겠으면 `none`으로 시작한다.
+운영 원칙:
 
-Node.js 24+는 하네스 runtime 요구사항이다. 제품 앱의 Node, Python, Android Gradle, Django 버전 요구사항은 별도로 profile 또는 packet에서 정한다.
+1. generated docs를 직접 수정하지 않는다.
+2. PMW를 write authority로 쓰지 않는다.
+3. generated와 governance가 충돌하면 생성 경로를 고친다.
 
-## 4. 새 프로젝트 설치
+## 3. 설치 방식
 
-exe 배포판에서는 `StandardHarnessSetup.exe`를 실행한다. CLI 옵션이 필요하면 명령 프롬프트에서 실행한다.
+### 3.1 권장 방식 (Windows 설치형)
+
+배포판을 받았다면 보통 다음 두 파일로 시작한다.
+
+- `StandardHarnessSetup.exe` (프로젝트 생성기)
+- `StandardHarnessPMWSetup.exe` (PMW 설치기)
+
+설치형은 bundled Node runtime을 포함하므로, 일반 사용자 PC에 Node.js/npm이 없어도 기본 실행이 가능하다.
+
+### 3.2 폴더형 패키지 방식
+
+폴더형 패키지를 사용하는 경우 전면 파일은 보통 다음과 같다.
+
+- `INSTALL_HARNESS.cmd`
+- `INSTALL_PMW.cmd`
+- `.package/` (실제 payload)
+
+`.package/`는 설치 payload이므로 직접 편집하지 않는다.
+
+### 3.3 수동 설치 fallback
+
+설치형 실행이 어려우면 다음 순서로 수동 설치한다.
+
+1. `standard-template/`를 새 프로젝트 폴더로 복사
+2. 프로젝트 루트에서 `INIT_STANDARD_HARNESS.cmd` 또는 `npm run harness:init`
+3. `npm run harness:pmw-export`
+4. PMW에서 프로젝트 폴더 Add
+
+## 4. 20분 퀵스타트
+
+### 4.1 PMW 먼저 설치
+
+```powershell
+StandardHarnessPMWSetup.exe
+```
+
+또는 폴더형 패키지:
+
+```powershell
+INSTALL_PMW.cmd
+```
+
+PMW 기본 주소:
+
+```text
+http://127.0.0.1:4174
+```
+
+### 4.2 새 프로젝트 생성
+
+설치형:
 
 ```powershell
 StandardHarnessSetup.exe --project-name "My Project" --target-dir "C:\work\my-project" --profiles PRF-07,PRF-09
 ```
 
-폴더형 패키지에서는 패키지 폴더에서 실행한다.
+폴더형:
 
 ```powershell
 INSTALL_HARNESS.cmd --project-name "My Project" --target-dir "C:\work\my-project" --profiles PRF-07,PRF-09
 ```
 
-옵션:
+### 4.3 생성 직후 점검
 
-- `--project-name`: 프로젝트 표시 이름
-- `--target-dir`: 새 repo 폴더
-- `--profiles`: comma-separated optional profile 목록. 예: `PRF-07,PRF-09`
-- `--user-goal`: 최종사용자 목표
-- `--ops-goal`: 운영/복원 목표
-- `--approval-goal`: 첫 승인 목표
-- `--non-interactive`: 질문 없이 기본값으로 설치
-
-설치 파일이 수행하는 일:
-
-1. 대상 폴더를 만든다.
-2. 패키지 내부의 `standard-template`을 복사한다.
-3. `harness:init`과 같은 초기화 경로를 실행한다.
-4. `.harness/operating_state.sqlite`를 새 프로젝트 기준으로 생성한다.
-5. generated state docs를 만든다.
-6. `.agents/runtime/project-manifest.json`과 `.agents/runtime/pmw-read-model.json`을 생성한다.
-7. PMW global registry에 프로젝트를 등록한다.
-8. bundled Node.js runtime을 `%LOCALAPPDATA%\StandardHarness\Runtime\node.exe`에 설치한다.
-9. 새 프로젝트 루트에 `HARNESS.cmd` wrapper를 생성한다.
-
-대상 폴더가 이미 존재하고 비어 있지 않으면 설치는 중단된다. 기존 프로젝트에 덮어쓰지 않는다.
-
-## 5. 수동 설치 fallback
-
-설치 파일을 쓰기 어렵다면 다음 순서로 진행한다.
-
-1. 패키지 내부 `standard-template`의 내용을 새 프로젝트 루트로 복사한다.
-2. 새 프로젝트 루트에서 `INIT_STANDARD_HARNESS.cmd` 또는 `npm run harness:init`를 실행한다.
-3. `npm run harness:pmw-export`를 실행한다.
-4. PMW 화면에서 프로젝트 폴더를 add 한다.
-
-일반 사용자는 수동 설치보다 `INSTALL_HARNESS.cmd`를 사용하는 편이 안전하다.
-
-## 6. 설치 후 바로 할 일
-
-새 프로젝트 폴더에서 실행한다.
+프로젝트 루트에서 실행:
 
 ```powershell
 HARNESS.cmd test
@@ -125,283 +135,394 @@ HARNESS.cmd validate
 HARNESS.cmd pmw-export
 ```
 
-Node.js/npm이 별도로 설치된 개발 PC에서는 기존 npm wrapper도 사용할 수 있다.
+Node/npm이 이미 설치된 개발 PC에서는 동등하게 다음도 가능:
 
 ```powershell
 npm test
 npm run harness:status
-```
-
-정상 기준:
-
-- `npm test`: 하네스 테스트가 모두 통과한다.
-- `harness:status`: 현재 stage, gate, focus, next action이 표시된다.
-- `harness:validate`: findings가 없거나 starter bootstrap 상태처럼 의도된 finding만 나온다.
-- `harness:pmw-export`: PMW가 읽을 manifest/read-model을 갱신한다.
-
-## 7. 핵심 폴더와 파일
-
-| 경로 | 의미 | 직접 편집 여부 |
-| --- | --- | --- |
-| `AGENTS.md` | AI agent 진입 규칙 | 보통 유지 |
-| `.agents/rules/workspace.md` | workspace 운영 원칙 | 신중히 편집 |
-| `.agents/artifacts/CURRENT_STATE.md` | 현재 상태 truth | 필요 시 편집 |
-| `.agents/artifacts/TASK_LIST.md` | 현재 task truth | 필요 시 편집 |
-| `.agents/artifacts/REQUIREMENTS.md` | requirements truth | 중요 변경 시 편집 |
-| `.agents/artifacts/ACTIVE_PROFILES.md` | 활성 profile 선언 | profile 변경 시 편집 |
-| `.harness/operating_state.sqlite` | hot operational DB | 직접 편집하지 않음 |
-| `.agents/runtime/generated-state-docs/*` | generated docs | 직접 편집하지 않음 |
-| `.agents/runtime/project-manifest.json` | PMW project identity | command로 생성 |
-| `.agents/runtime/pmw-read-model.json` | PMW read model | command로 생성 |
-| `.harness/runtime/*` | 하네스 runtime 코드 | 하네스 개발자가 관리 |
-| `.harness/test/*` | 하네스 테스트 | 하네스 개발자가 관리 |
-| `reference/packets/*` | task packet | 작업 시작 전 작성 |
-| `reference/profiles/*` | optional profile 정의 | profile 활성 시 참조 |
-
-제품 코드는 `src/`, `app/`, `backend/`, `frontend/`, `server/`, Android module 등 프로젝트가 선택한 경로를 쓴다.
-
-## 8. 주요 명령
-
-```powershell
-npm test
-```
-
-하네스 자체 테스트를 실행한다. 새 프로젝트 생성 직후, profile 변경 후, 하네스 runtime 변경 후 실행한다.
-
-Node.js/npm이 없는 PC에서는 다음을 사용한다.
-
-```powershell
-HARNESS.cmd test
-```
-
-```powershell
-npm run harness:status
-```
-
-현재 stage, gate, focus, blocker, decision, next action을 사람 읽기 좋게 확인한다.
-
-Node.js/npm이 없는 PC에서는 `HARNESS.cmd status`를 사용한다.
-
-```powershell
-npm run harness:doctor
-```
-
-운영자가 현재 상태를 빠르게 진단할 때 사용한다.
-
-```powershell
-npm run harness:next
-```
-
-다음 행동만 빠르게 확인한다.
-
-```powershell
-npm run harness:explain
-```
-
-왜 지금 막혀 있는지, 어떤 blocker가 있는지 설명한다.
-
-```powershell
 npm run harness:validate
-```
-
-하네스 계약 위반을 검사한다. gate close 전에 반드시 실행한다.
-
-```powershell
-npm run harness:validation-report
-```
-
-validation 결과를 Markdown/JSON evidence로 저장한다.
-
-```powershell
 npm run harness:pmw-export
 ```
 
-PMW가 읽을 project manifest와 read model을 갱신한다. PMW 화면이 오래된 것처럼 보이면 먼저 이 명령을 실행한다.
+### 4.4 PMW에 등록/확인
+
+1. PMW 실행
+2. 프로젝트 루트 경로 입력 후 `Add`
+3. `Select`로 프로젝트 선택
+4. `Stage`, `Gate`, `Next`, `Next Owner`, `Execution Baton`, `Diagnostics` 확인
+5. 다음 에이전트와 다음 작업을 확인한 뒤 `npm run harness:handoff` 또는 `HARNESS.cmd handoff`
+
+## 5. 핵심 폴더 구조
+
+| 경로 | 용도 | 편집 원칙 |
+| --- | --- | --- |
+| `AGENTS.md` | AI 작업 진입 규칙 | 유지 권장 |
+| `.agents/rules/workspace.md` | 워크스페이스 운영 규칙 | 신중히 변경 |
+| `.agents/artifacts/CURRENT_STATE.md` | 현재 상태 정본 | 운영 시 갱신 |
+| `.agents/artifacts/TASK_LIST.md` | 작업/락 정본 | 운영 시 갱신 |
+| `.agents/artifacts/REQUIREMENTS.md` | 요구사항 정본 | 승인 후 갱신 |
+| `.agents/artifacts/ACTIVE_PROFILES.md` | 활성 프로파일 선언 | 프로파일 변경 시 갱신 |
+| `.harness/operating_state.sqlite` | 하네스 hot-state DB | 직접 편집 금지 |
+| `.agents/runtime/generated-state-docs/*` | 파생 문서 | 직접 편집 금지 |
+| `.agents/runtime/project-manifest.json` | PMW용 프로젝트 식별 | export로 생성 |
+| `.agents/runtime/pmw-read-model.json` | PMW용 읽기 모델 | export로 생성 |
+| `reference/packets/*` | 작업 패킷 | 구현 전 작성/갱신 |
+| `reference/profiles/*` | 프로파일 정의 | 선택 프로파일 참조 |
+
+제품 코드는 프로젝트 성격에 맞는 경로(`src/`, `app/`, `backend/`, `frontend/`, Android 모듈 등)를 사용한다.
+
+## 6. 매일 쓰는 명령어
+
+| 목적 | npm 명령 | Node/npm 없는 환경 |
+| --- | --- | --- |
+| 테스트 | `npm test` | `HARNESS.cmd test` |
+| 상태 요약 | `npm run harness:status` | `HARNESS.cmd status` |
+| 진단 | `npm run harness:doctor` | `HARNESS.cmd doctor` |
+| 다음 행동 | `npm run harness:next` | `HARNESS.cmd next` |
+| handoff 실행 경로 확인 | `npm run harness:handoff` | `HARNESS.cmd handoff` |
+| 막힘 설명 | `npm run harness:explain` | `HARNESS.cmd explain` |
+| 규칙 검증 | `npm run harness:validate` | `HARNESS.cmd validate` |
+| 검증 리포트 저장 | `npm run harness:validation-report` | `HARNESS.cmd validation-report` |
+| PMW 내보내기 | `npm run harness:pmw-export` | `HARNESS.cmd pmw-export` |
+| 마이그레이션 미리보기 | `npm run harness:migration-preview` | `HARNESS.cmd migration-preview` |
+| 마이그레이션 적용 | `npm run harness:migration-apply` | `HARNESS.cmd migration-apply` |
+| 컷오버 사전점검 | `npm run harness:cutover-preflight` | `HARNESS.cmd cutover-preflight` |
+| 컷오버 보고서 | `npm run harness:cutover-report` | `HARNESS.cmd cutover-report` |
+
+## 7. 개발 표준 업무절차 (SOP)
+
+### 7.1 단계 개요
+
+표준 흐름:
+
+1. Kickoff
+2. Requirements freeze
+3. Packet 준비 (`Ready For Code`)
+4. 구현
+5. 검증/리포트
+6. 리팩터링/보안 리뷰 게이트
+7. 배포/컷오버
+8. 운영/변경 관리
+
+### 7.2 Kickoff
+
+최소 수행:
+
+1. 목표/사용자/운영맥락 정리
+2. `.agents/artifacts/REQUIREMENTS.md` 초안 작성
+3. optional profile 후보 선정
+4. PMW에서 baseline 상태 확인
+
+### 7.3 Requirements freeze
+
+다음이 닫혀야 freeze 가능:
+
+- 범위(무엇을 한다/안 한다)
+- 승인 기준
+- 주요 리스크
+- 사람 승인 경계
+
+freeze 전에 architecture/implementation/UI를 강제로 확정하지 않는다.
+
+### 7.4 Packet 준비 (`Ready For Code`)
+
+각 구현 단위는 `reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md` 기준으로 packet을 만든다.
+
+핵심 항목:
+
+- 목표, 범위, 제외 범위
+- active profiles 및 근거
+- 데이터 영향(schema impact)
+- UX 영향
+- 배포/롤백 경계
+- acceptance / validation 방법
+- human approval boundary
+
+`schema impact = unknown`이면 코드로 넘어가지 않는다.
+
+### 7.5 구현
+
+구현 중 원칙:
+
+1. packet 범위를 넘는 변경은 packet부터 갱신
+2. 프로젝트 코드와 하네스 코드 책임을 분리
+3. 요구사항 변경이 들어오면 문서/packet 영향 평가 먼저 수행
+
+### 7.6 검증/리포트
+
+최소 검증 세트:
 
 ```powershell
-npm run harness:migration-preview
-npm run harness:migration-apply
+npm test
+npm run harness:validate
+npm run harness:validation-report
+npm run harness:pmw-export
 ```
 
-legacy path나 이전 구조에서 현재 구조로 옮길 변경을 미리 보고 적용한다. 적용 전 preview를 먼저 본다.
+검증이 실패하면 generated docs를 직접 고치지 말고, source-of-truth 또는 생성 경로를 수정한다.
+검증 후 다음 담당 에이전트와 다음 작업을 넘길 때는 PMW의 `Execution Baton` 또는 `npm run harness:handoff` 결과를 기준으로 handoff한다.
+
+### 7.7 리팩터링/보안 리뷰 게이트
+
+구현이 끝난 packet은 `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md` 기준으로 closeout을 수행한다.
+
+필수 확인:
+
+- refactor 완료 내용과 residual debt disposition 기록
+- validation / security / cleanup evidence 기록
+- unresolved critical finding이 없는지 확인
+- defer 항목이 있으면 follow-up item으로 명시
+
+최소 실행:
+
+```powershell
+npm run harness:validate
+npm run harness:validation-report
+```
+
+### 7.8 배포/컷오버
+
+배포 전 최소 세트:
 
 ```powershell
 npm run harness:cutover-preflight
 npm run harness:cutover-report
+npm run harness:status
 ```
 
-cutover readiness를 확인하고 evidence report를 만든다.
+배포 기준:
 
-## 9. Optional Profile 선택법
+- rollback 경계가 정의됨
+- unresolved critical finding 없음
+- 최신 validation report 존재
+- PMW export 최신 반영 완료
 
-기본값은 `none`이다. 프로젝트 성격이 분명할 때만 켠다.
+## 8. Optional Profile 선택 가이드
 
-| Profile | 사용 상황 |
+기본값은 `none`이다. 필요한 것만 명시적으로 켠다.
+
+| Profile | 사용하는 상황 |
 | --- | --- |
-| `PRF-01` | 운영자용 dense grid, search/filter/sort, row action이 핵심 |
-| `PRF-02` | spreadsheet가 authoritative source인 프로젝트 |
-| `PRF-03` | 폐쇄망, 수동 반입, offline bundle, removable media 전달 |
-| `PRF-04` | Excel/VBA/MariaDB legacy 업무 시스템 대체 |
-| `PRF-05` | Python/Django backoffice |
-| `PRF-06` | workflow, approval, audit, state transition이 핵심 |
-| `PRF-07` | lightweight web/app, 작은 내부 도구, 단순 앱 |
-| `PRF-08` | Android native app, Gradle/AGP, signing, permissions, device test |
-| `PRF-09` | Node/frontend app, SPA/SSR/static site, package/build/test/deploy 경계 |
+| `PRF-01` | 운영자 중심의 dense grid, 검색/정렬/일괄작업이 핵심 |
+| `PRF-02` | spreadsheet가 authoritative source인 경우 |
+| `PRF-03` | 폐쇄망/수동반입/오프라인 번들 전달 |
+| `PRF-04` | Excel/VBA/MariaDB 기반 legacy 시스템 대체 |
+| `PRF-05` | Python/Django backoffice 중심 |
+| `PRF-06` | 결재/승인/감사로그/상태전이가 핵심 |
+| `PRF-07` | lightweight web/app, 작은 내부 도구 |
+| `PRF-08` | Android native app |
+| `PRF-09` | Node/frontend web app |
 
-예시:
+프로파일은 복수 선택 가능하지만, 선택한 프로파일의 packet evidence를 반드시 채워야 한다.
 
-```powershell
-INSTALL_HARNESS.cmd --project-name "Internal Tool" --target-dir "C:\work\internal-tool" --profiles PRF-07
-```
+## 9. 대표 시나리오별 시작법
 
-```powershell
-INSTALL_HARNESS.cmd --project-name "Frontend Portal" --target-dir "C:\work\portal" --profiles PRF-09
-```
+### 9.1 작은 내부 웹도구
+
+권장: `PRF-07` (+ Node 기반이면 `PRF-09`)
 
 ```powershell
-INSTALL_HARNESS.cmd --project-name "Android Field App" --target-dir "C:\work\field-app" --profiles PRF-08
+StandardHarnessSetup.exe --project-name "Ops Tool" --target-dir "C:\work\ops-tool" --profiles PRF-07,PRF-09
 ```
+
+초기 packet에서 닫을 것:
+
+- 사용자 역할
+- 핵심 화면 2~3개
+- 입력/저장 규칙
+- 완료 기준
+
+### 9.2 Node/Frontend 프로젝트
+
+권장: `PRF-09`
+
+packet 필수 항목:
+
+- 제품 코드 루트
+- package ownership
+- build/test/deploy 명령
+- env 정책
+- API 경계
+
+### 9.3 Android 네이티브 앱
+
+권장: `PRF-08`
+
+packet 필수 항목:
+
+- package namespace
+- minSdk/targetSdk
+- 권한/저장소/네트워크 정책
+- signing/배포 채널
+- emulator/device 테스트 기준
+
+### 9.4 Excel/VBA/MariaDB 대체 프로젝트
+
+권장 조합: `PRF-04 + PRF-05 + PRF-06` (필요 시 `PRF-02` 추가)
+
+구현 전 필수 조사:
+
+- 기존 workbook/sheet/range
+- VBA 매크로/모듈
+- MariaDB schema snapshot
+- 운영 수작업 절차
+- migration/reconciliation/rollback 기준
+
+### 9.5 결재/승인 중심 시스템
+
+권장: `PRF-06` (+ 운영자 대시보드가 grid-heavy면 `PRF-01`)
+
+packet 필수 항목:
+
+- 상태전이
+- 승인 규칙표
+- 권한 매트릭스
+- 감사로그 이벤트
+- 예외/재상신/회수 규칙
+
+## 10. 변경 요청이 들어왔을 때 (핵심)
+
+새 기획 문서나 정책 변경이 들어오면 아래 순서로 처리한다.
+
+1. authoritative source로 등록
+2. requirements/implementation/active packet 영향 분석
+3. 충돌/재작업/보류 여부 기록
+4. 사용자 승인 경계 확인
+5. packet 갱신 후 구현 재개
+6. 검증/리포트/PMW export 재실행
+
+작은 변경처럼 보여도 아래에 해당하면 packet 재검토가 필요하다.
+
+- DB 필드/스키마 변경
+- 승인 흐름 변경
+- 상태값 변경
+- 화면 입력 항목 변경
+- migration/cutover 영향 발생
+
+## 11. PMW 운영 가이드
+
+### 11.1 PMW가 읽는 파일
+
+프로젝트 루트의 다음 2개 파일을 읽는다.
+
+- `.agents/runtime/project-manifest.json`
+- `.agents/runtime/pmw-read-model.json`
+
+둘 다 `harness:pmw-export` 결과물이다.
+
+### 11.2 registry
+
+PMW registry 경로:
+
+```text
+%APPDATA%\StandardHarnessPMW\projects.json
+```
+
+동작:
+
+- `Add`: 프로젝트 등록
+- `Select`: 현재 보는 프로젝트 전환
+- `Archive`: 목록에는 유지, 기본 선택에서 제외
+- `Remove`: PMW 목록에서 제거 (프로젝트 파일은 삭제되지 않음)
+
+### 11.3 PMW stale 대응
+
+1. 프로젝트 루트에서 `harness:pmw-export`
+2. PMW 새로고침
+3. 그래도 stale이면 `harness:status`와 `harness:validate` 재확인
+
+## 12. 배포까지 가는 체크리스트
+
+배포 직전 체크:
+
+- [ ] 요구사항/packet 최신 상태 반영
+- [ ] `npm test` 통과
+- [ ] `npm run harness:validate` 통과(또는 승인된 예외만 존재)
+- [ ] `npm run harness:validation-report` 생성 완료
+- [ ] `npm run harness:cutover-preflight` 통과
+- [ ] rollback 경계와 실행 주체 명확화
+- [ ] `npm run harness:pmw-export` 최신 반영
+
+배포 후 체크:
+
+- [ ] PMW에서 stage/gate/next 정상 표시
+- [ ] 운영 이슈를 packet 또는 preventive memory로 기록
+- [ ] 후속 버전 scope를 task 단위로 분리
+
+## 13. 장애/이슈 대응 플레이북
+
+### 13.1 Node 버전 오류
+
+증상: init/test 실행 실패, 버전 가드 메시지 출력
+
+대응:
+
+1. source checkout 환경이면 Node.js 24+ 설치
+2. 설치형 환경이면 `HARNESS.cmd` 경로로 실행
+3. 다시 `HARNESS.cmd doctor`
+
+### 13.2 `manifest not found` (PMW Add 실패)
+
+대응:
+
+1. 프로젝트 루트인지 확인
+2. `harness:pmw-export` 재실행
+3. PMW Add 재시도
+
+### 13.3 `starter_bootstrap_pending` finding
+
+의미: starter 초기화 전 안내 상태일 수 있음
+
+대응:
+
+1. `INIT_STANDARD_HARNESS.cmd` 또는 `npm run harness:init`
+2. `harness:validate` 재실행
+
+### 13.4 validate 실패
+
+대응 원칙:
+
+1. finding code와 경로 확인
+2. generated docs 직접 수정 금지
+3. governance 문서/packet/입력 데이터 수정
+4. validate 재실행
+
+### 13.5 PMW 포트 충돌(4174)
 
 ```powershell
-INSTALL_HARNESS.cmd --project-name "Budget Replacement" --target-dir "C:\work\budget" --profiles PRF-04,PRF-05,PRF-06
+set PMW_PORT=4180
+%LOCALAPPDATA%\StandardHarnessPMW\app\START_PMW.cmd
 ```
 
-profile은 여러 개를 동시에 켤 수 있다. 단, 활성화된 profile은 active packet에서 필요한 evidence를 채워야 한다.
+## 14. 운영 중 품질 유지 원칙
 
-## 10. 표준 작업 흐름
+1. 패킷 없이 구현 시작하지 않는다.
+2. PMW를 수정 도구처럼 사용하지 않는다.
+3. generated docs 수동 수정으로 문제를 덮지 않는다.
+4. 반복 문제는 `.agents/artifacts/PREVENTIVE_MEMORY.md`에 남긴다.
+5. 중요한 결정은 `why + evidence + approval` 형태로 남긴다.
 
-### 10.1 Kickoff
+## 15. 절대 금지
 
-1. `START_HERE.md`를 읽는다.
-2. `.agents/artifacts/REQUIREMENTS.md`에 사용자 목표, 운영 목표, 승인 목표를 정리한다.
-3. `reference/planning/PLN-00_DEEP_INTERVIEW.md`로 초기 질문을 닫는다.
-4. `reference/planning/PLN-01_REQUIREMENTS_FREEZE.md`로 requirements freeze를 기록한다.
+- `.agents/runtime/generated-state-docs/*` 직접 수정
+- PMW를 write authority로 사용
+- active packet 없이 구현 시작
+- 사람 승인 경계(스키마/컷오버/보안 수용) 무시
+- 프로젝트 고유 규칙을 core 표준으로 무단 승격
 
-### 10.2 구현 전
+## 16. 첫 프로젝트 시작 체크리스트
 
-1. requirements가 닫혔는지 확인한다.
-2. architecture / implementation / UI baseline을 requirements와 맞춘다.
-3. `reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md`를 복사해 실제 task packet을 만든다.
-4. packet에 active profile, source, acceptance, human approval boundary를 적는다.
-5. user-facing, data-impact, deploy/cutover 작업은 사람 승인 지점을 닫는다.
+1. PMW 설치 완료
+2. 새 프로젝트 생성(설치형 권장)
+3. 프로젝트 루트에서 테스트/상태/검증/export 실행
+4. PMW Add + Select 완료
+5. requirements 초안 작성
+6. 필요한 프로파일 선택
+7. 첫 work-item packet 작성
+8. `Ready For Code` 확인 후 구현 시작
 
-### 10.3 구현 중
+## 17. 마무리
 
-1. packet 범위 밖의 변경을 섞지 않는다.
-2. 제품 코드와 하네스 코드를 분리한다.
-3. 변경한 truth와 DB/generated state가 충돌하지 않게 한다.
-4. 중간에 요구사항이 바뀌면 구현보다 rebaseline을 먼저 한다.
+표준 하네스의 목적은 개발 속도를 늦추는 것이 아니라, 실패 비용을 낮추고 재작업을 줄이며 의사결정을 빠르게 만드는 것이다.
 
-### 10.4 구현 후
-
-1. `npm test`
-2. `npm run harness:validate`
-3. `npm run harness:validation-report`
-4. `npm run harness:pmw-export`
-5. 필요한 경우 `harness:cutover-preflight`, `harness:cutover-report`
-6. review gate close
-
-## 11. 상황별 사용법
-
-### 새 프로젝트를 빠르게 시작해야 할 때
-
-1. PMW 설치 여부를 확인한다.
-2. `INSTALL_HARNESS.cmd --project-name ... --target-dir ... --profiles ...`를 실행한다.
-3. 새 프로젝트에서 `npm test`와 `harness:status`를 실행한다.
-4. PMW에서 프로젝트가 보이는지 확인한다.
-5. `PLN-00`, `PLN-01`부터 닫는다.
-
-### 작은 웹앱이나 내부 도구
-
-- `PRF-07`을 우선 고려한다.
-- Node/frontend package boundary가 있으면 `PRF-09`도 켠다.
-- 전체 workflow/approval profile을 무리하게 켜지 않는다.
-
-예:
-
-```powershell
-INSTALL_HARNESS.cmd --project-name "Ops Checklist" --target-dir "C:\work\ops-checklist" --profiles PRF-07,PRF-09
-```
-
-### Android native 앱
-
-- `PRF-08`을 켠다.
-- packet에서 package namespace, Gradle/AGP, minSdk/targetSdk, signing, permissions, storage, network boundary, device/emulator test plan을 닫는다.
-
-### Node/frontend 앱
-
-- `PRF-09`를 켠다.
-- packet에서 product source root, package ownership, Node product runtime, package manager, framework/bundler, build/test command, env policy, API/backend boundary, static routing, deploy target을 닫는다.
-- root `package.json`을 제품도 사용한다면 harness scripts 보존 정책을 먼저 적는다.
-
-### Excel/VBA/MariaDB legacy 대체
-
-- 보통 `PRF-04`, `PRF-05`, `PRF-06` 조합을 고려한다.
-- 기존 DB schema 또는 동등한 authoritative schema artifact를 요청한다.
-- migration/reconciliation, approval/audit, rollback/cutover 경계를 packet에서 닫기 전 구현하지 않는다.
-
-### 이미 진행 중인 프로젝트에 새 기획 문서가 들어왔을 때
-
-1. 새 문서를 authoritative source로 등록한다.
-2. requirements, architecture, implementation plan, active packet 영향 범위를 분석한다.
-3. 충돌, 재작업, defer 여부를 사용자에게 확인한다.
-4. rebaseline 없이 기존 구현을 계속 밀지 않는다.
-
-### PMW 화면이 최신이 아닐 때
-
-프로젝트 루트에서 실행한다.
-
-```powershell
-HARNESS.cmd pmw-export
-```
-
-그 뒤 PMW를 새로고침한다.
-
-### validation이 실패할 때
-
-1. finding code와 path를 확인한다.
-2. generated docs를 직접 수정하지 않는다.
-3. governance Markdown 또는 DB/generation path를 고친다.
-4. 다시 `npm run harness:validate`를 실행한다.
-
-### 제품 코드가 root `package.json`을 써야 할 때
-
-1. 모든 `harness:*` script를 보존한다.
-2. 제품 Node 버전과 하네스 Node.js 24+ 요구사항을 분리해 적는다.
-3. active packet에 package ownership policy를 남긴다.
-4. `PRF-09`가 켜져 있으면 Node/frontend profile evidence를 채운다.
-
-## 12. 하지 말아야 할 일
-
-- `.agents/runtime/generated-state-docs/*`를 직접 고치지 않는다.
-- PMW를 write authority로 취급하지 않는다.
-- active packet 없이 구현을 시작하지 않는다.
-- DB schema, cutover, 보안 risk acceptance를 사람 확인 없이 닫지 않는다.
-- 특정 프로젝트의 테이블명, 화면명, 운영 host를 core 규칙으로 승격하지 않는다.
-- profile이 필요 없는데 모든 profile을 켜지 않는다.
-
-## 13. 문제 해결
-
-### Node.js 버전 오류
-
-Node.js 24 이상을 설치한 뒤 다시 실행한다.
-
-### 설치 대상 폴더가 비어 있지 않다는 오류
-
-새 빈 폴더를 지정한다. 기존 프로젝트에 덮어쓰는 방식은 지원하지 않는다.
-
-### PMW registry 등록은 되었는데 화면에 상태가 없다
-
-프로젝트 루트에서 `npm run harness:pmw-export`를 실행한다.
-
-### `harness:validate`가 starter bootstrap pending을 표시한다
-
-수동 복사 후 아직 `harness:init`을 실행하지 않은 상태일 수 있다. `INIT_STANDARD_HARNESS.cmd` 또는 `npm run harness:init`를 실행한다.
-
-### package payload missing 오류
-
-설치 패키지에서 `.package/` 폴더가 누락된 상태다. `INSTALL_HARNESS.cmd`, `INSTALL_PMW.cmd`, 두 manual만 복사하고 `.package/`를 빼면 설치할 수 없다.
-
-## 14. 최종 기준
-
-하네스는 프로젝트를 대신 설계해 주는 도구가 아니다. 프로젝트가 `무엇을 왜 하는지`, `무엇을 승인해야 하는지`, `어디까지 구현해도 되는지`, `현재 다음 행동이 무엇인지`를 지속적으로 잃지 않게 만드는 운영 장치다.
+프로젝트가 작아도 이 매뉴얼의 최소 흐름(요구사항 -> packet -> 구현 -> 검증 -> export)만 지키면 품질 편차를 크게 줄일 수 있다.

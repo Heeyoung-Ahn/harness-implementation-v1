@@ -3,9 +3,12 @@ import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { RELEASE_BASELINE } from "../.harness/runtime/state/release-baseline.js";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const outputRoot = path.resolve(process.env.WINDOWS_EXE_OUTPUT_DIR ?? path.join(repoRoot, "dist", "windows-exe-v1.2"));
+const outputRoot = path.resolve(
+  process.env.WINDOWS_EXE_OUTPUT_DIR ?? path.join(repoRoot, "dist", RELEASE_BASELINE.windowsExeDirectory)
+);
 const buildRoot = path.join(os.tmpdir(), `standard-harness-exe-build-${Date.now()}`);
 const nodeExe = process.execPath;
 

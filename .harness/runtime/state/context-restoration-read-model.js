@@ -4,9 +4,12 @@ import path from "node:path";
 import { validateGeneratedStateDocs } from "./drift-validator.js";
 import { CURRENT_STATE_DOC, TASK_LIST_DOC } from "./generate-state-docs.js";
 import { resolveArtifactPath, resolveGeneratedDocReadPath } from "./harness-paths.js";
+import { resolveHandoffExecution, workflowForOwner } from "./workflow-routing.js";
 
 export const IMPLEMENTATION_PLAN_DOC = ".agents/artifacts/IMPLEMENTATION_PLAN.md";
 export const OPERATOR_NEXT_ACTION_SECTION = "## Operator Next Action";
+export const PROJECT_PROGRESS_DOC = ".agents/artifacts/PROJECT_PROGRESS.md";
+export const PROJECT_PROGRESS_SECTION = "## Progress Board";
 
 const SURFACE_SECTIONS = {
   decisionRequired: {
@@ -31,6 +34,93 @@ const SURFACE_SECTIONS = {
   }
 };
 
+const PHASE_ONE_OPERATOR_COMMANDS = [
+  {
+    id: "status",
+    label: "status",
+    command: "npm run harness:status",
+    launchMode: "pmw_phase1",
+    mandatory: true,
+    sideEffect: "read_only",
+    description: "Summarize the selected project's current stage, gate, and focus."
+  },
+  {
+    id: "next",
+    label: "next",
+    command: "npm run harness:next",
+    launchMode: "pmw_phase1",
+    mandatory: true,
+    sideEffect: "read_only",
+    description: "Show the next recommended action for the selected project."
+  },
+  {
+    id: "explain",
+    label: "explain",
+    command: "npm run harness:explain",
+    launchMode: "pmw_phase1",
+    mandatory: true,
+    sideEffect: "read_only",
+    description: "Explain the current state and operator-facing rationale."
+  },
+  {
+    id: "validate",
+    label: "validate",
+    command: "npm run harness:validate",
+    launchMode: "pmw_phase1",
+    mandatory: true,
+    sideEffect: "validation",
+    description: "Run validator checks against the selected project's current truth surfaces."
+  },
+  {
+    id: "handoff",
+    label: "handoff",
+    command: "npm run harness:handoff",
+    launchMode: "pmw_phase1",
+    mandatory: true,
+    sideEffect: "workflow_launch",
+    description: "Launch the next approved workflow for the selected project based on handoff routing."
+  },
+  {
+    id: "pmw-export",
+    label: "pmw-export",
+    command: "npm run harness:pmw-export",
+    launchMode: "pmw_phase1",
+    mandatory: true,
+    sideEffect: "derived_output",
+    description: "Regenerate the selected project's PMW read-model and manifest artifacts."
+  }
+];
+
+const TERMINAL_ONLY_OPERATOR_COMMANDS = [
+  {
+    id: "doctor",
+    label: "doctor",
+    command: "npm run harness:doctor",
+    launchMode: "terminal_only",
+    mandatory: false,
+    sideEffect: "read_only",
+    description: "Run environment and operator readiness checks from the selected project's terminal."
+  },
+  {
+    id: "test",
+    label: "test",
+    command: "npm test",
+    launchMode: "terminal_only",
+    mandatory: false,
+    sideEffect: "verification",
+    description: "Run the selected project's test suite from the terminal until PMW command-panel support is added."
+  },
+  {
+    id: "validation-report",
+    label: "validation-report",
+    command: "npm run harness:validation-report",
+    launchMode: "terminal_only",
+    mandatory: false,
+    sideEffect: "derived_output",
+    description: "Persist validation evidence from the terminal until PMW command-panel support is added."
+  }
+];
+
 export function buildContextRestorationReadModel({
   store,
   repoRoot = process.cwd(),
@@ -49,6 +139,7 @@ export function buildContextRestorationReadModel({
   const currentStateContent = readIfExists(resolveGeneratedDocReadPath({ outputDir, docName: CURRENT_STATE_DOC }));
   const taskListContent = readIfExists(resolveGeneratedDocReadPath({ outputDir, docName: TASK_LIST_DOC }));
   const implementationPlanContent = readIfExists(resolveArtifactPath(repoRoot, "plan"));
+  const projectProgressContent = readIfExists(resolveArtifactPath(repoRoot, "progress"));
 
   const decisionSurface = buildDecisionSurface({
     sectionContent: sliceSection(currentStateContent, SURFACE_SECTIONS.decisionRequired.summaryHeading),
@@ -67,6 +158,13 @@ export function buildContextRestorationReadModel({
     workItems,
     diagnostics
   });
+  const handoffExecution = resolveHandoffExecution({
+    repoRoot,
+    workItems,
+    latestHandoff,
+    includeWorkflowDetails: true
+  });
+  diagnostics.push(buildHandoffRouteDiagnostic({ handoff: handoffExecution, latestHandoff }));
 
   return {
     generatedAt: new Date().toISOString(),
@@ -104,6 +202,34 @@ export function buildContextRestorationReadModel({
       currentFocus: currentFocusSurface,
       nextAction: nextActionSurface
     },
+    projectOverviewBand: buildProjectOverviewBand({
+      releaseState,
+      freshness: validation,
+      workItems,
+      progressContent: projectProgressContent
+    }),
+    actionBoard: buildActionBoard({
+      decisionSurface,
+      blockedSurface,
+      nextActionSurface,
+      workItems,
+      handoffExecution
+    }),
+    reEntryBaton: buildReEntryBaton({
+      latestHandoff,
+      handoffExecution,
+      nextActionSurface,
+      workItems
+    }),
+    artifactLibrary: buildArtifactLibrary({
+      repoRoot,
+      releaseState,
+      latestHandoff,
+      nextActionSurface,
+      workItems,
+      artifactIndex: store.listArtifacts()
+    }),
+    operatorCommands: buildOperatorCommands(),
     recentHandoff: buildHandoffSummary(latestHandoff),
     diagnostics: [...validation.findings, ...diagnostics]
   };
@@ -277,6 +403,257 @@ function buildHandoffSummary(latestHandoff) {
   };
 }
 
+function buildHandoffRouteDiagnostic({ handoff, latestHandoff }) {
+  const taskLabel = handoff.task
+    ? `[${handoff.task.workItemId}] ${handoff.task.title}`
+    : "no open task";
+
+  return {
+    code: "handoff_route",
+    severity: "info",
+    owner: handoff.owner,
+    workflow: handoff.workflow,
+    routeStatus: handoff.routeStatus,
+    resolvedBy: handoff.resolvedBy,
+    currentStateNextAgent: handoff.currentStateNextAgent,
+    taskId: handoff.task?.workItemId ?? null,
+    taskTitle: handoff.task?.title ?? null,
+    taskStatus: handoff.task?.status ?? null,
+    workflowDetailsExists: handoff.workflowDetails?.exists ?? null,
+    workflowMissingSections: handoff.workflowDetails?.missingSections ?? [],
+    fromRole: latestHandoff?.fromRole ?? null,
+    toRole: latestHandoff?.toRole ?? null,
+    message: `handoff.md routes to ${handoff.workflow} for ${handoff.owner}: ${taskLabel}.`
+  };
+}
+
+function buildProjectOverviewBand({ releaseState, freshness, workItems, progressContent }) {
+  const progressRows = parseProgressBoardRows(progressContent);
+  const openWorkItems = workItems.filter((item) => !isClosedStatus(item.status));
+  const doneCount = progressRows.filter((row) => isClosedStatus(row.Status)).length;
+  const activeCount = progressRows.filter((row) => !isClosedStatus(row.Status)).length;
+  const phaseDetails = Array.from(
+    progressRows.reduce((acc, row) => {
+      const phase = row.Phase || "Other";
+      const current = acc.get(phase) ?? {
+        phase,
+        total: 0,
+        done: 0,
+        active: 0,
+        completedItems: [],
+        remainingItems: []
+      };
+      const item = {
+        taskId: row["Task ID"] || null,
+        title: row.Task || "Untitled task",
+        status: row.Status || "unknown",
+        notes: row.Notes || "",
+        source: row.Source || ""
+      };
+      current.total += 1;
+      if (isClosedStatus(row.Status)) {
+        current.done += 1;
+        current.completedItems.push(item);
+      } else {
+        current.active += 1;
+        current.remainingItems.push(item);
+      }
+      acc.set(phase, current);
+      return acc;
+    }, new Map()).values()
+  );
+  const phaseSummary = phaseDetails.map(({ phase, total, done, active }) => ({
+    phase,
+    total,
+    done,
+    active
+  }));
+
+  return {
+    heading: "Project Overview Band",
+    projectGoal: releaseState?.releaseGoal ?? "unknown",
+    currentFocus: releaseState?.currentFocus ?? "unknown",
+    stage: releaseState?.currentStage ?? "unknown",
+    gate: releaseState?.releaseGateState ?? "unknown",
+    metrics: {
+      totalTracked: progressRows.length,
+      done: doneCount,
+      active: activeCount,
+      openWorkItems: openWorkItems.length,
+      freshness: freshness.ok ? "fresh" : "attention"
+    },
+    phaseSummary,
+    phaseDetails,
+    sourceTrace: buildSourceTrace(PROJECT_PROGRESS_DOC, PROJECT_PROGRESS_SECTION, [
+      releaseState?.sourceRef,
+      resolveArtifactPathFallback("progress")
+    ])
+  };
+}
+
+function buildActionBoard({ decisionSurface, blockedSurface, nextActionSurface, workItems, handoffExecution }) {
+  const openWorkItems = workItems.filter((item) => !isClosedStatus(item.status));
+  const currentTask = openWorkItems[0] ?? null;
+  const nextTaskSource = openWorkItems[1] ?? null;
+
+  return {
+    heading: "Action Board",
+    cards: {
+      decisionRequired: {
+        label: "Decision Required",
+        headline: decisionSurface.headline,
+        supportingText: decisionSurface.supportingText,
+        count: decisionSurface.count,
+        sourceTrace: decisionSurface.sourceTrace
+      },
+      blockedAtRisk: {
+        label: "Blocked / At Risk",
+        headline: blockedSurface.headline,
+        supportingText: blockedSurface.supportingText,
+        count: blockedSurface.count,
+        sourceTrace: blockedSurface.sourceTrace
+      },
+      currentTask: currentTask
+        ? {
+            label: "Current Task",
+            taskId: currentTask.workItemId,
+            title: currentTask.title,
+            status: currentTask.status,
+            owner: currentTask.owner ?? "unassigned",
+            workflow: handoffExecution.owner === currentTask.owner ? handoffExecution.workflow : inferWorkflowFromOwner(currentTask.owner),
+            summary: currentTask.nextAction ?? "No current-task summary recorded.",
+            sourceRef: currentTask.sourceRef
+          }
+        : {
+            label: "Current Task",
+            taskId: null,
+            title: "No open task",
+            status: "empty",
+            owner: "unassigned",
+            workflow: null,
+            summary: "No open work item is currently active.",
+            sourceRef: null
+          },
+      nextTask: nextTaskSource
+        ? {
+            label: "Next Task",
+            taskId: nextTaskSource.workItemId,
+            title: nextTaskSource.title,
+            status: nextTaskSource.status,
+            owner: nextTaskSource.owner ?? "unassigned",
+            workflow: workflowForActionBoardOwner(nextTaskSource.owner),
+            summary:
+              nextTaskSource.nextAction ??
+              nextActionSurface.supportingText ??
+              "No next-task summary recorded.",
+            sourceRef: nextTaskSource.sourceRef
+          }
+        : currentTask
+          ? {
+              label: "Next Task",
+              taskId: null,
+              title: "Next Lane Step",
+              status: "queued",
+              owner: handoffExecution.owner ?? currentTask.owner ?? "unassigned",
+              workflow: handoffExecution.workflow ?? inferWorkflowFromOwner(currentTask.owner),
+              summary:
+                currentTask.nextAction ??
+                nextActionSurface.supportingText ??
+                "No next-task summary recorded.",
+              sourceRef: currentTask.sourceRef
+            }
+        : {
+            label: "Next Task",
+            taskId: null,
+            title: "No routed next task",
+            status: "empty",
+            owner: handoffExecution.owner ?? "unassigned",
+            workflow: handoffExecution.workflow,
+            summary: nextActionSurface.headline,
+            sourceRef: null
+          }
+    }
+  };
+}
+
+function buildReEntryBaton({ latestHandoff, handoffExecution, nextActionSurface, workItems }) {
+  const openWorkItems = workItems.filter((item) => !isClosedStatus(item.status));
+  const activeTask = handoffExecution.task ?? openWorkItems[0] ?? null;
+  return {
+    heading: "Re-entry Baton",
+    latestHandoff: latestHandoff
+      ? {
+          headline: latestHandoff.handoffSummary,
+          fromRole: latestHandoff.fromRole,
+          toRole: latestHandoff.toRole,
+          createdAt: latestHandoff.createdAt
+        }
+      : null,
+    nextOwner: handoffExecution.owner ?? "unassigned",
+    targetWorkflow: handoffExecution.workflow ?? null,
+    routeStatus: handoffExecution.routeStatus,
+    activeTask: activeTask
+      ? {
+          taskId: activeTask.workItemId,
+          title: activeTask.title
+        }
+      : null,
+    requiredSsot: latestHandoff?.payload?.requiredSsot ?? [],
+    pendingApprovals: latestHandoff?.payload?.pendingApprovals ?? [],
+    fallbackSummary: nextActionSurface.supportingText ?? nextActionSurface.headline
+  };
+}
+
+function buildArtifactLibrary({ repoRoot, releaseState, latestHandoff, nextActionSurface, workItems, artifactIndex }) {
+  const activeTask = workItems.find((item) => !isClosedStatus(item.status));
+  const currentPacketPath = activeTask?.sourceRef?.endsWith(".md") ? activeTask.sourceRef : null;
+  const executionTruth = uniqueItems(
+    [
+      { path: ".agents/artifacts/CURRENT_STATE.md", title: "Current State", kind: "governance" },
+      { path: ".agents/artifacts/TASK_LIST.md", title: "Task List", kind: "governance" },
+      { path: ".agents/artifacts/IMPLEMENTATION_PLAN.md", title: "Implementation Plan", kind: "governance" },
+      { path: PROJECT_PROGRESS_DOC, title: "Project Progress", kind: "governance" }
+    ],
+    "path"
+  );
+  const packetItems = uniqueItems(
+    [
+      ...(currentPacketPath ? [{ path: currentPacketPath, title: path.basename(currentPacketPath, ".md"), kind: "active_packet" }] : []),
+      ...artifactIndex
+        .filter((artifact) => artifact.category === "task_packet")
+        .map((artifact) => ({ path: artifact.path, title: artifact.title, kind: artifact.category }))
+    ],
+    "path"
+  );
+  const evidenceItems = uniqueItems(
+    [
+      ...(latestHandoff?.payload?.requiredSsot ?? []).map((item) => ({
+        path: item,
+        title: path.basename(item, path.extname(item)),
+        kind: "required_ssot"
+      })),
+      { path: ".agents/artifacts/VALIDATION_REPORT.md", title: "Validation Report", kind: "evidence" },
+      { path: ".agents/runtime/generated-state-docs/CURRENT_STATE.md", title: "Generated Current State", kind: "generated" },
+      { path: ".agents/runtime/generated-state-docs/TASK_LIST.md", title: "Generated Task List", kind: "generated" }
+    ],
+    "path"
+  );
+
+  return {
+    heading: "Artifact Library",
+    previewTitle: currentPacketPath ?? ".agents/artifacts/CURRENT_STATE.md",
+    groups: [
+      { id: "execution_truth", label: "Execution Truth", items: mapArtifactItems(repoRoot, executionTruth) },
+      { id: "active_packets", label: "Active Packet And Registered Packets", items: mapArtifactItems(repoRoot, packetItems) },
+      { id: "evidence", label: "Evidence And Generated Outputs", items: mapArtifactItems(repoRoot, evidenceItems) }
+    ],
+    sourceTrace: buildSourceTrace(PROJECT_PROGRESS_DOC, PROJECT_PROGRESS_SECTION, [
+      releaseState?.sourceRef,
+      nextActionSurface.source?.path
+    ])
+  };
+}
+
 function buildFreshnessSummary({ validation, generationStates }) {
   const stale =
     generationStates.some((state) => state.freshnessState !== "fresh") ||
@@ -295,6 +672,31 @@ function buildFreshnessSummary({ validation, generationStates }) {
       checksum: state.checksum
     }))
   };
+}
+
+function buildOperatorCommands() {
+  return {
+    selectionMode: "selected_project",
+    concurrencyPolicy: "one_command_per_project",
+    logRetention: "session",
+    phaseOne: cloneCommandSet(PHASE_ONE_OPERATOR_COMMANDS),
+    terminalOnly: cloneCommandSet(TERMINAL_ONLY_OPERATOR_COMMANDS),
+    notes: [
+      "PMW is a launcher and result-viewer surface, not the canonical write authority.",
+      "Terminal-only commands must run from the selected project's repo root."
+    ]
+  };
+}
+
+function cloneCommandSet(commands) {
+  return commands.map((command) => ({ ...command }));
+}
+
+function mapArtifactItems(repoRoot, items) {
+  return items.map((item) => ({
+    ...item,
+    previewable: fs.existsSync(path.resolve(repoRoot, item.path))
+  }));
 }
 
 function buildSourceTrace(designatedDoc, summaryHeading, sourceRefs) {
@@ -362,4 +764,65 @@ function extractBulletLines(sectionContent) {
     .map((line) => line.trim())
     .filter((line) => line.startsWith("- "))
     .map((line) => line.slice(2).trim());
+}
+
+function parseProgressBoardRows(content) {
+  const sectionContent = sliceSection(content, PROJECT_PROGRESS_SECTION);
+  if (!sectionContent) {
+    return [];
+  }
+
+  const tableLines = sectionContent
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("|"));
+  if (tableLines.length < 3) {
+    return [];
+  }
+
+  const headers = tableLines[0]
+    .split("|")
+    .slice(1, -1)
+    .map((cell) => cell.trim());
+  return tableLines
+    .slice(2)
+    .map((line) =>
+      line
+        .split("|")
+        .slice(1, -1)
+        .map((cell) => cell.trim())
+    )
+    .map((cells) => Object.fromEntries(headers.map((header, index) => [header, cells[index] ?? ""])));
+}
+
+function isClosedStatus(status) {
+  const normalized = String(status ?? "").trim().toLowerCase();
+  return ["done", "closed", "complete", "completed"].includes(normalized);
+}
+
+function inferWorkflowFromOwner(owner) {
+  return workflowForActionBoardOwner(owner);
+}
+
+function workflowForActionBoardOwner(owner) {
+  return owner ? workflowForOwner(owner) : null;
+}
+
+function uniqueItems(items, key) {
+  const seen = new Set();
+  return items.filter((item) => {
+    const value = item[key];
+    if (!value || seen.has(value)) {
+      return false;
+    }
+    seen.add(value);
+    return true;
+  });
+}
+
+function resolveArtifactPathFallback(key) {
+  if (key === "progress") {
+    return PROJECT_PROGRESS_DOC;
+  }
+  return null;
 }

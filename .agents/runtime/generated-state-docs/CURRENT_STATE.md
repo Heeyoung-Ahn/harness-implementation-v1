@@ -1,19 +1,19 @@
 # CURRENT_STATE
 
 ## Technical Facts
-- Release stage: closed
-- Release gate state: closed
-- Release goal: Production-ready standalone standard harness template for Excel/VBA-MariaDB replacement projects is ready for real project kickoff
-- Generated at: 2026-04-26T03:15:19.903Z
+- Release stage: planning
+- Release gate state: open
+- Release goal: preserve the V1.2 installable standard harness baseline while defining the approved V1.3 direction where PMW remains a separate installable multi-project operator console, workflow Markdown becomes explicit agent-role contracts, and reusable profiles PRF-04 through PRF-09 stay intact
+- Generated at: 2026-05-01T15:30:23.913Z
 
 ## Current Focus Summary
-- PLN-06 standalone business-system harness V1.1 is implemented and verified
+- DEV-08 packet exit closeout is approved; PLN-07 should select the next V1.3 planning step.
 
 ## Current Focus Detail
-- Stage: closed
-- Gate state: closed
-- Goal: Production-ready standalone standard harness template for Excel/VBA-MariaDB replacement projects is ready for real project kickoff
-- Focus: PLN-06 standalone business-system harness V1.1 is implemented and verified
+- Stage: planning
+- Gate state: open
+- Goal: preserve the V1.2 installable standard harness baseline while defining the approved V1.3 direction where PMW remains a separate installable multi-project operator console, workflow Markdown becomes explicit agent-role contracts, and reusable profiles PRF-04 through PRF-09 stay intact
+- Focus: DEV-08 packet exit closeout is approved; PLN-07 should select the next V1.3 planning step.
 - Source: .agents/artifacts/CURRENT_STATE.md
 
 ## Decision Required Summary
@@ -27,5 +27,5 @@
 
 ## Generation Metadata
 - Generated docs: CURRENT_STATE.md, TASK_LIST.md
-- Source revision: 2026-04-26T03:15:19.903Z
+- Source revision: 2026-05-01T15:30:23.913Z
 - Sync status: fresh at generation time

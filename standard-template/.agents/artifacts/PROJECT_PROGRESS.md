@@ -1,7 +1,7 @@
 # Project Progress
 
 ## Summary
-Track the whole project kickoff-to-release board here. PMW reads this file directly for the overall progress table.
+Track the whole project kickoff-to-release board here after bootstrapping from the V1.2 installable standard harness baseline. PMW reads this file directly for the overall progress table.
 
 ## Progress Board
 | Phase | Task ID | Task | Status | Notes | Source |
