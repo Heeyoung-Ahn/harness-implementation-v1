@@ -6,6 +6,7 @@
 ## Approval Rule
 - 이 packet은 구현 전에 작성한다.
 - 이 packet은 먼저 `Core / Optional Profile / Project Packet` 중 어디에 속하는지 판정한다.
+- 이 packet은 `light / standard / contract / release` 중 하나의 Gate profile을 선언하고 profile별 required evidence를 닫는다.
 - one-or-more active optional profiles가 있으면 approved profile references와 required profile-specific evidence 없이는 `Ready For Code`로 올리지 않는다.
 - declared optional profiles가 둘 이상이면 `Profile composition rationale`과 각 profile의 required evidence 합집합이 닫히기 전에는 `Ready For Code`로 올리지 않는다.
 - `프로그램 기능과 UI/UX`를 건드리는 작업은 human sync 또는 approval 없이는 `Ready For Code`로 올리지 않는다.
@@ -30,6 +31,7 @@
 | Work item | [작업 이름] | [왜 지금 하는지] | draft |
 | Ready For Code | approve / adjust / hold | [코드 착수 가능 여부 근거] | draft |
 | Human sync needed | yes / no | [왜 필요한지] | draft |
+| Gate profile | light / standard / contract / release | [필요한 검증 강도] | draft |
 | User-facing impact | none / low / medium / high | [영향 영역] | draft |
 | Layer classification | core / optional profile / project packet | [어디에 속하는지] | draft |
 | Active profile dependencies | none / [profile ids] | [왜 필요한지] | draft |
@@ -243,6 +245,12 @@
 - [구현 시 참고할 제약]
 
 ## 14. Verification Plan
+- Gate profile:
+- Verification manifest:
+  - light: canonical artifact update, validator if generated/runtime state is touched, turn-close handoff note
+  - standard: approved packet, targeted tests, validator, handoff evidence
+  - contract: Ready For Code, root sync, standard-template sync, targeted tests, root test suite, starter test suite, validator, PMW export when applicable, review closeout
+  - release: release-baseline parity, packaging/manual evidence, validator, security/cutover evidence where applicable, review closeout
 - [어떻게 검증할지]
 
 ## 15. Packet Exit Quality Gate

@@ -18,6 +18,7 @@
     "harness:validation-report": "node .harness/runtime/state/dev05-cli.js validation-report",
     "harness:pmw-export": "node .harness/runtime/state/dev05-cli.js pmw-export",
     "harness:project-manifest": "node .harness/runtime/state/dev05-cli.js project-manifest",
+    "harness:transition": "node .harness/runtime/state/dev05-cli.js transition",
     "package:release": "node packaging/build-release-package.js",
     "package:windows-exe": "node packaging/build-windows-exe-installers.js",
     "harness:migration-preview": "node .harness/runtime/state/dev05-cli.js migration-preview",

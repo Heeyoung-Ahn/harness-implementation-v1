@@ -2,6 +2,36 @@
 
 Use this artifact to record verification evidence and manual test results.
 
+## 2026-05-02 DEV-09 PMW Phase-1 Command Launcher Tester Verification
+
+- Scope: tester verification for the approved `DEV-09` PMW phase-1 command launcher and handoff execution packet.
+- Environment: local maintainer workspace on Windows PowerShell.
+- Tested scope:
+  - PMW launcher command catalog is limited to `status`, `next`, `explain`, `validate`, `handoff`, and `pmw-export`.
+  - `doctor`, `test`, and `validation-report` remain Terminal Actions, not PMW launcher actions.
+  - `validate` remains diagnostic and no-confirmation.
+  - `handoff` and `pmw-export` require confirmation before PMW launch.
+  - Unknown launcher command rejection, selected-project scoping, one in-flight command per project, session result metadata, stdout/stderr capture, related artifact links, and handoff baton previous/next work context are covered.
+  - Root and `standard-template` reusable command metadata remain synchronized.
+- Evidence:
+  - `pmw-app` `npm.cmd test`: 2/2 pass.
+  - root `npm.cmd test`: 36/36 pass.
+  - `standard-template` `npm.cmd test`: 36/36 pass.
+  - root `npm.cmd run harness:status`: pass, current assignment `DEV-09` / `tester` / `ready_for_test`.
+  - root `npm.cmd run harness:next`: pass, next owner `tester`, next task `DEV-09`.
+  - root `npm.cmd run harness:explain`: pass, no blockers.
+  - root `npm.cmd run harness:validate`: `ok: true`, findings `[]`.
+  - root `npm.cmd run harness:handoff`: `routeStatus: ready`, next owner `tester`, route `.agents/workflows/test.md`.
+  - root `npm.cmd run harness:pmw-export`: pass, exported `PMW Actions` / `Terminal Actions`, `validate.confirmationRequired: false`, `handoff.confirmationRequired: true`, `pmw-export.confirmationRequired: true`, and re-entry baton previous/next work summaries.
+  - root `npm.cmd run harness:validation-report`: gate decision `pass`, findings `[]`.
+- Untested scope:
+  - No arbitrary shell execution was tested because it is explicitly out of scope.
+  - No persistent cross-session command history was tested because session-scoped results are the approved boundary.
+  - No browser visual screenshot was captured in this pass; PMW app tests directly assert the rendered command labels, command split, confirmation policy, terminal-only guidance, result metadata, and handoff baton content.
+- Result: tester verification passed; no Tester-discovered remediation item remains.
+- Handoff:
+  - Reviewer should inspect DEV-09 packet exit closeout readiness, source parity, residual debt disposition, PMW command boundary, root/starter sync, and validation evidence.
+
 ## 2026-05-02 DEV-08 PMW Action Board NextTask Tester Re-Verification
 
 - Scope: tester re-verification for the `DEV-08` PMW Action Board `nextTask` owner/workflow remediation after Reviewer found that `PLN-07` was displayed using the current handoff route.

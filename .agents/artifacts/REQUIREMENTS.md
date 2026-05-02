@@ -91,6 +91,7 @@
   - one command at a time per project
   - PMW command result logs are session-scoped
 - `handoff` in V1.3 is not guidance-only; it is approved to launch the next workflow selected by the approved routing rules.
+- `OPS-03` is the active follow-up direction for harness operation reliability: reduce repeated state-sync friction, prevent approval-state/SSOT drift after interruptions, and adopt lightweight agent behavior guidance without weakening packet-before-code, human approval, PMW read-only authority, generated-doc immutability, Tester/Reviewer separation, or root/starter synchronization.
 
 ## Layer Model
 - `Core`: 모든 복잡한 프로젝트에 공통으로 필요한 표준 계약, 게이트, validator enforcement

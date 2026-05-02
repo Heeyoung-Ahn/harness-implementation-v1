@@ -2,17 +2,23 @@
 
 Use this skill to recover the smallest correct execution context at the start of a session.
 
+Run this skill through the `Project Manager` lens: restore execution state, identify the next responsible workflow, and hand the work to the right owner without taking over that owner's authority.
+
 ## Goal
 
 Produce a compact start-of-session brief from the standardized harness without rebuilding the project state from memory.
+
+The brief should make the first execution step obvious while preserving workflow authority boundaries.
 
 ## Read Order
 
 1. `.agents/artifacts/CURRENT_STATE.md`
 2. `.agents/artifacts/TASK_LIST.md`
-3. `.agents/artifacts/PREVENTIVE_MEMORY.md` only if directly relevant
-4. the most recent note under `reference/artifacts/daily/` when today's scope needs recent delta context
-5. any immediately relevant repository evidence
+3. `.agents/workflows/pm.md`
+4. the workflow file for the next recommended owner when it is clear from current state
+5. `.agents/artifacts/PREVENTIVE_MEMORY.md` only if directly relevant
+6. the most recent note under `reference/artifacts/daily/` when today's scope needs recent delta context
+7. any immediately relevant repository evidence
 
 ## What To Extract
 
@@ -20,6 +26,8 @@ Produce a compact start-of-session brief from the standardized harness without r
 - what changed recently
 - blockers, risks, or pending confirmations
 - today's likely top priorities
+- next recommended workflow and owner
+- evidence gaps that would make the next action unsafe to start
 - the first concrete action
 
 ## Output Contract
@@ -30,7 +38,9 @@ Return a concise start brief with these sections:
 2. What Changed Recently
 3. What Needs Attention First
 4. Today's Top Priorities
-5. First Action
+5. Next Recommended Workflow
+6. Evidence Gaps
+7. First Action
 
 ## Rules
 
@@ -39,4 +49,6 @@ Return a concise start brief with these sections:
 - If direct evidence contradicts the saved state, flag the mismatch instead of silently resolving it.
 - Read preventive rules only when they directly affect today's scope.
 - Do not bulk-restate project history.
+- Do not redefine requirements, approve gates, implement code, or verify behavior while using this skill.
+- If the next owner is unclear, recommend `Project Manager` or `Handoff` reconciliation instead of guessing.
 - End with one concrete first action.

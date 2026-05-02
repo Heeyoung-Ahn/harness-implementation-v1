@@ -4,6 +4,7 @@ import path from "node:path";
 const PACKET_TEMPLATE_FIXTURE = `# Work Item Packet Template
 
 | Layer classification | core / optional profile / project packet | rationale | draft |
+| Gate profile | light / standard / contract / release | verification strength | draft |
 | Active profile dependencies | none / [profile ids] | rationale | draft |
 | Profile evidence status | not-needed / pending / approved | rationale | draft |
 | Shared-source wave status | not-needed / pending / approved | rationale | draft |
@@ -21,6 +22,8 @@ const PACKET_TEMPLATE_FIXTURE = `# Work Item Packet Template
 - Source wave packet disposition:
 - Packet exit quality gate reference:
 - Improvement candidate reference:
+- Gate profile:
+- Verification manifest:
 - Primary admin entity / surface:
 - Grid interaction model:
 - Search / filter / sort / pagination behavior:
@@ -437,6 +440,7 @@ const TASK_LIST_FIXTURE = `# Task List
 const DEFAULT_CONCRETE_TASK_PACKET = {
   header: {
     "Ready For Code": "approve",
+    "Gate profile": "standard",
     "User-facing impact": "high",
     "Layer classification": "project packet",
     "Active profile dependencies": "PRF-01 + PRF-02",
@@ -456,6 +460,8 @@ const DEFAULT_CONCRETE_TASK_PACKET = {
   fields: {
     "Layer classification": "project packet",
     "Required reading before code": "requirements, architecture, implementation plan, active packet",
+    "Gate profile": "standard",
+    "Verification manifest": "approved packet, targeted tests, validator, handoff evidence",
     "Active profile references":
       "reference/profiles/PRF-01_ADMIN_GRID_APPLICATION_PROFILE.md, reference/profiles/PRF-02_AUTHORITATIVE_SPREADSHEET_SOURCE_PROFILE.md",
     "Profile composition rationale": "The work item combines admin-grid workflow and authoritative spreadsheet ingestion.",

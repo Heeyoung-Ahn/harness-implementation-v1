@@ -2,6 +2,90 @@
 
 Use this artifact when the project enters a formal review gate.
 
+## 2026-05-03 OPS-03 Review Finding
+
+- Scope: packet exit closeout review for `OPS-03` harness operation reliability and friction reduction after Tester re-verification passed.
+- Entry condition:
+  - Tester re-verification passed after Developer remediation of mixed-timestamp handoff ordering and transition canonical-doc updates.
+  - Root/starter tests, PMW app tests, validator, PMW export, and validation report were recorded as passing in the OPS-03 packet.
+- Evidence reviewed:
+  - `reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md`
+  - `.harness/runtime/state/dev05-tooling.js`
+  - `.harness/runtime/state/operating-state-store.js`
+  - `.harness/runtime/state/drift-validator.js`
+  - `.harness/runtime/state/context-restoration-read-model.js`
+  - `.harness/test/dev05-tooling.test.js`
+  - `.harness/test/operating-state-store.test.js`
+  - `standard-template/.harness/runtime/state/dev05-tooling.js`
+  - `.agents/runtime/pmw-read-model.json`
+  - `.agents/artifacts/VALIDATION_REPORT.md`
+- Findings:
+  - `harness:transition` reads packet `Ready For Code` state but does not block `planner-to-developer` when the packet is not approved. This weakens the OPS-03 requirement that implementation handoff requires a source-traced approval event.
+  - `harness:transition --apply` can return top-level `ok: true` after writing DB, canonical docs, generated docs, PMW export, and handoff evidence even when the generated validation report fails. The CLI exit rule also ignores `validationReport.ok`, so a failed post-apply validation can look successful to the operator.
+- Required remediation:
+  - Add root and `standard-template` transition guards so `planner-to-developer` requires packet `Ready For Code: approved`.
+  - Require any open Ready For Code decision for the same packet to be closed through the transition request before implementation handoff is considered valid.
+  - Make post-apply validation failure set top-level transition result `ok: false` and return a non-zero CLI exit.
+  - Add root/starter regression tests for unapproved Ready For Code, open Ready For Code decision, and post-apply validation failure reporting.
+  - Rerun root/starter targeted transition tests, root/starter full tests, PMW app tests, validator, PMW export, and validation report after remediation.
+- Developer remediation:
+  - Root and `standard-template` `harness:transition` now block `planner-to-developer` unless packet `Ready For Code` is approved.
+  - Root and `standard-template` `harness:transition` now block `planner-to-developer` when an open Ready For Code decision for the same packet is not included in `--close-decision`.
+  - Post-apply validation failure now sets top-level transition `ok: false`, preserving the validation report summary so the CLI can return failure instead of silent success.
+  - Transition apply now refreshes `.agents/artifacts/IMPLEMENTATION_PLAN.md` `## Operator Next Action`, closing the PMW Next Action stale-source gap observed during remediation.
+  - Root and starter transition regression tests now cover unapproved Ready For Code, unclosed Ready For Code decision, post-apply validation failure reporting, and implementation-plan next-action refresh.
+- Developer validation:
+  - root targeted `node --test .harness\test\dev05-tooling.test.js`: 17/17 pass.
+  - starter targeted `node --test standard-template\.harness\test\dev05-tooling.test.js`: 17/17 pass.
+  - root `npm.cmd test`: 43/43 pass.
+  - `standard-template` `npm.cmd test`: 43/43 pass.
+  - `pmw-app` `npm.cmd test`: 2/2 pass.
+- Packet exit decision:
+  - hold
+- Next handoff:
+  - Tester should re-verify the remediation and PMW/export evidence before returning to Reviewer.
+- Status: remediated; awaiting Tester re-verification
+
+## 2026-05-02 DEV-09 Packet Exit Closeout Review
+
+- Scope: packet exit closeout review for `DEV-09` PMW phase-1 command launcher, confirmation boundaries, terminal-only guidance, session result surface, and handoff baton behavior.
+- Entry condition:
+  - Tester verification passed on 2026-05-02 and was recorded in `reference/artifacts/WALKTHROUGH.md`.
+  - PMW app tests, root tests, starter tests, validator, PMW export, validation report, and handoff evidence are clean.
+- Evidence reviewed:
+  - `reference/packets/PKT-01_DEV-09_PMW_PHASE_1_COMMAND_LAUNCHER_AND_HANDOFF_EXECUTION.md`
+  - `pmw-app/runtime/server.js`
+  - `pmw-app/test/server.test.js`
+  - `.harness/runtime/state/context-restoration-read-model.js`
+  - `.harness/test/pmw-read-surface.test.js`
+  - `standard-template/.harness/runtime/state/context-restoration-read-model.js`
+  - `standard-template/.harness/test/pmw-read-surface.test.js`
+  - `.agents/runtime/pmw-read-model.json`
+  - `.agents/artifacts/VALIDATION_REPORT.md`
+  - `reference/artifacts/WALKTHROUGH.md`
+- Findings:
+  - no open review finding remains.
+- Review result:
+  - PMW launcher scope remains fixed to `status`, `next`, `explain`, `validate`, `handoff`, and `pmw-export`.
+  - `doctor`, `test`, and `validation-report` remain terminal-only guidance.
+  - Confirmation boundaries match the approved decision: `validate` is no-confirmation; `handoff` and `pmw-export` are confirmation-required.
+  - Server-side command execution is selected-project scoped, rejects unknown launcher commands, blocks a second in-flight command for the same project, and stores result entries in the current PMW session only.
+  - Handoff behavior uses the existing route contract and exposes previous work agent, previous work summary, next work agent, and next work summary without creating an agent runtime.
+  - Root and `standard-template` reusable command metadata and regression tests are synchronized.
+  - Residual debt disposition: none for the reviewed DEV-09 scope.
+- Validation:
+  - `pmw-app` `npm.cmd test`: 2/2 pass.
+  - root `npm.cmd test`: 36/36 pass.
+  - `standard-template` `npm.cmd test`: 36/36 pass.
+  - root `npm.cmd run harness:validate`: findings `[]`.
+  - root `npm.cmd run harness:pmw-export`: pass.
+  - root `npm.cmd run harness:validation-report`: gate decision `pass`, findings `[]`.
+  - root `npm.cmd run harness:handoff`: route `.agents/workflows/test.md` before closeout.
+- Result: approved.
+- Next handoff:
+  - Planner should open the harness-operation friction reduction plan requested by the user, covering gate profiles, transition automation, and state/history separation.
+- Status: done
+
 ## 2026-05-02 DEV-08 Packet Exit Closeout Review
 
 - Scope: packet exit closeout review for `DEV-08` workflow contracts, handoff routing remediation, PM workflow addition, root/starter parity, and PMW route-context evidence.

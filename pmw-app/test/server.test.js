@@ -51,7 +51,32 @@ test("PMW home page renders the DEV-07 first-view sections and artifact preview 
     body: JSON.stringify({ projectId: "alpha-project", commandId: "status" })
   });
   const runPayload = await runRes.json();
-  const completedSession = await waitForCommandSession(address.port, "alpha-project");
+  const busyRes = await fetch(`http://127.0.0.1:${address.port}/api/commands/run`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ projectId: "alpha-project", commandId: "next" })
+  });
+  const busyPayload = await busyRes.json();
+  const completedStatusSession = await waitForCommandSession(address.port, "alpha-project", "status");
+  const unknownCommandRes = await fetch(`http://127.0.0.1:${address.port}/api/commands/run`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ projectId: "alpha-project", commandId: "validation-report" })
+  });
+  const unknownCommandPayload = await unknownCommandRes.json();
+  const handoffNoConfirmRes = await fetch(`http://127.0.0.1:${address.port}/api/commands/run`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ projectId: "alpha-project", commandId: "handoff" })
+  });
+  const handoffNoConfirmPayload = await handoffNoConfirmRes.json();
+  const handoffRunRes = await fetch(`http://127.0.0.1:${address.port}/api/commands/run`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ projectId: "alpha-project", commandId: "handoff", confirmed: true })
+  });
+  const handoffRunPayload = await handoffRunRes.json();
+  const completedHandoffSession = await waitForCommandSession(address.port, "alpha-project", "handoff");
 
   assert.match(html, /PMW section navigation/);
   assert.match(html, /Project Overview/);
@@ -70,7 +95,26 @@ test("PMW home page renders the DEV-07 first-view sections and artifact preview 
   assert.match(html, /openOverviewModal/);
   assert.match(html, /phase-button/);
   assert.match(html, /function phaseCard/);
-  assert.match(html, /repo root:/);
+  assert.match(html, /selected project:/);
+  assert.match(html, /PMW Actions/);
+  assert.match(html, /Terminal Actions/);
+  assert.doesNotMatch(html, /dangerous = \['validate'/);
+  assert.deepEqual(
+    apiPayload.readModel.context.operatorCommands.phaseOne.map((command) => command.id),
+    ["status", "next", "explain", "validate", "handoff", "pmw-export"]
+  );
+  assert.equal(apiPayload.readModel.context.operatorCommands.phaseOneLabel, "PMW Actions");
+  assert.equal(apiPayload.readModel.context.operatorCommands.terminalOnlyLabel, "Terminal Actions");
+  assert.equal(
+    apiPayload.readModel.context.operatorCommands.phaseOne.find((command) => command.id === "validate")
+      .confirmationRequired,
+    false
+  );
+  assert.equal(
+    apiPayload.readModel.context.operatorCommands.phaseOne.find((command) => command.id === "handoff")
+      .confirmationRequired,
+    true
+  );
   assert.deepEqual(
     apiPayload.readModel.context.operatorCommands.terminalOnly.map((command) => command.id),
     ["doctor", "test", "validation-report"]
@@ -86,9 +130,25 @@ test("PMW home page renders the DEV-07 first-view sections and artifact preview 
   assert.equal(escapedArtifactPayload.ok, false);
   assert.match(escapedArtifactPayload.message, /escapes the selected project/);
   assert.equal(runPayload.ok, true);
-  assert.equal(completedSession.running, false);
-  assert.equal(completedSession.entries[0].status, "success");
-  assert.match(completedSession.entries[0].stdout, /status ok/);
+  assert.equal(busyPayload.ok, false);
+  assert.match(busyPayload.message, /already running/);
+  assert.equal(completedStatusSession.running, false);
+  assert.equal(completedStatusSession.entries[0].status, "success");
+  assert.equal(completedStatusSession.entries[0].selectedProject.id, "alpha-project");
+  assert.equal(completedStatusSession.entries[0].confirmationRequired, false);
+  assert.equal(typeof completedStatusSession.entries[0].durationMs, "number");
+  assert.match(completedStatusSession.entries[0].stdout, /status ok/);
+  assert.equal(unknownCommandPayload.ok, false);
+  assert.match(unknownCommandPayload.message, /approved PMW launcher scope/);
+  assert.equal(handoffNoConfirmPayload.ok, false);
+  assert.equal(handoffNoConfirmPayload.confirmationRequired, true);
+  assert.equal(handoffRunPayload.ok, true);
+  assert.equal(completedHandoffSession.entries[0].status, "success");
+  assert.equal(completedHandoffSession.entries[0].confirmationRequired, true);
+  assert.equal(completedHandoffSession.entries[0].handoffBaton.previousWorkAgent, "planner");
+  assert.match(completedHandoffSession.entries[0].handoffBaton.previousWorkSummary, /Ready For Code approved/);
+  assert.equal(completedHandoffSession.entries[0].handoffBaton.nextWorkAgent, "developer");
+  assert.match(completedHandoffSession.entries[0].handoffBaton.nextWorkSummary, /Implement DEV-09/);
   assert.match(artifactPayload.preview, /Current state preview/);
   assert.equal(apiPayload.readModel.context.operatorCommands.terminalOnly[1].command, "npm test");
   assert.equal(
@@ -109,7 +169,7 @@ function seedProject(root, id, name, stage) {
         name: id,
         version: "1.0.0",
         scripts: {
-          "harness:status": "node -e \"console.log('status ok')\"",
+          "harness:status": "node -e \"setTimeout(() => console.log('status ok'), 500)\"",
           "harness:next": "node -e \"console.log('next ok')\"",
           "harness:explain": "node -e \"console.log('explain ok')\"",
           "harness:validate": "node -e \"console.log('validate ok')\"",
@@ -256,6 +316,10 @@ function seedProject(root, id, name, stage) {
           reEntryBaton: {
             targetWorkflow: ".agents/workflows/dev.md",
             nextOwner: "developer",
+            previousWorkAgent: "planner",
+            previousWorkSummary: "DEV-09 Ready For Code approved.",
+            nextWorkAgent: "developer",
+            nextWorkSummary: "Implement DEV-09 PMW phase-1 command launcher and handoff baton behavior.",
             routeStatus: "ready",
             activeTask: { taskId: "DEV-07", title: "DEV-07 implementation" },
             requiredSsot: [".agents/artifacts/CURRENT_STATE.md"],
@@ -265,6 +329,17 @@ function seedProject(root, id, name, stage) {
               fromRole: "planner",
               toRole: "developer",
               createdAt: "2026-04-27T00:00:00.000Z"
+            }
+          },
+          recentHandoff: {
+            status: "ready",
+            headline: "planner -> developer",
+            createdAt: "2026-04-27T00:00:00.000Z",
+            fromRole: "planner",
+            toRole: "developer",
+            payload: {
+              completedScope: "DEV-09 Ready For Code approved.",
+              nextFirstAction: "Implement DEV-09 PMW phase-1 command launcher and handoff baton behavior."
             }
           },
           artifactLibrary: {
@@ -288,12 +363,68 @@ function seedProject(root, id, name, stage) {
             selectionMode: "selected_project",
             concurrencyPolicy: "one_command_per_project",
             logRetention: "session",
+            phaseOneLabel: "PMW Actions",
+            terminalOnlyLabel: "Terminal Actions",
             phaseOne: [
               {
                 id: "status",
                 label: "status",
                 command: "npm run harness:status",
+                launchMode: "pmw_phase1",
+                sideEffect: "read_only",
+                expectedEffect: "Read status.",
+                confirmationRequired: false,
                 description: "Summarize the selected project's current stage, gate, and focus."
+              },
+              {
+                id: "next",
+                label: "next",
+                command: "npm run harness:next",
+                launchMode: "pmw_phase1",
+                sideEffect: "read_only",
+                expectedEffect: "Read next action.",
+                confirmationRequired: false,
+                description: "Show the next recommended action for the selected project."
+              },
+              {
+                id: "explain",
+                label: "explain",
+                command: "npm run harness:explain",
+                launchMode: "pmw_phase1",
+                sideEffect: "read_only",
+                expectedEffect: "Read rationale.",
+                confirmationRequired: false,
+                description: "Explain the current state and operator-facing rationale."
+              },
+              {
+                id: "validate",
+                label: "validate",
+                command: "npm run harness:validate",
+                launchMode: "pmw_phase1",
+                sideEffect: "validation",
+                expectedEffect: "Run diagnostics.",
+                confirmationRequired: false,
+                description: "Run validator checks against the selected project's current truth surfaces."
+              },
+              {
+                id: "handoff",
+                label: "handoff",
+                command: "npm run harness:handoff",
+                launchMode: "pmw_phase1",
+                sideEffect: "workflow_launch",
+                expectedEffect: "Resolve handoff route.",
+                confirmationRequired: true,
+                description: "Launch the next approved workflow for the selected project based on handoff routing."
+              },
+              {
+                id: "pmw-export",
+                label: "pmw-export",
+                command: "npm run harness:pmw-export",
+                launchMode: "pmw_phase1",
+                sideEffect: "derived_output",
+                expectedEffect: "Regenerate PMW read-model artifacts.",
+                confirmationRequired: true,
+                description: "Regenerate the selected project's PMW read-model and manifest artifacts."
               }
             ],
             terminalOnly: [
@@ -344,13 +475,14 @@ function seedSiblingProjectPrefix(root, id) {
   fs.writeFileSync(path.join(siblingRoot, "SECRET.md"), "sibling secret\n", "utf8");
 }
 
-async function waitForCommandSession(port, projectId) {
+async function waitForCommandSession(port, projectId, commandId) {
   for (let attempt = 0; attempt < 80; attempt += 1) {
     const res = await fetch(
       `http://127.0.0.1:${port}/api/read-model?project=${encodeURIComponent(projectId)}`
     );
     const payload = await res.json();
-    if (!payload.commandSession?.running && payload.commandSession?.entries?.length) {
+    const latest = payload.commandSession?.entries?.[0];
+    if (!payload.commandSession?.running && latest?.commandId === commandId) {
       return payload.commandSession;
     }
     await new Promise((resolve) => setTimeout(resolve, 100));

@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { validateGeneratedStateDocs } from "./drift-validator.js";
 import { CURRENT_STATE_DOC, TASK_LIST_DOC } from "./generate-state-docs.js";
+import { resolveGateProfile, summarizeGateProfile } from "./gate-profiles.js";
 import { resolveArtifactPath, resolveGeneratedDocReadPath } from "./harness-paths.js";
 import { resolveHandoffExecution, workflowForOwner } from "./workflow-routing.js";
 
@@ -42,6 +43,8 @@ const PHASE_ONE_OPERATOR_COMMANDS = [
     launchMode: "pmw_phase1",
     mandatory: true,
     sideEffect: "read_only",
+    expectedEffect: "Read the selected project's current stage, gate, focus, assignment, and validation summary.",
+    confirmationRequired: false,
     description: "Summarize the selected project's current stage, gate, and focus."
   },
   {
@@ -51,6 +54,8 @@ const PHASE_ONE_OPERATOR_COMMANDS = [
     launchMode: "pmw_phase1",
     mandatory: true,
     sideEffect: "read_only",
+    expectedEffect: "Read the selected project's next recommended owner, task, and first action.",
+    confirmationRequired: false,
     description: "Show the next recommended action for the selected project."
   },
   {
@@ -60,6 +65,8 @@ const PHASE_ONE_OPERATOR_COMMANDS = [
     launchMode: "pmw_phase1",
     mandatory: true,
     sideEffect: "read_only",
+    expectedEffect: "Read the selected project's current blocker and rationale summary.",
+    confirmationRequired: false,
     description: "Explain the current state and operator-facing rationale."
   },
   {
@@ -69,6 +76,8 @@ const PHASE_ONE_OPERATOR_COMMANDS = [
     launchMode: "pmw_phase1",
     mandatory: true,
     sideEffect: "validation",
+    expectedEffect: "Run diagnostic validation checks and report pass/fail without requiring operator confirmation.",
+    confirmationRequired: false,
     description: "Run validator checks against the selected project's current truth surfaces."
   },
   {
@@ -78,6 +87,8 @@ const PHASE_ONE_OPERATOR_COMMANDS = [
     launchMode: "pmw_phase1",
     mandatory: true,
     sideEffect: "workflow_launch",
+    expectedEffect: "Resolve the next owner and workflow through the approved handoff routing contract.",
+    confirmationRequired: true,
     description: "Launch the next approved workflow for the selected project based on handoff routing."
   },
   {
@@ -87,6 +98,8 @@ const PHASE_ONE_OPERATOR_COMMANDS = [
     launchMode: "pmw_phase1",
     mandatory: true,
     sideEffect: "derived_output",
+    expectedEffect: "Regenerate the selected project's PMW manifest and read-model artifacts.",
+    confirmationRequired: true,
     description: "Regenerate the selected project's PMW read-model and manifest artifacts."
   }
 ];
@@ -99,6 +112,8 @@ const TERMINAL_ONLY_OPERATOR_COMMANDS = [
     launchMode: "terminal_only",
     mandatory: false,
     sideEffect: "read_only",
+    expectedEffect: "Read local environment and operator readiness diagnostics from the selected project terminal.",
+    confirmationRequired: false,
     description: "Run environment and operator readiness checks from the selected project's terminal."
   },
   {
@@ -108,6 +123,8 @@ const TERMINAL_ONLY_OPERATOR_COMMANDS = [
     launchMode: "terminal_only",
     mandatory: false,
     sideEffect: "verification",
+    expectedEffect: "Run the selected project's test suite from a terminal.",
+    confirmationRequired: false,
     description: "Run the selected project's test suite from the terminal until PMW command-panel support is added."
   },
   {
@@ -117,7 +134,20 @@ const TERMINAL_ONLY_OPERATOR_COMMANDS = [
     launchMode: "terminal_only",
     mandatory: false,
     sideEffect: "derived_output",
+    expectedEffect: "Persist validation evidence from the selected project's terminal.",
+    confirmationRequired: true,
     description: "Persist validation evidence from the terminal until PMW command-panel support is added."
+  },
+  {
+    id: "transition",
+    label: "transition",
+    command: "npm run harness:transition -- --transition <name> --work-item <id>",
+    launchMode: "terminal_only",
+    mandatory: false,
+    sideEffect: "state_transition",
+    expectedEffect: "Preview or apply a structured owner/status handoff across SSOT, DB, generated docs, PMW export, validation report, and handoff evidence.",
+    confirmationRequired: true,
+    description: "Preview state transitions by default; use --apply only after operator review."
   }
 ];
 
@@ -209,6 +239,7 @@ export function buildContextRestorationReadModel({
       progressContent: projectProgressContent
     }),
     actionBoard: buildActionBoard({
+      repoRoot,
       decisionSurface,
       blockedSurface,
       nextActionSurface,
@@ -221,6 +252,7 @@ export function buildContextRestorationReadModel({
       nextActionSurface,
       workItems
     }),
+    gateProfile: buildGateProfileSurface({ repoRoot, workItems }),
     artifactLibrary: buildArtifactLibrary({
       repoRoot,
       releaseState,
@@ -491,7 +523,7 @@ function buildProjectOverviewBand({ releaseState, freshness, workItems, progress
   };
 }
 
-function buildActionBoard({ decisionSurface, blockedSurface, nextActionSurface, workItems, handoffExecution }) {
+function buildActionBoard({ repoRoot, decisionSurface, blockedSurface, nextActionSurface, workItems, handoffExecution }) {
   const openWorkItems = workItems.filter((item) => !isClosedStatus(item.status));
   const currentTask = openWorkItems[0] ?? null;
   const nextTaskSource = openWorkItems[1] ?? null;
@@ -522,6 +554,7 @@ function buildActionBoard({ decisionSurface, blockedSurface, nextActionSurface, 
             owner: currentTask.owner ?? "unassigned",
             workflow: handoffExecution.owner === currentTask.owner ? handoffExecution.workflow : inferWorkflowFromOwner(currentTask.owner),
             summary: currentTask.nextAction ?? "No current-task summary recorded.",
+            gateProfile: buildTaskGateProfile({ repoRoot, workItem: currentTask }),
             sourceRef: currentTask.sourceRef
           }
         : {
@@ -532,6 +565,7 @@ function buildActionBoard({ decisionSurface, blockedSurface, nextActionSurface, 
             owner: "unassigned",
             workflow: null,
             summary: "No open work item is currently active.",
+            gateProfile: null,
             sourceRef: null
           },
       nextTask: nextTaskSource
@@ -542,6 +576,7 @@ function buildActionBoard({ decisionSurface, blockedSurface, nextActionSurface, 
             status: nextTaskSource.status,
             owner: nextTaskSource.owner ?? "unassigned",
             workflow: workflowForActionBoardOwner(nextTaskSource.owner),
+            gateProfile: buildTaskGateProfile({ repoRoot, workItem: nextTaskSource }),
             summary:
               nextTaskSource.nextAction ??
               nextActionSurface.supportingText ??
@@ -556,6 +591,7 @@ function buildActionBoard({ decisionSurface, blockedSurface, nextActionSurface, 
               status: "queued",
               owner: handoffExecution.owner ?? currentTask.owner ?? "unassigned",
               workflow: handoffExecution.workflow ?? inferWorkflowFromOwner(currentTask.owner),
+              gateProfile: buildTaskGateProfile({ repoRoot, workItem: currentTask }),
               summary:
                 currentTask.nextAction ??
                 nextActionSurface.supportingText ??
@@ -570,6 +606,7 @@ function buildActionBoard({ decisionSurface, blockedSurface, nextActionSurface, 
             owner: handoffExecution.owner ?? "unassigned",
             workflow: handoffExecution.workflow,
             summary: nextActionSurface.headline,
+            gateProfile: null,
             sourceRef: null
           }
     }
@@ -579,6 +616,15 @@ function buildActionBoard({ decisionSurface, blockedSurface, nextActionSurface, 
 function buildReEntryBaton({ latestHandoff, handoffExecution, nextActionSurface, workItems }) {
   const openWorkItems = workItems.filter((item) => !isClosedStatus(item.status));
   const activeTask = handoffExecution.task ?? openWorkItems[0] ?? null;
+  const previousWorkAgent = latestHandoff?.fromRole ?? null;
+  const previousWorkSummary =
+    latestHandoff?.payload?.completedScope ?? latestHandoff?.handoffSummary ?? null;
+  const nextWorkAgent = handoffExecution.owner ?? latestHandoff?.toRole ?? "unassigned";
+  const nextWorkSummary =
+    latestHandoff?.payload?.nextFirstAction ??
+    activeTask?.nextAction ??
+    nextActionSurface.supportingText ??
+    nextActionSurface.headline;
   return {
     heading: "Re-entry Baton",
     latestHandoff: latestHandoff
@@ -589,6 +635,10 @@ function buildReEntryBaton({ latestHandoff, handoffExecution, nextActionSurface,
           createdAt: latestHandoff.createdAt
         }
       : null,
+    previousWorkAgent,
+    previousWorkSummary,
+    nextWorkAgent,
+    nextWorkSummary,
     nextOwner: handoffExecution.owner ?? "unassigned",
     targetWorkflow: handoffExecution.workflow ?? null,
     routeStatus: handoffExecution.routeStatus,
@@ -654,6 +704,59 @@ function buildArtifactLibrary({ repoRoot, releaseState, latestHandoff, nextActio
   };
 }
 
+function buildGateProfileSurface({ repoRoot, workItems }) {
+  const openWorkItems = workItems.filter((item) => !isClosedStatus(item.status));
+  const activeTask = openWorkItems[0] ?? null;
+  const activeProfile = buildTaskGateProfile({ repoRoot, workItem: activeTask });
+  return {
+    heading: "Gate Profile",
+    activeTask: activeTask
+      ? {
+          taskId: activeTask.workItemId,
+          title: activeTask.title,
+          owner: activeTask.owner ?? "unassigned",
+          status: activeTask.status
+        }
+      : null,
+    activeProfile,
+    availableProfiles: ["light", "standard", "contract", "release"],
+    sourceTrace: activeTask?.sourceRef
+      ? [{ kind: "active_task_packet", path: activeTask.sourceRef }]
+      : []
+  };
+}
+
+function buildTaskGateProfile({ repoRoot, workItem }) {
+  if (!workItem) {
+    return null;
+  }
+  const metadataProfile = resolveGateProfile(workItem.metadata?.gateProfile);
+  const packetProfile = resolveGateProfile(readPacketGateProfile(repoRoot, workItem.sourceRef));
+  const profile = metadataProfile ?? packetProfile;
+  return profile
+    ? {
+        ...summarizeGateProfile(profile),
+        source: metadataProfile ? "work_item_metadata" : "packet_header"
+      }
+    : null;
+}
+
+function readPacketGateProfile(repoRoot, sourceRef) {
+  if (!sourceRef || !sourceRef.endsWith(".md")) {
+    return null;
+  }
+  const packetPath = path.resolve(repoRoot, sourceRef);
+  if (!fs.existsSync(packetPath)) {
+    return null;
+  }
+  const content = fs.readFileSync(packetPath, "utf8");
+  const row = content
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .find((line) => /^\|\s*Gate profile\s*\|/i.test(line));
+  return row ? row.split("|")[2]?.trim() : null;
+}
+
 function buildFreshnessSummary({ validation, generationStates }) {
   const stale =
     generationStates.some((state) => state.freshnessState !== "fresh") ||
@@ -679,6 +782,8 @@ function buildOperatorCommands() {
     selectionMode: "selected_project",
     concurrencyPolicy: "one_command_per_project",
     logRetention: "session",
+    phaseOneLabel: "PMW Actions",
+    terminalOnlyLabel: "Terminal Actions",
     phaseOne: cloneCommandSet(PHASE_ONE_OPERATOR_COMMANDS),
     terminalOnly: cloneCommandSet(TERMINAL_ONLY_OPERATOR_COMMANDS),
     notes: [

@@ -1,12 +1,12 @@
 # Current State
 
 ## Snapshot
-- Current Stage: planning
-- Current Focus: `DEV-08` packet exit closeout is approved; `PLN-07` should select the next V1.3 planning step
+- Current Stage: verification
+- Current Focus: OPS-03 tester re-verification after reviewer-finding remediation
 - Current Release Goal: preserve the V1.2 installable standard harness baseline while defining the approved V1.3 direction where PMW remains a separate installable multi-project operator console, workflow Markdown becomes explicit agent-role contracts, and reusable profiles `PRF-04` through `PRF-09` stay intact
 
 ## Next Recommended Agent
-- Planner
+- Tester
 
 ## Must Read Next
 - `.agents/artifacts/REQUIREMENTS.md`
@@ -16,6 +16,9 @@
 - `reference/artifacts/REVIEW_REPORT.md`
 - `reference/manuals/HARNESS_MANUAL.md`
 - `reference/planning/PLN-07_PMW_V1_3_OPERATOR_CONSOLE_DRAFT.md`
+- `reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md`
+- `C:/Users/ahyne/Downloads/andrej-karpathy-skills-main.zip`
+- `reference/packets/PKT-01_DEV-09_PMW_PHASE_1_COMMAND_LAUNCHER_AND_HANDOFF_EXECUTION.md`
 - `reference/packets/PKT-01_DEV-08_WORKFLOW_CONTRACTS_AND_HANDOFF_ROUTING.md`
 - `reference/packets/PKT-01_DEV-07_PMW_V1_3_OPERATOR_CONSOLE_FIRST_VIEW.md`
 - `.agents/runtime/generated-state-docs/CURRENT_STATE.md`
@@ -23,6 +26,7 @@
 
 ## Open Decisions / Blockers
 - No active blocker is open.
+- `OPS-03` Ready For Code is approved; active handoff is `developer -> tester`. Re-verify OPS-03 reviewer-finding remediation: Ready For Code transition guards, open-decision guard, post-apply validation failure reporting, Implementation Plan PMW Next Action freshness, tests, validator, PMW export, and validation report.
 - The current reusable baseline remains `V1.2`: `standard-template/` installs a new project, PMW is shipped as a separate installable app, and release packaging is tracked under `dist/windows-exe-v1.2/`.
 - `PLN-07` is now the active planning lane for V1.3. The approved direction is to keep PMW independently installable and multi-project, while expanding it into an operator console and strengthening workflow Markdown into explicit agent-role contracts.
 - `DEV-07` is implemented in the PMW read-model and `pmw-app/` UI and is closed after Tester verification, user testing, Developer remediation, and Reviewer re-check.
@@ -43,12 +47,40 @@
 - `DEV-08` Developer remediation on 2026-05-02 made PMW Action Board `nextTask` derive owner/workflow from `nextTaskSource.owner` through the shared workflow routing contract, synchronized root and `standard-template`, and added root/starter regression coverage for a planner-owned next task while the active task routes to another owner.
 - `DEV-08` Tester re-verification on 2026-05-02 passed the PMW Action Board `nextTask` owner/workflow remediation, root/starter regression coverage, root/starter full tests, validator, handoff, PMW export, and validation-report evidence.
 - `DEV-08` Reviewer closeout on 2026-05-02 approved packet exit after re-checking PMW `nextTask` route evidence, source parity, residual debt disposition, root/starter validation evidence, and packet closeout readiness; no open DEV-08 finding remains.
+- `DEV-09` is now the approved `PLN-07` implementation packet for PMW phase-1 command launcher and handoff execution behavior.
+- `DEV-09` detailed function agreement and detailed UI/UX agreement were approved by the user on 2026-05-02.
+- `DEV-09 Ready For Code` was approved by the user on 2026-05-02. Developer workflow is now the next approved handoff target.
+- `DEV-09` Developer implementation completed on 2026-05-02. PMW now exposes `PMW Actions` / `Terminal Actions`, enriches command metadata with expected effect and confirmation policy, rejects unknown launcher commands, enforces one in-flight command per project, requires confirmation for `handoff` and `pmw-export` only, and displays handoff baton previous/next agent/work summaries.
+- `DEV-09` reusable command metadata and read-model tests were synchronized into `standard-template/`.
+- `DEV-09` Tester verification passed on 2026-05-02 with PMW app tests, root/starter tests, harness command evidence, PMW export, validation report, and handoff evidence.
+- `DEV-09` Reviewer closeout approved on 2026-05-02; no open DEV-09 finding remains.
+- `PLN-07` is closed after delivering the approved V1.3 PMW operator-console first view, workflow contracts/handoff routing, PM workflow addition, PMW command launcher, and handoff baton execution scope through `DEV-07`, `DEV-08`, and `DEV-09`.
+- `OPS-HARNESS-FRICTION-004` is recorded in preventive memory and is being expanded into the active `OPS-03` core improvement lane.
+- `OPS-03` is the active packet for harness operation reliability. Its expanded detailed agreement and `Ready For Code` are approved; current owner and next action are tracked in the active lock/task rows and latest handoff above.
+- `OPS-03` Developer audit and reconciliation of the interrupted partial implementation are recorded in the packet; the current remaining gate is Tester re-verification of the reviewer-finding remediation before Reviewer closeout resumes.
+- The interrupted partial `OPS-03` implementation is no longer closeout evidence by itself; use the packet remediation evidence, tests, validator, PMW export, validation report, and handoff log for the current truth.
+- `DEV-09` scope must preserve the approved phase-1 launcher set: `status`, `next`, `explain`, `validate`, `handoff`, and `pmw-export`.
+- `doctor`, `test`, and `validation-report` remain terminal-only guided commands in `DEV-09` unless the user explicitly changes scope.
+- `DEV-09` handoff output must include previous work agent, previous work summary, next work agent, and next work summary, matching the kind of turn-close transition report used in this conversation.
 - Commit `b225956` on 2026-04-26 implemented the installable baseline across `standard-template/`, `installer/`, `pmw-app/`, `packaging/`, and `reference/manuals/`, but canonical `.agents/artifacts/*` and `.harness/operating_state.sqlite` remained on `PLN-06` V1.1.
 - `REL-02` SSOT reconciliation closed on 2026-04-27 after updating governance Markdown, DB hot-state, generated docs, validation report, and adding a release-baseline consistency validator that must fail when release assets and SSOT drift.
 - `PRF-04` legacy Excel/VBA-MariaDB replacement, `PRF-05` Python/Django backoffice, `PRF-06` workflow/approval, `PRF-07` lightweight web/app, `PRF-08` Android native, and `PRF-09` Node/frontend web app are part of the approved reusable baseline.
 - `standard-template/` remains the starter payload; root and starter runtime/test/reference surfaces must stay synchronized for reusable changes, while `installer/`, `pmw-app/`, and `packaging/` remain root-only release surfaces.
 
 ## Latest Handoff Summary
+- 2026-05-02: `[developer -> tester] Developer remediated Reviewer transition findings: Ready For Code handoff guards, open-decision guard, post-apply validation failure reporting, and PMW Next Action freshness.`
+- 2026-05-02: `[reviewer -> developer] Reviewer found transition approval and validation-result reporting gaps; Developer remediation required.`
+- 2026-05-02: `[tester -> reviewer] OPS-03 Tester re-verification passed after Developer remediation; mixed timestamp handoff ordering, transition canonical-doc updates, PMW Re-entry Baton/recentHandoff freshness, root/starter/PMW tests, validator, PMW export, and validation report passed.`
+- 2026-05-02: `[developer -> tester] OPS-03 Developer remediated PMW stale handoff ordering and transition canonical-doc update gaps; root/starter/PMW tests and validator pass.`
+- 2026-05-02: `[developer -> tester] OPS-03 Developer reconciliation completed | root/starter sync restored | approval-state consistency guarded | tests, validator, PMW export, and validation report pass`
+- 2026-05-02: `[developer -> developer] OPS-03 partial implementation audit completed | keep/revise/drop classification recorded in packet | next reconcile root/starter sync drift and failing root tests`
+- 2026-05-02: `[planner -> developer] OPS-03 Ready For Code explicitly approved | Developer starts by auditing interrupted partial implementation | classify each existing change as keep/revise/drop before continuing implementation`
+- 2026-05-02: `[reviewer -> planner] DEV-09 packet exit approved | no open finding remains | finalize OPS-03 harness operation friction reduction plan`
+- 2026-05-02: `[tester -> reviewer] DEV-09 Tester verification passed | PMW Actions / Terminal Actions, confirmation boundaries, result surface, terminal-only guidance, and handoff baton verified`
+- 2026-05-02: `[developer -> tester] DEV-09 implementation completed | verify PMW Actions / Terminal Actions, command execution boundaries, result surface, and handoff baton behavior`
+- 2026-05-02: `[planner -> developer] DEV-09 Ready For Code approved | implement PMW phase-1 command launcher and handoff baton behavior under approved packet scope`
+- 2026-05-02: `[planner -> planner] DEV-09 detailed agreement approved | validate runs without confirmation | PMW Actions/Terminal Actions labels approved | handoff baton must show previous and next agent/work summaries | Ready For Code still pending`
+- 2026-05-02: `[planner -> planner] DEV-09 packet draft opened | PMW phase-1 command launcher and handoff execution scope proposed | detailed function/UI agreement and Ready For Code remain pending`
 - 2026-05-02: `[reviewer -> planner] DEV-08 packet exit approved | no open finding remains | select next PLN-07 V1.3 planning step`
 - 2026-05-02: `[tester -> reviewer] DEV-08 PMW next-task owner/workflow re-verification passed | Action Board PLN-07 routes planner/plan.md | review packet exit closeout`
 - 2026-05-02: `[developer -> tester] DEV-08 PMW next-task owner/workflow remediation completed | root/starter tests passed | verify Action Board nextTask route parity and PMW evidence`

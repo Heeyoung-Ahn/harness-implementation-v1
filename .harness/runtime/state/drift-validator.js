@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { resolveGeneratedDocReadPath } from "./harness-paths.js";
 import { CURRENT_STATE_DOC, TASK_LIST_DOC, calculateChecksum } from "./generate-state-docs.js";
+import { GATE_PROFILE_IDS, resolveGateProfile } from "./gate-profiles.js";
 import {
   RELEASE_BASELINE,
   ROOT_RELEASE_BASELINE_MARKERS,
@@ -23,6 +24,7 @@ const SOURCE_WAVE_LEDGER_PATH = "reference/artifacts/AUTHORITATIVE_SOURCE_WAVE_L
 const ACTIVE_PROFILES_PATH = ".agents/artifacts/ACTIVE_PROFILES.md";
 const TASK_LIST_PATH = ".agents/artifacts/TASK_LIST.md";
 const REPOSITORY_LAYOUT_PATH = "reference/artifacts/REPOSITORY_LAYOUT_OWNERSHIP.md";
+const GATE_PROFILE_CONTRACT_PATH = ".harness/runtime/state/gate-profiles.js";
 const WORKFLOW_CONTRACT_PATHS = [
   ".agents/workflows/deploy.md",
   ".agents/workflows/design.md",
@@ -85,6 +87,8 @@ const PACKET_TEMPLATE_REQUIRED_MARKERS = [
   "- Source wave packet disposition:",
   "- Packet exit quality gate reference:",
   "- Improvement candidate reference:",
+  "- Gate profile:",
+  "- Verification manifest:",
   "- Primary admin entity / surface:",
   "- Grid interaction model:",
   "- Search / filter / sort / pagination behavior:",
@@ -489,6 +493,7 @@ export function validateGeneratedStateDocs({
   validateActiveProfiles(repoRoot, findings);
   validateProfileAwareContracts(repoRoot, findings);
   validateRegisteredTaskPackets(store, repoRoot, findings);
+  validateGateProfileContracts(store, repoRoot, findings);
   validateWorkflowContracts(repoRoot, findings);
   validateStarterSync(repoRoot, findings);
   validateReleaseBaselineConsistency(store, repoRoot, findings);
@@ -520,6 +525,7 @@ function validateHarnessOwnedPaths(repoRoot, findings) {
   const requiredPaths = [
     ".harness/runtime/state/dev05-cli.js",
     ".harness/runtime/state/drift-validator.js",
+    GATE_PROFILE_CONTRACT_PATH,
     ".harness/runtime/state/project-manifest.js",
     ".harness/test",
     REPOSITORY_LAYOUT_PATH
@@ -555,6 +561,7 @@ function validatePackageCommandSurface(repoRoot, findings) {
     "harness:validation-report",
     "harness:pmw-export",
     "harness:project-manifest",
+    "harness:transition",
     "harness:migration-preview",
     "harness:migration-apply",
     "harness:cutover-preflight",
@@ -753,6 +760,10 @@ function normalizeTaskStatus(value) {
   return normalizeValue(value ?? "").replace(/[_-]/g, " ");
 }
 
+function isClosedWorkItemStatus(status) {
+  return ["closed", "done", "complete", "completed"].includes(normalizeTaskStatus(status));
+}
+
 function validateActiveProfiles(repoRoot, findings) {
   const activeProfilesPath = path.resolve(repoRoot, ACTIVE_PROFILES_PATH);
   if (!fs.existsSync(activeProfilesPath)) {
@@ -902,6 +913,7 @@ function validateStarterSync(repoRoot, findings) {
     ".harness/runtime/state/dev05-cli.js",
     ".harness/runtime/state/dev05-tooling.js",
     ".harness/runtime/state/drift-validator.js",
+    GATE_PROFILE_CONTRACT_PATH,
     ".harness/runtime/state/generate-state-docs.js",
     ".harness/runtime/state/harness-paths.js",
     ".harness/runtime/state/init-project.js",
@@ -1145,6 +1157,177 @@ function validateRegisteredTaskPackets(store, repoRoot, findings) {
     });
     validateRegisteredTaskPacket({ artifact: existingArtifact, repoRoot, findings });
   }
+}
+
+function validateGateProfileContracts(store, repoRoot, findings) {
+  const activePacketWorkItems = store
+    .listWorkItems()
+    .filter((item) => !isClosedWorkItemStatus(item.status))
+    .filter((item) => item.sourceRef?.startsWith(`${TASK_PACKET_DIRECTORY}/`) && item.sourceRef.endsWith(".md"))
+    .filter((item) => item.sourceRef !== PACKET_TEMPLATE_PATH);
+
+  for (const workItem of activePacketWorkItems) {
+    const packetPath = path.resolve(repoRoot, workItem.sourceRef);
+    const content = readRequiredUtf8File({
+      filePath: packetPath,
+      findings,
+      missingCode: "gate_profile_packet_missing",
+      missingMessage: `Active work item ${workItem.workItemId} points to missing gate-profile packet ${workItem.sourceRef}.`,
+      pathKey: "packetPath"
+    });
+    if (content == null) {
+      continue;
+    }
+
+    const header = parseQuickDecisionHeader(content);
+    validateReadyForCodeConsistency({ store, workItem, header, findings });
+    const gateProfileValue = header ? getHeaderProposed(header, "Gate profile") : null;
+    if (!hasConcreteValue(gateProfileValue, { allowUnknown: false })) {
+      findings.push({
+        code: "gate_profile_missing",
+        severity: "error",
+        workItemId: workItem.workItemId,
+        packetPath: workItem.sourceRef,
+        message: `${workItem.sourceRef} must declare one approved Gate profile for active work item ${workItem.workItemId}.`
+      });
+      continue;
+    }
+
+    const gateProfile = resolveGateProfile(gateProfileValue);
+    if (!gateProfile) {
+      findings.push({
+        code: "gate_profile_invalid",
+        severity: "error",
+        workItemId: workItem.workItemId,
+        packetPath: workItem.sourceRef,
+        gateProfile: gateProfileValue,
+        message: `${workItem.sourceRef} declares invalid Gate profile ${gateProfileValue}. Expected one of ${GATE_PROFILE_IDS.join(", ")}.`
+      });
+      continue;
+    }
+
+    const metadataGateProfile = resolveGateProfile(workItem.metadata?.gateProfile);
+    if (metadataGateProfile && metadataGateProfile.id !== gateProfile.id) {
+      findings.push({
+        code: "gate_profile_metadata_mismatch",
+        severity: "error",
+        workItemId: workItem.workItemId,
+        packetPath: workItem.sourceRef,
+        gateProfile: gateProfile.id,
+        metadataGateProfile: metadataGateProfile.id,
+        message: `${workItem.workItemId} metadata gate profile ${metadataGateProfile.id} does not match packet gate profile ${gateProfile.id}.`
+      });
+    }
+
+    validateGateProfileEvidence({ workItem, packetPath: workItem.sourceRef, content, header, gateProfile, findings });
+  }
+}
+
+function validateReadyForCodeConsistency({ store, workItem, header, findings }) {
+  if (!header) {
+    return;
+  }
+
+  const packetReadyForCodeApproved = isReadyForCodeApproved(getHeaderProposed(header, "Ready For Code"));
+  const metadataReadyForCodeApproved = isReadyForCodeApproved(workItem.metadata?.readyForCode);
+  const openDecision = findOpenReadyForCodeDecision(store, workItem);
+
+  if (packetReadyForCodeApproved && !metadataReadyForCodeApproved) {
+    findings.push({
+      code: "ready_for_code_metadata_mismatch",
+      severity: "error",
+      workItemId: workItem.workItemId,
+      packetPath: workItem.sourceRef,
+      message: `${workItem.workItemId} packet marks Ready For Code approved, but work_item metadata readyForCode is not approved.`
+    });
+  }
+
+  if (!packetReadyForCodeApproved && metadataReadyForCodeApproved) {
+    findings.push({
+      code: "ready_for_code_metadata_mismatch",
+      severity: "error",
+      workItemId: workItem.workItemId,
+      packetPath: workItem.sourceRef,
+      message: `${workItem.workItemId} work_item metadata marks Ready For Code approved, but packet header does not.`
+    });
+  }
+
+  if (packetReadyForCodeApproved && openDecision) {
+    findings.push({
+      code: "ready_for_code_decision_open",
+      severity: "error",
+      workItemId: workItem.workItemId,
+      decisionId: openDecision.decisionId,
+      packetPath: workItem.sourceRef,
+      message: `${workItem.workItemId} packet marks Ready For Code approved, but decision ${openDecision.decisionId} is still open in decision_registry.`
+    });
+  }
+}
+
+function findOpenReadyForCodeDecision(store, workItem) {
+  return store.listDecisions({ status: "open", decisionNeeded: true }).find((decision) => {
+    const sameSource = decision.sourceRef === workItem.sourceRef;
+    const decisionText = `${decision.decisionId ?? ""} ${decision.title ?? ""}`.toLowerCase();
+    return sameSource && decisionText.includes("ready for code");
+  });
+}
+
+function isReadyForCodeApproved(value) {
+  const normalized = normalizeValue(String(value ?? ""));
+  return normalized === "approved" || normalized === "approve";
+}
+
+function validateGateProfileEvidence({ workItem, packetPath, content, header, gateProfile, findings }) {
+  const layerClassification = normalizeValue(getHeaderProposed(header, "Layer classification"));
+  if (gateProfile.id === "light" && ["core", "contract", "release"].includes(layerClassification)) {
+    findings.push({
+      code: "gate_profile_incompatible",
+      severity: "error",
+      workItemId: workItem.workItemId,
+      packetPath,
+      gateProfile: gateProfile.id,
+      message: `${packetPath} cannot use light gate profile for ${layerClassification} layer work.`
+    });
+  }
+
+  const manifest = sliceSection(content, "## Verification Manifest");
+  if (!manifest) {
+    findings.push({
+      code: "gate_profile_evidence_missing",
+      severity: "error",
+      workItemId: workItem.workItemId,
+      packetPath,
+      gateProfile: gateProfile.id,
+      message: `${packetPath} must include ## Verification Manifest for gate profile ${gateProfile.id}.`
+    });
+    return;
+  }
+
+  const requiredMarkers = gateProfileEvidenceMarkers(gateProfile.id);
+  for (const marker of requiredMarkers) {
+    if (manifest.toLowerCase().includes(marker.toLowerCase())) {
+      continue;
+    }
+    findings.push({
+      code: "gate_profile_evidence_missing",
+      severity: "error",
+      workItemId: workItem.workItemId,
+      packetPath,
+      gateProfile: gateProfile.id,
+      marker,
+      message: `${packetPath} Verification Manifest for ${gateProfile.id} is missing evidence marker: ${marker}.`
+    });
+  }
+}
+
+function gateProfileEvidenceMarkers(profileId) {
+  const markers = {
+    light: ["canonical artifact", "handoff"],
+    standard: ["approved packet", "targeted test", "validator", "handoff"],
+    contract: ["Ready For Code", "root", "standard-template", "targeted", "validator", "PMW export", "review closeout"],
+    release: ["release-baseline", "packaging", "validator", "review closeout"]
+  };
+  return markers[profileId] ?? [];
 }
 
 function validateRegisteredTaskPacket({ artifact, repoRoot, findings }) {

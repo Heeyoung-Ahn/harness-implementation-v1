@@ -10,6 +10,7 @@ import {
   buildMigrationPreview,
   buildHarnessStatus,
   resolveHandoff,
+  runTransition,
   runCutoverPreflight,
   runValidator,
   writeCutoverReport
@@ -232,6 +233,411 @@ test("validator becomes clean after the copied starter is initialized", () => {
   assert.deepEqual(result.findings, []);
 });
 
+test("validator enforces gate profile evidence for active packet work", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-gate-profile-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_OPS-03_GATE_PROFILE_TEST.md";
+  writeOpsPacket(repoRoot, packetPath, { gateProfile: null, includeManifest: false });
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-02T10:00:00.000Z") });
+  store.setReleaseState({
+    currentStage: "planning",
+    releaseGateState: "open",
+    currentFocus: "OPS-03 gate profile validation",
+    releaseGoal: "Validate gate profile contracts",
+    sourceRef: ".agents/artifacts/CURRENT_STATE.md"
+  });
+  store.upsertWorkItem({
+    workItemId: "OPS-03",
+    title: "Harness operation friction reduction",
+    status: "planning",
+    nextAction: "Approve gate profile evidence.",
+    owner: "planner",
+    sourceRef: packetPath
+  });
+  store.upsertArtifact({
+    artifactId: "PKT-01_OPS-03_GATE_PROFILE_TEST",
+    path: packetPath,
+    category: "task_packet",
+    title: "OPS-03 gate profile test packet",
+    sourceRef: packetPath
+  });
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  store.close();
+
+  const result = runValidator({ repoRoot, dbPath, outputDir: repoRoot });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.findings.some((item) => item.code === "gate_profile_missing"), true);
+});
+
+test("validator blocks packet-header-only Ready For Code approval", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-ready-for-code-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_OPS-03_READY_FOR_CODE_TEST.md";
+  writeOpsPacket(repoRoot, packetPath, { gateProfile: "contract", includeManifest: true });
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-02T10:05:00.000Z") });
+  store.setReleaseState({
+    currentStage: "planning",
+    releaseGateState: "open",
+    currentFocus: "OPS-03 Ready For Code consistency",
+    releaseGoal: "Validate approval state consistency",
+    sourceRef: ".agents/artifacts/CURRENT_STATE.md"
+  });
+  store.upsertWorkItem({
+    workItemId: "OPS-03",
+    title: "Harness operation friction reduction",
+    status: "in_progress",
+    nextAction: "Reconcile approval state.",
+    owner: "developer",
+    sourceRef: packetPath,
+    metadata: { gateProfile: "contract" }
+  });
+  store.recordDecision({
+    decisionId: "OPS-03-ready-for-code",
+    title: "OPS-03 Ready For Code",
+    decisionNeeded: true,
+    impactSummary: "Packet header alone must not close implementation approval.",
+    sourceRef: packetPath
+  });
+  store.upsertArtifact({
+    artifactId: "PKT-01_OPS-03_READY_FOR_CODE_TEST",
+    path: packetPath,
+    category: "task_packet",
+    title: "OPS-03 Ready For Code consistency packet",
+    sourceRef: packetPath
+  });
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  store.close();
+
+  const result = runValidator({ repoRoot, dbPath, outputDir: repoRoot });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.findings.some((item) => item.code === "ready_for_code_metadata_mismatch"), true);
+  assert.equal(result.findings.some((item) => item.code === "ready_for_code_decision_open"), true);
+});
+
+test("transition blocks planner-to-developer before Ready For Code approval", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-transition-ready-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_OPS-03_TRANSITION_READY_TEST.md";
+  writeOpsPacket(repoRoot, packetPath, {
+    gateProfile: "contract",
+    includeManifest: true,
+    readyForCode: "pending"
+  });
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-02T10:10:00.000Z") });
+  store.setReleaseState({
+    currentStage: "planning",
+    releaseGateState: "open",
+    currentFocus: "OPS-03 transition approval guard",
+    releaseGoal: "Validate transition approval guard",
+    sourceRef: ".agents/artifacts/CURRENT_STATE.md"
+  });
+  store.upsertWorkItem({
+    workItemId: "OPS-03",
+    title: "Harness operation friction reduction",
+    status: "planning",
+    nextAction: "Approve OPS-03 Ready For Code.",
+    owner: "planner",
+    sourceRef: packetPath,
+    metadata: { gateProfile: "contract" }
+  });
+  store.upsertArtifact({
+    artifactId: "PKT-01_OPS-03_TRANSITION_READY_TEST",
+    path: packetPath,
+    category: "task_packet",
+    title: "OPS-03 transition Ready For Code guard packet",
+    sourceRef: packetPath
+  });
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  store.close();
+
+  const preview = runTransition({
+    repoRoot,
+    dbPath,
+    outputDir: repoRoot,
+    args: ["--transition", "planner-to-developer", "--work-item", "OPS-03"]
+  });
+
+  assert.equal(preview.ok, false);
+  assert.match(preview.errors.join("\n"), /Ready For Code approved/);
+});
+
+test("transition blocks planner-to-developer until Ready For Code decision is closed", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-transition-decision-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_OPS-03_TRANSITION_DECISION_TEST.md";
+  writeOpsPacket(repoRoot, packetPath, { gateProfile: "contract", includeManifest: true });
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-02T10:12:00.000Z") });
+  store.setReleaseState({
+    currentStage: "planning",
+    releaseGateState: "open",
+    currentFocus: "OPS-03 transition decision guard",
+    releaseGoal: "Validate transition decision guard",
+    sourceRef: ".agents/artifacts/CURRENT_STATE.md"
+  });
+  store.upsertWorkItem({
+    workItemId: "OPS-03",
+    title: "Harness operation friction reduction",
+    status: "planning",
+    nextAction: "Close OPS-03 Ready For Code decision.",
+    owner: "planner",
+    sourceRef: packetPath,
+    metadata: { gateProfile: "contract" }
+  });
+  store.recordDecision({
+    decisionId: "OPS-03-ready-for-code",
+    title: "OPS-03 Ready For Code",
+    decisionNeeded: true,
+    impactSummary: "Developer handoff requires closing this approval decision.",
+    sourceRef: packetPath
+  });
+  store.upsertArtifact({
+    artifactId: "PKT-01_OPS-03_TRANSITION_DECISION_TEST",
+    path: packetPath,
+    category: "task_packet",
+    title: "OPS-03 transition decision guard packet",
+    sourceRef: packetPath
+  });
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  store.close();
+
+  const blockedPreview = runTransition({
+    repoRoot,
+    dbPath,
+    outputDir: repoRoot,
+    args: ["--transition", "planner-to-developer", "--work-item", "OPS-03"]
+  });
+  assert.equal(blockedPreview.ok, false);
+  assert.match(blockedPreview.errors.join("\n"), /--close-decision/);
+
+  const allowedPreview = runTransition({
+    repoRoot,
+    dbPath,
+    outputDir: repoRoot,
+    args: [
+      "--transition",
+      "planner-to-developer",
+      "--work-item",
+      "OPS-03",
+      "--close-decision",
+      "OPS-03-ready-for-code"
+    ]
+  });
+  assert.equal(allowedPreview.ok, true);
+  assert.deepEqual(allowedPreview.closeDecisions, ["OPS-03-ready-for-code"]);
+});
+
+test("transition apply reports post-apply validation failure at top level", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-transition-validation-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_OPS-03_TRANSITION_VALIDATION_TEST.md";
+  writeOpsPacket(repoRoot, packetPath, { gateProfile: "contract", includeManifest: false });
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-02T10:14:00.000Z") });
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "OPS-03 transition validation reporting",
+    releaseGoal: "Validate transition validation reporting",
+    sourceRef: ".agents/artifacts/CURRENT_STATE.md"
+  });
+  store.upsertWorkItem({
+    workItemId: "OPS-03",
+    title: "Harness operation friction reduction",
+    status: "in_progress",
+    nextAction: "Hand off to Tester.",
+    owner: "developer",
+    sourceRef: packetPath,
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  store.upsertArtifact({
+    artifactId: "PKT-01_OPS-03_TRANSITION_VALIDATION_TEST",
+    path: packetPath,
+    category: "task_packet",
+    title: "OPS-03 transition validation reporting packet",
+    sourceRef: packetPath
+  });
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  store.close();
+
+  const applied = runTransition({
+    repoRoot,
+    dbPath,
+    outputDir: repoRoot,
+    args: ["--transition", "developer-to-tester", "--work-item", "OPS-03", "--apply"]
+  });
+
+  assert.equal(applied.apply, true);
+  assert.equal(applied.ok, false);
+  assert.equal(applied.validationReport.ok, false);
+  assert.equal(applied.validationReport.findingCount > 0, true);
+  assert.match(applied.errors.join("\n"), /validation report failed/);
+});
+
+test("transition preview is review-first and apply updates state surfaces", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-transition-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_OPS-03_TRANSITION_TEST.md";
+  writeOpsPacket(repoRoot, packetPath, { gateProfile: "contract", includeManifest: true });
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"),
+    [
+      "# Current State",
+      "",
+      "## Snapshot",
+      "- Current Stage: planning",
+      "- Current Focus: OPS-03 planning",
+      "",
+      "## Next Recommended Agent",
+      "- Planner",
+      "",
+      "## Open Decisions / Blockers",
+      "- `OPS-03 Ready For Code` remains pending.",
+      "",
+      "## Latest Handoff Summary",
+      "- none"
+    ].join("\n"),
+    "utf8"
+  );
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "TASK_LIST.md"),
+    [
+      "# Task List",
+      "",
+      "## Active Locks",
+      "| Task ID | Scope | Owner | Status | Started At | Notes |",
+      "|---|---|---|---|---|---|",
+      "| OPS-03 | Harness operation friction reduction | planner | active | 2026-05-02 | planning |",
+      "",
+      "## Active Tasks",
+      "| Task ID | Title | Scope | Owner | Status | Priority | Depends On | Verification |",
+      "|---|---|---|---|---|---|---|---|",
+      "| OPS-03 | Harness operation friction reduction | gate profiles and transition automation | planner | planning | P0 | DEV-09 | pending |",
+      "- Next first action: Approve OPS-03 Ready For Code.",
+      "",
+      "## Blocked Tasks",
+      "| Task ID | Blocker | Owner | Status | Unblock Condition | Verification |",
+      "|---|---|---|---|---|---|",
+      "| - | None | - | clear | - | - |",
+      "",
+      "## Completed Tasks",
+      "| Task ID | Title | Completed At | Verification | Notes |",
+      "|---|---|---|---|---|",
+      "| - | None | - | - | - |",
+      "",
+      "## Handoff Log",
+      "- none"
+    ].join("\n"),
+    "utf8"
+  );
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-02T10:15:00.000Z") });
+  store.setReleaseState({
+    currentStage: "planning",
+    releaseGateState: "open",
+    currentFocus: "OPS-03 planning",
+    releaseGoal: "Validate transition automation",
+    sourceRef: ".agents/artifacts/CURRENT_STATE.md"
+  });
+  store.upsertWorkItem({
+    workItemId: "OPS-03",
+    title: "Harness operation friction reduction",
+    status: "planning",
+    nextAction: "Approve OPS-03 Ready For Code.",
+    owner: "planner",
+    sourceRef: packetPath,
+    metadata: { gateProfile: "contract" }
+  });
+  store.recordDecision({
+    decisionId: "OPS-03-approval",
+    title: "OPS-03 Ready For Code",
+    decisionNeeded: true,
+    impactSummary: "Developer implementation requires user approval.",
+    sourceRef: packetPath
+  });
+  store.upsertArtifact({
+    artifactId: "PKT-01_OPS-03_TRANSITION_TEST",
+    path: packetPath,
+    category: "task_packet",
+    title: "OPS-03 transition test packet",
+    sourceRef: packetPath
+  });
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  store.close();
+
+  const preview = runTransition({
+    repoRoot,
+    dbPath,
+    outputDir: repoRoot,
+    args: [
+      "--transition",
+      "planner-to-developer",
+      "--work-item",
+      "OPS-03",
+      "--close-decision",
+      "OPS-03-approval"
+    ]
+  });
+  assert.equal(preview.ok, true);
+  assert.equal(preview.apply, false);
+  assert.equal(preview.toOwner, "developer");
+  assert.equal(preview.plannedUpdates.includes(".agents/artifacts/IMPLEMENTATION_PLAN.md"), true);
+
+  const applied = runTransition({
+    repoRoot,
+    dbPath,
+    outputDir: repoRoot,
+    args: [
+      "--transition",
+      "planner-to-developer",
+      "--work-item",
+      "OPS-03",
+      "--gate-profile",
+      "contract",
+      "--current-focus",
+      "OPS-03 implementation",
+      "--close-decision",
+      "OPS-03-approval",
+      "--apply"
+    ]
+  });
+
+  assert.equal(applied.ok, true);
+  assert.equal(applied.apply, true);
+  assert.equal(applied.validationReport.ok, true);
+  assert.match(
+    fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "TASK_LIST.md"), "utf8"),
+    /\| OPS-03 \| Harness operation friction reduction \| gate profiles and transition automation \| developer \| in_progress \|/
+  );
+  const taskList = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "TASK_LIST.md"), "utf8");
+  assert.match(taskList, /- Next first action: Implement the approved packet scope and hand off to Tester\./);
+  assert.match(taskList, /\[planner -> developer\] Planning approved; implementation can proceed\./);
+  const currentState = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"), "utf8");
+  assert.match(currentState, /Current Stage: implementation/);
+  assert.match(currentState, /`OPS-03` Ready For Code is approved; active handoff is `planner -> developer`\./);
+  assert.match(currentState, /\[planner -> developer\] Planning approved; implementation can proceed\./);
+  const implementationPlan = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "IMPLEMENTATION_PLAN.md"), "utf8");
+  assert.match(implementationPlan, /`OPS-03` active handoff is `planner -> developer`\./);
+  assert.match(implementationPlan, /Implement the approved packet scope and hand off to Tester\./);
+  assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "pmw-read-model.json")), true);
+
+  const afterStore = createOperatingStateStore({ dbPath });
+  assert.equal(afterStore.getWorkItem("OPS-03").metadata.readyForCode, "approved");
+  assert.equal(afterStore.listDecisions({ status: "open", decisionNeeded: true }).length, 0);
+  afterStore.close();
+});
+
 test("validator blocks incomplete workflow contracts", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-workflow-contract-invalid-"));
   seedStandardRepo(repoRoot);
@@ -377,6 +783,70 @@ test("handoff routing rejects ambiguous and substring alias owner values", () =>
   assert.equal(workflowForOwner("PM"), ".agents/workflows/pm.md");
   assert.equal(workflowForOwner("QA verification lane"), ".agents/workflows/test.md");
 });
+
+function writeOpsPacket(repoRoot, packetPath, { gateProfile, includeManifest, readyForCode = "approved" }) {
+  const readyForCodeApproved = readyForCode === "approved";
+  const headerRows = [
+    ["Work item", "OPS-03 Harness operation friction reduction", "Reduce state-sync friction", "draft"],
+    [
+      "Ready For Code",
+      readyForCode,
+      readyForCodeApproved ? "User approved implementation" : "Implementation approval pending",
+      readyForCodeApproved ? "approved" : "draft"
+    ],
+    ["Human sync needed", "yes", "Gate behavior changes operator process", "approved"],
+    ...(gateProfile ? [["Gate profile", gateProfile, "Contract-level harness operation change", "approved"]] : []),
+    ["User-facing impact", "medium", "Operator state and PMW metadata change", "approved"],
+    ["Layer classification", "core", "Reusable harness contract", "approved"],
+    ["Active profile dependencies", "none", "No optional profile", "not-needed"],
+    ["Profile evidence status", "not-needed", "No optional profile", "not-needed"],
+    ["UX archetype status", "approved", "Operator-facing metadata surface is covered by existing PMW archetype", "approved"],
+    ["UX deviation status", "none", "No deviation", "approved"],
+    ["Environment topology status", "not-needed", "No deploy/cutover", "not-needed"],
+    ["Domain foundation status", "not-needed", "No product data schema", "not-needed"],
+    ["Authoritative source intake status", "not-needed", "Uses local packet evidence", "not-needed"],
+    ["Shared-source wave status", "not-needed", "No source wave", "not-needed"],
+    ["Packet exit gate status", "pending", "Implementation pending", "draft"],
+    ["Improvement promotion status", "approved", "OPS-03 promoted from preventive memory", "approved"],
+    ["Existing system dependency", "none", "No legacy system", "not-needed"],
+    ["New authoritative source impact", "none", "No new external source", "not-needed"],
+    ["Risk if started now", "low", "Approval boundary closed", "approved"]
+  ];
+  const manifest = includeManifest
+    ? [
+        "## Verification Manifest",
+        `- Ready For Code: ${readyForCode}`,
+        "- root: run root targeted and full tests",
+        "- standard-template: run starter targeted and full tests",
+        "- targeted: gate profile and transition tests",
+        "- validator: run harness validator",
+        "- PMW export: regenerate read-model and manifest",
+        "- review closeout: required before packet close"
+      ].join("\n")
+    : "";
+  const content = [
+    "# PKT-01 OPS-03 Transition Test",
+    "",
+    "## Quick Decision Header",
+    "| Item | Proposed | Why | Status |",
+    "|---|---|---|---|",
+    ...headerRows.map((row) => `| ${row.join(" | ")} |`),
+    "",
+    "## 1. Goal",
+    "- Test OPS-03 gate profile behavior.",
+    "",
+    "## 3. Proposed Scope",
+    "- Layer classification: core",
+    "- Required reading before code: `.agents/artifacts/CURRENT_STATE.md`, `.agents/artifacts/TASK_LIST.md`, this packet",
+    "- UX archetype reference: reference/artifacts/PRODUCT_UX_ARCHETYPE.md",
+    "- Selected UX archetype: operator-console-read-model",
+    `- Gate profile: ${gateProfile ?? "pending"}`,
+    `- Verification manifest: ${includeManifest ? "contract evidence declared" : "pending"}`,
+    "",
+    manifest
+  ].join("\n");
+  fs.writeFileSync(path.join(repoRoot, packetPath), content, "utf8");
+}
 
 function seedStandardRepo(repoRoot) {
   fs.mkdirSync(path.join(repoRoot, ".agents", "artifacts"), { recursive: true });

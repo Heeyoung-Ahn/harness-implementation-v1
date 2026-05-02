@@ -9,7 +9,9 @@
 
 2026-04-27 `REL-02` is closed as the V1.2 installable harness / PMW baseline reconciliation lane. It reconciled the already-implemented installer, separate PMW app, packaging, manuals, and PRF-07/08/09 profile hardening into canonical SSOT, DB hot-state, generated docs, and validator enforcement.
 
-2026-04-27 `PLN-07` is now open as the V1.3 PMW operator-console and workflow-contract planning lane. It preserves the V1.2 installable baseline while promoting the approved V1.3 operator-console, command-catalog, handoff-launch, and agent-role workflow-contract direction into canonical planning state.
+2026-04-27 `PLN-07` opened as the V1.3 PMW operator-console and workflow-contract planning lane. It closed on 2026-05-02 after delivering the approved PMW operator console first view, workflow contracts/handoff routing, PM workflow addition, PMW phase-1 command launcher, terminal-only guidance, and handoff baton execution behavior through `DEV-07`, `DEV-08`, and `DEV-09`.
+
+2026-05-02 `OPS-03` is now rebaselined as the harness operation reliability planning lane. It keeps the DEV-07 through DEV-09 PMW V1.3 evidence stable while combining operation friction reduction, approval/SSOT consistency protection, current-state/history separation, transition automation, and applicable agent behavior guidance from the attached Karpathy-style package.
 
 ## Follow-Up Phase Plan
 1. approved release-ready baseline을 보존하면서 follow-up planning lane을 연다.
@@ -62,6 +64,8 @@
 - PLN-07 V1.3 PMW operator console and workflow-contract planning
 - DEV-07 PMW V1.3 operator console first-view packet
 - DEV-08 workflow contracts and handoff routing packet
+- DEV-09 PMW phase-1 command launcher and handoff execution packet
+- OPS-03 harness operation friction reduction packet
 - PLN-03 core / optional profile / project packet activation contract
 - PLN-04 domain foundation gate
 - PLN-05 authoritative source contract
@@ -220,13 +224,15 @@ Close the already-implemented installable release baseline as canonical truth so
 Promote the approved V1.3 PMW direction into canonical planning state without breaking the V1.2 installable baseline, separate PMW deployment model, reusable root/starter sync rules, or current approved profile catalog.
 
 ### Status
-- Open: approved on 2026-04-27 and now active as the planner-owned lane.
-- Current next artifact: draft and sign off `reference/packets/PKT-01_DEV-07_PMW_V1_3_OPERATOR_CONSOLE_FIRST_VIEW.md` before any new PMW implementation lane opens.
+- Closed: approved V1.3 PMW operator-console and workflow-contract planning scope completed on 2026-05-02.
+- Closed packet evidence: `DEV-07`, `DEV-08`, and `DEV-09` remain stable while the next planning work moves to `OPS-03`.
 
 ### Input
 - User-approved V1.3 direction on 2026-04-27.
 - `reference/planning/PLN-07_PMW_V1_3_OPERATOR_CONSOLE_DRAFT.md`
 - `reference/packets/PKT-01_DEV-07_PMW_V1_3_OPERATOR_CONSOLE_FIRST_VIEW.md`
+- `reference/packets/PKT-01_DEV-08_WORKFLOW_CONTRACTS_AND_HANDOFF_ROUTING.md`
+- `reference/packets/PKT-01_DEV-09_PMW_PHASE_1_COMMAND_LAUNCHER_AND_HANDOFF_EXECUTION.md`
 - `.agents/artifacts/REQUIREMENTS.md`
 - `.agents/artifacts/CURRENT_STATE.md`
 - `.agents/artifacts/TASK_LIST.md`
@@ -238,6 +244,7 @@ Promote the approved V1.3 PMW direction into canonical planning state without br
 - handoff-as-baton planning contract that preserves routeable next workflow execution
 - a concrete `DEV-07` packet that freezes the V1.3 PMW first-view hierarchy, artifact drill-down, and operator-command panel before implementation
 - a concrete `DEV-08` packet that freezes workflow-contract and handoff-routing implementation scope before implementation
+- a concrete `DEV-09` packet that freezes PMW phase-1 command launcher execution, command result behavior, terminal-only guidance, and `handoff` launch semantics before implementation
 - root/starter runtime contract updates that export the phase-1 command guidance to PMW
 - synchronized canonical docs, DB hot-state, generated docs, and PMW export for the active planning baseline
 
@@ -246,7 +253,7 @@ Promote the approved V1.3 PMW direction into canonical planning state without br
 - PMW remains independently installable, multi-project, and non-authoritative with respect to canonical writes
 - V1.3 phase-1 command scope is explicit and no arbitrary shell boundary is introduced
 - workflow-contract expectations make planner/tester responsibility boundaries explicit before any implementation lane opens
-- `DEV-07` is closed and `DEV-08` is registered as the next planner-owned packet before developer work begins
+- `DEV-07`, `DEV-08`, and `DEV-09` are closed with Reviewer closeout evidence
 - validator and exported PMW state remain clean after the planning baseline changes
 
 ## DEV-07 PMW V1.3 Operator Console First View
@@ -373,6 +380,99 @@ Define the next `PLN-07` implementation packet so workflow Markdown role contrac
 - Residual debt disposition is `none` for the reviewed DEV-08 scope.
 - Reviewer re-ran root/starter targeted read-model tests, root/starter full tests, validator, handoff, and PMW export; all passed.
 - DEV-08 packet exit is approved and the active lane returns to `PLN-07` planning.
+
+## DEV-09 PMW Phase-1 Command Launcher And Handoff Execution
+
+### Goal
+Define the next `PLN-07` implementation packet so PMW can execute the approved phase-1 command catalog and make `handoff` use the approved workflow routing contract without making PMW the canonical write authority.
+
+### Status
+- Closed: Reviewer packet exit closeout approved on 2026-05-02.
+- Detailed function agreement and detailed UI/UX agreement: approved by the user on 2026-05-02.
+- `Ready For Code`: approved by the user on 2026-05-02.
+- Active owner: none; active work returns to `Planner` for the next improvement plan.
+
+### Input
+- `reference/packets/PKT-01_DEV-09_PMW_PHASE_1_COMMAND_LAUNCHER_AND_HANDOFF_EXECUTION.md`
+- `reference/planning/PLN-07_PMW_V1_3_OPERATOR_CONSOLE_DRAFT.md`
+- `reference/packets/PKT-01_DEV-07_PMW_V1_3_OPERATOR_CONSOLE_FIRST_VIEW.md`
+- `reference/packets/PKT-01_DEV-08_WORKFLOW_CONTRACTS_AND_HANDOFF_ROUTING.md`
+- `.agents/artifacts/REQUIREMENTS.md`
+- `.agents/artifacts/CURRENT_STATE.md`
+- `.agents/artifacts/TASK_LIST.md`
+
+### Required Output
+- approved PMW launcher command catalog for `status`, `next`, `explain`, `validate`, `handoff`, and `pmw-export`
+- terminal-only guidance for `doctor`, `test`, and `validation-report`
+- selected-project execution boundary
+- one-command-at-a-time per project enforcement
+- session-scoped command result surface
+- confirmation rule for state-changing or derived-output commands
+- `handoff` launch semantics through the DEV-08 workflow routing contract
+- handoff baton content showing previous work agent, previous work summary, next work agent, and next work summary
+- PMW app and harness test expectations for catalog filtering, unknown command rejection, confirmation behavior, route failure states, and result rendering
+- Developer implementation added PMW command result metadata for selected project, launch mode, side-effect class, expected effect, confirmation policy, duration, related artifacts, and handoff baton details.
+- Developer implementation added server-side confirmation enforcement for `handoff` and `pmw-export`; `validate` remains diagnostic and no-confirmation.
+- Developer implementation synchronized reusable command metadata into `standard-template`.
+
+### Exit Criteria
+- packet is registered as a `task_packet`
+- detailed function agreement is approved or adjusted by the user
+- detailed UI/UX agreement is approved or adjusted by the user
+- `Ready For Code` decision is explicit and approved before Developer handoff
+- no change expands the V1.3 phase-1 PMW launcher scope
+- PMW remains non-authoritative for canonical writes
+- validator remains clean after planning-state sync
+- PMW app tests, root tests, starter tests, validator, validation report, handoff, and PMW export remain clean after implementation
+- Tester verification and Reviewer closeout are recorded in `reference/artifacts/WALKTHROUGH.md` and `reference/artifacts/REVIEW_REPORT.md`.
+
+### Closeout
+- Closed on 2026-05-02.
+- PMW exposes only `status`, `next`, `explain`, `validate`, `handoff`, and `pmw-export` as `PMW Actions`.
+- `doctor`, `test`, and `validation-report` remain `Terminal Actions`.
+- `validate` does not require confirmation; `handoff` and `pmw-export` do require confirmation.
+- PMW command execution is selected-project scoped, rejects unknown commands, enforces one in-flight command per project, stores results for the current PMW session, and shows selected project, duration, stdout/stderr, related artifacts, and handoff baton previous/next work context.
+- Root and `standard-template` reusable command metadata and tests are synchronized.
+- Verification passed with PMW app tests, root/starter tests, harness command evidence, PMW export, validation report, and Reviewer closeout.
+
+## OPS-03 Harness Operation Reliability And Friction Reduction
+
+### Goal
+Reduce repeated manual overhead and interruption risk by defining risk-based gate profiles, transition automation, approval/SSOT consistency checks, current-state/history separation, and thin agent behavior guidance while preserving the strict governance rules that protect reusable core changes.
+
+### Status
+- Planning: packet rebaselined on 2026-05-02 after user direction to combine three related harness-improvement themes.
+- Active owner: `Planner`.
+- Detailed agreement and `Ready For Code`: pending user approval for the expanded scope.
+- Interrupted partial implementation: present in the worktree and must be reviewed/reconciled before Developer continuation.
+
+### Input
+- User feedback on 2026-05-02 that current harness work repeatedly requires state alignment and should be examined seriously.
+- User feedback on 2026-05-02 that the approval-state/SSOT inconsistency and attached agent behavior guide are part of the same harness-efficiency problem.
+- `C:/Users/ahyne/Downloads/andrej-karpathy-skills-main.zip`
+- `.agents/artifacts/PREVENTIVE_MEMORY.md`
+- `reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md`
+- DEV-07 through DEV-09 closeout evidence.
+
+### Required Output
+- approved gate profile taxonomy for `light`, `standard`, `contract`, and `release`
+- approval-state consistency contract across packet headers, DB decisions, work-item metadata, canonical Markdown, generated docs, PMW export, validation report, and handoff evidence
+- transition automation scope for common workflow handoffs and state closeout
+- current-state/history separation rule that keeps context restoration short and source-traceable
+- disposition of the interrupted partial OPS-03 implementation before new Developer work
+- thin reusable agent behavior guidance based on assumptions, simplicity, surgical changes, and verifiable success criteria
+- verification manifest by gate profile
+- validator/test expectations for profile evidence and transition drift
+- root/starter synchronization plan for reusable runtime/test changes
+
+### Exit Criteria
+- user approves or adjusts expanded detailed scope and `Ready For Code`
+- implementation does not weaken packet-before-code, PMW read-only authority, generated-doc immutability, root/starter sync, Tester/Reviewer separation, or human approval gates
+- validator can detect missing or incompatible gate-profile evidence
+- validator can detect approval-state mismatch between packet, DB, canonical docs, generated docs, PMW export, and handoff evidence
+- transition automation prevents inconsistent SSOT/DB/generated/PMW/validation-report/handoff state updates
+- `CURRENT_STATE.md` becomes shorter without losing active work and source trace
+- agent behavior guidance is applied as thin workflow/skill guidance without becoming a heavy new ceremony layer
 
 ## SIM-01 Execution
 ### Goal
@@ -809,7 +909,7 @@ transfer-bound or airgapped delivery 환경에서 반복되는 bundle handoff와
 8. 구현 후 `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`를 사용해 packet exit quality gate reference, source parity, residual debt disposition, UX/topology/schema conformance, validation/security/cleanup evidence, deferred follow-up item을 정리하고, 반복 friction이 보이면 `.agents/artifacts/PREVENTIVE_MEMORY.md`에 improvement candidate reference, proposed target layer, promotion status, linked follow-up item을 남긴 뒤 closeout hold 조건이 없을 때만 security review와 validator check를 함께 닫는다.
 
 ## Operator Next Action
-- `DEV-08` packet exit closeout is approved.
-- Planner should select the next `PLN-07` V1.3 PMW operator-console / workflow-contract planning step.
-- Preserve the separate installable PMW boundary, read-only canonical authority boundary, and approved command split while planning this packet.
-- Do not expand phase-1 launcher scope beyond `status`, `next`, `explain`, `validate`, `handoff`, and `pmw-export`.
+- `OPS-03` active handoff is `developer -> tester`.
+- Re-verify OPS-03 reviewer-finding remediation: Ready For Code transition guards, open-decision guard, post-apply validation failure reporting, Implementation Plan PMW Next Action freshness, tests, validator, PMW export, and validation report.
+- Source packet: `reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md`.
+- Preserve packet-before-code, PMW read-only authority, generated-doc immutability, root/starter sync, Tester/Reviewer separation, and human approval gates.

@@ -2,7 +2,13 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { validateGeneratedStateDocs } from "./drift-validator.js";
-import { CURRENT_STATE_DOC, TASK_LIST_DOC } from "./generate-state-docs.js";
+import { CURRENT_STATE_DOC, TASK_LIST_DOC, writeGeneratedStateDocs } from "./generate-state-docs.js";
+import {
+  DEFAULT_GATE_PROFILE_ID,
+  GATE_PROFILES,
+  resolveGateProfile,
+  summarizeGateProfile
+} from "./gate-profiles.js";
 import {
   ACTIVE_PROFILES_MARKDOWN,
   ARTIFACT_PATHS,
@@ -16,6 +22,7 @@ import {
 import { looksLikeStarterPlaceholder } from "./init-project.js";
 import { createOperatingStateStore, DEFAULT_DB_PATH } from "./operating-state-store.js";
 import { RELEASE_BASELINE, isInstallableReleaseMaintainerRepo } from "./release-baseline.js";
+import { writePmwProjectExport } from "./project-manifest.js";
 import { resolveHandoffExecution } from "./workflow-routing.js";
 
 export const STANDARD_PATH_MIGRATIONS = {
@@ -235,6 +242,576 @@ export function writeValidationReport({ repoRoot = process.cwd(), outputDir = re
     jsonPath,
     report
   };
+}
+
+export function runTransition({
+  repoRoot = process.cwd(),
+  outputDir = repoRoot,
+  dbPath = DEFAULT_DB_PATH,
+  args = []
+} = {}) {
+  const options = parseTransitionArgs(args);
+  if (!options.apply) {
+    return withStore({ dbPath, repoRoot }, (store) => buildTransitionPlan({ store, repoRoot, options }));
+  }
+
+  const applied = withStore({ dbPath, repoRoot }, (store) => {
+    const plan = buildTransitionPlan({ store, repoRoot, options });
+    if (!plan.ok) {
+      return plan;
+    }
+    return applyTransitionPlan({ store, repoRoot, outputDir, plan, options });
+  });
+
+  if (!applied.ok) {
+    return applied;
+  }
+
+  const validationReport = writeValidationReport({ repoRoot, outputDir, dbPath });
+  const validationReportSummary = {
+    ok: validationReport.ok,
+    markdownPath: validationReport.markdownPath,
+    jsonPath: validationReport.jsonPath,
+    gateDecision: validationReport.report.gateDecision,
+    findingCount: validationReport.report.findings.length
+  };
+
+  return {
+    ...applied,
+    ok: validationReport.ok,
+    errors: validationReport.ok
+      ? applied.errors
+      : [
+          ...(applied.errors ?? []),
+          "Transition apply completed, but validation report failed; do not treat this handoff as clean."
+        ],
+    validationReport: validationReportSummary
+  };
+}
+
+function parseTransitionArgs(args) {
+  const options = { apply: false };
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === "--apply") {
+      options.apply = true;
+      continue;
+    }
+    if (!arg.startsWith("--")) {
+      if (!options.transition) {
+        options.transition = arg;
+      }
+      continue;
+    }
+
+    const key = arg.slice(2).replace(/-([a-z])/g, (_, char) => char.toUpperCase());
+    const next = args[index + 1];
+    if (next == null || next.startsWith("--")) {
+      options[key] = true;
+      continue;
+    }
+    options[key] = next;
+    index += 1;
+  }
+  return options;
+}
+
+function buildTransitionPlan({ store, repoRoot, options }) {
+  const transitionDefaults = transitionDefaultsFor(options.transition);
+  const transition = options.transition ?? transitionDefaults.transition;
+  const workItemId = options.workItem ?? options.workItemId;
+  const errors = [];
+  const workItem = workItemId ? store.getWorkItem(workItemId) : null;
+  const releaseState = store.getReleaseState("current");
+  const fromOwner = normalizeOwner(options.from ?? transitionDefaults.from ?? workItem?.owner);
+  const toOwner = normalizeOwner(options.to ?? transitionDefaults.to);
+  const status = options.status ?? transitionDefaults.status ?? workItem?.status ?? "in_progress";
+  const sourceRef = options.sourceRef ?? workItem?.sourceRef ?? releaseState?.sourceRef ?? ".agents/artifacts/TASK_LIST.md";
+  const gateProfile = resolveTransitionGateProfile({ options, workItem, repoRoot });
+  const packetReadyForCode = readPacketReadyForCode(repoRoot, sourceRef);
+  const closeDecisions = parseListOption(options.closeDecision ?? options.closeDecisions);
+  const openReadyForCodeDecision = workItem ? findOpenReadyForCodeTransitionDecision(store, workItem) : null;
+  const summary =
+    options.summary ??
+    transitionDefaults.summary ??
+    `${workItemId ?? "work item"} transition ${fromOwner ?? "unknown"} -> ${toOwner ?? "unassigned"}`;
+  const nextAction =
+    options.nextAction ??
+    transitionDefaults.nextAction ??
+    workItem?.nextAction ??
+    `Continue ${workItemId ?? "the current work item"} as ${toOwner ?? "the next owner"}.`;
+
+  if (!workItemId) {
+    errors.push("Missing --work-item.");
+  }
+  if (!workItem) {
+    errors.push(`Cannot transition missing work item: ${workItemId ?? "unknown"}.`);
+  }
+  if (!toOwner) {
+    errors.push("Missing --to or named transition target owner.");
+  }
+  if (fromOwner && workItem?.owner && normalizeOwner(workItem.owner) !== fromOwner) {
+    errors.push(`Transition source owner mismatch: expected ${fromOwner}, current owner is ${workItem.owner}.`);
+  }
+  if (gateProfile == null) {
+    errors.push(
+      `Invalid gate profile ${options.gateProfile ?? workItem?.metadata?.gateProfile ?? "not declared"}. Expected one of ${Object.keys(GATE_PROFILES).join(", ")}.`
+    );
+  }
+  if (sourceRef && !fs.existsSync(path.resolve(repoRoot, sourceRef))) {
+    errors.push(`Transition source_ref does not exist: ${sourceRef}.`);
+  }
+  if (transition === "planner-to-developer" && packetReadyForCode !== "approved") {
+    errors.push(
+      `planner-to-developer requires ${workItemId ?? "the work item"} packet Ready For Code approved; current packet status is ${packetReadyForCode || "missing"}.`
+    );
+  }
+  if (
+    transition === "planner-to-developer" &&
+    openReadyForCodeDecision &&
+    !closeDecisions.includes(openReadyForCodeDecision.decisionId)
+  ) {
+    errors.push(
+      `planner-to-developer requires closing Ready For Code decision ${openReadyForCodeDecision.decisionId} with --close-decision before Developer handoff.`
+    );
+  }
+
+  const ok = errors.length === 0;
+  return {
+    ok,
+    command: "transition",
+    apply: false,
+    transition,
+    workItemId: workItemId ?? null,
+    fromOwner,
+    toOwner,
+    status,
+    gateProfile: gateProfile?.id ?? null,
+    readyForCode: packetReadyForCode,
+    gateProfileSummary: summarizeGateProfile(gateProfile),
+    summary,
+    nextAction,
+    sourceRef,
+    closeDecisions,
+    currentStage: options.currentStage ?? transitionDefaults.currentStage ?? releaseState?.currentStage ?? null,
+    currentFocus: options.currentFocus ?? transitionDefaults.currentFocus ?? releaseState?.currentFocus ?? null,
+    releaseGateState: options.releaseGate ?? options.releaseGateState ?? releaseState?.releaseGateState ?? null,
+    plannedUpdates: [
+      ".agents/artifacts/TASK_LIST.md",
+      ".agents/artifacts/CURRENT_STATE.md",
+      ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+      ".harness/operating_state.sqlite",
+      ".agents/runtime/generated-state-docs/CURRENT_STATE.md",
+      ".agents/runtime/generated-state-docs/TASK_LIST.md",
+      ".agents/runtime/project-manifest.json",
+      ".agents/runtime/pmw-read-model.json",
+      ".agents/artifacts/VALIDATION_REPORT.md",
+      ".agents/artifacts/VALIDATION_REPORT.json"
+    ],
+    errors
+  };
+}
+
+function transitionDefaultsFor(transition = "custom") {
+  const transitions = {
+    "planner-to-developer": {
+      transition: "planner-to-developer",
+      from: "planner",
+      to: "developer",
+      status: "in_progress",
+      currentStage: "implementation",
+      summary: "Planning approved; implementation can proceed.",
+      nextAction: "Implement the approved packet scope and hand off to Tester."
+    },
+    "developer-to-tester": {
+      transition: "developer-to-tester",
+      from: "developer",
+      to: "tester",
+      status: "review",
+      currentStage: "verification",
+      summary: "Developer implementation completed; Tester should verify the approved scope.",
+      nextAction: "Verify the implementation against the packet acceptance criteria."
+    },
+    "tester-to-reviewer": {
+      transition: "tester-to-reviewer",
+      from: "tester",
+      to: "reviewer",
+      status: "review",
+      currentStage: "review",
+      summary: "Tester verification completed; Reviewer should assess packet exit readiness.",
+      nextAction: "Review implementation, evidence, residual debt, and closeout readiness."
+    },
+    "reviewer-to-planner": {
+      transition: "reviewer-to-planner",
+      from: "reviewer",
+      to: "planner",
+      status: "planning",
+      currentStage: "planning",
+      summary: "Packet exit approved; Planner should choose or refine the next lane.",
+      nextAction: "Plan the next approved lane or close remaining planning decisions."
+    }
+  };
+  return transitions[transition] ?? { transition: transition ?? "custom" };
+}
+
+function applyTransitionPlan({ store, repoRoot, outputDir, plan, options }) {
+  const timestamp = new Date().toISOString();
+  const metadata = {
+    ...(store.getWorkItem(plan.workItemId)?.metadata ?? {}),
+    gateProfile: plan.gateProfile,
+    ...(plan.readyForCode === "approved" ? { readyForCode: "approved" } : {}),
+    lastTransition: {
+      transition: plan.transition,
+      fromOwner: plan.fromOwner,
+      toOwner: plan.toOwner,
+      appliedAt: timestamp
+    }
+  };
+
+  store.transitionWorkItem({
+    workItemId: plan.workItemId,
+    owner: plan.toOwner,
+    status: plan.status,
+    nextAction: plan.nextAction,
+    sourceRef: plan.sourceRef,
+    metadata
+  });
+
+  const releaseState = store.getReleaseState("current");
+  if (releaseState) {
+    store.setReleaseState({
+      currentStage: plan.currentStage ?? releaseState.currentStage,
+      releaseGateState: plan.releaseGateState ?? releaseState.releaseGateState,
+      currentFocus: plan.currentFocus ?? releaseState.currentFocus,
+      releaseGoal: releaseState.releaseGoal,
+      sourceRef: plan.sourceRef ?? releaseState.sourceRef,
+      updatedBy: "harness:transition",
+      metadata: {
+        ...(releaseState.metadata ?? {}),
+        lastTransition: metadata.lastTransition
+      }
+    });
+  }
+
+  for (const decisionId of plan.closeDecisions) {
+    const decision = store.getDecision(decisionId);
+    if (!decision) {
+      continue;
+    }
+    store.recordDecision({
+      ...decision,
+      decisionNeeded: false,
+      status: "closed"
+    });
+  }
+
+  const handoff = store.appendHandoff({
+    handoffId: buildTransitionHandoffId(plan, timestamp),
+    handoffSummary: `[${plan.fromOwner ?? "unknown"} -> ${plan.toOwner}] ${plan.summary}`,
+    fromRole: plan.fromOwner,
+    toRole: plan.toOwner,
+    sourceRef: plan.sourceRef,
+    payload: {
+      transition: plan.transition,
+      workItemId: plan.workItemId,
+      gateProfile: plan.gateProfile,
+      completedScope: plan.summary,
+      nextFirstAction: plan.nextAction,
+      requiredSsot: [
+        ".agents/artifacts/CURRENT_STATE.md",
+        ".agents/artifacts/TASK_LIST.md",
+        ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+        plan.sourceRef
+      ].filter(Boolean)
+    }
+  });
+
+  updateCanonicalTaskList({ repoRoot, plan, timestamp });
+  updateCanonicalCurrentState({ repoRoot, plan, timestamp });
+  updateCanonicalImplementationPlan({ repoRoot, plan });
+  const generatedDocs = writeGeneratedStateDocs({ store, outputDir });
+  const pmwExport = writePmwProjectExport({ store, repoRoot, outputDir });
+
+  return {
+    ...plan,
+    ok: true,
+    apply: true,
+    appliedAt: timestamp,
+    handoff,
+    generatedDocs,
+    pmwExport: {
+      manifestPath: pmwExport.manifestPath,
+      readModelPath: pmwExport.readModelPath
+    }
+  };
+}
+
+function resolveTransitionGateProfile({ options, workItem, repoRoot }) {
+  const explicit = resolveGateProfile(options.gateProfile);
+  if (explicit) {
+    return explicit;
+  }
+  const metadataProfile = resolveGateProfile(workItem?.metadata?.gateProfile);
+  if (metadataProfile) {
+    return metadataProfile;
+  }
+  const packetProfile = resolveGateProfile(readPacketGateProfile(repoRoot, workItem?.sourceRef));
+  return packetProfile ?? resolveGateProfile(DEFAULT_GATE_PROFILE_ID);
+}
+
+function readPacketGateProfile(repoRoot, sourceRef) {
+  return readPacketHeaderValue(repoRoot, sourceRef, "Gate profile");
+}
+
+function readPacketReadyForCode(repoRoot, sourceRef) {
+  const value = normalizePacketHeaderValue(readPacketHeaderValue(repoRoot, sourceRef, "Ready For Code"));
+  return value === "approved" || value === "approve" ? "approved" : value;
+}
+
+function findOpenReadyForCodeTransitionDecision(store, workItem) {
+  return store.listDecisions({ status: "open", decisionNeeded: true }).find((decision) => {
+    const sameSource = decision.sourceRef === workItem.sourceRef;
+    const decisionText = `${decision.decisionId ?? ""} ${decision.title ?? ""}`.toLowerCase();
+    return sameSource && decisionText.includes("ready for code");
+  });
+}
+
+function readPacketHeaderValue(repoRoot, sourceRef, label) {
+  if (!sourceRef || !sourceRef.endsWith(".md")) {
+    return null;
+  }
+  const packetPath = path.resolve(repoRoot, sourceRef);
+  if (!fs.existsSync(packetPath)) {
+    return null;
+  }
+  const content = fs.readFileSync(packetPath, "utf8");
+  const target = label.trim().toLowerCase();
+  const row = content
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .find((line) => line.toLowerCase().startsWith(`| ${target} |`) || new RegExp(`^\\|\\s*${escapeRegExp(target)}\\s*\\|`, "i").test(line));
+  return row ? row.split("|")[2]?.trim() : null;
+}
+
+function normalizePacketHeaderValue(value) {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[`*_]/g, "")
+    .replace(/\s+/g, "-");
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function buildTransitionHandoffId(plan, timestamp) {
+  const compactTime = timestamp.replace(/[-:.TZ]/g, "").slice(0, 14);
+  return `${String(plan.workItemId).toLowerCase()}-${plan.transition}-${compactTime}`;
+}
+
+function updateCanonicalTaskList({ repoRoot, plan, timestamp }) {
+  const taskListPath = path.resolve(repoRoot, ".agents/artifacts/TASK_LIST.md");
+  if (!fs.existsSync(taskListPath)) {
+    return;
+  }
+  let content = fs.readFileSync(taskListPath, "utf8");
+  content = updateMarkdownTableRow(content, "## Active Locks", "Task ID", plan.workItemId, {
+    Owner: plan.toOwner,
+    Status: "active",
+    Notes: `${plan.transition}; gate ${plan.gateProfile}; ${plan.nextAction}`
+  });
+  content = updateMarkdownTableRow(content, "## Active Tasks", "Task ID", plan.workItemId, {
+    Owner: plan.toOwner,
+    Status: plan.status,
+    Verification: `gate ${plan.gateProfile}; ${plan.nextAction}`
+  });
+  content = prependSectionBullet(
+    content,
+    "## Handoff Log",
+    `- ${timestamp.slice(0, 10)}: [${plan.fromOwner ?? "unknown"} -> ${plan.toOwner}] ${plan.summary} | ${plan.nextAction}`
+  );
+  content = replaceBulletValue(content, "- Next first action:", plan.nextAction);
+  fs.writeFileSync(taskListPath, content, "utf8");
+}
+
+function updateCanonicalCurrentState({ repoRoot, plan, timestamp }) {
+  const currentStatePath = path.resolve(repoRoot, ".agents/artifacts/CURRENT_STATE.md");
+  if (!fs.existsSync(currentStatePath)) {
+    return;
+  }
+  let content = fs.readFileSync(currentStatePath, "utf8");
+  content = replaceBulletValue(content, "- Current Stage:", plan.currentStage);
+  content = replaceBulletValue(content, "- Current Focus:", plan.currentFocus);
+  content = replaceSectionFirstBullet(content, "## Next Recommended Agent", titleCaseOwner(plan.toOwner));
+  content = replaceOrPrependSectionBulletContaining(
+    content,
+    "## Open Decisions / Blockers",
+    `\`${plan.workItemId}`,
+    buildCurrentWorkItemStateBullet(plan)
+  );
+  content = prependSectionBullet(
+    content,
+    "## Latest Handoff Summary",
+    `- ${timestamp.slice(0, 10)}: \`[${plan.fromOwner ?? "unknown"} -> ${plan.toOwner}] ${plan.summary}\``
+  );
+  fs.writeFileSync(currentStatePath, content, "utf8");
+}
+
+function updateCanonicalImplementationPlan({ repoRoot, plan }) {
+  const implementationPlanPath = path.resolve(repoRoot, ".agents/artifacts/IMPLEMENTATION_PLAN.md");
+  if (!fs.existsSync(implementationPlanPath)) {
+    return;
+  }
+  let content = fs.readFileSync(implementationPlanPath, "utf8");
+  content = replaceSectionBullets(content, "## Operator Next Action", [
+    `- \`${plan.workItemId}\` active handoff is \`${plan.fromOwner ?? "unknown"} -> ${plan.toOwner}\`.`,
+    `- ${plan.nextAction}`,
+    `- Source packet: \`${plan.sourceRef}\`.`,
+    "- Preserve packet-before-code, PMW read-only authority, generated-doc immutability, root/starter sync, Tester/Reviewer separation, and human approval gates."
+  ]);
+  fs.writeFileSync(implementationPlanPath, content, "utf8");
+}
+
+function buildCurrentWorkItemStateBullet(plan) {
+  const approvalText = plan.readyForCode === "approved"
+    ? "Ready For Code is approved"
+    : `Ready For Code status is ${plan.readyForCode ?? "unknown"}`;
+  return `- \`${plan.workItemId}\` ${approvalText}; active handoff is \`${plan.fromOwner ?? "unknown"} -> ${plan.toOwner}\`. ${plan.nextAction}`;
+}
+
+function updateMarkdownTableRow(content, sectionHeading, keyColumn, keyValue, updates) {
+  const range = findSectionRange(content, sectionHeading);
+  if (!range) {
+    return content;
+  }
+  const section = content.slice(range.start, range.end);
+  const lines = section.split(/\r?\n/);
+  const tableStart = lines.findIndex((line) => line.trim().startsWith("|"));
+  if (tableStart === -1 || !lines[tableStart + 1]?.includes("---")) {
+    return content;
+  }
+  const headers = parseTableCells(lines[tableStart]);
+  const keyIndex = headers.indexOf(keyColumn);
+  if (keyIndex === -1) {
+    return content;
+  }
+  for (let index = tableStart + 2; index < lines.length; index += 1) {
+    if (!lines[index].trim().startsWith("|")) {
+      break;
+    }
+    const cells = parseTableCells(lines[index]);
+    if (cells[keyIndex] !== keyValue) {
+      continue;
+    }
+    const nextCells = headers.map((header, cellIndex) => updates[header] ?? cells[cellIndex] ?? "");
+    lines[index] = `| ${nextCells.map(escapeMarkdownCell).join(" | ")} |`;
+    const updatedSection = lines.join("\n");
+    return `${content.slice(0, range.start)}${updatedSection}${content.slice(range.end)}`;
+  }
+  return content;
+}
+
+function prependSectionBullet(content, sectionHeading, bullet) {
+  const start = content.indexOf(sectionHeading);
+  if (start === -1 || content.includes(bullet)) {
+    return content;
+  }
+  const insertAt = content.indexOf("\n", start);
+  if (insertAt === -1) {
+    return `${content}\n${bullet}\n`;
+  }
+  return `${content.slice(0, insertAt + 1)}${bullet}\n${content.slice(insertAt + 1)}`;
+}
+
+function replaceBulletValue(content, prefix, value) {
+  if (!value) {
+    return content;
+  }
+  const escaped = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(`^${escaped}.*$`, "m");
+  return pattern.test(content) ? content.replace(pattern, `${prefix} ${value}`) : content;
+}
+
+function replaceSectionFirstBullet(content, sectionHeading, value) {
+  if (!value) {
+    return content;
+  }
+  const range = findSectionRange(content, sectionHeading);
+  if (!range) {
+    return content;
+  }
+  const section = content.slice(range.start, range.end);
+  const updatedSection = section.replace(/^-\s+.*$/m, `- ${value}`);
+  return `${content.slice(0, range.start)}${updatedSection}${content.slice(range.end)}`;
+}
+
+function replaceOrPrependSectionBulletContaining(content, sectionHeading, needle, bullet) {
+  const range = findSectionRange(content, sectionHeading);
+  if (!range || !needle || !bullet) {
+    return content;
+  }
+  const section = content.slice(range.start, range.end);
+  const lines = section.split(/\r?\n/);
+  const existingIndex = lines.findIndex((line) => line.trim().startsWith("- ") && line.includes(needle));
+
+  if (existingIndex !== -1) {
+    lines[existingIndex] = bullet;
+  } else {
+    const headingIndex = lines.findIndex((line) => line.trim() === sectionHeading);
+    lines.splice(headingIndex === -1 ? 1 : headingIndex + 1, 0, bullet);
+  }
+
+  return `${content.slice(0, range.start)}${lines.join("\n")}${content.slice(range.end)}`;
+}
+
+function replaceSectionBullets(content, sectionHeading, bullets) {
+  const range = findSectionRange(content, sectionHeading);
+  if (!range) {
+    return `${content.trimEnd()}\n\n${sectionHeading}\n${bullets.join("\n")}\n`;
+  }
+  return `${content.slice(0, range.start)}${sectionHeading}\n${bullets.join("\n")}\n${content.slice(range.end)}`;
+}
+
+function findSectionRange(content, sectionHeading) {
+  const start = content.indexOf(sectionHeading);
+  if (start === -1) {
+    return null;
+  }
+  const after = content.slice(start + sectionHeading.length);
+  const next = after.match(/\n##\s+/);
+  return {
+    start,
+    end: next ? start + sectionHeading.length + next.index : content.length
+  };
+}
+
+function parseTableCells(line) {
+  return line.split("|").slice(1, -1).map((cell) => cell.trim());
+}
+
+function escapeMarkdownCell(value) {
+  return String(value ?? "").replaceAll("|", "\\|");
+}
+
+function parseListOption(value) {
+  if (!value || value === true) {
+    return [];
+  }
+  return String(value)
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function normalizeOwner(value) {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  return normalized || null;
+}
+
+function titleCaseOwner(value) {
+  const normalized = String(value ?? "").trim();
+  return normalized ? normalized[0].toUpperCase() + normalized.slice(1) : null;
 }
 
 export function buildMigrationPreview({ repoRoot = process.cwd(), dbPath = DEFAULT_DB_PATH } = {}) {

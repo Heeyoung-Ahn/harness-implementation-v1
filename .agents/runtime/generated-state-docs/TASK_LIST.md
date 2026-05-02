@@ -1,10 +1,10 @@
 # TASK_LIST
 
 ## Technical Facts
-- Open work items: 31
+- Open work items: 33
 - Open blocked or at-risk items: 0
 - Recent handoffs captured: 10
-- Generated at: 2026-05-01T15:30:23.913Z
+- Generated at: 2026-05-02T15:51:23.083Z
 
 ## Blocked / At Risk Summary
 - 0 open blocker or risks require attention.
@@ -18,7 +18,9 @@
 ## Work Item Detail
 | ID | Title | Status | Next Action |
 |---|---|---|---|
-| PLN-07 | V1.3 PMW operator console and workflow-contract planning | in_progress | Select the next V1.3 PMW operator-console / workflow-contract planning step now that DEV-08 packet exit is approved. |
+| OPS-03 | Harness operation reliability and friction reduction packet | review | Re-verify OPS-03 reviewer-finding remediation: Ready For Code transition guards, open-decision guard, post-apply validation failure reporting, Implementation Plan PMW Next Action freshness, tests, validator, PMW export, and validation report. |
+| PLN-07 | V1.3 PMW operator console and workflow-contract planning | done | Closed on 2026-05-02 after DEV-07, DEV-08, and DEV-09 packet closeouts; preserve V1.3 PMW evidence while OPS-03 proceeds. |
+| DEV-09 | PMW phase-1 command launcher and handoff execution packet | done | Closed on 2026-05-02 after Tester verification and Reviewer packet exit approval; preserve DEV-09 command launcher and handoff baton evidence. |
 | DEV-08 | Workflow contracts and handoff routing packet | done | Closed on 2026-05-02 after Reviewer approved packet exit closeout; no open DEV-08 finding remains. |
 | DEV-07 | PMW V1.3 operator console first-view implementation | done | Closed after Reviewer re-check; preserve DEV-07 evidence while Planner selects the next PLN-07 step. |
 | REL-02 | V1.2 installable harness / PMW baseline reconciliation | closed | Preserve the V1.2 release-baseline alignment across SSOT, DB, generated docs, manuals, and packaging. |
@@ -51,18 +53,18 @@
 | DEV-04 | PMW read surface | done | Closed after browser verification passed at http://127.0.0.1:4173. |
 
 ## Handoff Log
-- 2026-05-01T15:30:23.913Z: [reviewer -> planner] DEV-08 packet exit approved | no open finding remains | select next PLN-07 V1.3 planning step
-- 2026-05-01T15:24:57.075Z: [tester -> reviewer] DEV-08 PMW next-task owner/workflow re-verification passed | Action Board PLN-07 routes planner/plan.md | review packet exit closeout
-- 2026-05-01T15:18:34.608Z: [developer -> tester] DEV-08 PMW next-task owner/workflow remediation completed | root/starter tests passed | verify Action Board nextTask route parity and PMW evidence
-- 2026-05-01T15:07:29.957Z: [reviewer -> developer] DEV-08 packet exit review found PMW next-task owner/workflow mismatch | fix Action Board routing and add root/starter regression coverage
-- 2026-05-01T15:00:36.764Z: [tester -> reviewer] DEV-08 Tester re-verification passed | PM workflow routing and remediation evidence clean | review packet exit gate and closeout readiness
-- 2026-05-01T14:47:28.550Z: [developer -> tester] DEV-08 PM workflow addition completed | root/starter tests and validator passed | verify PM workflow contract, PM routing, and root/starter sync
-- 2026-05-01T14:38:12.257Z: [developer -> tester] DEV-08 route ambiguity and missing-workflow diagnostic remediation completed | root/starter tests and validator passed | re-verify negative routing cases and PMW diagnostics
-- 2026-05-01T14:29:44.239Z: [tester -> developer] DEV-08 verification found route ambiguity and missing-workflow diagnostic gaps | positive tests passed | remediate alias matching and read-model route diagnostics
-- 2026-05-01T14:19:34.003Z: [developer -> tester] DEV-08 workflow contracts and handoff routing implemented | root/starter tests and validator passed | verify contract parsing, route behavior, and PMW/handoff evidence
-- 2026-05-01T13:58:09.680Z: [planner -> planner] DEV-08 detailed agreement recommended | Ready For Code remains pending | user should approve or adjust before developer handoff
+- 2026-05-02T15:51:23.083Z: [developer -> tester] Developer remediated Reviewer transition findings: Ready For Code handoff guards, open-decision guard, post-apply validation failure reporting, and PMW Next Action freshness.
+- 2026-05-02T15:45:08.393Z: [reviewer -> developer] Reviewer found transition approval and validation-result reporting gaps; Developer remediation required.
+- 2026-05-02T15:39:05.804Z: [tester -> reviewer] OPS-03 Tester re-verification passed after Developer remediation; mixed timestamp handoff ordering, transition canonical-doc updates, PMW Re-entry Baton/recentHandoff freshness, root/starter/PMW tests, validator, PMW export, and validation report passed.
+- 2026-05-02T15:36:31.614Z: [developer -> tester] OPS-03 Developer remediated PMW stale handoff ordering and transition canonical-doc update gaps; root/starter/PMW tests and validator pass.
+- 2026-05-02T15:29:54.731Z: [tester -> developer] OPS-03 Tester verification found stale PMW handoff evidence despite passing tests and validator.
+- 2026-05-02T15:19:20.730Z: [developer -> tester] OPS-03 Developer reconciliation completed: root/starter sync restored, approval-state consistency guarded, tests and validator pass, PMW export/report refreshed.
+- 2026-05-03T00:01:03.3222041+09:00: [developer -> developer] OPS-03 partial implementation audit completed | keep/revise/drop classification recorded in packet | next reconcile root/starter sync drift and failing root tests
+- 2026-05-02T23:56:00.8130243+09:00: [planner -> developer] OPS-03 Ready For Code explicitly approved | Developer starts by auditing interrupted partial implementation | classify each existing change as keep/revise/drop before continuing implementation
+- 2026-05-02T00:00:05.000Z: [reviewer -> planner] DEV-09 packet exit approved | no open finding remains | finalize OPS-03 harness operation friction reduction plan
+- 2026-05-02T00:00:04.000Z: [tester -> reviewer] DEV-09 Tester verification passed | PMW Actions / Terminal Actions, confirmation boundaries, result surface, terminal-only guidance, and handoff baton verified
 
 ## Generation Metadata
 - Generated docs: CURRENT_STATE.md, TASK_LIST.md
-- Source revision: 2026-05-01T15:30:23.913Z
+- Source revision: 2026-05-02T15:51:23.083Z
 - Sync status: fresh at generation time

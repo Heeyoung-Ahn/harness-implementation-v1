@@ -1,10 +1,10 @@
 # Validation Report
 
 ## Summary
-- Executed at: 2026-05-01T15:32:21.638Z
+- Executed at: 2026-05-02T15:56:45.126Z
 - Validator version: v1.2
 - Gate decision: pass
-- Next action: Select the next V1.3 PMW operator-console / workflow-contract planning step now that DEV-08 packet exit is approved.
+- Next action: Re-verify OPS-03 reviewer-finding remediation: Ready For Code transition guards, open-decision guard, post-apply validation failure reporting, Implementation Plan PMW Next Action freshness, tests, validator, PMW export, and validation report.
 
 ## Active Profiles
 - Source: .agents/artifacts/ACTIVE_PROFILES.md

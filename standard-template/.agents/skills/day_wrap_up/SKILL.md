@@ -2,13 +2,22 @@
 
 Use this skill to close the day with a reliable restart point.
 
+Run this skill through the `Project Manager` lens: reconcile what happened, preserve the next baton, and make the next responsible workflow explicit without claiming another workflow's approval authority.
+
+## PM Boundary
+
+- PM may reconcile status, blocker ownership, next workflow, and handoff readiness from canonical evidence.
+- PM may recommend the next owner and first action.
+- PM must not mark implementation, testing, review, release, or human approval gates complete unless the owning workflow or user has provided that evidence.
+
 ## Required Flow
 
 1. gather explicit evidence
 2. update the live state
 3. record unresolved items honestly
 4. review whether any repeated issue should become preventive memory
-5. define the next first action
+5. define the next responsible workflow
+6. define the next first action
 
 ## Reconciliation Gate
 
@@ -19,6 +28,7 @@ Do not claim a clean closeout if any of these remain ambiguous:
 - changed architecture direction
 - unverified behavior change
 - unresolved blocker owner or status
+- unclear next responsible workflow or handoff route
 
 ## Output Contract
 
@@ -28,7 +38,8 @@ Return a concise closeout with:
 2. Still Open
 3. Verification
 4. Confirmations And Deferred Decisions
-5. Next Session First Action
+5. Next Recommended Workflow
+6. Next Session First Action
 
 ## Rules
 
@@ -36,3 +47,4 @@ Return a concise closeout with:
 - Prefer short confirmation questions when evidence does not fully close a conflict.
 - Do not silently rewrite stable context from a guess.
 - Promote repeated issues into preventive memory only when the trigger, rule, and check method are explicit enough to reuse.
+- If the next workflow owns planning, implementation, testing, review, deployment, or documentation work, report the handoff recommendation instead of performing that workflow's work inside this skill.

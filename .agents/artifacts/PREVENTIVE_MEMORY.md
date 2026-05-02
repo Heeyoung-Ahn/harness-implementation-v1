@@ -30,6 +30,17 @@ This file keeps thin, durable prevention rules for repeated process or quality i
 
 ## Promotion Candidates
 
+- Candidate ID: OPS-HARNESS-FRICTION-004
+- Issue Pattern: 하네스 core/PMW 작업을 닫을 때마다 `CURRENT_STATE`, `TASK_LIST`, packet, DB hot-state, generated docs, PMW export, validation report, handoff log를 사람이 반복적으로 맞춰야 하며, 중단 후 승인 상태와 정본 상태가 갈라질 수 있다.
+- Why It Matters: 현재 엄격도는 core contract 작업에는 유효하지만, 모든 작업에 같은 강도로 적용하면 작업 시간이 state sync에 과도하게 쓰이고 수동 중복 기록에서 drift가 생긴다. 2026-05-02 OPS-03 중단 사례처럼 packet header, DB decision, canonical docs, generated docs, PMW export가 서로 다른 승인 상태를 표시하면 다음 에이전트가 구현 가능 여부를 오판할 수 있다.
+- Proposed Target Layer: core
+- Proposed Target Artifact / Follow-Up Item: `OPS-03` Harness operation reliability packet for gate profiles, approval/SSOT consistency, transition automation, current-state/history separation, and thin agent behavior guidance.
+- Promotion Status: approved
+- Human Review Boundary: expanded OPS-03 scope, gate profile taxonomy, approval consistency contract, transition automation scope, state/history split, attached agent behavior guide disposition, interrupted implementation disposition, and `Ready For Code` were approved by the user on 2026-05-02; promotion is not marked `promoted` until Tester re-verification and Reviewer closeout pass.
+- Linked Follow-Up Item: `OPS-03`
+- Needed Refinement: complete OPS-03 Tester re-verification and Reviewer closeout for the implemented transition guards, approval parity checks, PMW freshness evidence, gate-profile evidence, and lightweight behavior guidance before promoting this candidate into active preventive rules.
+- Source / Evidence: DEV-07 through DEV-09 repeated closeout work, user feedback on 2026-05-02 asking whether the current harness effort level is appropriate, the interrupted OPS-03 implementation/approval mismatch on 2026-05-02, and `C:/Users/ahyne/Downloads/andrej-karpathy-skills-main.zip`.
+
 - Candidate ID: SIM-MULTI-PROFILE-001
 - Issue Pattern: 하나의 실제 work item이 admin-grid UX, spreadsheet-backed authoritative source, later delivery profile까지 동시에 필요로 하지만, current packet contract와 validator가 사실상 single active profile 중심으로 작동한다.
 - Why It Matters: WBMS류 프로젝트에서 operator가 profile 하나를 누락하거나 work item을 부자연스럽게 쪼개게 되면 required evidence와 hold rule이 부분적으로만 적용된다.

@@ -38,6 +38,7 @@ export function createPmwMonitorServer({ host = "127.0.0.1", port = 4174 } = {})
         const payload = await runPhaseOneCommand({
           projectId: body.projectId,
           commandId: body.commandId,
+          confirmed: body.confirmed === true,
           commandSessions
         });
         return json(res, payload);
@@ -113,6 +114,8 @@ const APPROVED_PHASE_ONE_COMMANDS = {
   }
 };
 
+const CONFIRMATION_REQUIRED_SIDE_EFFECTS = new Set(["workflow_launch", "derived_output"]);
+
 function buildProjectsPayload(requestedProjectId, commandSessions = new Map()) {
   const registry = loadRegistry();
   const selectedProject = resolveSelectedProject(registry, requestedProjectId);
@@ -164,11 +167,14 @@ function isPathInside(parentPath, candidatePath) {
   );
 }
 
-async function runPhaseOneCommand({ projectId, commandId, commandSessions }) {
+async function runPhaseOneCommand({ projectId, commandId, confirmed = false, commandSessions }) {
   const registry = loadRegistry();
   const selectedProject = resolveSelectedProject(registry, projectId);
   if (!selectedProject) {
     return { ok: false, message: "No selected project." };
+  }
+  if (!fs.existsSync(selectedProject.repoRoot)) {
+    return { ok: false, message: `Selected project path is unavailable: ${selectedProject.repoRoot}` };
   }
 
   const readModel = readProjectReadModel(selectedProject);
@@ -183,6 +189,15 @@ async function runPhaseOneCommand({ projectId, commandId, commandSessions }) {
     return {
       ok: false,
       message: `Command contract mismatch for ${commandId}. PMW only launches the approved phase-1 command catalog.`
+    };
+  }
+  const confirmationRequired = commandRequiresConfirmation(commandContract);
+  if (confirmationRequired && !confirmed) {
+    return {
+      ok: false,
+      confirmationRequired: true,
+      commandId,
+      message: `${commandContract.label} requires operator confirmation before PMW launches it.`
     };
   }
 
@@ -201,12 +216,23 @@ async function runPhaseOneCommand({ projectId, commandId, commandSessions }) {
     commandId,
     label: commandContract.label,
     command: commandContract.command,
+    launchMode: commandContract.launchMode ?? "pmw_phase1",
     sideEffect: commandContract.sideEffect ?? "unknown",
+    expectedEffect: commandContract.expectedEffect ?? commandContract.description ?? "No expected effect recorded.",
+    confirmationRequired,
+    selectedProject: {
+      id: selectedProject.id,
+      name: selectedProject.name,
+      repoRoot: selectedProject.repoRoot
+    },
     status: "running",
     startedAt: new Date().toISOString(),
     finishedAt: null,
+    durationMs: null,
     exitCode: null,
     summary: `${commandContract.label} is running.`,
+    relatedArtifacts: relatedArtifactsForCommand(commandId),
+    handoffBaton: null,
     stdout: "",
     stderr: ""
   };
@@ -246,6 +272,7 @@ async function runPhaseOneCommand({ projectId, commandId, commandSessions }) {
   child.on("error", (error) => {
     entry.status = "failed";
     entry.finishedAt = new Date().toISOString();
+    entry.durationMs = calculateDurationMs(entry.startedAt, entry.finishedAt);
     entry.summary = `${commandContract.label} failed to start.`;
     entry.stderr = appendLimited(entry.stderr, error.message);
     session.running = false;
@@ -253,17 +280,134 @@ async function runPhaseOneCommand({ projectId, commandId, commandSessions }) {
   child.on("close", (code) => {
     entry.exitCode = code;
     entry.finishedAt = new Date().toISOString();
+    entry.durationMs = calculateDurationMs(entry.startedAt, entry.finishedAt);
     entry.status = code === 0 ? "success" : "failed";
+    const parsedResult = parseCommandJsonOutput(entry.stdout);
+    if (commandId === "handoff") {
+      entry.handoffBaton = buildHandoffBaton({ parsedResult, readModel });
+    }
     entry.summary =
       code === 0
-        ? `${commandContract.label} completed successfully.`
-        : `${commandContract.label} failed with exit code ${code}.`;
+        ? summarizeSuccessfulCommand(commandContract, parsedResult)
+        : summarizeFailedCommand(commandContract, code, parsedResult);
     session.running = false;
   });
 
   return {
     ok: true,
     commandSession: session
+  };
+}
+
+function commandRequiresConfirmation(commandContract) {
+  return (
+    commandContract.confirmationRequired === true ||
+    CONFIRMATION_REQUIRED_SIDE_EFFECTS.has(commandContract.sideEffect)
+  );
+}
+
+function relatedArtifactsForCommand(commandId) {
+  const commonTruth = [
+    { path: ".agents/artifacts/CURRENT_STATE.md", title: "Current State" },
+    { path: ".agents/artifacts/TASK_LIST.md", title: "Task List" }
+  ];
+  const map = {
+    status: commonTruth,
+    next: [
+      ...commonTruth,
+      { path: ".agents/artifacts/IMPLEMENTATION_PLAN.md", title: "Implementation Plan" }
+    ],
+    explain: commonTruth,
+    validate: [
+      ...commonTruth,
+      { path: ".agents/artifacts/VALIDATION_REPORT.md", title: "Validation Report" },
+      { path: ".agents/artifacts/VALIDATION_REPORT.json", title: "Validation Report JSON" }
+    ],
+    handoff: [
+      ...commonTruth,
+      { path: ".agents/artifacts/IMPLEMENTATION_PLAN.md", title: "Implementation Plan" }
+    ],
+    "pmw-export": [
+      { path: ".agents/runtime/project-manifest.json", title: "PMW Project Manifest" },
+      { path: ".agents/runtime/pmw-read-model.json", title: "PMW Read Model" },
+      { path: ".agents/runtime/generated-state-docs/CURRENT_STATE.md", title: "Generated Current State" },
+      { path: ".agents/runtime/generated-state-docs/TASK_LIST.md", title: "Generated Task List" }
+    ]
+  };
+  return map[commandId] ?? [];
+}
+
+function calculateDurationMs(startedAt, finishedAt) {
+  const started = Date.parse(startedAt);
+  const finished = Date.parse(finishedAt);
+  return Number.isFinite(started) && Number.isFinite(finished) ? Math.max(0, finished - started) : null;
+}
+
+function summarizeSuccessfulCommand(commandContract, parsedResult) {
+  if (commandContract.id === "validate" && parsedResult) {
+    const findingCount = Array.isArray(parsedResult.findings) ? parsedResult.findings.length : 0;
+    return `${commandContract.label} completed: ${parsedResult.ok ? "pass" : "attention"} with ${findingCount} finding(s).`;
+  }
+  if (commandContract.id === "handoff" && parsedResult) {
+    return `${commandContract.label} completed: ${parsedResult.routeStatus ?? "route"} -> ${parsedResult.nextOwner ?? "unassigned"}.`;
+  }
+  return `${commandContract.label} completed successfully.`;
+}
+
+function summarizeFailedCommand(commandContract, code, parsedResult) {
+  if (parsedResult?.nextAction) {
+    return `${commandContract.label} failed with exit code ${code}. Next action: ${parsedResult.nextAction}`;
+  }
+  return `${commandContract.label} failed with exit code ${code}.`;
+}
+
+function parseCommandJsonOutput(stdout) {
+  const text = String(stdout ?? "").trim();
+  if (!text) {
+    return null;
+  }
+  const candidates = [];
+  for (let index = text.indexOf("{"); index !== -1; index = text.indexOf("{", index + 1)) {
+    candidates.push(index);
+  }
+  for (const index of candidates) {
+    try {
+      return JSON.parse(text.slice(index));
+    } catch {
+      // Keep scanning: commands may print a human summary before their JSON payload.
+    }
+  }
+  return null;
+}
+
+function buildHandoffBaton({ parsedResult, readModel }) {
+  const context = readModel?.context ?? {};
+  const baton = context.reEntryBaton ?? {};
+  const recent = context.recentHandoff ?? {};
+  const nextTask = parsedResult?.nextTask ?? null;
+  return {
+    previousWorkAgent:
+      baton.previousWorkAgent ?? recent.fromRole ?? parsedResult?.recentHandoff?.fromRole ?? "unknown",
+    previousWorkSummary:
+      baton.previousWorkSummary ??
+      recent.payload?.completedScope ??
+      parsedResult?.recentHandoff?.summary ??
+      baton.latestHandoff?.headline ??
+      "No previous work summary recorded.",
+    nextWorkAgent:
+      parsedResult?.nextOwner ?? baton.nextWorkAgent ?? baton.nextOwner ?? recent.toRole ?? "unassigned",
+    nextWorkSummary:
+      parsedResult?.nextAction ??
+      baton.nextWorkSummary ??
+      baton.fallbackSummary ??
+      "No next work summary recorded.",
+    targetWorkflow: parsedResult?.workflow ?? baton.targetWorkflow ?? null,
+    routeStatus: parsedResult?.routeStatus ?? baton.routeStatus ?? null,
+    nextTask: nextTask
+      ? `[${nextTask.workItemId}] ${nextTask.title} (${nextTask.status})`
+      : baton.activeTask
+        ? `[${baton.activeTask.taskId}] ${baton.activeTask.title}`
+        : null
   };
 }
 
@@ -736,7 +880,10 @@ function renderActionCard(card){
 }
 
 function renderTaskCard(card){
-  return '<article class="action-card"><div class="eyebrow">' + escapeHtml(card?.label) + '</div><div class="title">' + escapeHtml(card?.title ?? 'No task') + '</div><div class="sub">' + escapeHtml(card?.summary ?? 'No summary recorded.') + '</div><div class="pill">owner ' + escapeHtml(card?.owner ?? 'unassigned') + '</div><div class="route">' + escapeHtml(card?.workflow ?? 'workflow n/a') + ' · ' + escapeHtml(card?.status ?? 'status n/a') + '</div></article>';
+  const gate = card?.gateProfile
+    ? '<div class="route">gate ' + escapeHtml(card.gateProfile.id) + ' · ' + escapeHtml((card.gateProfile.requiredEvidence ?? []).join(', ')) + '</div>'
+    : '<div class="route">gate profile n/a</div>';
+  return '<article class="action-card"><div class="eyebrow">' + escapeHtml(card?.label) + '</div><div class="title">' + escapeHtml(card?.title ?? 'No task') + '</div><div class="sub">' + escapeHtml(card?.summary ?? 'No summary recorded.') + '</div><div class="pill">owner ' + escapeHtml(card?.owner ?? 'unassigned') + '</div><div class="route">' + escapeHtml(card?.workflow ?? 'workflow n/a') + ' · ' + escapeHtml(card?.status ?? 'status n/a') + '</div>' + gate + '</article>';
 }
 
 function renderBaton(baton){
@@ -746,6 +893,12 @@ function renderBaton(baton){
   const handoff = baton.latestHandoff;
   return [
     '<div class="baton-card"><div class="eyebrow">Latest Handoff</div><div class="title">' + escapeHtml(handoff?.headline ?? 'No recent handoff recorded.') + '</div><div class="sub">' + escapeHtml((handoff?.fromRole ?? 'n/a') + ' -> ' + (handoff?.toRole ?? 'n/a') + ' @ ' + (handoff?.createdAt ?? 'n/a')) + '</div></div>',
+    '<div class="baton-card"><div class="eyebrow">Handoff Confirmation</div><ul class="baton-list">' +
+      '<li>Previous work agent: ' + escapeHtml(baton.previousWorkAgent ?? handoff?.fromRole ?? 'unknown') + '</li>' +
+      '<li>Previous work summary: ' + escapeHtml(baton.previousWorkSummary ?? handoff?.headline ?? 'none') + '</li>' +
+      '<li>Next work agent: ' + escapeHtml(baton.nextWorkAgent ?? baton.nextOwner ?? 'unassigned') + '</li>' +
+      '<li>Next work summary: ' + escapeHtml(baton.nextWorkSummary ?? baton.fallbackSummary ?? 'none') + '</li>' +
+    '</ul></div>',
     '<div class="baton-card"><div class="eyebrow">Re-entry Data</div><ul class="baton-list">' +
       '<li>Next owner: ' + escapeHtml(baton.nextOwner ?? 'unassigned') + '</li>' +
       '<li>Target workflow: ' + escapeHtml(baton.targetWorkflow ?? 'n/a') + '</li>' +
@@ -795,8 +948,8 @@ function renderCommands(model){
     return '<div class="command-col"><div class="title">No operator command guidance exported yet.</div></div>';
   }
   return [
-    renderCommandColumn('Launch Here', commands.phaseOne, 'planned command', true, repoRoot),
-    renderCommandColumn('Run In Terminal For Now', commands.terminalOnly, 'terminal command', false, repoRoot),
+    renderCommandColumn(commands.phaseOneLabel ?? 'PMW Actions', commands.phaseOne, 'PMW action', true, repoRoot),
+    renderCommandColumn(commands.terminalOnlyLabel ?? 'Terminal Actions', commands.terminalOnly, 'terminal action', false, repoRoot),
     renderCommandSession(currentCommandSession)
   ].join('');
 }
@@ -810,14 +963,19 @@ function renderCommandColumn(title, items, commandLabel, launchable, repoRoot){
 
 function renderCommandItem(command, commandLabel, launchable, repoRoot){
   const running = Boolean(currentCommandSession?.running);
-  const disabled = running ? ' disabled' : '';
+  const disabled = running || (launchable && !selected) ? ' disabled' : '';
   const runButton = launchable
     ? '<div class="command-item-actions"><button class="primary command-run"' + disabled + ' onclick="runCommand(\\'' + escapeJsString(command.id) + '\\')">' + (running ? 'Busy' : 'Run') + '</button></div>'
     : '';
-  const commandRoute = launchable
-    ? commandLabel + ': ' + command.command
-    : commandLabel + ': ' + command.command + ' · repo root: ' + repoRoot;
-  return '<div class="command-item"><div class="command-item-head"><div><strong>' + escapeHtml(command.label) + '</strong><div class="sub">' + escapeHtml(command.description) + '</div></div>' + runButton + '</div><div class="route">' + escapeHtml(commandRoute) + '</div></div>';
+  const commandRoute = [
+    commandLabel + ': ' + command.command,
+    'side effect: ' + (command.sideEffect ?? 'unknown'),
+    'launch mode: ' + (command.launchMode ?? 'unknown'),
+    'confirmation: ' + (requiresCommandConfirmation(command) ? 'required' : 'not required'),
+    'selected project: ' + repoRoot
+  ].join(' · ');
+  const expectedEffect = command.expectedEffect ? '<div class="route">effect: ' + escapeHtml(command.expectedEffect) + '</div>' : '';
+  return '<div class="command-item"><div class="command-item-head"><div><strong>' + escapeHtml(command.label) + '</strong><div class="sub">' + escapeHtml(command.description) + '</div></div>' + runButton + '</div><div class="route">' + escapeHtml(commandRoute) + '</div>' + expectedEffect + '</div>';
 }
 
 function renderCommandSession(session){
@@ -826,7 +984,30 @@ function renderCommandSession(session){
     return '<section class="command-session"><div class="title">Latest Command Result</div><div class="command-session-summary muted">No PMW command has been run in this session.</div></section>';
   }
   const statusLabel = latest.status === 'running' ? 'running' : latest.status;
+  const metaParts = [
+    latest.label ?? latest.commandId ?? 'command',
+    statusLabel,
+    latest.sideEffect ? 'side effect ' + latest.sideEffect : null,
+    latest.launchMode ? 'launch ' + latest.launchMode : null,
+    latest.durationMs != null ? 'duration ' + latest.durationMs + 'ms' : null,
+    latest.startedAt ? 'started ' + latest.startedAt : null,
+    latest.finishedAt ? 'finished ' + latest.finishedAt : null
+  ].filter(Boolean);
+  const projectLine = latest.selectedProject
+    ? '<div class="command-session-meta">selected project: ' + escapeHtml(latest.selectedProject.name + ' · ' + latest.selectedProject.repoRoot) + '</div>'
+    : '';
+  const expectedEffect = latest.expectedEffect
+    ? '<div class="command-session-meta">effect: ' + escapeHtml(latest.expectedEffect) + '</div>'
+    : '';
   const outputBlocks = [];
+  const batonBlock = renderCommandHandoffBaton(latest.handoffBaton);
+  if(batonBlock){
+    outputBlocks.push(batonBlock);
+  }
+  const artifactBlock = renderRelatedArtifacts(latest.relatedArtifacts);
+  if(artifactBlock){
+    outputBlocks.push(artifactBlock);
+  }
   if(latest.stdout){
     outputBlocks.push('<div class="command-log"><strong>stdout</strong><pre>' + escapeHtml(latest.stdout) + '</pre></div>');
   }
@@ -836,7 +1017,31 @@ function renderCommandSession(session){
   if(currentCommandError){
     outputBlocks.unshift('<div class="command-log"><strong>message</strong><pre>' + escapeHtml(currentCommandError) + '</pre></div>');
   }
-  return '<section class="command-session"><div class="command-session-head"><div><div class="title">Latest Command Result</div><div class="command-session-summary">' + escapeHtml(latest.summary ?? 'No summary.') + '</div><div class="command-session-meta">' + escapeHtml((latest.label ?? latest.commandId ?? 'command') + ' · ' + statusLabel + ' · started ' + (latest.startedAt ?? 'n/a')) + (latest.finishedAt ? escapeHtml(' · finished ' + latest.finishedAt) : '') + '</div></div><span class="status-pill ' + escapeHtml(statusLabel === 'success' ? 'done' : 'remaining') + '">' + escapeHtml(statusLabel) + '</span></div>' + outputBlocks.join('') + '</section>';
+  return '<section class="command-session"><div class="command-session-head"><div><div class="title">Latest Command Result</div><div class="command-session-summary">' + escapeHtml(latest.summary ?? 'No summary.') + '</div><div class="command-session-meta">' + escapeHtml(metaParts.join(' · ')) + '</div>' + projectLine + expectedEffect + '</div><span class="status-pill ' + escapeHtml(statusLabel === 'success' ? 'done' : 'remaining') + '">' + escapeHtml(statusLabel) + '</span></div>' + outputBlocks.join('') + '</section>';
+}
+
+function renderRelatedArtifacts(artifacts){
+  const items = artifacts ?? [];
+  if(!items.length){
+    return '';
+  }
+  return '<div class="command-log"><strong>related artifacts</strong><div class="project-actions">' +
+    items.map((item) => '<button class="subtle" onclick="showArtifact(\\'' + escapeJsString(item.path) + '\\')">' + escapeHtml(item.title ?? item.path) + '</button>').join('') +
+    '</div></div>';
+}
+
+function renderCommandHandoffBaton(baton){
+  if(!baton){
+    return '';
+  }
+  return '<div class="command-log"><strong>handoff baton</strong><ul class="baton-list">' +
+    '<li>Previous work agent: ' + escapeHtml(baton.previousWorkAgent ?? 'unknown') + '</li>' +
+    '<li>Previous work summary: ' + escapeHtml(baton.previousWorkSummary ?? 'none') + '</li>' +
+    '<li>Next work agent: ' + escapeHtml(baton.nextWorkAgent ?? 'unassigned') + '</li>' +
+    '<li>Next work summary: ' + escapeHtml(baton.nextWorkSummary ?? 'none') + '</li>' +
+    '<li>Target workflow: ' + escapeHtml(baton.targetWorkflow ?? 'n/a') + '</li>' +
+    '<li>Route status: ' + escapeHtml(baton.routeStatus ?? 'n/a') + '</li>' +
+    '</ul></div>';
 }
 
 function escapeJsString(value){
@@ -870,17 +1075,25 @@ function closeProjectsModal(){
 
 async function runCommand(commandId){
   if(!selected){
+    currentCommandError = 'Select a registered project before running a PMW action.';
+    document.getElementById('commands').innerHTML = renderCommands(currentReadModel);
     return;
   }
   currentCommandError = null;
-  const dangerous = ['validate', 'handoff', 'pmw-export'];
-  if(dangerous.includes(commandId)){
-    const confirmed = window.confirm('This command can update validation state, derived outputs, or workflow state for the selected project. Run it now?');
+  const command = (currentReadModel?.context?.operatorCommands?.phaseOne ?? []).find((item) => item.id === commandId);
+  if(!command){
+    currentCommandError = 'Command is not in the approved PMW Actions catalog: ' + commandId;
+    document.getElementById('commands').innerHTML = renderCommands(currentReadModel);
+    return;
+  }
+  let confirmed = false;
+  if(requiresCommandConfirmation(command)){
+    confirmed = window.confirm('Run ' + command.label + ' for the selected project? This action can refresh derived outputs or advance the handoff workflow path.');
     if(!confirmed){
       return;
     }
   }
-  const payload = await api('/api/commands/run', { projectId: selected, commandId });
+  const payload = await api('/api/commands/run', { projectId: selected, commandId, confirmed });
   if(!payload.ok){
     currentCommandError = payload.message ?? 'Unable to run the selected PMW command.';
     currentCommandSession = payload.commandSession ?? currentCommandSession;
@@ -888,6 +1101,10 @@ async function runCommand(commandId){
     return;
   }
   await load(selected);
+}
+
+function requiresCommandConfirmation(command){
+  return command?.confirmationRequired === true || ['workflow_launch','derived_output'].includes(command?.sideEffect);
 }
 
 function openOverviewModal(view = 'tracked'){

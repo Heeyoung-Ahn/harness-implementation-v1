@@ -97,7 +97,7 @@ test("builds a fresh context restoration read model from designated summary sour
   );
   assert.deepEqual(
     model.operatorCommands.terminalOnly.map((command) => command.id),
-    ["doctor", "test", "validation-report"]
+    ["doctor", "test", "validation-report", "transition"]
   );
   assert.equal(model.operatorCommands.terminalOnly[1].command, "npm test");
   assert.equal(model.recentHandoff.headline, "DEV-03 is ready for implementation.");

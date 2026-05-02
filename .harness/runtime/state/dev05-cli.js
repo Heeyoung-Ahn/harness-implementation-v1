@@ -9,6 +9,7 @@ import {
   explainCurrentBlockers,
   recommendNextAction,
   resolveHandoff,
+  runTransition,
   runDoctor,
   runCutoverPreflight,
   runValidator,
@@ -31,6 +32,7 @@ const commands = {
   "validation-report": () => writeValidationReport({ repoRoot, outputDir, dbPath }),
   "pmw-export": () => writeProjectExport({ repoRoot, outputDir, dbPath }),
   "project-manifest": () => writeProjectExport({ repoRoot, outputDir, dbPath }),
+  transition: () => runTransition({ repoRoot, outputDir, dbPath, args: process.argv.slice(3) }),
   "migration-preview": () => buildMigrationPreview({ repoRoot, dbPath }),
   "migration-apply": () => applyMigration({ repoRoot, dbPath }),
   "cutover-preflight": () => runCutoverPreflight({ repoRoot, outputDir, dbPath }),
@@ -39,7 +41,7 @@ const commands = {
 
 if (!command || !commands[command]) {
   process.stderr.write(
-    "Usage: node .harness/runtime/state/dev05-cli.js <validate|doctor|status|next|handoff|explain|validation-report|pmw-export|project-manifest|migration-preview|migration-apply|cutover-preflight|cutover-report>\n"
+    "Usage: node .harness/runtime/state/dev05-cli.js <validate|doctor|status|next|handoff|explain|validation-report|pmw-export|project-manifest|transition|migration-preview|migration-apply|cutover-preflight|cutover-report>\n"
   );
   process.exit(1);
 }
@@ -49,7 +51,7 @@ process.stdout.write(`${formatResult(result)}\n`);
 process.exit(result.ok === false || result.cutoverReady === false ? 1 : 0);
 
 function formatResult(result) {
-  if (["doctor", "status", "next", "handoff", "explain", "validation-report"].includes(result.command)) {
+  if (["doctor", "status", "next", "handoff", "explain", "validation-report", "transition"].includes(result.command)) {
     return `${formatHumanSummary(result)}\n\n${JSON.stringify(result, null, 2)}`;
   }
 
@@ -123,6 +125,21 @@ function formatHumanSummary(result) {
       `- Result: ${result.ok ? "no blockers" : "blocked"}`,
       `- Summary: ${result.summary}`,
       `- Next action: ${result.nextAction}`
+    ].join("\n");
+  }
+
+  if (result.command === "transition") {
+    const mode = result.apply ? "apply" : "preview";
+    return [
+      "Harness Transition",
+      `- Mode: ${mode}`,
+      `- Result: ${result.ok ? "pass" : "fail"}`,
+      `- Transition: ${result.transition}`,
+      `- Work item: ${result.workItemId}`,
+      `- From/To: ${result.fromOwner} -> ${result.toOwner}`,
+      `- Status: ${result.status}`,
+      `- Gate profile: ${result.gateProfile ?? "not declared"}`,
+      `- Next action: ${result.nextAction ?? "none"}`
     ].join("\n");
   }
 

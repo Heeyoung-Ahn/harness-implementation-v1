@@ -295,8 +295,13 @@ export class OperatingStateStore {
   listRecentHandoffs(limit = 10) {
     const safeLimit = Number.isInteger(limit) && limit > 0 ? limit : 10;
     return this.db
-      .prepare("SELECT * FROM handoff_log ORDER BY created_at DESC LIMIT ?")
-      .all(safeLimit)
+      .prepare("SELECT * FROM handoff_log")
+      .all()
+      .sort((left, right) =>
+        compareTimestampValuesDesc(left.created_at, right.created_at) ||
+        String(right.handoff_id).localeCompare(String(left.handoff_id))
+      )
+      .slice(0, safeLimit)
       .map(mapHandoffRow);
   }
 
@@ -313,15 +318,15 @@ export class OperatingStateStore {
     ];
 
     for (const [tableName, columnName] of tables) {
-      const row = this.db
-        .prepare(`SELECT MAX(${columnName}) AS ts FROM ${tableName}`)
-        .get();
-      if (row?.ts) {
-        timestamps.push(row.ts);
+      const rows = this.db.prepare(`SELECT ${columnName} AS ts FROM ${tableName}`).all();
+      for (const row of rows) {
+        if (row?.ts) {
+          timestamps.push(row.ts);
+        }
       }
     }
 
-    return timestamps.sort().at(-1) ?? null;
+    return latestTimestamp(timestamps);
   }
 
   getLatestOperationalTimestamp() {
@@ -336,15 +341,15 @@ export class OperatingStateStore {
     ];
 
     for (const [tableName, columnName] of tables) {
-      const row = this.db
-        .prepare(`SELECT MAX(${columnName}) AS ts FROM ${tableName}`)
-        .get();
-      if (row?.ts) {
-        timestamps.push(row.ts);
+      const rows = this.db.prepare(`SELECT ${columnName} AS ts FROM ${tableName}`).all();
+      for (const row of rows) {
+        if (row?.ts) {
+          timestamps.push(row.ts);
+        }
       }
     }
 
-    return timestamps.sort().at(-1) ?? null;
+    return latestTimestamp(timestamps);
   }
 
   setReleaseState(payload, { expectedVersion } = {}) {
@@ -777,6 +782,36 @@ function resolveDbPath(dbPath) {
 
 function defaultNow() {
   return new Date().toISOString();
+}
+
+function latestTimestamp(timestamps) {
+  return timestamps
+    .filter(Boolean)
+    .sort(compareTimestampValuesDesc)[0] ?? null;
+}
+
+function compareTimestampValuesDesc(left, right) {
+  const leftEpoch = parseTimestampForSort(left);
+  const rightEpoch = parseTimestampForSort(right);
+
+  if (leftEpoch != null && rightEpoch != null && leftEpoch !== rightEpoch) {
+    return rightEpoch - leftEpoch;
+  }
+
+  if (leftEpoch != null && rightEpoch == null) {
+    return -1;
+  }
+
+  if (leftEpoch == null && rightEpoch != null) {
+    return 1;
+  }
+
+  return String(right ?? "").localeCompare(String(left ?? ""));
+}
+
+function parseTimestampForSort(value) {
+  const epoch = Date.parse(value);
+  return Number.isFinite(epoch) ? epoch : null;
 }
 
 function requiredText(value, fieldName) {

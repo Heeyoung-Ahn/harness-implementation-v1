@@ -122,6 +122,34 @@ test("supports the mutable command surface with optimistic concurrency", () => {
   store.close();
 });
 
+test("orders recent handoffs by actual timestamp across timezone offsets", () => {
+  const store = createOperatingStateStore({ dbPath: ":memory:" });
+
+  store.appendHandoff({
+    handoffId: "handoff-local-offset",
+    handoffSummary: "Earlier handoff written with a local offset timestamp",
+    fromRole: "developer",
+    toRole: "developer",
+    createdAt: "2026-05-03T00:01:03.3222041+09:00"
+  });
+  store.appendHandoff({
+    handoffId: "handoff-utc-latest",
+    handoffSummary: "Later handoff written with a UTC timestamp",
+    fromRole: "tester",
+    toRole: "developer",
+    createdAt: "2026-05-02T15:29:54.731Z"
+  });
+
+  const recentHandoffs = store.listRecentHandoffs(2);
+
+  assert.equal(recentHandoffs[0].handoffId, "handoff-utc-latest");
+  assert.equal(recentHandoffs[1].handoffId, "handoff-local-offset");
+  assert.equal(store.getLatestOperationalTimestamp(), "2026-05-02T15:29:54.731Z");
+  assert.equal(store.getLatestMutationTimestamp(), "2026-05-02T15:29:54.731Z");
+
+  store.close();
+});
+
 test("creates a repo-local sqlite file and rejects invalid repo-relative paths", () => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "harness-store-"));
   const dbPath = path.join(tempDir, ".harness", "operating_state.sqlite");
