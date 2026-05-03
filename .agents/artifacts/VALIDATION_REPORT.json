@@ -1,14 +1,14 @@
 {
   "ok": true,
   "command": "validation-report",
-  "validatorVersion": "v1.2",
-  "executedAt": "2026-05-03T02:46:10.034Z",
+  "validatorVersion": "v1.3",
+  "executedAt": "2026-05-03T10:13:42.939Z",
   "profileSummary": {
     "path": ".agents/artifacts/ACTIVE_PROFILES.md",
     "status": "empty",
     "profiles": []
   },
   "findings": [],
-  "nextAction": "Planner should finish the PLN-08 draft and get user approval on the phase-2 PMW command promotion scope before any implementation packet opens.",
+  "nextAction": "Verify the implementation against the packet acceptance criteria.",
   "gateDecision": "pass"
 }

@@ -15,12 +15,9 @@ fs.mkdirSync(payloadRoot, { recursive: true });
 
 copyDirectory("standard-template", path.join(payloadRoot, "standard-template"));
 copyDirectory("installer", path.join(payloadRoot, "installer"));
-copyDirectory("pmw-app", path.join(payloadRoot, "pmw-app"));
 
 copyFile("reference/manuals/HARNESS_MANUAL.md", path.join(packageRoot, "HARNESS_MANUAL.md"));
-copyFile("reference/manuals/PMW_MANUAL.md", path.join(packageRoot, "PMW_MANUAL.md"));
 writeHarnessInstaller(path.join(packageRoot, "INSTALL_HARNESS.cmd"));
-writePmwInstaller(path.join(packageRoot, "INSTALL_PMW.cmd"));
 
 process.stdout.write(
   [
@@ -29,8 +26,6 @@ process.stdout.write(
     "- Top-level files:",
     "  - INSTALL_HARNESS.cmd",
     "  - HARNESS_MANUAL.md",
-    "  - INSTALL_PMW.cmd",
-    "  - PMW_MANUAL.md",
     "- Internal payload: .package/"
   ].join("\n") + "\n"
 );
@@ -68,28 +63,6 @@ function writeHarnessInstaller(target) {
       "  exit /b 1",
       ")",
       "node \".package\\installer\\install-harness.js\" %*",
-      "set \"EXIT_CODE=%ERRORLEVEL%\"",
-      "popd >nul",
-      "exit /b %EXIT_CODE%",
-      ""
-    ].join("\r\n"),
-    "utf8"
-  );
-}
-
-function writePmwInstaller(target) {
-  fs.writeFileSync(
-    target,
-    [
-      "@echo off",
-      "setlocal EnableExtensions",
-      "pushd \"%~dp0\" >nul",
-      "if not exist \".package\\pmw-app\\INSTALL_PMW.cmd\" (",
-      "  echo Package payload is missing. Keep .package next to this installer.",
-      "  popd >nul",
-      "  exit /b 1",
-      ")",
-      "call \".package\\pmw-app\\INSTALL_PMW.cmd\" %*",
       "set \"EXIT_CODE=%ERRORLEVEL%\"",
       "popd >nul",
       "exit /b %EXIT_CODE%",

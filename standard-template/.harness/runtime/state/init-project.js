@@ -1,9 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { writeActiveContext } from "./active-context.js";
 import { writeGeneratedStateDocs } from "./generate-state-docs.js";
 import { createOperatingStateStore } from "./operating-state-store.js";
-import { writePmwProjectExport } from "./project-manifest.js";
 
 export const STARTER_PACKAGE_NAME = "harness-implementation-v1";
 export const KNOWN_PROFILES = {
@@ -173,11 +173,11 @@ const PROGRESS_ROWS = [
   {
     phase: "Test",
     id: "DEV-04",
-    task: "PMW and operator read-surface check",
+    task: "Active context and operator re-entry check",
     status: "todo",
-    notes: "Verify the operator-facing read surface against the approved baseline.",
+    notes: "Verify CLI-first context and operator re-entry against the approved baseline.",
     source: "reference/artifacts/UI_DESIGN.md",
-    domain: "PMW 읽기 화면"
+    domain: "활성 컨텍스트"
   },
   {
     phase: "Release",
@@ -222,7 +222,7 @@ const PROGRESS_ROWS = [
     status: "todo",
     notes: "Confirm first-view comprehension before release.",
     source: "reference/artifacts/UI_DESIGN.md",
-    domain: "PMW 읽기 화면"
+    domain: "활성 컨텍스트"
   },
   {
     phase: "Review",
@@ -434,7 +434,7 @@ export function initializeProjectStarter({
     }
 
     writeGeneratedStateDocs({ store, outputDir: resolvedRoot });
-    writePmwProjectExport({ store, repoRoot: resolvedRoot, outputDir: resolvedRoot });
+    writeActiveContext({ store, repoRoot: resolvedRoot, outputDir: resolvedRoot });
   } finally {
     store.close();
   }
@@ -530,13 +530,14 @@ function buildProjectReadme({ projectName, projectSlug, initializedDate, activeP
     "- `npm run harness:doctor`",
     "- `npm run harness:status`",
     "- `npm run harness:next`",
-    "- `npm run harness:pmw-export`",
+    "- `npm run harness:context`",
     "",
     "## Truth Contract",
     "- `.agents/artifacts/*` is governance Markdown truth.",
     "- `.harness/operating_state.sqlite` is hot operational DB state.",
     "- `.agents/runtime/generated-state-docs/*` is derived output.",
-    "- PMW is read-only.",
+    "- `.agents/runtime/ACTIVE_CONTEXT.json` is compact AI-facing state.",
+    "- `.agents/runtime/ACTIVE_CONTEXT.md` is Korean human-facing state.",
     "- `reference/*` is optional reference material.",
     "",
     "## Product Code",
@@ -606,7 +607,7 @@ function buildTaskListDoc({ projectName, currentFocus, bootstrapSummary, initial
     "## Completed Tasks",
     "| Task ID | Title | Completed At | Verification | Notes |",
     "|---|---|---|---|---|",
-    "| BOOT-00 | Starter initialization | " + initializedDate + " | " + bootstrapSummary + " | PMW-ready state seeded |",
+    "| BOOT-00 | Starter initialization | " + initializedDate + " | " + bootstrapSummary + " | active-context state seeded |",
     "",
     "## Handoff Log",
     `- ${initializedDate}: ${bootstrapSummary}`
@@ -645,7 +646,7 @@ function buildProjectProgressDoc({ projectName }) {
     "# Project Progress",
     "",
     "## Summary",
-    `Track the whole project kickoff-to-release board for ${projectName} here. PMW reads this file directly for the overall progress table.`,
+    `Track the whole project kickoff-to-release board for ${projectName} here. Human-facing summaries stay readable here, while AI-facing state is generated into ACTIVE_CONTEXT artifacts.`,
     "",
     "## Progress Board",
     "| Phase | Task ID | Task | Status | Notes | Source |",
@@ -793,7 +794,7 @@ function defaultNextAction(workItemId, projectName) {
     case "DEV-03":
       return "Run validator and generated-doc checks after the first implementation packet changes live truth.";
     case "DEV-04":
-      return "Verify PMW and operator-facing read surfaces against the approved baseline.";
+      return "Verify active context and operator-facing re-entry surfaces against the approved baseline.";
     case "DEV-05":
       return "Close environment topology, rollback, and release-readiness checks.";
     default:

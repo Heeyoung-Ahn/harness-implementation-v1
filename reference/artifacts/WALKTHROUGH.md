@@ -2,6 +2,176 @@
 
 Use this artifact to record verification evidence and manual test results.
 
+## 2026-05-03 DEV-11 Tester Re-Verification For CURRENT_STATE And Validation Evidence
+
+- Scope: independent tester re-verification focused on the reviewer-reported `CURRENT_STATE.md` phase-wording drift fix and on whether root/starter regression plus validation evidence remain clean for `DEV-11`.
+- Environment: local maintainer workspace on Windows PowerShell.
+- Tested scope:
+  - Canonical `CURRENT_STATE.md` parity for current stage, current focus, approved-scope/open-decision wording, and active packet wording after the remediation handoff returned the lane to Tester.
+  - Root full regression suite.
+  - `standard-template` full regression suite.
+  - Root `harness:validate`.
+  - Root `harness:validation-report`.
+- Evidence:
+  - canonical `.agents/artifacts/CURRENT_STATE.md` reports `Current Stage: verification`, `Current Focus: V1.3 CLI-first PMW-free harness baseline is implemented and verified; DEV-11 implementation is ready for Tester verification.`, active handoff `developer -> tester`, approved-scope bullet `current handoff is developer -> tester`, and active packet bullet `PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md is Ready For Code approved and in Tester verification.`
+  - root `npm.cmd test`: 46/46 pass.
+  - `standard-template` `npm.cmd test`: 46/46 pass.
+  - root `npm.cmd run harness:validate`: `ok: true`, `cutoverReady: true`, findings `[]`.
+  - root `npm.cmd run harness:validation-report`: pass, gate decision `pass`, next action `Verify the implementation against the packet acceptance criteria.`.
+- Untested scope / environment note:
+  - I did not rerun the fresh copied-starter smoke or release-payload PMW-string sweep in this pass because the required escalated shell execution hit the current approval/usage limit in this session.
+  - The latest recorded evidence for those two areas remains the prior DEV-11 tester walkthrough entries from the same day, which were green after the final remediation.
+- Result: for the requested scope, tester re-verification passed. The reviewer-reported `CURRENT_STATE` wording drift is no longer reproduced, and the current root/starter/validation evidence remains clean.
+- Handoff:
+  - Reviewer should resume DEV-11 closeout review, with the note that copied-starter and payload sweeps were not re-executed in this specific pass because of the session approval limit.
+
+## 2026-05-03 DEV-11 Developer Remediation For Reviewer-Stage CURRENT_STATE Drift
+
+- Scope: remediate the DEV-11 reviewer finding where `CURRENT_STATE.md` still reported pre-review / pre-remediation phase wording after the reviewer-to-developer handoff, and prevent the same drift from reappearing in release-gate transitions.
+- Implemented change:
+  - added reviewer-to-developer transition defaults and custom owner-pair inference so reviewer remediation handoffs no longer inherit stale review text for `Current Focus`, open-decision bullets, or current-truth notes.
+  - added release-baseline focus preservation so release-gate transitions keep the `V1.3` baseline prefix in `release_state` / `CURRENT_STATE` focus text instead of dropping into validator drift.
+  - added root and `standard-template` regression coverage for named reviewer-to-developer transitions, explicit custom reviewer-to-developer handoffs, and release-baseline focus preservation during `developer-to-tester`.
+  - replayed the live DEV-11 handoff through the harness path after the first pre-fix tester handoff had updated state but failed validation due the dropped release-baseline focus prefix.
+- Validation evidence:
+  - root `node --test .harness/test/dev05-tooling.test.js`: 24/24 pass.
+  - `standard-template` `node --test .harness/test/dev05-tooling.test.js`: 24/24 pass.
+  - root `npm.cmd test`: 46/46 pass.
+  - `standard-template` `npm.cmd test`: 46/46 pass.
+  - root `npm.cmd run harness:validate`: `ok: true`, `cutoverReady: true`, findings `[]`.
+  - root `npm.cmd run harness:validation-report`: pass, gate decision `pass`, next action `Verify the implementation against the packet acceptance criteria.`.
+  - replayed live `tester -> developer` refresh handoff with packet `sourceRef`, then replayed clean `developer -> tester`; final transition result `ok: true` with validation report `ok: true`.
+  - final canonical `CURRENT_STATE.md` reports `Current Stage: verification`, `Current Focus: V1.3 CLI-first PMW-free harness baseline is implemented and verified; DEV-11 implementation is ready for Tester verification.`, and active handoff `developer -> tester`.
+- Note:
+  - the brief `tester -> developer` replay in the live handoff log exists only because the first pre-fix `developer -> tester` apply had already mutated state before post-apply validation failed. The replay was used to restore a clean developer-owned release-baseline state and then reissue a clean tester handoff through the approved harness path.
+- Result: developer remediation completed; reviewer-stage stale wording and release-baseline focus drift are fixed, validation is clean again, and DEV-11 is handed back to Tester.
+
+## 2026-05-03 DEV-11 Final Tester Re-Verification
+
+- Scope: independent tester re-verification for `DEV-11` after the packaged-payload manual remediation and V1.3 rebuild.
+- Environment: local maintainer workspace on Windows PowerShell; rebuilt `dist/standard-harness-v1.3` and `dist/windows-exe-v1.3`; clean copied starter smoke under `C:\tmp`.
+- Tested scope:
+  - Root and `standard-template` full regression suites after the final DEV-11 remediation.
+  - Root validator and validation-report outputs after the rebuilt V1.3 payloads.
+  - Clean copied starter `harness:init`, `harness:context`, `harness:next`, `harness:handoff`, and `harness:validate`.
+  - Clean copied starter absence of `.agents/runtime/pmw-read-model.json` and `.agents/runtime/project-manifest.json`.
+  - Rebuilt `dist/standard-harness-v1.3` and `dist/windows-exe-v1.3` search for lingering PMW-only references.
+- Evidence:
+  - root `npm.cmd test`: 44/44 pass.
+  - `standard-template` `npm.cmd test`: 44/44 pass.
+  - root `npm.cmd run harness:validate`: `ok: true`, `cutoverReady: true`, findings `[]`.
+  - root `npm.cmd run harness:validation-report`: pass, gate decision `pass`, findings `[]`.
+  - clean copied starter in `C:\tmp\standard-harness-smoke-c0105f33fe1f4d2c8951b5a84a174c1f`: `harness:init`, `harness:context`, `harness:next`, `harness:handoff`, and `harness:validate` all pass.
+  - the clean copied starter reports `PLN-00` as the current/next task, routes `handoff` to `Planner`, and does not generate `.agents/runtime/pmw-read-model.json` or `.agents/runtime/project-manifest.json`.
+  - rebuilt `dist/standard-harness-v1.3/HARNESS_MANUAL.md`, `dist/windows-exe-v1.3/HARNESS_MANUAL.md`, and packaged starter docs under `dist/standard-harness-v1.3/.package/standard-template/*` returned no matches for `pmw-export`, `project-manifest`, `pmw-read-model`, `PMW_MANUAL`, `INSTALL_PMW`, `START_PMW`, `StandardHarnessPMW`, `pmw-app`, or `PMW_OUTPUT_DIR`.
+- Untested scope:
+  - No full Windows EXE install execution was repeated in this tester pass.
+  - The root `pmw-app` empty directory still appears in the maintainer workspace because another process is holding a directory handle, but no files remain there and it did not appear in active payload/runtime checks.
+- Result: tester re-verification passed. No active DEV-11 tester finding remains in the rebuilt payload or copied-starter acceptance flow.
+- Handoff:
+  - Reviewer should inspect DEV-11 closeout readiness against the approved packet, final tester evidence, rebuilt release payload parity, residual empty-folder note for the maintainer workspace, and validation outputs.
+
+## 2026-05-03 DEV-11 Developer Remediation For Packaged Payload PMW References
+
+- Scope: remediate the DEV-11 tester finding where the active V1.3 packaged starter payload still shipped stale PMW-only documentation references.
+- Implemented change:
+  - updated `standard-template/HARNESS_MANUAL.md`, `standard-template/README.md`, and `standard-template/START_HERE.md` to the current CLI-first PMW-free operator guidance.
+  - restored the required V1.3 release-baseline marker in canonical `CURRENT_STATE.md` so release-baseline validation stays green while DEV-11 remediation is still open.
+  - rebuilt `dist/standard-harness-v1.3` and `dist/windows-exe-v1.3` from the updated source docs.
+- Validation evidence:
+  - source and rebuilt payload PMW-reference search across starter docs plus `dist/standard-harness-v1.3` / `dist/windows-exe-v1.3` manuals returned no matches for `pmw-export`, `project-manifest`, `pmw-read-model`, `PMW_MANUAL`, `INSTALL_PMW`, `START_PMW`, `StandardHarnessPMW`, `pmw-app`, or `PMW_OUTPUT_DIR`.
+  - root `npm.cmd test`: 44/44 pass.
+  - `standard-template` `npm.cmd test`: 44/44 pass.
+  - root `npm.cmd run harness:validate`: `ok: true`, `cutoverReady: true`, findings `[]`.
+  - root `npm.cmd run harness:validation-report`: pass, gate decision `pass`, findings `[]`.
+  - clean copied starter smoke in `C:\tmp\standard-harness-smoke-288c9ac8501a43e0b5985e6d0be7984c`: `harness:init`, `harness:context`, `harness:next`, `harness:handoff`, and `harness:validate` all pass and still route bootstrap work to `PLN-00` / `Planner`.
+- Note:
+  - the root `pmw-app` directory is now an empty folder only, but this session could not remove or move the folder because another process is holding a directory handle. It no longer contributes files to the active payload or runtime.
+- Result: developer remediation completed for the packaged payload PMW-reference issue and DEV-11 is ready for Tester re-verification.
+
+## 2026-05-03 DEV-11 Tester Re-Verification After Starter Routing Remediation
+
+- Scope: independent tester re-verification for `DEV-11` after Developer fixed the clean-starter `next` / `handoff` routing defect.
+- Environment: local maintainer workspace on Windows PowerShell; copied clean starter smoke under `C:\tmp`; active release payload inspection under `dist/standard-harness-v1.3` and `dist/windows-exe-v1.3`.
+- Tested scope:
+  - Root and `standard-template` full regression suites after the routing remediation.
+  - Root validator and validation-report outputs after the remediation handoff to Tester.
+  - Clean copied starter `harness:init`, `harness:context`, `harness:next`, `harness:handoff`, and `harness:validate`.
+  - Clean copied starter absence of `.agents/runtime/pmw-read-model.json` and `.agents/runtime/project-manifest.json`.
+  - Active V1.3 release payload file inventory and PMW-reference search in current manuals and packaged starter docs.
+- Evidence:
+  - root `npm.cmd test`: 44/44 pass.
+  - `standard-template` `npm.cmd test`: 44/44 pass.
+  - root `npm.cmd run harness:validate`: `ok: true`, `cutoverReady: true`, findings `[]`.
+  - root `npm.cmd run harness:validation-report`: pass, gate decision `pass`, findings `[]`.
+  - clean copied starter in `C:\tmp\standard-harness-smoke-3dc7692fa6ae408aa0e3df3f1bb59486`: `harness:init`, `harness:context`, `harness:next`, `harness:handoff`, and `harness:validate` all pass.
+  - the clean copied starter now reports `PLN-00` as the current/next task and routes `handoff` to `Planner`; the prior `REV-01` misrouting is no longer reproduced.
+  - the clean copied starter does not generate `.agents/runtime/pmw-read-model.json` or `.agents/runtime/project-manifest.json`.
+  - active V1.3 payload file inventory confirms there is no shipped `pmw-app/`, PMW runtime JS, PMW installer script, or `PMW_MANUAL.md` file in `dist/standard-harness-v1.3` / `dist/windows-exe-v1.3`.
+- Failed checks / remediation required:
+  - `dist/standard-harness-v1.3/.package/standard-template/HARNESS_MANUAL.md` still contains PMW-only references to `.agents/runtime/project-manifest.json`, `.agents/runtime/pmw-read-model.json`, `HARNESS.cmd pmw-export`, `npm run harness:pmw-export`, and `npm run harness:project-manifest`.
+  - `dist/standard-harness-v1.3/.package/standard-template/README.md` still references `PMW_MANUAL.md`.
+  - `dist/standard-harness-v1.3/.package/standard-template/START_HERE.md` still tells operators to use `PMW_MANUAL.md`.
+  - root manuals searched in this pass did not show the same PMW strings; the mismatch is specific to the active packaged starter payload, so the active release artifact is stale/incomplete relative to the approved DEV-11 PMW-free baseline.
+  - after applying the tester-to-developer handoff, root validator/report moved to `hold` with `release_baseline_marker_missing` on `.agents/artifacts/CURRENT_STATE.md`; the live state now clearly reflects Developer remediation ownership, but the release-baseline marker expectation must be restored before DEV-11 can close cleanly.
+- Untested scope:
+  - No full Windows EXE install execution was repeated in this pass.
+  - Reviewer closeout was not performed in this pass.
+- Result: tester re-verification is not passed. The clean-starter routing defect is fixed, but the active V1.3 packaged starter payload still carries stale PMW-only documentation references.
+- Handoff:
+  - Developer should remove the stale PMW references from the packaged starter docs source/build path, rebuild the active V1.3 release payload, restore the required V1.3 release-baseline marker in canonical state, rerun payload inspection plus clean copied starter smoke, and then hand DEV-11 back to Tester.
+
+## 2026-05-03 DEV-11 Developer Remediation For Starter Next/Handoff Routing
+
+- Scope: remediate the DEV-11 tester finding where clean copied starters routed `harness:next` and `harness:handoff` to `REV-01` instead of bootstrap work.
+- Implemented change:
+  - moved open-work-item prioritization into shared workflow-routing helpers and made `ACTIVE_CONTEXT`, `harness:next`, `harness:handoff`, and next-action selection use the same prioritized active-task logic.
+  - added root and `standard-template` regression coverage for copied-starter post-init routing so bootstrap work stays ahead of unrelated stale open history.
+  - applied `developer-to-tester` transition for `DEV-11` after validation completed so canonical state, generated docs, active context, handoff log, and validation report all point to Tester verification.
+- Validation evidence:
+  - root `node --test .harness/test/dev05-tooling.test.js`: 22/22 pass.
+  - `standard-template` `node --test .harness/test/dev05-tooling.test.js`: 22/22 pass.
+  - root `npm.cmd test`: 44/44 pass.
+  - `standard-template` `npm.cmd test`: 44/44 pass.
+  - root `npm.cmd run harness:validate`: `ok: true`, `cutoverReady: true`, findings `[]`.
+  - root `npm.cmd run harness:validation-report`: pass, gate decision `pass`, findings `[]`.
+  - root `npm.cmd run harness:context`, `harness:next`, and `harness:handoff` after `developer-to-tester`: pass and now point to `tester` / `DEV-11`.
+  - clean copied starter smoke in `C:\tmp\standard-harness-smoke-15e6f138546e4d04836990b9276c00a8`: `harness:init`, `harness:context`, `harness:next`, `harness:handoff`, and `harness:validate` all pass; `next` and `handoff` now select `PLN-00` and route to `Planner`, not `REV-01`.
+- Result: developer remediation completed; tester-reported routing defect is fixed and DEV-11 is handed back to Tester for independent verification.
+
+## 2026-05-03 DEV-11 Independent Tester Verification
+
+- Scope: independent tester verification for `DEV-11` CLI-first PMW decommission and Active Context replacement.
+- Environment: local maintainer workspace on Windows PowerShell; copied clean starter smoke under `%TEMP%`.
+- Tested scope:
+  - Root and `standard-template` full regression suites after the DEV-11 implementation.
+  - Root validator and validation-report closeout outputs after PMW removal.
+  - Root CLI smoke for `context`, `status`, `next`, `explain`, `doctor`, and `handoff`.
+  - Clean copied starter initialization and CLI smoke for `context`, `validate`, `next`, and `handoff` without any PMW setup.
+  - Release/manual payload spot-check for active PMW-only artifacts in current V1.3 docs and packaged payload paths.
+- Evidence:
+  - root `npm.cmd test`: 43/43 pass.
+  - `standard-template` `npm.cmd test`: 43/43 pass.
+  - root `npm.cmd run harness:validate`: `ok: true`, `cutoverReady: true`, findings `[]`.
+  - root `npm.cmd run harness:validation-report`: pass, gate decision `pass`, findings `[]`.
+  - root `npm.cmd run harness:context`, `harness:status`, `harness:next`, `harness:explain`, `harness:doctor`, and `harness:handoff`: all run successfully in the maintainer repo.
+  - clean copied starter `npm.cmd run harness:init -- --non-interactive --project-name "Tester Smoke Project" --profiles none`: pass.
+  - clean copied starter `npm.cmd run harness:context`: pass and reports bootstrap work on `PLN-00`.
+  - clean copied starter `npm.cmd run harness:validate`: pass.
+  - active V1.3 manual/payload search across `README.md`, `reference/manuals/HARNESS_MANUAL.md`, `dist/standard-harness-v1.3/**`, and `dist/windows-exe-v1.3/HARNESS_MANUAL.md` found no active `pmw-export`, `project-manifest`, `pmw-read-model`, `PMW_MANUAL`, `INSTALL_PMW`, `START_PMW`, `StandardHarnessPMW`, or `pmw-app` references.
+- Failed checks / remediation required:
+  - clean copied starter `npm.cmd run harness:next` reports next task `REV-01` instead of the starter bootstrap tasks `PLN-00` / `PLN-01`.
+  - clean copied starter `npm.cmd run harness:handoff` also reports next task `REV-01` while its `nextAction` still tells the operator to close `PLN-00` and `PLN-01`.
+  - the copied starter canonical docs remain consistent with bootstrap state: `.agents/artifacts/TASK_LIST.md` shows `PLN-00` active and `.agents/artifacts/CURRENT_STATE.md` points the next agent to `Planner`. The defect is therefore in `next` / `handoff` task selection, not in the bootstrap docs.
+  - likely cause from read-only runtime inspection: `ACTIVE_CONTEXT` logic prioritizes open work items by status, but `harness:next` / `harness:handoff` still choose the first non-closed work item from store order, which allows unrelated open items such as `REV-01` to win in a fresh starter.
+- Untested scope:
+  - No full Windows EXE install execution was repeated in this tester pass.
+  - Reviewer closeout was not performed in this tester pass.
+  - Historical `dist/windows-exe-v1.2/*` PMW artifacts were not treated as a DEV-11 failure because they are superseded historical outputs, not the active V1.3 release payload.
+- Result: tester verification is not passed. DEV-11 still has a clean-starter routing defect in `harness:next` and `harness:handoff`.
+- Handoff:
+  - Developer should align `harness:next` and `harness:handoff` active-task selection with the same prioritized bootstrap/active-task logic used by `harness:context` / `ACTIVE_CONTEXT`, rerun root and `standard-template` tests, rerun root command smoke, rerun clean copied starter smoke, and regenerate validation/context evidence before handing back to Tester.
+
 ## 2026-05-03 OPS-03 CURRENT_STATE Transition Remediation Tester Re-Verification
 
 - Scope: tester re-verification for the revised `OPS-03` closeout-remediation after Reviewer found stale `CURRENT_STATE.md` transition wording and reviewer-source Ready For Code display drift.

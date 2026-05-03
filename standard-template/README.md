@@ -12,7 +12,6 @@
 
 - `START_HERE.md`
 - `HARNESS_MANUAL.md`
-- `PMW_MANUAL.md`
 
 이 starter에는 maintainer-only 문서를 두지 않는다.
 
@@ -26,7 +25,6 @@
 - `README.md`
 - `START_HERE.md`
 - `HARNESS_MANUAL.md`
-- `PMW_MANUAL.md`
 - `INIT_STANDARD_HARNESS.cmd`
 - `package.json`
 
@@ -46,7 +44,7 @@
 4. 프로젝트 루트에서 `INIT_STANDARD_HARNESS.cmd` 또는 `npm run harness:init`를 실행한다.
 5. `START_HERE.md`를 따라 kickoff baseline을 만든다.
 
-초기화가 끝나면 starter placeholder가 프로젝트 전용 내용으로 바뀌고 `.harness/operating_state.sqlite`, generated docs, PMW export files가 새 프로젝트 기준으로 생성된다.
+초기화가 끝나면 starter placeholder가 프로젝트 전용 내용으로 바뀌고 `.harness/operating_state.sqlite`, generated docs, `ACTIVE_CONTEXT.*`가 새 프로젝트 기준으로 생성된다.
 
 제품 코드는 `src/`, `app/`, `backend/`, `frontend/`, `server/` 등 프로젝트가 원하는 경로를 자유롭게 선택할 수 있다. 하네스 구현은 `.harness/runtime/`과 `.harness/test/`에 격리되어 있다.
 

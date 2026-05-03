@@ -1,29 +1,29 @@
 # Requirements
 
 ## Summary
-이 프로젝트의 목표는 하네스가 스스로 유지·개선 가능한 운영 구조를 가지면서, 최종사용자가 PMW 첫 화면과 핵심 아티팩트만으로 현재 판단 지점을 빠르게 이해할 수 있게 하는 것이다. `.agents/artifacts/REQUIREMENTS.md`는 전체 문서 중 가장 사용자 친화적인 기준 문서로 유지한다.
+이 프로젝트의 목표는 하네스가 스스로 유지·개선 가능한 운영 구조를 가지면서, 최종사용자가 CLI와 Korean Active Context 문서만으로 현재 판단 지점과 다음 행동을 빠르게 이해할 수 있게 하는 것이다. `.agents/artifacts/REQUIREMENTS.md`는 전체 문서 중 가장 사용자 친화적인 기준 문서로 유지한다.
 
 2026-04-22 기준 first-ship standardized harness baseline은 release-ready로 닫혀 있다. 현재 follow-up 방향은 특정 프로젝트 사례를 core에 박아 넣지 않고, 복잡한 프로젝트에서 반복되는 실패 패턴을 `core / optional profile / project packet` 3층 구조로 일반화하는 것이다.
 
-2026-04-26 현재 `PLN-06`은 닫혔고, 2026-04-27 기준 V1.2 baseline is implemented: `standard-template/`은 installable project generator payload이고 PMW는 별도 installable multi-project app으로 분리되어 있다. 추가 hardening으로 lightweight web/app, Android native app, Node/frontend web app이 표준 profile로 포함된다.
+2026-04-26 현재 `PLN-06`은 닫혔고, 2026-04-27 기준 V1.2 baseline was implemented. That PMW-bearing release is now historical baseline context only after the 2026-05-03 `DEV-11` direction.
 
-2026-04-27 기준 `PLN-07` V1.3 planning direction is approved: PMW는 독립 설치형 복수 프로젝트 operator console로 유지되며, 상태/아티팩트 조회 surface는 기본적으로 read-only지만 선택된 프로젝트에 대해 승인된 하네스 명령 catalog를 launch하고 결과를 보여줄 수 있다. 동시에 workflow Markdown은 explicit agent-role contract로 강화된다.
+2026-05-03 기준 active V1.3 direction is `DEV-11`: V1.3 CLI-first PMW-free harness baseline is implemented and verified. PMW is removed from the active root/starter/release baseline, `harness:context` and `.agents/runtime/ACTIVE_CONTEXT.*` replace PMW export/read-model obligations, and remaining SSOT is split into AI-facing compact state and human-facing Korean operating guidance. Workflow Markdown remains an explicit agent-role contract.
 
 ## Project Goal
 
 ### 추진목적
 1. hot-state 변경은 하나의 write surface만 수정하게 만든다.
-2. PMW에서 파일 탐색 없이 필요한 artifact를 읽게 만든다.
+2. CLI와 Active Context에서 파일 탐색 없이 필요한 현재 상태와 출처를 읽게 만든다.
 3. user-facing 정보와 technical context를 같은 canonical 문서 안에서 계층적으로 분리한다.
 4. 하네스가 운영 중 비효율을 기록하고, 누적되면 스스로 개선 과제로 승격할 수 있게 만든다.
-5. PMW의 상태/아티팩트 조회 surface는 read-only 기본값을 유지하면서도, 승인된 로컬 하네스 명령 launch boundary와 canonical write authority boundary를 명확히 분리한다.
+5. Active Context는 파생 요약으로만 두고, 승인된 로컬 하네스 명령 boundary와 canonical write authority boundary를 명확히 분리한다.
 6. 복잡한 프로젝트에서 반복되는 실패 패턴을 표준 계약과 게이트로 흡수한다.
 7. 특정 도메인, 특정 기술스택, 특정 운영환경 편향 없이 재사용 가능한 표준 하네스를 유지한다.
 8. Excel/VBA-MariaDB 기반 legacy 업무시스템 대체 프로젝트에서 source intake, schema compatibility, migration/reconciliation, approval/audit gate를 누락하지 않게 만든다.
 9. 하네스 runtime이 제품 코드 경로와 충돌하지 않게 하여 실제 프로젝트가 `src/`, `app/`, `backend/`, `frontend/`, `server/` 등 원하는 구조를 선택할 수 있게 한다.
 10. OMX 같은 외부 실행 오케스트레이터 없이도 환경 점검, 현재 상태 설명, 다음 행동 추천, validation report 저장을 자체 제공한다.
-11. 표준 하네스 설치기는 프로젝트명/폴더/profile을 받아 새 repo를 만들고 PMW registry까지 연결한다.
-12. PMW는 표준 하네스와 분리된 installable multi-project operator console로 운영하되, canonical write authority는 갖지 않는다.
+11. 표준 하네스 설치기는 프로젝트명/폴더/profile을 받아 PMW 없이 새 repo를 만들고 Active Context를 초기화한다.
+12. PMW는 active baseline, starter, release package, validation closeout에서 제거된다.
 
 ### 기대효과
 1. 상태 변경 시 수정 비용과 정합도 유지 비용을 줄인다.
@@ -35,7 +35,7 @@
 7. starter를 복사한 프로젝트가 하네스 소스와 제품 소스를 혼동하지 않고 바로 실무 kickoff를 시작할 수 있다.
 
 ### 최종사용자
-- PMW 첫 화면에서 현재 판단 지점과 운영 상태를 빠르게 읽어야 하는 사용자
+- CLI와 Korean Active Context에서 현재 판단 지점과 운영 상태를 빠르게 읽어야 하는 사용자
 - 하네스를 유지·개선하는 AI 에이전트
 - 승인, 리뷰, 운영 맥락을 관리하는 사람 운영자
 - Excel/VBA-MariaDB 기반 기존 업무시스템을 웹앱으로 대체하려는 프로젝트 PM, 기획자, 개발자, 현업 승인자
@@ -53,47 +53,45 @@
 - `PLN-06` sync boundary: reusable root changes must be classified as sync, root-only, generated, or starter-owned before closeout.
 - `PLN-06` added contracts: workflow state vocabulary, command output contract, profile activation contract, and packet readiness contract.
 
-## V1.2 Release Baseline
-- V1.2 baseline is implemented and is no longer only an upgrade direction.
+## Historical V1.2 Release Baseline
+- V1.2 baseline is historical after `DEV-11` supersedes the PMW-bearing installable shape.
 - `standard-template/` is the installable project-generator payload for new downstream repos.
-- `installer/` builds the Windows setup flow that copies `standard-template/`, runs initialization, and registers the project with PMW.
-- `pmw-app/` is a separate installable multi-project PMW app and is not embedded into downstream project runtime code.
+- `installer/` builds the Windows setup flow that copies `standard-template/` and runs initialization.
 - `packaging/` produces the installable release payloads and their directory labels must come from the shared release baseline constant.
 - `reference/manuals/HARNESS_MANUAL.md` is the maintainer-approved integrated operator manual for the installable baseline.
 - `PRF-07`, `PRF-08`, and `PRF-09` are part of the approved reusable profile catalog alongside `PRF-04`, `PRF-05`, and `PRF-06`.
-- If a maintainer lane changes the installable payload, separate PMW behavior, packaging layout, or release manuals, the same lane must update root `.agents/artifacts/*`, `.harness/operating_state.sqlite`, generated state docs, validation report, and starter runtime guardrails before it can close.
+- If a maintainer lane changes the installable payload, Active Context behavior, packaging layout, or release manuals, the same lane must update root `.agents/artifacts/*`, `.harness/operating_state.sqlite`, generated state docs, validation report, and starter runtime guardrails before it can close.
 - Release baseline labels must not be hardcoded independently across SSOT, DB state, manuals, packaging, and validator messages.
 
 ## V1.3 Approved Direction
-- `PLN-07` is the active planning lane for the approved V1.3 direction.
-- V1.3 must remain compatible with the existing truth contract, reusable root/starter sync model, separate PMW deployment architecture, and current approved profile catalog.
-- PMW is an independently installable multi-project operator console.
-- PMW project-status and artifact surfaces are read-only by default, and PMW is never the canonical write authority.
-- PMW may launch an approved local harness command catalog for the selected project and display the resulting status, logs, and derived artifacts.
+- `DEV-11` is the active implementation packet for the approved V1.3 direction.
+- V1.3 must remain compatible with the existing truth contract, reusable root/starter sync model, PMW-free release packaging, and current approved profile catalog.
+- PMW is removed from the active root, starter, release package, package scripts, validation closeout, and operator workflow.
+- Active Context is generated derived state and is never the canonical write authority.
+- `harness:context` writes `.agents/runtime/ACTIVE_CONTEXT.json` for AI re-entry and `.agents/runtime/ACTIVE_CONTEXT.md` for Korean human re-entry.
 - Workflow Markdown files must be strengthened into explicit agent-role execution contracts without replacing the current lane/workflow structure.
 - Explicit role naming is approved for workflow contracts: `Project Manager`, `Planner`, `Designer`, `Developer`, `Tester`, `Reviewer`, `Deployer`, `Documenter`.
 - `Tester` workflow contract must verify scope and collect evidence without directly fixing discovered defects; remediation must hand off to `Developer`.
 - `Planner` workflow contract must define scope, constraints, acceptance, and approval boundaries without starting implementation before approval.
-- Handoff records must remain the canonical baton between lanes, sessions, and agents, and PMW must surface latest handoff, next owner, next task, handoff route, and required SSOT.
-- V1.3 phase-1 PMW launcher scope is approved as:
+- Handoff records must remain the canonical baton between lanes, sessions, and agents, and Active Context must surface latest handoff, next owner, next task, handoff route, and required SSOT.
+- V1.3 CLI command surface is:
   - `status`
   - `next`
   - `explain`
   - `validate`
   - `handoff`
-  - `pmw-export`
-- V1.3 phase-1 terminal-only guided commands are:
+  - `context`
+- V1.3 terminal-only guided commands are:
   - `doctor`
   - `test`
   - `validation-report`
-- Phase-1 PMW command execution policy is:
+- CLI command execution policy is:
   - execution is always scoped to the selected project
   - one command at a time per project
-  - PMW command result logs are session-scoped
 - `handoff` in V1.3 is not guidance-only; it is approved to launch the next workflow selected by the approved routing rules.
-- `OPS-03` is the active follow-up direction for harness operation reliability: reduce repeated state-sync friction, prevent approval-state/SSOT drift after interruptions, sufficiently integrate the attached Karpathy-style agent behavior guidance, make human-and-Planner-approved project design SSOT the guiding instruction layer for all agents, and improve PMW access to whole-project design artifacts without weakening packet-before-code, human approval, PMW read-only authority, generated-doc immutability, Tester/Reviewer separation, or root/starter synchronization.
+- `OPS-03` reliability guidance remains active: reduce repeated state-sync friction, prevent approval-state/SSOT drift after interruptions, sufficiently integrate the attached Karpathy-style agent behavior guidance, and make human-and-Planner-approved project design SSOT the guiding instruction layer for all agents without weakening packet-before-code, human approval, generated-doc immutability, Tester/Reviewer separation, or root/starter synchronization.
 - Human-and-Planner-approved project design SSOT guides every downstream agent: Developer implements according to it, Tester verifies implementation against it, and Reviewer checks source parity/evidence/residual debt against it.
-- PMW Artifact Library must keep whole-project design and overview artifacts always discoverable in one stable category, including `REQUIREMENTS.md`, `ARCHITECTURE_GUIDE.md`, `IMPLEMENTATION_PLAN.md`, and approved equivalents. The artifact body reading area must be wide enough for long design documents to be read comfortably.
+- Human-facing SSOT must keep whole-project design and overview artifacts easy to find, including `REQUIREMENTS.md`, `ARCHITECTURE_GUIDE.md`, `IMPLEMENTATION_PLAN.md`, active packets, and approved equivalents.
 
 ## Layer Model
 - `Core`: 모든 복잡한 프로젝트에 공통으로 필요한 표준 계약, 게이트, validator enforcement
@@ -194,8 +192,8 @@
 - repo-local DB truth for hot-state and AI가 빠르게 이해해야 하는 운영 메타데이터
 - 사람이 읽고 승인할 수 있는 Markdown canonical docs
 - generated state docs
-- PMW operator-console summary/detail/artifact viewer/settings
-- PMW approved local harness command launcher and result-viewer surface
+- Active Context JSON/Markdown summary surfaces
+- approved local harness CLI command surface and result output
 - workflow Markdown as explicit agent-role contract surface
 - designated user-facing summary contract
 - context restoration flow with explicit load order and source trace
@@ -229,15 +227,15 @@
 - `PLN-06` workflow/approval application profile and evidence requirements
 - `PLN-06` task-list structured table contract and validator/reporting support
 - `PLN-06` validation report persistence as operational evidence
-- `PLN-06` workflow state vocabulary shared by live artifacts, DB, generated docs, PMW, and validator output
+- `PLN-06` workflow state vocabulary shared by live artifacts, DB, generated docs, Active Context, and validator output
 - `PLN-06` command output contract with exit code, human summary, findings, and next action
 - `PLN-06` active profile declaration contract
 - `PLN-06` packet readiness contract before `Ready For Code`
 
 ## Out of Scope
 - 기존 코드 재사용
-- PMW becoming canonical write authority
-- arbitrary shell execution from PMW
+- Active Context becoming canonical write authority
+- arbitrary shell execution through generated context artifacts
 - starter/downstream rollout
 - separate user-only duplicate docs
 - 외부 SaaS / remote sync
@@ -302,7 +300,7 @@
 - 사람 승인 지점이 필요한 단계에서 human in the loop가 빠지지 않는다.
 - DB, generated docs, canonical summary 사이 drift는 validator가 감지하고 stale 상태를 표시하며, cutover 전에는 재생성 또는 rollback 경로가 명시된다.
 - generated docs deterministic / parity pass
-- 지정된 reviewer가 PMW first view만 보고 30초 안에 `무엇을 결정해야 하는지`, `무엇이 막고 있는지`, `다음에 무엇을 해야 하는지` 세 질문에 답할 수 있다.
+- 지정된 reviewer가 `ACTIVE_CONTEXT.md`와 CLI 상태 출력만 보고 30초 안에 `무엇을 결정해야 하는지`, `무엇이 막고 있는지`, `다음에 무엇을 해야 하는지` 세 질문에 답할 수 있다.
 - summary/detail/source trace/count parity pass
 - raw technical prose direct projection 금지
 - design mockup과 implemented UI가 같은 source-to-surface mapping과 concrete behavior contract를 공유한다.
@@ -320,9 +318,9 @@
 - Human-and-Planner-approved project design SSOT is explicitly treated as the guiding instruction layer for all agent behavior.
 - Developer, Tester, and Reviewer workflow contracts state their relationship to the approved project design SSOT: implement to it, verify against it, and review source parity/evidence against it.
 - Karpathy-style guidance from the attached package is sufficiently reflected in reusable workflow/skill/manual guidance and coverage, including assumption disclosure, confusion management, tradeoff surfacing, warranted pushback, simplicity-first implementation, surgical edits, and goal-driven verification.
-- PMW remains independently installable and supports multiple registered projects while exposing a selected-project command catalog boundary.
-- PMW Artifact Library exposes a stable project-design/overview category with `REQUIREMENTS.md`, `ARCHITECTURE_GUIDE.md`, `IMPLEMENTATION_PLAN.md`, and approved equivalent project-wide design artifacts, and the document body has enough width for practical long-form reading.
-- V1.3 phase-1 PMW launcher scope and terminal-only guided command split are documented and enforced by the exported operator-command contract.
+- PMW remains historical-only unless a new user-approved packet explicitly revives it.
+- Human-facing SSOT exposes stable project-design/overview references with `REQUIREMENTS.md`, `ARCHITECTURE_GUIDE.md`, `IMPLEMENTATION_PLAN.md`, and approved equivalent project-wide design artifacts.
+- V1.3 CLI command surface and terminal-only guided command split are documented and enforced by the exported operator-command contract.
 - improvement candidate는 human review를 거쳐야만 core/profile/project follow-up item 또는 baseline update로 승격된다.
 - 재사용 가능한 표준 하네스 변경은 `standard-template/`의 대응 starter, code, test, reference 자산이 함께 갱신될 때만 완료로 본다.
 - `PLN-06` requirements are explicitly approved before implementation starts.
@@ -343,7 +341,7 @@
   `release_state`, `work_item_registry`, `decision_registry`, `gate_risk_registry`, `handoff_log`, `artifact_index`, `generation_state` 7개 테이블 최소 집합으로 시작한다.
 - First-ship validator scope: `approve`
   required section presence, source_ref resolve, generated docs parity, checksum/freshness drift, count/detail parity, UTF-8/mojibake, cutover preflight를 first ship 범위로 고정한다.
-- PMW artifact viewer mandatory scope: `approve`
+- Active Context mandatory scope: `approve`
   canonical docs, generated docs, latest handoff를 mandatory scope로 두고 archive/starter/reset viewer는 rollout lane으로 둔다.
 - Inefficiency capture projection: `approve`
   raw capture는 DB truth에 기록하고, human review를 통과한 promoted item만 Markdown summary로 올린다.

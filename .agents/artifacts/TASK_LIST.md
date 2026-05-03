@@ -1,27 +1,28 @@
 # Task List
 
 ## Current Release Target
-- Preserve the V1.2 installable harness baseline while `PLN-08` defines the V1.3 phase-2 PMW command-surface lane after the closed `OPS-03` reliability rebaseline, without weakening governance gates.
+- Rebaseline the standard harness toward a CLI-first core by drafting `PLN-09`, superseding the active PMW extension lane, preserving governance gates, fully removing PMW from the active reusable baseline, and splitting the remaining SSOT into AI-facing and human-facing surfaces.
 
 ## Active Locks
 | Task ID | Scope | Owner | Status | Started At | Notes |
 |---|---|---|---|---|---|
-| PLN-08 | V1.3 PMW phase-2 command surface planning | planner | active | 2026-05-03 | planner-owned planning draft; gate contract; close the phase-2 PMW command promotion scope before any implementation packet opens. |
+| DEV-11 | CLI-first PMW decommission and active context implementation | tester | active | 2026-05-03 | developer-to-tester; gate release; Verify the implementation against the packet acceptance criteria. |
 
 ## Active Tasks
 | Task ID | Title | Scope | Owner | Status | Priority | Depends On | Verification |
 |---|---|---|---|---|---|---|---|
-| PLN-08 | V1.3 PMW phase-2 command surface planning | Decide whether `doctor`, `test`, and `validation-report` remain terminal-only or are promoted into a later PMW command-surface packet, while preserving PMW read-only authority, confirmation boundaries, and root/starter sync. | planner | planning | P0 | OPS-03 | gate contract; user approval required before any implementation packet opens. |
-- Preserve the V1.2 installable project-generator payload in `standard-template/`, `installer/`, `pmw-app/`, `packaging/`, and `reference/manuals/` while V1.3 planning stays in the canonical-doc / runtime-contract layer.
+| DEV-11 | CLI-first PMW decommission and active context implementation packet | Concrete implementation packet for complete PMW removal, active-context replacement, AI/human SSOT split, root/starter sync, validator changes, manuals, packaging, and clean starter acceptance. | tester | review | P0 | PLN-09 | gate release; Verify the implementation against the packet acceptance criteria. |
+- Preserve historical PMW evidence only; active implementation changes `standard-template/`, `installer/`, `packaging/`, and `reference/manuals/` to the PMW-free V1.3 baseline.
 - Keep root `.agents/artifacts/*`, `.harness/operating_state.sqlite`, `.agents/runtime/generated-state-docs/*`, and `.agents/artifacts/VALIDATION_REPORT.*` aligned with the same active planning baseline.
 - Keep `PRF-04` through `PRF-09` as the current approved reusable profile catalog.
-- Treat `reference/packets/PKT-01_DEV-07_PMW_V1_3_OPERATOR_CONSOLE_FIRST_VIEW.md` as the closed evidence packet for the PMW V1.3 first-view implementation while `PLN-08` defines the next V1.3 planning step.
+- Treat `reference/packets/PKT-01_DEV-07_PMW_V1_3_OPERATOR_CONSOLE_FIRST_VIEW.md` as the closed evidence packet for the PMW V1.3 first-view implementation; it remains history while `PLN-09` plans PMW removal from the active baseline.
 - Treat `reference/packets/PKT-01_DEV-09_PMW_PHASE_1_COMMAND_LAUNCHER_AND_HANDOFF_EXECUTION.md` as the closed evidence packet for the PMW phase-1 command launcher and handoff execution scope.
 - Treat `reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md` as the closed evidence packet for the expanded harness operation reliability lane.
-- Treat `reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md` as the active planning source for the next V1.3 PMW command-surface lane.
-- Next first action: Planner should finish the PLN-08 draft and get user approval on the phase-2 PMW command promotion scope before any implementation packet opens.
-- V1.3 phase-1 PMW launcher scope is `status`, `next`, `explain`, `validate`, `handoff`, and `pmw-export`.
-- `doctor`, `test`, and `validation-report` remain terminal-only guidance in phase-1 until a later V1.3 packet explicitly promotes them.
+- Treat `reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md` and `reference/packets/PKT-01_DEV-10_PMW_PHASE_2_DOCTOR_PROMOTION_AND_USABILITY_REMEDIATION.md` as superseded by `PLN-09` / `DEV-11`; do not implement DEV-10 unless the user explicitly opens a new PMW revival lane.
+- Treat `reference/planning/PLN-09_CLI_FIRST_REBASELINE_AND_PMW_DECOMMISSION_DRAFT.md` as the active planning draft for the next user decision.
+- Treat `reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md` as the approved active implementation packet.
+- Next first action: Verify the implementation against the packet acceptance criteria.
+- Proposed CLI-first command surface is `status`, `next`, `explain`, `doctor`, `handoff`, `transition`, `validate`, `validation-report`, and new `context`.
 - Treat any future release-baseline mismatch between code, manuals, packaging, DB hot-state, or canonical artifacts as a blocking validator failure.
 
 ## Blocked Tasks
@@ -40,8 +41,25 @@
 | DEV-08 | Workflow contracts and handoff routing packet | 2026-05-02 | root/starter targeted read-model tests, root/starter full tests, validator, handoff, PMW export, validation report, Reviewer closeout | Closed after workflow contract routing, PM workflow addition, PMW Action Board `nextTask` source-owner routing remediation, Tester re-verification, and Reviewer closeout approval. |
 | DEV-09 | PMW phase-1 command launcher and handoff execution packet | 2026-05-02 | PMW app tests, root/starter tests, status/next/explain/validate/handoff/pmw-export/validation-report evidence, Reviewer closeout | Closed after implementing and verifying the approved PMW Actions / Terminal Actions split, confirmation boundaries, selected-project execution, session result surface, and handoff baton context. |
 | OPS-03 | Harness operation reliability and friction reduction packet | 2026-05-03 | transition planner -> planner; gate contract | Planner recorded OPS-03 closeout after reviewer-approved exit and remediation re-verification. Planner should choose the next approved lane; do not reopen implementation without a new human-approved packet. |
+| PLN-09 | CLI-first harness rebaseline and PMW decommission planning | 2026-05-03 | DEV-11 packet approved for implementation | Planning closed after user approved DEV-11 scope and requested implementation, tests, and review. |
 
 ## Handoff Log
+- 2026-05-03: [tester -> developer] Developer briefly reopens DEV-11 to finalize the corrected tester handoff wording. | Finalize the corrected developer-to-tester handoff.
+- 2026-05-03: [tester -> developer] Developer resumes after tester-state refresh to reissue the clean tester handoff. | Reissue the clean tester handoff after the CURRENT_STATE remediation.
+- 2026-05-03: [tester -> tester] Tester state refreshed after DEV-11 CURRENT_STATE remediation. | Verify the implementation against the packet acceptance criteria.
+- 2026-05-03: [tester -> developer] Validation hold after the prior tester handoff; Developer resumes to refresh the release-baseline state. | Refresh the release-baseline state and hand off back to Tester.
+- 2026-05-03: [reviewer -> developer] DEV-11 transition reviewer -> developer | Review implementation, evidence, residual debt, and closeout readiness.
+- 2026-05-03: [tester -> reviewer] Tester verification completed; Reviewer should assess packet exit readiness. | Review implementation, evidence, residual debt, and closeout readiness.
+- 2026-05-03: [tester -> developer] Tester re-verification found stale PMW-only references in the active V1.3 packaged starter payload. | Remove stale PMW references from the packaged starter docs source/build path, rebuild the active V1.3 payload, rerun payload inspection and clean copied starter smoke, then hand back to Tester.
+- 2026-05-03: [developer -> tester] Developer implementation completed; Tester should verify the approved scope. | Verify the implementation against the packet acceptance criteria.
+- 2026-05-03: [planner -> developer] Planning approved; implementation can proceed. | Implement the approved packet scope and hand off to Tester.
+- 2026-05-03: [user -> planner] PLN-09 draft requested. | Planner should draft a detailed CLI-first rebaseline and PMW decommission plan, incorporate the attached evaluation where relevant, and ensure PMW-linked cleanup surfaces are not missed.
+- 2026-05-03: [planner -> developer] PLN-08 transition planner -> developer | Implement PKT-01_DEV-10 within the approved packet boundary, preserve the doctor-only promotion scope, and rerun root/starter/PMW tests, validator, PMW export, and validation report.
+- 2026-05-03: [planner -> developer] PKT-01_DEV-10 Ready For Code approved by user. | Developer should implement the approved doctor-promotion and PMW usability-remediation scope, then rerun root/starter/PMW tests, validator, PMW export, and validation report.
+- 2026-05-03: [planner -> planner] PLN-08 transition planner -> planner | Review PKT-01_DEV-10 and decide whether to approve, adjust, or hold Ready For Code.
+- 2026-05-03: [planner -> planner] Drafted `PKT-01_DEV-10` from the approved PLN-08 scope. | Review the packet and decide whether to approve, adjust, or hold `Ready For Code` before implementation opens.
+- 2026-05-03: [planner -> planner] PLN-08 transition planner -> planner | Draft the concrete follow-up packet for doctor promotion and the accepted PMW usability changes before any implementation packet opens.
+- 2026-05-03: [user -> planner] Final PMW UX confirmation completed. | Record the approved `doctor`-only phase-2 scope, preserve `test` / `validation-report` as terminal-only, and draft the next packet without opening implementation yet.
 - 2026-05-03: [planner -> planner] Opened PLN-08 planning lane to define the V1.3 phase-2 PMW command-surface scope after OPS-03 closeout. | Planner should finish the PLN-08 draft and get user approval on the phase-2 PMW command promotion scope before any implementation packet opens.
 - 2026-05-03: [planner -> planner] Planner recorded OPS-03 closeout after reviewer-approved exit and remediation re-verification. | Planner should choose the next approved lane; do not reopen implementation without a new human-approved packet.
 - 2026-05-03: [reviewer -> planner] OPS-03 packet exit approved after revised-scope remediation and re-verification; Planner should record closeout and choose the next lane. | Planner should record OPS-03 closeout, reconcile completed-task state, and choose the next approved lane.

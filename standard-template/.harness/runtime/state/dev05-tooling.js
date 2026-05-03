@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { writeActiveContext } from "./active-context.js";
 import { validateGeneratedStateDocs } from "./drift-validator.js";
 import { CURRENT_STATE_DOC, TASK_LIST_DOC, writeGeneratedStateDocs } from "./generate-state-docs.js";
 import {
@@ -22,8 +23,7 @@ import {
 import { looksLikeStarterPlaceholder } from "./init-project.js";
 import { createOperatingStateStore, DEFAULT_DB_PATH } from "./operating-state-store.js";
 import { RELEASE_BASELINE, isInstallableReleaseMaintainerRepo } from "./release-baseline.js";
-import { writePmwProjectExport } from "./project-manifest.js";
-import { resolveHandoffExecution } from "./workflow-routing.js";
+import { isClosedStatus, resolveHandoffExecution, selectActiveWorkItem } from "./workflow-routing.js";
 
 export const STANDARD_PATH_MIGRATIONS = {
   "REQUIREMENTS.md": ARTIFACT_PATHS.requirements,
@@ -37,7 +37,7 @@ export const STANDARD_PATH_MIGRATIONS = {
   "PKT-01_DEV-01_DB_FOUNDATION.md": "reference/packets/PKT-01_DEV-01_DB_FOUNDATION.md",
   "PKT-01_DEV-02_GENERATED_STATE_DOCS.md": "reference/packets/PKT-01_DEV-02_GENERATED_STATE_DOCS.md",
   "PKT-01_DEV-03_CONTEXT_RESTORATION_READ_MODEL.md": "reference/packets/PKT-01_DEV-03_CONTEXT_RESTORATION_READ_MODEL.md",
-  "PKT-01_DEV-04_PMW_READ_SURFACE.md": ARTIFACT_PATHS.packet,
+  "PKT-01_DEV-04_PMW_READ_SURFACE.md": "reference/packets/PKT-01_DEV-04_PMW_READ_SURFACE.md",
   "PKT-01_WORK_ITEM_PACKET_TEMPLATE.md": "reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md",
   "PLN-00_DEEP_INTERVIEW.md": "reference/planning/PLN-00_DEEP_INTERVIEW.md",
   "PLN-01_REQUIREMENTS_FREEZE.md": "reference/planning/PLN-01_REQUIREMENTS_FREEZE.md",
@@ -317,16 +317,24 @@ function parseTransitionArgs(args) {
 }
 
 function buildTransitionPlan({ store, repoRoot, options }) {
-  const transitionDefaults = transitionDefaultsFor(options.transition);
-  const transition = options.transition ?? transitionDefaults.transition;
+  const baseTransitionDefaults = transitionDefaultsFor(options.transition);
+  const transition = options.transition ?? baseTransitionDefaults.transition;
   const workItemId = options.workItem ?? options.workItemId;
   const errors = [];
   const workItem = workItemId ? store.getWorkItem(workItemId) : null;
   const releaseState = store.getReleaseState("current");
+  const initialFromOwner = normalizeOwner(options.from ?? baseTransitionDefaults.from ?? workItem?.owner);
+  const initialToOwner = normalizeOwner(options.to ?? baseTransitionDefaults.to);
+  const transitionDefaults = resolveTransitionDefaults({
+    transition,
+    fromOwner: initialFromOwner,
+    toOwner: initialToOwner
+  });
   const fromOwner = normalizeOwner(options.from ?? transitionDefaults.from ?? workItem?.owner);
   const toOwner = normalizeOwner(options.to ?? transitionDefaults.to);
   const status = options.status ?? transitionDefaults.status ?? workItem?.status ?? "in_progress";
   const sourceRef = options.sourceRef ?? workItem?.sourceRef ?? releaseState?.sourceRef ?? ".agents/artifacts/TASK_LIST.md";
+  const packetSourceRef = workItem?.sourceRef ?? sourceRef;
   const gateProfile = resolveTransitionGateProfile({ options, workItem, repoRoot });
   const packetReadyForCode = readPacketReadyForCode(repoRoot, sourceRef) || workItem?.metadata?.readyForCode || null;
   const closeDecisions = parseListOption(options.closeDecision ?? options.closeDecisions);
@@ -340,6 +348,20 @@ function buildTransitionPlan({ store, repoRoot, options }) {
     transitionDefaults.nextAction ??
     workItem?.nextAction ??
     `Continue ${workItemId ?? "the current work item"} as ${toOwner ?? "the next owner"}.`;
+  const currentStage =
+    options.currentStage ??
+    transitionDefaults.currentStage ??
+    releaseState?.currentStage ??
+    null;
+  const currentFocus =
+    preserveReleaseBaselineFocus({
+      focus:
+        options.currentFocus ??
+        renderTransitionTextTemplate(transitionDefaults.currentFocusTemplate, workItemId) ??
+        releaseState?.currentFocus ??
+        null,
+      releaseState
+    });
 
   if (!workItemId) {
     errors.push("Missing --work-item.");
@@ -393,9 +415,10 @@ function buildTransitionPlan({ store, repoRoot, options }) {
     summary,
     nextAction,
     sourceRef,
+    packetSourceRef,
     closeDecisions,
-    currentStage: options.currentStage ?? transitionDefaults.currentStage ?? releaseState?.currentStage ?? null,
-    currentFocus: options.currentFocus ?? transitionDefaults.currentFocus ?? releaseState?.currentFocus ?? null,
+    currentStage,
+    currentFocus,
     releaseGateState: options.releaseGate ?? options.releaseGateState ?? releaseState?.releaseGateState ?? null,
     plannedUpdates: [
       ".agents/artifacts/TASK_LIST.md",
@@ -405,8 +428,8 @@ function buildTransitionPlan({ store, repoRoot, options }) {
       ".harness/operating_state.sqlite",
       ".agents/runtime/generated-state-docs/CURRENT_STATE.md",
       ".agents/runtime/generated-state-docs/TASK_LIST.md",
-      ".agents/runtime/project-manifest.json",
-      ".agents/runtime/pmw-read-model.json",
+      ".agents/runtime/ACTIVE_CONTEXT.json",
+      ".agents/runtime/ACTIVE_CONTEXT.md",
       ".agents/artifacts/VALIDATION_REPORT.md",
       ".agents/artifacts/VALIDATION_REPORT.json"
     ],
@@ -422,6 +445,7 @@ function transitionDefaultsFor(transition = "custom") {
       to: "developer",
       status: "in_progress",
       currentStage: "implementation",
+      currentFocusTemplate: "{workItemId} implementation is in progress.",
       summary: "Planning approved; implementation can proceed.",
       nextAction: "Implement the approved packet scope and hand off to Tester."
     },
@@ -431,6 +455,7 @@ function transitionDefaultsFor(transition = "custom") {
       to: "tester",
       status: "review",
       currentStage: "verification",
+      currentFocusTemplate: "{workItemId} implementation is ready for Tester verification.",
       summary: "Developer implementation completed; Tester should verify the approved scope.",
       nextAction: "Verify the implementation against the packet acceptance criteria."
     },
@@ -440,8 +465,19 @@ function transitionDefaultsFor(transition = "custom") {
       to: "reviewer",
       status: "review",
       currentStage: "review",
+      currentFocusTemplate: "{workItemId} is under reviewer closeout assessment.",
       summary: "Tester verification completed; Reviewer should assess packet exit readiness.",
       nextAction: "Review implementation, evidence, residual debt, and closeout readiness."
+    },
+    "reviewer-to-developer": {
+      transition: "reviewer-to-developer",
+      from: "reviewer",
+      to: "developer",
+      status: "in_progress",
+      currentStage: "implementation",
+      currentFocusTemplate: "{workItemId} reviewer finding remediation is in progress.",
+      summary: "Reviewer found remediation work; Developer should address the finding.",
+      nextAction: "Remediate the reviewer finding, rerun tests and validation, and hand off to Tester."
     },
     "reviewer-to-planner": {
       transition: "reviewer-to-planner",
@@ -449,11 +485,52 @@ function transitionDefaultsFor(transition = "custom") {
       to: "planner",
       status: "planning",
       currentStage: "planning",
+      currentFocusTemplate: "{workItemId} closeout is approved; Planner is choosing the next approved lane.",
       summary: "Packet exit approved; Planner should choose or refine the next lane.",
       nextAction: "Plan the next approved lane or close remaining planning decisions."
     }
   };
   return transitions[transition] ?? { transition: transition ?? "custom" };
+}
+
+function resolveTransitionDefaults({ transition, fromOwner, toOwner }) {
+  const namedDefaults = transitionDefaultsFor(transition);
+  if (transition && transition !== "custom") {
+    return namedDefaults;
+  }
+  const inferredTransition = `${fromOwner ?? "unknown"}-to-${toOwner ?? "unknown"}`;
+  const inferredDefaults = transitionDefaultsFor(inferredTransition);
+  return {
+    ...inferredDefaults,
+    ...namedDefaults,
+    transition: transition ?? namedDefaults.transition ?? "custom"
+  };
+}
+
+function renderTransitionTextTemplate(template, workItemId) {
+  if (typeof template !== "string" || template.length === 0) {
+    return null;
+  }
+  return template.replaceAll("{workItemId}", workItemId ?? "The active work item");
+}
+
+function preserveReleaseBaselineFocus({ focus, releaseState }) {
+  if (typeof focus !== "string" || focus.length === 0) {
+    return focus ?? null;
+  }
+  const releaseBaseline = releaseState?.metadata?.releaseBaseline;
+  if (!releaseBaseline || focus.includes(releaseBaseline)) {
+    return focus;
+  }
+  const previousFocus = String(releaseState?.currentFocus ?? "");
+  const baselinePrefix = previousFocus
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => part.includes(releaseBaseline));
+  if (!baselinePrefix) {
+    return focus;
+  }
+  return `${baselinePrefix}; ${focus}`;
 }
 
 function applyTransitionPlan({ store, repoRoot, outputDir, plan, options }) {
@@ -534,7 +611,7 @@ function applyTransitionPlan({ store, repoRoot, outputDir, plan, options }) {
   updateCanonicalImplementationPlan({ repoRoot, plan });
   updateCanonicalProjectProgress({ repoRoot, plan });
   const generatedDocs = writeGeneratedStateDocs({ store, outputDir });
-  const pmwExport = writePmwProjectExport({ store, repoRoot, outputDir });
+  const activeContext = writeActiveContext({ store, repoRoot, outputDir });
 
   return {
     ...plan,
@@ -543,9 +620,9 @@ function applyTransitionPlan({ store, repoRoot, outputDir, plan, options }) {
     appliedAt: timestamp,
     handoff,
     generatedDocs,
-    pmwExport: {
-      manifestPath: pmwExport.manifestPath,
-      readModelPath: pmwExport.readModelPath
+    activeContext: {
+      jsonPath: activeContext.jsonPath,
+      markdownPath: activeContext.markdownPath
     }
   };
 }
@@ -685,11 +762,29 @@ function updateCanonicalCurrentState({ repoRoot, plan, timestamp }) {
     `\`${plan.workItemId}`,
     buildCurrentWorkItemStateBullet(plan)
   );
+  content = replaceSectionBulletContaining(
+    content,
+    "## Open Decisions / Blockers",
+    `under ${plan.workItemId}.`,
+    buildApprovedScopeStateBullet(plan)
+  );
+  content = replaceSectionBulletContaining(
+    content,
+    "## Open Decisions / Blockers",
+    `User-approved \`${plan.workItemId}\` scope remains active.`,
+    buildApprovedScopeStateBullet(plan)
+  );
   content = replaceOrPrependSectionBulletContaining(
     content,
     "## Current Truth Notes",
     `\`${plan.workItemId}`,
     buildCurrentTruthNote(plan)
+  );
+  content = replaceSectionBulletContaining(
+    content,
+    "## Current Truth Notes",
+    `\`${path.basename(plan.packetSourceRef ?? "")}\``,
+    buildActivePacketStateBullet(plan)
   );
   content = prependSectionBullet(
     content,
@@ -713,13 +808,13 @@ function updateCanonicalImplementationPlan({ repoRoot, plan }) {
           `- \`${plan.workItemId}\` is closed; latest closeout handoff is \`${plan.fromOwner ?? "unknown"} -> ${plan.toOwner}\`.`,
           `- ${plan.nextAction}`,
           `- Source packet: \`${plan.sourceRef}\`.`,
-          "- Preserve packet-before-code, PMW read-only authority, generated-doc immutability, root/starter sync, Tester/Reviewer separation, and human approval gates."
+          "- Preserve packet-before-code, active-context derived authority, generated-doc immutability, root/starter sync, Tester/Reviewer separation, and human approval gates."
         ]
       : [
           `- \`${plan.workItemId}\` active handoff is \`${plan.fromOwner ?? "unknown"} -> ${plan.toOwner}\`.`,
           `- ${plan.nextAction}`,
           `- Source packet: \`${plan.sourceRef}\`.`,
-          "- Preserve packet-before-code, PMW read-only authority, generated-doc immutability, root/starter sync, Tester/Reviewer separation, and human approval gates."
+          "- Preserve packet-before-code, active-context derived authority, generated-doc immutability, root/starter sync, Tester/Reviewer separation, and human approval gates."
         ]
   );
   fs.writeFileSync(implementationPlanPath, content, "utf8");
@@ -735,11 +830,42 @@ function buildCurrentWorkItemStateBullet(plan) {
   return `- \`${plan.workItemId}\` ${approvalText}; active handoff is \`${plan.fromOwner ?? "unknown"} -> ${plan.toOwner}\`. ${plan.nextAction}`;
 }
 
+function buildApprovedScopeStateBullet(plan) {
+  if (isClosedStatus(plan.status)) {
+    return `- User-approved \`${plan.workItemId}\` scope is closed; latest handoff is \`${plan.fromOwner ?? "unknown"} -> ${plan.toOwner}\`.`;
+  }
+  return `- User-approved \`${plan.workItemId}\` scope remains active. Ready For Code is approved; current handoff is \`${plan.fromOwner ?? "unknown"} -> ${plan.toOwner}\`. ${plan.nextAction}`;
+}
+
 function buildCurrentTruthNote(plan) {
   if (isClosedStatus(plan.status)) {
     return `- \`${plan.workItemId}\` is closed. Latest handoff is \`${plan.fromOwner ?? "unknown"} -> ${plan.toOwner}\`; stage is \`${plan.currentStage ?? "unknown"}\`; gate profile is \`${plan.gateProfile ?? "unknown"}\`.`;
   }
   return `- \`${plan.workItemId}\` remains the active work item. Current handoff is \`${plan.fromOwner ?? "unknown"} -> ${plan.toOwner}\`; stage is \`${plan.currentStage ?? "unknown"}\`; gate profile is \`${plan.gateProfile ?? "unknown"}\`.`;
+}
+
+function buildActivePacketStateBullet(plan) {
+  const packetName = path.basename(plan.packetSourceRef ?? plan.sourceRef ?? "active packet");
+  if (isClosedStatus(plan.status)) {
+    return `- \`${packetName}\` is closed with the latest handoff \`${plan.fromOwner ?? "unknown"} -> ${plan.toOwner}\`.`;
+  }
+  return `- \`${packetName}\` is Ready For Code approved and in ${describeStageForPacket(plan.currentStage)}.`;
+}
+
+function describeStageForPacket(currentStage) {
+  if (currentStage === "implementation") {
+    return "Developer implementation";
+  }
+  if (currentStage === "verification") {
+    return "Tester verification";
+  }
+  if (currentStage === "review") {
+    return "Reviewer closeout review";
+  }
+  if (currentStage === "planning") {
+    return "planning";
+  }
+  return currentStage ?? "the active workflow stage";
 }
 
 function updateCanonicalProjectProgress({ repoRoot, plan }) {
@@ -922,6 +1048,20 @@ function replaceOrPrependSectionBulletContaining(content, sectionHeading, needle
   }
 
   return `${content.slice(0, range.start)}${lines.join("\n")}${content.slice(range.end)}`;
+}
+
+function replaceSectionBulletContaining(content, sectionHeading, needle, bullet) {
+  const range = findSectionRange(content, sectionHeading);
+  if (!range || !needle || !bullet) {
+    return content;
+  }
+  const section = content.slice(range.start, range.end);
+  const lines = section.split(/\r?\n/);
+  const replaced = lines.map((line) => (line.startsWith("- ") && line.includes(needle) ? bullet : line));
+  if (replaced.join("\n") === section) {
+    return content;
+  }
+  return `${content.slice(0, range.start)}${replaced.join("\n")}${content.slice(range.end)}`;
 }
 
 function replaceSectionBullets(content, sectionHeading, bullets) {
@@ -1345,7 +1485,7 @@ function recommendNextActionFromState(store, validation, repoRoot = process.cwd(
     return "The current release is closed. Review the latest handoff and open the next approved lane.";
   }
 
-  const activeWork = store.listWorkItems().find((item) => !isClosedStatus(item.status));
+  const activeWork = selectActiveWorkItem(store.listWorkItems());
   if (activeWork?.nextAction) {
     return activeWork.nextAction;
   }
@@ -1356,10 +1496,6 @@ function recommendNextActionFromState(store, validation, repoRoot = process.cwd(
   }
 
   return "No blocker is recorded. Continue with the current approved packet or open the next planning lane.";
-}
-
-function isClosedStatus(status) {
-  return ["closed", "done", "complete"].includes(String(status ?? "").toLowerCase());
 }
 
 function recoveryForFinding(finding) {

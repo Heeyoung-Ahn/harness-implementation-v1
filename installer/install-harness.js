@@ -6,7 +6,6 @@ import readline from "node:readline/promises";
 import { fileURLToPath } from "node:url";
 
 import { initializeProjectStarter, normalizeActiveProfiles, slugifyProjectName } from "../standard-template/.harness/runtime/state/init-project.js";
-import { addProject } from "../pmw-app/runtime/project-registry.js";
 
 const INSTALLER_DIR = path.dirname(fileURLToPath(import.meta.url));
 const PACKAGE_ROOT = path.resolve(INSTALLER_DIR, "..");
@@ -36,7 +35,7 @@ const projectSlug = slugifyProjectName(projectName);
 const targetDir = path.resolve(options["target-dir"] ?? (options["non-interactive"] ? projectSlug : await prompt("Project folder", projectSlug)));
 const profiles = normalizeActiveProfiles(options.profiles ?? (options["non-interactive"] ? "none" : await prompt("Active profiles", "none")));
 const userGoal = options["user-goal"] ?? `${projectName} 사용자가 현재 판단 지점을 빠르게 이해한다.`;
-const opsGoal = options["ops-goal"] ?? `${projectName} 운영 상태와 다음 행동을 PMW에서 복원한다.`;
+const opsGoal = options["ops-goal"] ?? `${projectName} 운영 상태와 다음 행동을 CLI active context에서 복원한다.`;
 const approvalGoal = options["approval-goal"] ?? `${projectName}의 PLN-00과 PLN-01을 닫아 첫 구현 lane을 연다.`;
 const runtimeNodePath = installBundledRuntime();
 
@@ -54,7 +53,6 @@ const initResult = initializeProjectStarter({
   approvalGoal,
   activeProfiles: profiles
 });
-addProject({ repoRoot: targetDir, name: projectName });
 writeProjectWrappers({ repoRoot: targetDir, runtimeNodePath });
 
 process.stdout.write(
@@ -64,7 +62,7 @@ process.stdout.write(
     `- Folder: ${targetDir}`,
     `- Active profiles: ${profiles.length ? profiles.join(", ") : "none"}`,
     runtimeNodePath ? `- Bundled runtime: ${runtimeNodePath}` : "- Bundled runtime: not installed; system Node.js is required",
-    "- PMW registry: updated",
+    "- Active context: initialized",
     "- Next action: run HARNESS.cmd test and HARNESS.cmd status in the project folder."
   ].join("\n") + "\n"
 );
@@ -103,12 +101,11 @@ function installBundledRuntime() {
 function writeProjectWrappers({ repoRoot, runtimeNodePath }) {
   const nodeCommand = runtimeNodePath ?? "node";
   const testFiles = [
-    ".harness\\test\\context-restoration-read-model.test.js",
+    ".harness\\test\\active-context.test.js",
     ".harness\\test\\dev05-tooling.test.js",
     ".harness\\test\\generated-state-docs.test.js",
     ".harness\\test\\init-project.test.js",
-    ".harness\\test\\operating-state-store.test.js",
-    ".harness\\test\\pmw-read-surface.test.js"
+    ".harness\\test\\operating-state-store.test.js"
   ];
   fs.writeFileSync(
     path.join(repoRoot, "HARNESS.cmd"),
@@ -126,8 +123,7 @@ function writeProjectWrappers({ repoRoot, runtimeNodePath }) {
       "if /i \"%~1\"==\"next\" goto next",
       "if /i \"%~1\"==\"explain\" goto explain",
       "if /i \"%~1\"==\"validation-report\" goto validation_report",
-      "if /i \"%~1\"==\"pmw-export\" goto pmw_export",
-      "if /i \"%~1\"==\"project-manifest\" goto project_manifest",
+      "if /i \"%~1\"==\"context\" goto context",
       "if /i \"%~1\"==\"migration-preview\" goto migration_preview",
       "if /i \"%~1\"==\"migration-apply\" goto migration_apply",
       "if /i \"%~1\"==\"cutover-preflight\" goto cutover_preflight",
@@ -157,11 +153,8 @@ function writeProjectWrappers({ repoRoot, runtimeNodePath }) {
       ":validation_report",
       "\"%HARNESS_NODE%\" \".harness\\runtime\\state\\dev05-cli.js\" validation-report",
       "goto finish",
-      ":pmw_export",
-      "\"%HARNESS_NODE%\" \".harness\\runtime\\state\\dev05-cli.js\" pmw-export",
-      "goto finish",
-      ":project_manifest",
-      "\"%HARNESS_NODE%\" \".harness\\runtime\\state\\dev05-cli.js\" project-manifest",
+      ":context",
+      "\"%HARNESS_NODE%\" \".harness\\runtime\\state\\dev05-cli.js\" context",
       "goto finish",
       ":migration_preview",
       "\"%HARNESS_NODE%\" \".harness\\runtime\\state\\dev05-cli.js\" migration-preview",
@@ -176,7 +169,7 @@ function writeProjectWrappers({ repoRoot, runtimeNodePath }) {
       "\"%HARNESS_NODE%\" \".harness\\runtime\\state\\dev05-cli.js\" cutover-report",
       "goto finish",
       ":usage",
-      "echo Usage: HARNESS.cmd ^<test^|status^|validate^|doctor^|next^|explain^|validation-report^|pmw-export^|project-manifest^|migration-preview^|migration-apply^|cutover-preflight^|cutover-report^>",
+      "echo Usage: HARNESS.cmd ^<test^|status^|validate^|doctor^|next^|explain^|validation-report^|context^|migration-preview^|migration-apply^|cutover-preflight^|cutover-report^>",
       "set \"EXIT_CODE=1\"",
       "goto done",
       ":finish",

@@ -23,7 +23,7 @@ This file is the constitutional entry point for Antigravity and any other agent 
 - governance Markdown truth: `.agents/artifacts/*`
 - hot operational DB state: `.harness/operating_state.sqlite`
 - generated operational summaries: `.agents/runtime/generated-state-docs/*`
-- PMW read surface: read-only projection
+- Active Context: `.agents/runtime/ACTIVE_CONTEXT.json` and `.agents/runtime/ACTIVE_CONTEXT.md` are generated re-entry summaries
 - optional extension material: `reference/*`
 
 ## Conflict Rule
@@ -31,7 +31,7 @@ This file is the constitutional entry point for Antigravity and any other agent 
 - governance Markdown truth wins over generated docs
 - DB hot-state must be reconciled to governance truth before gate close
 - generated docs are never edited manually
-- PMW is never write authority
+- Active Context is never write authority
 
 ## Minimal Operating Rules
 

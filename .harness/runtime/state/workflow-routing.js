@@ -31,6 +31,14 @@ const HANDOFF_WORKFLOW_ROUTES = [
   { workflow: ".agents/workflows/plan.md", aliases: ["planner", "maintainer", "planning", "기획", "유지보수"] }
 ];
 
+export function prioritizeOpenWorkItems(workItems = []) {
+  return workItems.filter((workItem) => !isClosedStatus(workItem.status)).sort(compareActiveWorkItems);
+}
+
+export function selectActiveWorkItem(workItems = []) {
+  return prioritizeOpenWorkItems(workItems)[0] ?? null;
+}
+
 export function workflowForOwner(owner) {
   const matchingRoutes = matchingWorkflowRoutesForOwner(owner);
   if (matchingRoutes.length !== 1) {
@@ -47,7 +55,7 @@ export function resolveHandoffExecution({
   includeWorkflowDetails = false
 } = {}) {
   const currentStateNextAgent = resolveCurrentStateNextAgent({ repoRoot });
-  const activeWorkItem = workItems.find((workItem) => !isClosedStatus(workItem.status)) ?? null;
+  const activeWorkItem = selectActiveWorkItem(workItems);
   const owner = activeWorkItem?.owner ?? currentStateNextAgent ?? latestHandoff?.toRole ?? "unassigned";
   const workflow = workflowForOwner(owner);
   const workflowDetailsForStatus = readWorkflowDetails({ repoRoot, workflow });
@@ -264,6 +272,30 @@ function normalizeRoleValue(value) {
   return inlineCodeMatch ? inlineCodeMatch[1] : trimmed;
 }
 
+export function isClosedStatus(status) {
+  return ["closed", "done", "complete", "completed"].includes(String(status ?? "").toLowerCase());
+}
+
+function compareActiveWorkItems(left, right) {
+  const leftPriority = statusPriority(left.status);
+  const rightPriority = statusPriority(right.status);
+  if (leftPriority !== rightPriority) {
+    return leftPriority - rightPriority;
+  }
+  return String(left.workItemId).localeCompare(String(right.workItemId));
+}
+
+function statusPriority(status) {
+  const normalized = String(status ?? "").toLowerCase();
+  if (["in_progress", "active", "implementing"].includes(normalized)) {
+    return 0;
+  }
+  if (["todo", "pending", "planned", "draft"].includes(normalized)) {
+    return 1;
+  }
+  return 2;
+}
+
 function normalizeOwnerText(value) {
   return String(value ?? "")
     .normalize("NFKC")
@@ -283,8 +315,4 @@ function aliasMatchesOwner(normalizedOwner, alias) {
   }
 
   return normalizedOwner.includes(normalizedAlias);
-}
-
-function isClosedStatus(status) {
-  return ["closed", "done", "complete"].includes(String(status ?? "").toLowerCase());
 }

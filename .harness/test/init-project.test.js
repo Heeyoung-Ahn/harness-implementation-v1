@@ -10,7 +10,7 @@ import { initializeProjectStarter } from "../runtime/state/init-project.js";
 
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 
-test("initializes a copied starter repo and seeds PMW-ready state", () => {
+test("initializes a copied starter repo and seeds active-context-ready state", () => {
   const repoRoot = copyStarterRepo();
 
   const result = initializeProjectStarter({
@@ -58,16 +58,20 @@ test("initializes a copied starter repo and seeds PMW-ready state", () => {
   assert.equal(store.getWorkItem("PLN-00").status, "in_progress");
   assert.equal(store.getWorkItem("PLN-01").status, "todo");
 
-  const manifest = JSON.parse(fs.readFileSync(path.join(repoRoot, ".agents", "runtime", "project-manifest.json"), "utf8"));
-  const readModel = JSON.parse(fs.readFileSync(path.join(repoRoot, ".agents", "runtime", "pmw-read-model.json"), "utf8"));
+  const activeContext = JSON.parse(
+    fs.readFileSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.json"), "utf8")
+  );
+  const activeContextMarkdown = fs.readFileSync(
+    path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.md"),
+    "utf8"
+  );
   store.close();
 
-  assert.equal(manifest.projectName, "WBMS Budget Suite");
-  assert.equal(manifest.source.pmwReadModel, ".agents/runtime/pmw-read-model.json");
-  assert.deepEqual(manifest.activeProfiles.map((profile) => profile.profileId), ["PRF-01", "PRF-02"]);
-  assert.equal(readModel.project.name, "WBMS Budget Suite");
-  assert.equal(readModel.context.releaseState.currentStage, "kickoff_interview");
-  assert.equal(readModel.context.surfaces.nextAction.headline.includes("PLN-00"), true);
+  assert.equal(activeContext.project.name, "WBMS Budget Suite");
+  assert.equal(activeContext.release.stage, "kickoff_interview");
+  assert.equal(activeContext.activeTask.workItemId, "PLN-00");
+  assert.equal(activeContext.nextWork.action.includes("PLN-00"), true);
+  assert.match(activeContextMarkdown, /# 활성 컨텍스트/);
 });
 
 test("refuses to reinitialize an already-edited repo without force", () => {

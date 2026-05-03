@@ -2,6 +2,41 @@
 
 Use this artifact when the project enters a formal review gate.
 
+## 2026-05-03 DEV-11 Closeout Readiness Review
+
+- Scope: closeout readiness review for `DEV-11` after final Tester re-verification passed and the active handoff moved to `tester -> reviewer`.
+- Entry condition:
+  - Final Tester re-verification evidence was recorded in `reference/artifacts/WALKTHROUGH.md`.
+  - Root/starter full tests, validator, validation report, rebuilt V1.3 payload inspection, and clean copied-starter smoke all passed in the final Tester pass.
+- Evidence reviewed:
+  - `reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md`
+  - `reference/artifacts/WALKTHROUGH.md`
+  - `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`
+  - `reference/artifacts/REVIEW_REPORT.md`
+  - `.agents/artifacts/CURRENT_STATE.md`
+  - `.agents/artifacts/TASK_LIST.md`
+  - `.agents/artifacts/REQUIREMENTS.md`
+  - `.agents/artifacts/ARCHITECTURE_GUIDE.md`
+  - `.agents/artifacts/IMPLEMENTATION_PLAN.md`
+  - `.agents/artifacts/VALIDATION_REPORT.md`
+  - local maintainer workspace directory inspection for `pmw-app/`
+- Findings:
+  - `.agents/artifacts/CURRENT_STATE.md` still carries stale DEV-11 phase wording after the active handoff moved to `tester -> reviewer`. The same canonical doc says the stage is `review` and the active handoff is `tester -> reviewer`, but it also says `DEV-11 implementation is ready for re-verification`, `Developer is implementing PMW-only procedure removal`, and `PKT-01_DEV-11... is Ready For Code approved and in Developer implementation.` This leaves the human-facing current-state SSOT partially behind the live review state and means the DEV-11 active-task/current-work parity contract is not fully met at closeout.
+- Risk:
+  - Reviewer cannot approve packet exit while the canonical human-facing current-state surface still reports prior-gate wording for the active work item.
+  - This reintroduces the stale-current-state closeout risk that previously required remediation in `OPS-03`.
+- Non-blocking note:
+  - The root `pmw-app/` directory still exists as an empty maintainer-workspace folder because another process is holding a directory handle. No files remain there, it is absent from the rebuilt V1.3 payload/runtime evidence, and it is treated here as local cleanup residue rather than the blocking closeout finding.
+- Required remediation:
+  - Update the current-state refresh path so reviewer-stage DEV-11 wording replaces stale implementation/re-verification bullets consistently across `Current Focus`, open-decision bullets, and current-truth notes.
+  - Add regression coverage or validator enforcement that catches stale reviewer-stage wording in canonical `CURRENT_STATE.md`.
+  - Rerun the relevant root/starter transition tests, full tests, validator, validation report, and return the packet to Tester for re-verification.
+- Packet exit decision:
+  - hold
+- Next handoff:
+  - Developer should remediate the stale reviewer-stage `CURRENT_STATE.md` wording and strengthen coverage so the canonical current-state surface cannot lag behind the active handoff again.
+- Status: hold; Developer remediation required
+
 ## 2026-05-03 OPS-03 Revised-Scope Closeout Re-Check
 
 - Scope: Reviewer re-check for `OPS-03` after Developer remediated the stale `CURRENT_STATE` transition wording and Tester re-verified the remediation.

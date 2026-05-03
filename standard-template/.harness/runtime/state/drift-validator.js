@@ -50,8 +50,7 @@ const AGENT_BEHAVIOR_GUIDE_REQUIRED_MARKERS = [
   "Project Design SSOT Precedence",
   "Developer implements",
   "Tester verifies",
-  "Reviewer checks",
-  "PMW read-only"
+  "Reviewer checks"
 ];
 const WORKFLOW_BEHAVIOR_REQUIRED_MARKERS = [
   "## Behavior Contract",
@@ -561,7 +560,7 @@ function validateHarnessOwnedPaths(repoRoot, findings) {
     ".harness/runtime/state/dev05-cli.js",
     ".harness/runtime/state/drift-validator.js",
     GATE_PROFILE_CONTRACT_PATH,
-    ".harness/runtime/state/project-manifest.js",
+    ".harness/runtime/state/active-context.js",
     ".harness/test",
     REPOSITORY_LAYOUT_PATH
   ];
@@ -594,8 +593,7 @@ function validatePackageCommandSurface(repoRoot, findings) {
     "harness:next",
     "harness:explain",
     "harness:validation-report",
-    "harness:pmw-export",
-    "harness:project-manifest",
+    "harness:context",
     "harness:transition",
     "harness:migration-preview",
     "harness:migration-apply",
@@ -1028,7 +1026,7 @@ function validateStarterSync(repoRoot, findings) {
     AGENT_BEHAVIOR_GUIDE_PATH,
     ...AGENT_BEHAVIOR_SKILL_PATHS,
     ".agents/scripts/init-project.js",
-    ".harness/runtime/state/context-restoration-read-model.js",
+    ".harness/runtime/state/active-context.js",
     ".harness/runtime/state/dev05-cli.js",
     ".harness/runtime/state/dev05-tooling.js",
     ".harness/runtime/state/drift-validator.js",
@@ -1038,15 +1036,13 @@ function validateStarterSync(repoRoot, findings) {
     ".harness/runtime/state/init-project.js",
     ".harness/runtime/state/operating_state.schema.json",
     ".harness/runtime/state/operating-state-store.js",
-    ".harness/runtime/state/project-manifest.js",
     ".harness/runtime/state/release-baseline.js",
     ".harness/runtime/state/workflow-routing.js",
-    ".harness/test/context-restoration-read-model.test.js",
+    ".harness/test/active-context.test.js",
     ".harness/test/dev05-tooling.test.js",
     ".harness/test/generated-state-docs.test.js",
     ".harness/test/init-project.test.js",
     ".harness/test/operating-state-store.test.js",
-    ".harness/test/pmw-read-surface.test.js",
     ".harness/test/profile-aware-validator-fixtures.js",
     "reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md",
     "reference/profiles/README.md",
@@ -1443,7 +1439,7 @@ function gateProfileEvidenceMarkers(profileId) {
   const markers = {
     light: ["canonical artifact", "handoff"],
     standard: ["approved packet", "targeted test", "validator", "handoff"],
-    contract: ["Ready For Code", "root", "standard-template", "targeted", "validator", "PMW export", "review closeout"],
+    contract: ["Ready For Code", "root", "standard-template", "targeted", "validator", "active context", "review closeout"],
     release: ["release-baseline", "packaging", "validator", "review closeout"]
   };
   return markers[profileId] ?? [];

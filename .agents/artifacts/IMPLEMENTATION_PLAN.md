@@ -11,7 +11,9 @@
 
 2026-04-27 `PLN-07` opened as the V1.3 PMW operator-console and workflow-contract planning lane. It closed on 2026-05-02 after delivering the approved PMW operator console first view, workflow contracts/handoff routing, PM workflow addition, PMW phase-1 command launcher, terminal-only guidance, and handoff baton execution behavior through `DEV-07`, `DEV-08`, and `DEV-09`.
 
-2026-05-03 `OPS-03` is closed after revised-scope implementation, remediation, Tester re-verification, Reviewer approval, and Planner closeout. The next active planning lane is `PLN-08`, which defines the V1.3 phase-2 PMW command surface after the phase-1 launcher and the OPS-03 reliability rebaseline.
+2026-05-03 `OPS-03` is closed after revised-scope implementation, remediation, Tester re-verification, Reviewer approval, and Planner closeout. `PLN-08` opened next as the V1.3 phase-2 PMW command surface lane, but it is now superseded by `PLN-09` unless the user explicitly opens a new PMW revival lane.
+
+2026-05-03 user direction supersedes the active PMW extension path: `PLN-09` is now open as a CLI-first harness rebaseline and complete PMW removal planning lane. `PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md` is the concrete implementation packet draft for that direction. `PLN-08` / `DEV-10` must not proceed to implementation unless the user explicitly reopens PMW. The remaining SSOT must split into AI-facing compact deterministic state and human-facing Korean, easy-term operating documents.
 
 ## Follow-Up Phase Plan
 1. approved release-ready baseline을 보존하면서 follow-up planning lane을 연다.
@@ -61,7 +63,8 @@
 - REV-01 architecture / review gate
 
 ### Active Follow-Up Tasks
-- PLN-08 V1.3 PMW phase-2 command surface planning
+- PLN-09 CLI-first harness rebaseline and PMW decommission planning
+- DEV-11 CLI-first PMW decommission and active context implementation packet
 
 ## DEV-06 Execution
 ### Goal
@@ -460,7 +463,7 @@ Define the next V1.3 planning lane that decides whether `doctor`, `test`, and `v
 ### Status
 - Opened on 2026-05-03 after `OPS-03` closeout.
 - Active owner: `Planner`.
-- Current approval boundary: user approval is required before any phase-2 implementation packet opens.
+- Current approval boundary: superseded by `PLN-09`; do not implement `DEV-10` unless the user explicitly opens a new PMW revival lane.
 
 ### Input
 - `reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md`
@@ -481,6 +484,45 @@ Define the next V1.3 planning lane that decides whether `doctor`, `test`, and `v
 - the first phase-2 PMW command-surface packet is concrete enough for user approval
 - the packet names which commands are promoted now and which are deferred
 - `Developer`, `Tester`, and `Reviewer` can work from one SSOT without reopening phase-1 or `OPS-03`
+
+### Supersession
+- User direction on 2026-05-03 reopened the baseline assumption and approved complete PMW removal because PMW is a major source of harness alignment overhead.
+- `reference/packets/PKT-01_DEV-10_PMW_PHASE_2_DOCTOR_PROMOTION_AND_USABILITY_REMEDIATION.md` remains historical draft evidence, not an active implementation contract.
+- The next planning source is `reference/planning/PLN-09_CLI_FIRST_REBASELINE_AND_PMW_DECOMMISSION_DRAFT.md`.
+
+## PLN-09 CLI-First Harness Rebaseline And PMW Decommission Planning
+
+### Goal
+Rebaseline the standard harness from a PMW-centered operator-console model to a CLI-first operating model that preserves governance strength while reducing repeated alignment time, token cost, generated-surface drift, and session-loss confusion.
+
+### Status
+- Opened on 2026-05-03 by user direction.
+- Active owner: `Planner`.
+- Current approval boundary: user approval is required before any Developer implementation starts.
+- Gate profile: `release`, because the lane affects root/starter runtime, validator, manuals, package scripts, installer/release payload, and release-baseline contracts.
+
+### Input
+- `reference/planning/PLN-09_CLI_FIRST_REBASELINE_AND_PMW_DECOMMISSION_DRAFT.md`
+- `C:\Users\ahyne\OneDrive\바탕 화면\평가.MD`
+- `.agents/artifacts/REQUIREMENTS.md`
+- `.agents/artifacts/ARCHITECTURE_GUIDE.md`
+- `.agents/artifacts/TASK_LIST.md`
+- `reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md`
+- `reference/packets/PKT-01_DEV-10_PMW_PHASE_2_DOCTOR_PROMOTION_AND_USABILITY_REMEDIATION.md`
+- `reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md`
+
+### Required Output
+- approved decision that PMW is fully removed from the active baseline, not retained as an optional sidecar
+- CLI-first replacement contract for `harness:context` and `.agents/runtime/ACTIVE_CONTEXT.*`
+- explicit supersession of `PLN-08` / `DEV-10`
+- PMW cleanup checklist covering SSOT, root/starter runtime, validator, tests, package scripts, PMW app, installer, packaging, manuals, release-baseline checks, generated outputs, and historical packet disposition
+- evaluation-feedback disposition that accepts active-task parity and command-contract findings while deferring security/eval/CI hardening to later lanes
+
+### Exit Criteria
+- user approves, adjusts, or rejects PMW decommission
+- Ready For Code remains held until the implementation packet identifies exact file/module ownership and verification evidence
+- no active planning state points Developer at `DEV-10`
+- next packet can be implemented without reinterpreting PMW history or missing PMW-linked cleanup surfaces
 
 ## SIM-01 Execution
 ### Goal
@@ -917,7 +959,7 @@ transfer-bound or airgapped delivery 환경에서 반복되는 bundle handoff와
 8. 구현 후 `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`를 사용해 packet exit quality gate reference, source parity, residual debt disposition, UX/topology/schema conformance, validation/security/cleanup evidence, deferred follow-up item을 정리하고, 반복 friction이 보이면 `.agents/artifacts/PREVENTIVE_MEMORY.md`에 improvement candidate reference, proposed target layer, promotion status, linked follow-up item을 남긴 뒤 closeout hold 조건이 없을 때만 security review와 validator check를 함께 닫는다.
 
 ## Operator Next Action
-- `PLN-08` active handoff is `planner -> planner`.
-- Planner should finish the PLN-08 draft and get user approval on the phase-2 PMW command promotion scope before any implementation packet opens.
-- Source packet: `reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md`.
-- Preserve packet-before-code, PMW read-only authority, generated-doc immutability, root/starter sync, Tester/Reviewer separation, and human approval gates.
+- `DEV-11` active handoff is `developer -> tester`.
+- Verify the implementation against the packet acceptance criteria.
+- Source packet: `reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md`.
+- Preserve packet-before-code, active-context derived authority, generated-doc immutability, root/starter sync, Tester/Reviewer separation, and human approval gates.

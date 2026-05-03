@@ -11,7 +11,7 @@ export const GATE_PROFILES = {
     forbids: [
       "runtime code changes",
       "workflow contract changes",
-      "PMW command/read-model changes",
+      "active-context command/state changes",
       "root/starter reusable drift"
     ]
   },
@@ -33,7 +33,7 @@ export const GATE_PROFILES = {
   contract: {
     id: "contract",
     label: "Contract",
-    summary: "Reusable runtime, workflow, validator, PMW read-model/command, packet-template, or root/starter contract change.",
+    summary: "Reusable runtime, workflow, validator, active-context command/state, packet-template, or root/starter contract change.",
     requiredEvidence: [
       "approved packet scope and Ready For Code",
       "root and standard-template synchronization",
@@ -41,13 +41,13 @@ export const GATE_PROFILES = {
       "root test suite",
       "starter test suite",
       "harness validator",
-      "PMW export when PMW/read-model state is affected",
+      "active context evidence when re-entry state is affected",
       "review closeout"
     ],
     forbids: [
       "Developer self-approval",
       "generated-doc manual authority",
-      "PMW canonical write authority"
+      "derived context canonical write authority"
     ]
   },
   release: {

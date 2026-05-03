@@ -25,7 +25,7 @@
 
 초기화가 끝나면 starter placeholder, repo-local DB, generated docs가 프로젝트 기준으로 바뀐다.
 
-`INIT_STANDARD_HARNESS.cmd`를 쓰기 어렵다면 `npm run harness:init`를 실행해도 된다. 전체 운영 매뉴얼은 `HARNESS_MANUAL.md`, PMW 연결은 `PMW_MANUAL.md`를 기준으로 본다.
+`INIT_STANDARD_HARNESS.cmd`를 쓰기 어렵다면 `npm run harness:init`를 실행해도 된다. 전체 운영 기준과 재진입 기준은 `HARNESS_MANUAL.md`를 본다.
 
 ## 3. 처음에는 이 문서만 연다
 

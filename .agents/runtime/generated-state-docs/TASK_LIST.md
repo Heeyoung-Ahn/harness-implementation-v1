@@ -1,10 +1,10 @@
 # TASK_LIST
 
 ## Technical Facts
-- Open work items: 34
+- Open work items: 35
 - Open blocked or at-risk items: 0
 - Recent handoffs captured: 10
-- Generated at: 2026-05-03T02:44:20.428Z
+- Generated at: 2026-05-03T10:11:30.883Z
 
 ## Blocked / At Risk Summary
 - 0 open blocker or risks require attention.
@@ -18,7 +18,8 @@
 ## Work Item Detail
 | ID | Title | Status | Next Action |
 |---|---|---|---|
-| PLN-08 | V1.3 PMW phase-2 command surface planning | planning | Planner should finish the PLN-08 draft and get user approval on the phase-2 PMW command promotion scope before any implementation packet opens. |
+| DEV-11 | CLI-first PMW decommission and active context implementation packet | review | Verify the implementation against the packet acceptance criteria. |
+| PLN-08 | V1.3 PMW phase-2 command surface planning | done | Superseded by DEV-11 PMW decommission packet; do not implement DEV-10 unless the user opens a new PMW revival lane. |
 | OPS-03 | Harness operation reliability and friction reduction packet | done | Planner should choose the next approved lane; do not reopen implementation without a new human-approved packet. |
 | PLN-07 | V1.3 PMW operator console and workflow-contract planning | done | Closed on 2026-05-02 after DEV-07, DEV-08, and DEV-09 packet closeouts; preserve V1.3 PMW evidence while OPS-03 proceeds. |
 | DEV-09 | PMW phase-1 command launcher and handoff execution packet | done | Closed on 2026-05-02 after Tester verification and Reviewer packet exit approval; preserve DEV-09 command launcher and handoff baton evidence. |
@@ -54,18 +55,18 @@
 | DEV-04 | PMW read surface | done | Closed after browser verification passed at http://127.0.0.1:4173. |
 
 ## Handoff Log
-- 2026-05-03T02:44:20.428Z: [planner -> planner] Opened PLN-08 planning lane to define the V1.3 phase-2 PMW command-surface scope after OPS-03 closeout.
-- 2026-05-03T01:54:09.472Z: [planner -> planner] Planner recorded OPS-03 closeout after reviewer-approved exit and remediation re-verification.
-- 2026-05-03T01:37:43.766Z: [reviewer -> planner] OPS-03 packet exit approved after revised-scope remediation and re-verification; Planner should record closeout and choose the next lane.
-- 2026-05-03T01:36:16.467Z: [tester -> reviewer] Tester re-verified the CURRENT_STATE transition remediation; stale wording is gone, reviewer-source Ready For Code handling is preserved, and validation evidence passed.
-- 2026-05-03T01:34:33.236Z: [developer -> tester] Developer remediated CURRENT_STATE transition stale wording and Ready For Code fallback handling; regression coverage and validation evidence passed.
-- 2026-05-03T01:26:09.488Z: [reviewer -> developer] Reviewer found stale CURRENT_STATE transition wording after tester handoff; Developer should remediate the update path and add coverage.
-- 2026-05-03T01:24:14.669Z: [tester -> reviewer] Tester verified the revised OPS-03 scope against the approved SSOT; behavior guidance, project-design precedence, PMW Artifact Library access, and validation evidence passed.
-- 2026-05-03T01:07:35.822Z: [developer -> tester] Developer implemented the revised OPS-03 scope: sufficient behavior guidance, project-design SSOT precedence, workflow closeout reporting, PMW design Artifact Library access, and validation coverage.
-- 2026-05-03T00:30:46.849Z: [planner -> developer] OPS-03 revised scope Ready For Code approved by user; Developer starts revised implementation.
-- 2026-05-03T00:20:16.647Z: [planner -> user] OPS-03 revised agreement finalized; Ready For Code for revised scope is pending user approval.
+- 2026-05-03T10:11:30.883Z: [developer -> tester] Developer implementation completed; Tester should verify the approved scope.
+- 2026-05-03T10:11:21.709Z: [tester -> developer] Developer briefly reopens DEV-11 to finalize the corrected tester handoff wording.
+- 2026-05-03T10:10:40.680Z: [developer -> tester] Developer implementation completed; Tester should verify the approved scope.
+- 2026-05-03T10:10:30.064Z: [tester -> developer] Developer resumes after tester-state refresh to reissue the clean tester handoff.
+- 2026-05-03T10:10:06.816Z: [tester -> tester] Tester state refreshed after DEV-11 CURRENT_STATE remediation.
+- 2026-05-03T10:05:49.751Z: [developer -> tester] Developer implementation completed; Tester should verify the approved scope.
+- 2026-05-03T10:05:39.182Z: [tester -> developer] Validation hold after the prior tester handoff; Developer resumes to refresh the release-baseline state.
+- 2026-05-03T10:01:15.616Z: [developer -> tester] Developer implementation completed; Tester should verify the approved scope.
+- 2026-05-03T09:54:12.897Z: [reviewer -> developer] DEV-11 transition reviewer -> developer
+- 2026-05-03T09:50:06.174Z: [tester -> reviewer] Tester verification completed; Reviewer should assess packet exit readiness.
 
 ## Generation Metadata
 - Generated docs: CURRENT_STATE.md, TASK_LIST.md
-- Source revision: 2026-05-03T02:44:20.428Z
+- Source revision: 2026-05-03T10:11:30.883Z
 - Sync status: fresh at generation time

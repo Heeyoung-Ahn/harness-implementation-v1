@@ -9,7 +9,7 @@ export const VALIDATION_REPORT_MARKDOWN = ".agents/artifacts/VALIDATION_REPORT.m
 export const VALIDATION_REPORT_JSON = ".agents/artifacts/VALIDATION_REPORT.json";
 export const ACTIVE_PROFILES_MARKDOWN = ".agents/artifacts/ACTIVE_PROFILES.md";
 export const REPOSITORY_LAYOUT_MARKDOWN = "reference/artifacts/REPOSITORY_LAYOUT_OWNERSHIP.md";
-export const PMW_PACKET_MARKDOWN = "reference/packets/PKT-01_DEV-04_PMW_READ_SURFACE.md";
+export const ACTIVE_CONTEXT_PACKET_MARKDOWN = "reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md";
 export const DEV05_PACKET_MARKDOWN = "reference/packets/PKT-01_DEV-05_VALIDATOR_MIGRATION_CUTOVER.md";
 export const REVIEW_REPORT_MARKDOWN = "reference/artifacts/REVIEW_REPORT.md";
 
@@ -19,8 +19,8 @@ export const ARTIFACT_PATHS = {
   plan: ".agents/artifacts/IMPLEMENTATION_PLAN.md",
   progress: ".agents/artifacts/PROJECT_PROGRESS.md",
   ui: "reference/artifacts/UI_DESIGN.md",
-  packet: PMW_PACKET_MARKDOWN,
-  pmwPacket: PMW_PACKET_MARKDOWN,
+  packet: ACTIVE_CONTEXT_PACKET_MARKDOWN,
+  activeContextPacket: ACTIVE_CONTEXT_PACKET_MARKDOWN,
   dev05Packet: DEV05_PACKET_MARKDOWN,
   reviewReport: REVIEW_REPORT_MARKDOWN,
   validationReport: VALIDATION_REPORT_MARKDOWN,

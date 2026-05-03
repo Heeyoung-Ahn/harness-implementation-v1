@@ -1,19 +1,19 @@
 # Architecture Guide
 
 ## Summary
-아키텍처는 `Governance Markdown truth + hot operational DB state + generated operational docs + read-only PMW`의 4층 runtime 구조를 기본값으로 유지한다. follow-up baseline에서는 이 runtime 구조를 `core / optional profile / project packet` 3층 activation 모델로 감싸, 복잡한 프로젝트의 반복 실패 패턴을 표준 계약과 선택형 profile로 일반화한다.
+아키텍처는 `Governance Markdown truth + hot operational DB state + generated operational docs + Active Context derived summaries`의 4층 runtime 구조를 기본값으로 유지한다. follow-up baseline에서는 이 runtime 구조를 `core / optional profile / project packet` 3층 activation 모델로 감싸, 복잡한 프로젝트의 반복 실패 패턴을 표준 계약과 선택형 profile로 일반화한다.
 
 ## Truth Hierarchy And Conflict Rule
 1. Governance Markdown truth: `.agents/artifacts/*.md`
 2. Hot operational DB state: `.harness/operating_state.sqlite`
 3. Generated operational docs: `.agents/runtime/generated-state-docs/*`
-4. PMW read-only surface
+4. Active Context derived summaries: `.agents/runtime/ACTIVE_CONTEXT.json` and `.agents/runtime/ACTIVE_CONTEXT.md`
 
 Conflict rules:
 - Governance Markdown wins over generated docs.
 - DB hot-state must be reconciled to governance truth before gate close.
 - Generated docs are never edited manually.
-- PMW is never write authority.
+- Active Context is never write authority.
 - Human-and-Planner-approved project design SSOT inside governance Markdown and approved project artifacts is the guiding instruction layer for all agent roles.
 - Developer implements to the approved design SSOT, Tester verifies implementation against it without directly fixing defects, and Reviewer evaluates source parity/evidence/residual debt against it.
 
@@ -39,21 +39,21 @@ Conflict rules:
 ## Core Boundaries
 - Hard Core State: repo-local DB for hot-state and AI-oriented operational metadata
 - Context Canonical Docs: Markdown for goals, rationale, approvals, and human-readable operating context
-- Projection and Generation: generated state docs / PMW read model
-- PMW Read Surface: summary cards, detail panel, artifact viewer, settings
+- Projection and Generation: generated state docs / Active Context artifacts
+- Active Context Surface: compact AI JSON and Korean human Markdown
 - Improvement Memory: recurring inefficiency records and promoted improvement tasks
 
-## PMW Project Design Access
-- PMW remains a read surface, but it must make whole-project design and overview artifacts easy to inspect.
-- Artifact Library must expose a stable project-design/overview category for `REQUIREMENTS.md`, `ARCHITECTURE_GUIDE.md`, `IMPLEMENTATION_PLAN.md`, and equivalent approved design/overview sources.
-- Artifact body layout should allocate enough horizontal reading width for long-form design documents instead of forcing narrow preview wrapping.
-- PMW design access does not create write authority; canonical changes still flow through governance Markdown, DB reconciliation, generated docs, validation, and handoff evidence.
+## Active Context Project Design Access
+- Active Context remains a generated re-entry surface, not an editor or authority.
+- Human-facing guidance must keep `REQUIREMENTS.md`, `ARCHITECTURE_GUIDE.md`, `IMPLEMENTATION_PLAN.md`, active packets, and equivalent approved design/overview sources easy to identify.
+- Korean Active Context Markdown must describe current work, next work, blockers, latest handoff, validation state, and source paths in easy operational terms.
+- Active Context design access does not create write authority; canonical changes still flow through governance Markdown, DB reconciliation, generated docs, validation, and handoff evidence.
 
 ## Operating Principles
 - Context continuity: state, rationale, handoff, and source trace must support fast context restoration across sessions and agents.
 - SOP compliance: approved workflows, gates, validators, and cutover order are part of the architecture contract, not optional process notes.
 - Human in the loop: architecture keeps explicit approval boundaries where human judgment must confirm or override automation.
-- Decision-ready communication: user-facing decision packets and PMW decision surfaces must minimize interpretation load while preserving enough evidence for approval, adjustment, or defer.
+- Decision-ready communication: user-facing decision packets and Active Context surfaces must minimize interpretation load while preserving enough evidence for approval, adjustment, or defer.
 - Progressive elaboration: rough baseline documents set direction, but concrete work items must pass a more detailed planning/design agreement before implementation.
 - Layered standardization: core는 공통 계약만 담고, 반복 패턴은 profile로, 실제 구현 합의는 project packet으로 내린다.
 
@@ -90,11 +90,11 @@ Conflict rules:
 - 새 사용자 기획 문서는 즉시 최우선 authoritative source로 승격하고, 기존 안정성 유지는 반영 보류 근거가 되지 않는다.
 - deploy/test/cutover 작업은 explicit execution target과 environment topology 없이 진행하지 않는다.
 - generated docs는 fallback / projection 결과다.
-- PMW는 read-only다.
+- Active Context는 generated derived summary다.
 - strong surface는 designated user-facing summary만 consume한다.
 - 디자인 목업은 실제 data contract, source-to-surface mapping, 상태 전이와 맞아야 한다.
 - non-blocking diagnostics는 secondary layer로 내린다.
-- handoff, generated docs, PMW detail은 context continuity를 깨지 않도록 source trace와 복원 경로를 남긴다.
+- handoff, generated docs, Active Context는 context continuity를 깨지 않도록 source trace와 복원 경로를 남긴다.
 - SOP 예외는 묵시적으로 처리하지 않고 기록 가능한 change path를 통해서만 허용한다.
 - high-risk change, cutover, security exception은 human approval boundary 없이 닫지 않는다.
 
@@ -120,7 +120,7 @@ Conflict rules:
 - DB schema는 `release_state`, `work_item_registry`, `decision_registry`, `gate_risk_registry`, `handoff_log`, `artifact_index`, `generation_state` 7개 최소 집합으로 시작한다.
 - generated docs는 `CURRENT_STATE.md`, `TASK_LIST.md` 두 개만 first ship 대상으로 본다.
 - validator first-ship scope는 required section presence, source_ref resolve, generated docs parity, checksum/freshness drift, count/detail parity, UTF-8/mojibake, cutover preflight로 고정한다.
-- PMW는 top 4-card rail + active detail + artifact viewer + settings까지만 first ship mandatory이며, artifact viewer mandatory scope는 canonical docs, generated docs, latest handoff로 제한한다.
+- Historical PMW browser scope is no longer active after DEV-11. Active mandatory scope is CLI context/status/next/explain/doctor/handoff/validation-report plus `ACTIVE_CONTEXT.json` and Korean `ACTIVE_CONTEXT.md`.
 - security automation은 path/file operation, dependency inventory, secret scan, cutover rollback presence preflight까지만 자동화하고 최종 보안 판단은 human gate에 남긴다.
 - requirements, approval, rationale은 Markdown에 남기고, AI가 빠르게 소비해야 하는 변경성 높은 상태와 유지보수 신호만 구조화해 DB에 둔다.
 - recurring inefficiency capture와 quality/security review 결과는 first ship에서는 대응 문서 또는 existing DB-backed operational record에 남긴다.

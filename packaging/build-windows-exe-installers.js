@@ -15,7 +15,7 @@ const nodeExe = process.execPath;
 if (!fs.existsSync(nodeExe) || path.basename(nodeExe).toLowerCase() !== "node.exe") {
   throw new Error(`This builder must run on Windows with node.exe. Current runtime: ${nodeExe}`);
 }
-for (const fileName of ["StandardHarnessSetup.exe", "StandardHarnessPMWSetup.exe"]) {
+for (const fileName of ["StandardHarnessSetup.exe"]) {
   const target = path.join(outputRoot, fileName);
   if (fs.existsSync(target)) {
     throw new Error(`Windows exe already exists: ${target}`);
@@ -26,7 +26,6 @@ fs.mkdirSync(outputRoot, { recursive: true });
 fs.mkdirSync(buildRoot, { recursive: true });
 
 buildHarnessExe();
-buildPmwExe();
 copyManuals();
 
 process.stdout.write(
@@ -34,7 +33,6 @@ process.stdout.write(
     "Windows exe installers built.",
     `- Folder: ${outputRoot}`,
     "- StandardHarnessSetup.exe",
-    "- StandardHarnessPMWSetup.exe",
     "- Manuals copied for operator reference"
   ].join("\n") + "\n"
 );
@@ -45,7 +43,6 @@ function buildHarnessExe() {
   fs.mkdirSync(payload, { recursive: true });
   copyDirectory(path.join(repoRoot, "standard-template"), path.join(payload, "standard-template"));
   copyDirectory(path.join(repoRoot, "installer"), path.join(payload, "installer"));
-  copyDirectory(path.join(repoRoot, "pmw-app"), path.join(payload, "pmw-app"));
   makeZip(payload, path.join(stage, "payload.zip"));
   fs.copyFileSync(nodeExe, path.join(stage, "node.exe"));
   fs.writeFileSync(path.join(stage, "install-harness.cmd"), harnessInstallCmd(), "utf8");
@@ -61,28 +58,8 @@ function buildHarnessExe() {
   });
 }
 
-function buildPmwExe() {
-  const stage = path.join(buildRoot, "pmw");
-  const payload = path.join(stage, "payload");
-  fs.mkdirSync(payload, { recursive: true });
-  copyDirectory(path.join(repoRoot, "pmw-app"), path.join(payload, "pmw-app"));
-  makeZip(payload, path.join(stage, "payload.zip"));
-  fs.copyFileSync(nodeExe, path.join(stage, "node.exe"));
-  fs.writeFileSync(path.join(stage, "install-pmw.cmd"), pmwInstallCmd(), "utf8");
-  makeIexpressExe({
-    stage,
-    targetName: path.join(outputRoot, "StandardHarnessPMWSetup.exe"),
-    friendlyName: "Standard Harness PMW Setup",
-    appLaunched: "install-pmw.cmd",
-    installFile: "install-pmw.cmd",
-    extraFiles: [],
-    sedName: "pmw.sed"
-  });
-}
-
 function copyManuals() {
   fs.copyFileSync(path.join(repoRoot, "reference", "manuals", "HARNESS_MANUAL.md"), path.join(outputRoot, "HARNESS_MANUAL.md"));
-  fs.copyFileSync(path.join(repoRoot, "reference", "manuals", "PMW_MANUAL.md"), path.join(outputRoot, "PMW_MANUAL.md"));
 }
 
 function copyDirectory(source, target) {
@@ -214,22 +191,6 @@ function harnessInstallUiPowerShell() {
     "  [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Standard Harness Setup failed') | Out-Null",
     "  exit 1",
     "}",
-    ""
-  ].join("\r\n");
-}
-
-function pmwInstallCmd() {
-  return [
-    "@echo off",
-    "setlocal EnableExtensions",
-    "set \"WORK=%TEMP%\\StandardHarnessPMWSetup_%RANDOM%_%RANDOM%\"",
-    "mkdir \"%WORK%\" >nul 2>nul",
-    "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"Expand-Archive -LiteralPath '%~dp0payload.zip' -DestinationPath '%WORK%' -Force\"",
-    "if errorlevel 1 exit /b %ERRORLEVEL%",
-    "set \"STANDARD_HARNESS_BUNDLED_NODE=%~dp0node.exe\"",
-    "\"%~dp0node.exe\" \"%WORK%\\pmw-app\\install-pmw.js\" %*",
-    "set \"EXIT_CODE=%ERRORLEVEL%\"",
-    "exit /b %EXIT_CODE%",
     ""
   ].join("\r\n");
 }

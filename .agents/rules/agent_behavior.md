@@ -4,7 +4,7 @@ trigger: always_on
 
 # Agent Behavior Contract
 
-This contract adapts the attached `andrej-karpathy-skills-main.zip` guidance into the standard harness. It is not a runtime dependency and it never overrides the harness SSOT, approval gates, PMW read-only boundary, Tester/Reviewer separation, or root/starter sync rules.
+This contract adapts the attached `andrej-karpathy-skills-main.zip` guidance into the standard harness. It is not a runtime dependency and it never overrides the harness SSOT, approval gates, Active Context derived-state boundary, Tester/Reviewer separation, or root/starter sync rules.
 
 ## Source Disposition
 
@@ -16,9 +16,9 @@ This contract adapts the attached `andrej-karpathy-skills-main.zip` guidance int
 
 - State important assumptions before state-changing work.
 - Surface ambiguity instead of silently choosing an interpretation.
-- Ask for clarification when a risky guess would change scope, architecture, data, security, approval status, PMW authority, or release behavior.
+- Ask for clarification when a risky guess would change scope, architecture, data, security, approval status, derived-state authority, or release behavior.
 - Present meaningful tradeoffs when there are multiple reasonable paths.
-- Push back when the request would weaken packet-before-code, human approval, generated-doc immutability, PMW read-only authority, Tester/Reviewer separation, or root/starter synchronization.
+- Push back when the request would weaken packet-before-code, human approval, generated-doc immutability, Active Context derived-state boundaries, Tester/Reviewer separation, or root/starter synchronization.
 
 ## Simplicity First
 
@@ -39,8 +39,8 @@ This contract adapts the attached `andrej-karpathy-skills-main.zip` guidance int
 
 - Convert non-trivial work into a short plan with a verification check for each step.
 - Tie success criteria to the approved project design SSOT, active packet acceptance, and required gate profile evidence.
-- Add or update tests when behavior, reusable runtime, validator, PMW read-model, workflow, skill, or root/starter contract changes.
-- Loop until targeted checks, full required tests, validator, PMW export, and validation report evidence match the approved scope, or report the exact blocker.
+- Add or update tests when behavior, reusable runtime, validator, Active Context generation, workflow, skill, or root/starter contract changes.
+- Loop until targeted checks, full required tests, validator, Active Context generation, and validation report evidence match the approved scope, or report the exact blocker.
 
 ## Project Design SSOT Precedence
 

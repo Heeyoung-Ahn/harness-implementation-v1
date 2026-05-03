@@ -1,7 +1,7 @@
 import path from "node:path";
 
+import { writeActiveContext } from "./active-context.js";
 import { createOperatingStateStore, DEFAULT_DB_PATH } from "./operating-state-store.js";
-import { writePmwProjectExport } from "./project-manifest.js";
 import {
   applyMigration,
   buildMigrationPreview,
@@ -19,8 +19,8 @@ import {
 
 const command = process.argv[2];
 const repoRoot = process.env.REPO_ROOT ?? process.cwd();
-const outputDir = process.env.PMW_OUTPUT_DIR ?? repoRoot;
-const dbPath = process.env.PMW_DB_PATH ?? DEFAULT_DB_PATH;
+const outputDir = repoRoot;
+const dbPath = process.env.HARNESS_DB_PATH ?? DEFAULT_DB_PATH;
 
 const commands = {
   validate: () => runValidator({ repoRoot, outputDir, dbPath }),
@@ -30,8 +30,7 @@ const commands = {
   handoff: () => resolveHandoff({ repoRoot, outputDir, dbPath }),
   explain: () => explainCurrentBlockers({ repoRoot, outputDir, dbPath }),
   "validation-report": () => writeValidationReport({ repoRoot, outputDir, dbPath }),
-  "pmw-export": () => writeProjectExport({ repoRoot, outputDir, dbPath }),
-  "project-manifest": () => writeProjectExport({ repoRoot, outputDir, dbPath }),
+  context: () => writeContext({ repoRoot, outputDir, dbPath }),
   transition: () => runTransition({ repoRoot, outputDir, dbPath, args: process.argv.slice(3) }),
   "migration-preview": () => buildMigrationPreview({ repoRoot, dbPath }),
   "migration-apply": () => applyMigration({ repoRoot, dbPath }),
@@ -41,7 +40,7 @@ const commands = {
 
 if (!command || !commands[command]) {
   process.stderr.write(
-    "Usage: node .harness/runtime/state/dev05-cli.js <validate|doctor|status|next|handoff|explain|validation-report|pmw-export|project-manifest|transition|migration-preview|migration-apply|cutover-preflight|cutover-report>\n"
+    "Usage: node .harness/runtime/state/dev05-cli.js <validate|doctor|status|next|handoff|explain|validation-report|context|transition|migration-preview|migration-apply|cutover-preflight|cutover-report>\n"
   );
   process.exit(1);
 }
@@ -51,7 +50,7 @@ process.stdout.write(`${formatResult(result)}\n`);
 process.exit(result.ok === false || result.cutoverReady === false ? 1 : 0);
 
 function formatResult(result) {
-  if (["doctor", "status", "next", "handoff", "explain", "validation-report", "transition"].includes(result.command)) {
+  if (["doctor", "status", "next", "handoff", "explain", "validation-report", "context", "transition"].includes(result.command)) {
     return `${formatHumanSummary(result)}\n\n${JSON.stringify(result, null, 2)}`;
   }
 
@@ -143,6 +142,16 @@ function formatHumanSummary(result) {
     ].join("\n");
   }
 
+  if (result.command === "context") {
+    return [
+      "Harness Context",
+      `- JSON: ${result.jsonPath}`,
+      `- Markdown: ${result.markdownPath}`,
+      `- Current task: ${result.context.activeTask?.workItemId ?? "none"}`,
+      `- Next action: ${result.context.nextWork.action}`
+    ].join("\n");
+  }
+
   return [
     "Harness Validation Report",
     `- Result: ${result.ok ? "pass" : "fail"}`,
@@ -153,11 +162,12 @@ function formatHumanSummary(result) {
   ].join("\n");
 }
 
-function writeProjectExport({ repoRoot, outputDir, dbPath }) {
+function writeContext({ repoRoot, outputDir, dbPath }) {
   const resolvedDbPath = path.isAbsolute(dbPath) ? dbPath : path.resolve(repoRoot, dbPath);
+  const validation = runValidator({ repoRoot, outputDir, dbPath });
   const store = createOperatingStateStore({ dbPath: resolvedDbPath });
   try {
-    return writePmwProjectExport({ store, repoRoot, outputDir });
+    return writeActiveContext({ store, repoRoot, outputDir, validation });
   } finally {
     store.close();
   }

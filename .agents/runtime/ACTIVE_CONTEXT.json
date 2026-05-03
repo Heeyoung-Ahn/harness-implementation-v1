@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "standard-harness-active-context/v1",
+  "generatedAt": "2026-05-03T10:11:30.915Z",
+  "project": {
+    "repoRoot": "C:\\Newface\\30 Github\\harness-implementation-v1",
+    "name": "harness-implementation-v1"
+  },
+  "release": {
+    "stage": "verification",
+    "gate": "open",
+    "focus": "V1.3 CLI-first PMW-free harness baseline is implemented and verified; DEV-11 implementation is ready for Tester verification.",
+    "goal": "Preserve the V1.3 installable standard harness baseline while implementing DEV-11 PMW removal and Active Context replacement under the release gate.",
+    "sourceRef": "reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md"
+  },
+  "activeTask": {
+    "workItemId": "DEV-11",
+    "title": "CLI-first PMW decommission and active context implementation packet",
+    "status": "review",
+    "owner": "tester",
+    "nextAction": "Verify the implementation against the packet acceptance criteria.",
+    "sourceRef": "reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md",
+    "gateProfile": "release",
+    "readyForCode": "approved"
+  },
+  "nextWork": {
+    "owner": "tester",
+    "action": "Verify the implementation against the packet acceptance criteria."
+  },
+  "blockers": [],
+  "decisions": [],
+  "latestHandoff": {
+    "createdAt": "2026-05-03T10:11:30.883Z",
+    "fromRole": "developer",
+    "toRole": "tester",
+    "summary": "[developer -> tester] Developer implementation completed; Tester should verify the approved scope.",
+    "sourceRef": "reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md",
+    "nextFirstAction": "Verify the implementation against the packet acceptance criteria."
+  },
+  "validation": null,
+  "generatedDocs": [
+    {
+      "projectionName": "CURRENT_STATE.md",
+      "generatedAt": "2026-05-03T10:11:30.883Z",
+      "freshnessState": "fresh",
+      "sourceRevision": "2026-05-03T10:11:30.883Z"
+    },
+    {
+      "projectionName": "TASK_LIST.md",
+      "generatedAt": "2026-05-03T10:11:30.883Z",
+      "freshnessState": "fresh",
+      "sourceRevision": "2026-05-03T10:11:30.883Z"
+    }
+  ],
+  "sources": {
+    "currentState": ".agents/artifacts/CURRENT_STATE.md",
+    "taskList": ".agents/artifacts/TASK_LIST.md",
+    "implementationPlan": ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+    "projectProgress": ".agents/artifacts/PROJECT_PROGRESS.md",
+    "activeProfiles": ".agents/artifacts/ACTIVE_PROFILES.md",
+    "generatedCurrentState": ".agents/runtime/generated-state-docs/CURRENT_STATE.md",
+    "generatedTaskList": ".agents/runtime/generated-state-docs/TASK_LIST.md",
+    "validationReport": ".agents/artifacts/VALIDATION_REPORT.json",
+    "activePacket": "reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md"
+  }
+}

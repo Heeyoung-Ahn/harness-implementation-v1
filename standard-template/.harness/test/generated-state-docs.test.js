@@ -37,7 +37,7 @@ test("writes deterministic generated docs and validates them successfully", () =
     decisionId: "DEC-01",
     title: "Choose generated doc structure",
     decisionNeeded: true,
-    impactSummary: "Impacts PMW source mapping",
+    impactSummary: "Impacts Active Context source mapping",
     sourceRef: ".agents/artifacts/ARCHITECTURE_GUIDE.md"
   });
   store.recordGateRisk({
@@ -147,7 +147,7 @@ test("detects tampered generated docs, missing sections, and stale freshness", (
     decisionId: "DEC-01",
     title: "Choose generated doc structure",
     decisionNeeded: true,
-    impactSummary: "Impacts PMW source mapping",
+    impactSummary: "Impacts Active Context source mapping",
     sourceRef: ".agents/artifacts/ARCHITECTURE_GUIDE.md"
   });
   store.recordGateRisk({
@@ -724,13 +724,11 @@ function seedRepoFiles(repoRoot) {
 
 function seedMaintainerReleaseFiles(repoRoot, { stale = false } = {}) {
   fs.mkdirSync(path.join(repoRoot, "installer"), { recursive: true });
-  fs.mkdirSync(path.join(repoRoot, "pmw-app"), { recursive: true });
   fs.mkdirSync(path.join(repoRoot, "packaging"), { recursive: true });
   fs.mkdirSync(path.join(repoRoot, "reference", "manuals"), { recursive: true });
   fs.mkdirSync(path.join(repoRoot, "reference", "artifacts"), { recursive: true });
 
   fs.writeFileSync(path.join(repoRoot, "installer", "install-harness.js"), "// harness installer\n", "utf8");
-  fs.writeFileSync(path.join(repoRoot, "pmw-app", "install-pmw.js"), "// pmw installer\n", "utf8");
   fs.writeFileSync(path.join(repoRoot, "packaging", "build-windows-exe-installers.js"), "// release build\n", "utf8");
   fs.writeFileSync(path.join(repoRoot, "packaging", "build-release-package.js"), "// release build\n", "utf8");
   fs.writeFileSync(
@@ -738,12 +736,6 @@ function seedMaintainerReleaseFiles(repoRoot, { stale = false } = {}) {
     `# Harness Manual\n\n${RELEASE_BASELINE.label} installable harness baseline.\n`,
     "utf8"
   );
-  fs.writeFileSync(
-    path.join(repoRoot, "reference", "manuals", "PMW_MANUAL.md"),
-    `# PMW Manual\n\n${RELEASE_BASELINE.label} separate PMW baseline.\n`,
-    "utf8"
-  );
-
   if (stale) {
     fs.writeFileSync(
       path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"),

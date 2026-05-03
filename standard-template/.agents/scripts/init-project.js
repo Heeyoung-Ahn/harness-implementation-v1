@@ -61,8 +61,8 @@ const userGoal =
 const opsGoal =
   options["ops-goal"] ??
   (options["non-interactive"]
-    ? `${projectName} 운영 상태와 다음 행동을 live artifacts와 PMW에서 빠르게 복원한다.`
-    : await prompt("Operator goal", `${projectName} 운영 상태와 다음 행동을 live artifacts와 PMW에서 빠르게 복원한다.`));
+    ? `${projectName} 운영 상태와 다음 행동을 CLI와 Active Context에서 빠르게 복원한다.`
+    : await prompt("Operator goal", `${projectName} 운영 상태와 다음 행동을 CLI와 Active Context에서 빠르게 복원한다.`));
 const approvalGoal =
   options["approval-goal"] ??
   (options["non-interactive"]

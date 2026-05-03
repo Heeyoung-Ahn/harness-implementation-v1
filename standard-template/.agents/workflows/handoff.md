@@ -14,7 +14,7 @@
 - Keep every changed line traceable to the user request, approved packet, or required verification evidence.
 
 ## Authority
-- Record baton state across `CURRENT_STATE.md`, `TASK_LIST.md`, DB hot-state, and PMW-visible routing surfaces.
+- Record baton state across `CURRENT_STATE.md`, `TASK_LIST.md`, DB hot-state, and Active Context routing surfaces.
 - Resolve the next workflow target from approved routing rules and launch the next workflow path.
 
 ## Non-Authority
@@ -46,7 +46,7 @@
 ## Required Outputs
 - A structured baton record that identifies completed scope, remaining scope, next first action, next owner, required SSOT, and blockers or risks.
 - Updated current-state and task-list ownership signals that match the baton.
-- A routeable workflow target for PMW and CLI handoff surfaces.
+- A routeable workflow target for CLI and Active Context handoff surfaces.
 
 ## Turn Close Reporting
 - At the end of every turn, report in two blocks: `Current Work` and `Next Work`.
