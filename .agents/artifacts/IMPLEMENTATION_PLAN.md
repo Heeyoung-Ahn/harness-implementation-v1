@@ -11,7 +11,7 @@
 
 2026-04-27 `PLN-07` opened as the V1.3 PMW operator-console and workflow-contract planning lane. It closed on 2026-05-02 after delivering the approved PMW operator console first view, workflow contracts/handoff routing, PM workflow addition, PMW phase-1 command launcher, terminal-only guidance, and handoff baton execution behavior through `DEV-07`, `DEV-08`, and `DEV-09`.
 
-2026-05-02 `OPS-03` is now rebaselined as the harness operation reliability planning lane. It keeps the DEV-07 through DEV-09 PMW V1.3 evidence stable while combining operation friction reduction, approval/SSOT consistency protection, current-state/history separation, transition automation, and applicable agent behavior guidance from the attached Karpathy-style package.
+2026-05-03 `OPS-03` is closed after revised-scope implementation, remediation, Tester re-verification, Reviewer approval, and Planner closeout. The next active planning lane is `PLN-08`, which defines the V1.3 phase-2 PMW command surface after the phase-1 launcher and the OPS-03 reliability rebaseline.
 
 ## Follow-Up Phase Plan
 1. approved release-ready baseline을 보존하면서 follow-up planning lane을 연다.
@@ -61,27 +61,7 @@
 - REV-01 architecture / review gate
 
 ### Active Follow-Up Tasks
-- PLN-07 V1.3 PMW operator console and workflow-contract planning
-- DEV-07 PMW V1.3 operator console first-view packet
-- DEV-08 workflow contracts and handoff routing packet
-- DEV-09 PMW phase-1 command launcher and handoff execution packet
-- OPS-03 harness operation friction reduction packet
-- PLN-03 core / optional profile / project packet activation contract
-- PLN-04 domain foundation gate
-- PLN-05 authoritative source contract
-- DSG-02 product UX archetype contract
-- OPS-02 environment topology contract
-- QLT-01 packet exit quality gate
-- OPS-01 improvement promotion loop
-- PRF-01 admin grid application profile
-- PRF-02 authoritative spreadsheet source profile
-- PRF-03 airgapped delivery profile
-- TST-03 profile-aware validator
-- REV-02 standard harness generalization review
-- SIM-01 multi-profile packet composition contract
-- SIM-02 task-packet registration enforcement
-- SIM-03 shared-source rebaseline control
-- REV-03 simulation remediation review
+- PLN-08 V1.3 PMW phase-2 command surface planning
 
 ## DEV-06 Execution
 ### Goal
@@ -438,17 +418,18 @@ Define the next `PLN-07` implementation packet so PMW can execute the approved p
 ## OPS-03 Harness Operation Reliability And Friction Reduction
 
 ### Goal
-Reduce repeated manual overhead and interruption risk by defining risk-based gate profiles, transition automation, approval/SSOT consistency checks, current-state/history separation, and thin agent behavior guidance while preserving the strict governance rules that protect reusable core changes.
+Reduce repeated manual overhead and interruption risk by defining risk-based gate profiles, transition automation, approval/SSOT consistency checks, current-state/history separation, sufficiently integrated Karpathy-style behavior guidance, project-design SSOT precedence, and PMW design-artifact access while preserving the strict governance rules that protect reusable core changes.
 
 ### Status
-- Planning: packet rebaselined on 2026-05-02 after user direction to combine three related harness-improvement themes.
-- Active owner: `Planner`.
-- Detailed agreement and `Ready For Code`: pending user approval for the expanded scope.
-- Interrupted partial implementation: present in the worktree and must be reviewed/reconciled before Developer continuation.
+- Closed on 2026-05-03 after revised-scope implementation, CURRENT_STATE transition remediation, Tester re-verification, Reviewer re-check approval, and Planner closeout.
+- Historical implementation and remediation evidence remains authoritative in the OPS-03 packet, walkthrough, review report, validation report, and PMW/read-model state.
 
 ### Input
 - User feedback on 2026-05-02 that current harness work repeatedly requires state alignment and should be examined seriously.
 - User feedback on 2026-05-02 that the approval-state/SSOT inconsistency and attached agent behavior guide are part of the same harness-efficiency problem.
+- User clarification on 2026-05-03 that the attached guide should be sufficiently reflected, not reduced to thin guidance, as long as it does not conflict with the harness direction.
+- User requirement on 2026-05-03 that human-and-Planner-approved project design SSOT must guide Developer implementation, Tester verification, Reviewer closeout, and other agent behavior.
+- User requirement on 2026-05-03 that PMW Artifact Library widen the reading body and keep whole-project design/overview artifacts always available as one category.
 - `C:/Users/ahyne/Downloads/andrej-karpathy-skills-main.zip`
 - `.agents/artifacts/PREVENTIVE_MEMORY.md`
 - `reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md`
@@ -460,19 +441,46 @@ Reduce repeated manual overhead and interruption risk by defining risk-based gat
 - transition automation scope for common workflow handoffs and state closeout
 - current-state/history separation rule that keeps context restoration short and source-traceable
 - disposition of the interrupted partial OPS-03 implementation before new Developer work
-- thin reusable agent behavior guidance based on assumptions, simplicity, surgical changes, and verifiable success criteria
+- sufficiently integrated Karpathy-style behavior guidance across workflows, skills, manuals, and validation/regression coverage
+- explicit project-design SSOT precedence contract for Planner, Developer, Tester, Reviewer, and other agents
+- standardized workflow turn-close reporting with `Current Work` and `Next Work` blocks, including current issues/decisions and next expected issues/decisions
+- PMW Artifact Library project-design/overview category and wider artifact body reading requirement
 - verification manifest by gate profile
 - validator/test expectations for profile evidence and transition drift
 - root/starter synchronization plan for reusable runtime/test changes
 
 ### Exit Criteria
-- user approves or adjusts expanded detailed scope and `Ready For Code`
-- implementation does not weaken packet-before-code, PMW read-only authority, generated-doc immutability, root/starter sync, Tester/Reviewer separation, or human approval gates
-- validator can detect missing or incompatible gate-profile evidence
-- validator can detect approval-state mismatch between packet, DB, canonical docs, generated docs, PMW export, and handoff evidence
-- transition automation prevents inconsistent SSOT/DB/generated/PMW/validation-report/handoff state updates
-- `CURRENT_STATE.md` becomes shorter without losing active work and source trace
-- agent behavior guidance is applied as thin workflow/skill guidance without becoming a heavy new ceremony layer
+- Closed. All revised scope, remediation, verification, review, and planner closeout criteria were met on 2026-05-03.
+
+## PLN-08 PMW V1.3 Phase-2 Command Surface Planning
+
+### Goal
+Define the next V1.3 planning lane that decides whether `doctor`, `test`, and `validation-report` remain terminal-only guidance or move into a later PMW command-surface implementation packet.
+
+### Status
+- Opened on 2026-05-03 after `OPS-03` closeout.
+- Active owner: `Planner`.
+- Current approval boundary: user approval is required before any phase-2 implementation packet opens.
+
+### Input
+- `reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md`
+- `.agents/artifacts/REQUIREMENTS.md`
+- `.agents/artifacts/ARCHITECTURE_GUIDE.md`
+- `.agents/artifacts/TASK_LIST.md`
+- `.agents/artifacts/PREVENTIVE_MEMORY.md`
+- `reference/packets/PKT-01_DEV-09_PMW_PHASE_1_COMMAND_LAUNCHER_AND_HANDOFF_EXECUTION.md`
+- `reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md`
+
+### Required Output
+- a concrete recommendation for which terminal-only commands are promoted in the first phase-2 packet
+- explicit non-scope for commands that remain terminal-only
+- confirmation, result-surface, and verification expectations for the promoted command set
+- a later implementation packet boundary that preserves PMW read-only authority and root/starter sync
+
+### Exit Criteria
+- the first phase-2 PMW command-surface packet is concrete enough for user approval
+- the packet names which commands are promoted now and which are deferred
+- `Developer`, `Tester`, and `Reviewer` can work from one SSOT without reopening phase-1 or `OPS-03`
 
 ## SIM-01 Execution
 ### Goal
@@ -909,7 +917,7 @@ transfer-bound or airgapped delivery 환경에서 반복되는 bundle handoff와
 8. 구현 후 `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`를 사용해 packet exit quality gate reference, source parity, residual debt disposition, UX/topology/schema conformance, validation/security/cleanup evidence, deferred follow-up item을 정리하고, 반복 friction이 보이면 `.agents/artifacts/PREVENTIVE_MEMORY.md`에 improvement candidate reference, proposed target layer, promotion status, linked follow-up item을 남긴 뒤 closeout hold 조건이 없을 때만 security review와 validator check를 함께 닫는다.
 
 ## Operator Next Action
-- `OPS-03` active handoff is `developer -> tester`.
-- Re-verify OPS-03 reviewer-finding remediation: Ready For Code transition guards, open-decision guard, post-apply validation failure reporting, Implementation Plan PMW Next Action freshness, tests, validator, PMW export, and validation report.
-- Source packet: `reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md`.
+- `PLN-08` active handoff is `planner -> planner`.
+- Planner should finish the PLN-08 draft and get user approval on the phase-2 PMW command promotion scope before any implementation packet opens.
+- Source packet: `reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md`.
 - Preserve packet-before-code, PMW read-only authority, generated-doc immutability, root/starter sync, Tester/Reviewer separation, and human approval gates.

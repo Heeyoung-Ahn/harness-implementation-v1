@@ -2,6 +2,131 @@
 
 Use this artifact when the project enters a formal review gate.
 
+## 2026-05-03 OPS-03 Revised-Scope Closeout Re-Check
+
+- Scope: Reviewer re-check for `OPS-03` after Developer remediated the stale `CURRENT_STATE` transition wording and Tester re-verified the remediation.
+- Entry condition:
+  - Developer remediation evidence was added to `reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md`.
+  - Tester re-verification evidence was added to `reference/artifacts/WALKTHROUGH.md`.
+  - Root/starter targeted regression tests, root/starter full tests, validator, PMW export, and validation report were rerun and passed after the remediation.
+- Evidence reviewed:
+  - `reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md`
+  - `reference/artifacts/WALKTHROUGH.md`
+  - `.agents/artifacts/CURRENT_STATE.md`
+  - `.agents/artifacts/TASK_LIST.md`
+  - `.agents/artifacts/VALIDATION_REPORT.md`
+  - `.agents/runtime/pmw-read-model.json`
+  - `.harness/runtime/state/dev05-tooling.js`
+  - `standard-template/.harness/runtime/state/dev05-tooling.js`
+  - `.harness/test/dev05-tooling.test.js`
+  - `standard-template/.harness/test/dev05-tooling.test.js`
+- Findings:
+  - no open review finding remains.
+- Review result:
+  - Canonical `CURRENT_STATE.md` now updates the active work-item truth note with the same transition state that drives the main active-handoff bullet.
+  - Reviewer-source remediation loops preserve `Ready For Code: approved` instead of degrading the display to an empty status.
+  - Root and `standard-template` remain synchronized for the reusable transition/runtime/test changes.
+  - PMW export again uses the active OPS-03 packet as the active packet source and no stale current-state wording remains in the canonical state surface reviewed for closeout.
+  - Residual debt disposition: none for the reviewed remediation scope.
+- Validation:
+  - root `node --test .harness\test\dev05-tooling.test.js`: 20/20 pass.
+  - `standard-template` `node --test standard-template\.harness\test\dev05-tooling.test.js`: 20/20 pass.
+  - root `npm.cmd test`: 46/46 pass.
+  - `standard-template` `npm.cmd test`: 46/46 pass.
+  - root `npm.cmd run harness:validate`: findings `[]`.
+  - root `npm.cmd run harness:pmw-export`: pass.
+  - root `npm.cmd run harness:validation-report`: gate decision `pass`, findings `[]`.
+- Packet exit decision:
+  - approved
+- Next handoff:
+  - Planner should record OPS-03 closeout and choose the next approved lane.
+- Status: done
+
+## 2026-05-03 OPS-03 Revised-Scope Closeout Review
+
+- Scope: closeout readiness review for the revised `OPS-03` scope after revised-scope Tester verification passed and the active handoff moved to `tester -> reviewer`.
+- Entry condition:
+  - Revised-scope Tester verification evidence was recorded in `reference/artifacts/WALKTHROUGH.md`.
+  - Root/starter targeted tests, root/starter full tests, `pmw-app` tests, validator, PMW export, and validation report were rerun and passed on 2026-05-03.
+- Evidence reviewed:
+  - `reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md`
+  - `reference/artifacts/WALKTHROUGH.md`
+  - `reference/artifacts/REVIEW_REPORT.md`
+  - `.agents/artifacts/CURRENT_STATE.md`
+  - `.agents/artifacts/TASK_LIST.md`
+  - `.agents/artifacts/VALIDATION_REPORT.md`
+  - `.agents/artifacts/REQUIREMENTS.md`
+  - `.agents/artifacts/ARCHITECTURE_GUIDE.md`
+  - `.agents/artifacts/IMPLEMENTATION_PLAN.md`
+- Findings:
+  - After `harness:transition -- --transition tester-to-reviewer --apply` succeeded on 2026-05-03, `.agents/artifacts/CURRENT_STATE.md` still contains stale revised-scope wording: `Revised Developer implementation evidence is recorded; Tester verification and Reviewer closeout remain pending.` and `revised Developer evidence is now recorded and must be verified by Tester before Reviewer closeout.` This conflicts with the live owner/state that already moved to `reviewer` and shows the OPS-03 stale current-state problem is not fully closed.
+- Risk:
+  - Reviewer cannot approve packet exit while the canonical current-state surface still reports a completed gate as pending.
+  - The stale wording weakens OPS-03's approval/SSOT consistency and current-state/history-separation acceptance because the operator-facing canonical doc remains partially behind the true lane state after transition.
+- Required remediation:
+  - Update the canonical current-state transition refresh path so reviewer-facing transitions also rewrite or remove stale phase-specific residual bullets, not only the main active-work bullet.
+  - Add regression coverage and/or validator enforcement that catches stale current-state gate wording after state transitions.
+  - Rerun the relevant root/starter transition tests, full tests, validator, PMW export, and validation report after remediation, then return to Tester for re-verification.
+- Packet exit decision:
+  - hold
+- Next handoff:
+  - Developer should remediate the current-state stale-transition wording and add coverage so the same stale state cannot pass into Reviewer closeout again.
+- Status: hold; Developer remediation required
+
+## 2026-05-03 OPS-03 User-Directed Planning Reopen
+
+- Scope: Planner rebaseline after the user clarified the intended treatment of Reviewer feedback and the attached Karpathy-style behavior guide.
+- Trigger:
+  - Reviewer closeout readiness re-check held `OPS-03` for current-state/history separation and insufficient behavior guidance adoption.
+  - User clarified that the guide must not be thinned down; it should be sufficiently reflected while staying compatible with this harness's SSOT, approval, workflow, Tester, Reviewer, PMW read-only, and root/starter sync contracts.
+  - User added that human-and-Planner-approved project design SSOT must guide every other agent, and PMW Artifact Library must keep whole-project design artifacts always available with a wider reading body.
+- Review disposition:
+  - The previous `reviewer -> developer` remediation path is superseded as the immediate next action.
+  - Prior Developer remediation evidence remains historical evidence, but closeout must wait for the revised Planner agreement and later implementation/verification under the clarified scope.
+- Next handoff:
+  - Planner should revise the OPS-03 agreement and acceptance criteria before Developer resumes.
+- Status: planning reopened
+
+## 2026-05-03 OPS-03 Closeout Readiness Re-Check
+
+- Scope: closeout readiness review for `OPS-03` after Tester re-verification of the Reviewer-finding remediation.
+- Entry condition:
+  - Tester re-verification passed after transition guard remediation.
+  - Root/starter targeted transition tests, root/starter full tests, PMW app tests, validator, PMW export, and validation report were recorded as passing.
+- Evidence reviewed:
+  - `reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md`
+  - `reference/artifacts/WALKTHROUGH.md`
+  - `.agents/artifacts/CURRENT_STATE.md`
+  - `.agents/artifacts/TASK_LIST.md`
+  - `.agents/artifacts/VALIDATION_REPORT.md`
+  - `.agents/runtime/pmw-read-model.json`
+  - `.agents/workflows/dev.md`
+  - `.agents/workflows/test.md`
+  - `.agents/workflows/review.md`
+  - `.agents/workflows/plan.md`
+  - `.agents/skills/day_start/SKILL.md`
+  - `.agents/skills/day_wrap_up/SKILL.md`
+  - `standard-template/.agents/workflows/dev.md`
+  - `standard-template/.agents/workflows/test.md`
+  - `standard-template/.agents/workflows/review.md`
+  - `standard-template/.agents/workflows/plan.md`
+  - `standard-template/.agents/skills/day_start/SKILL.md`
+  - `standard-template/.agents/skills/day_wrap_up/SKILL.md`
+- Findings:
+  - `CURRENT_STATE.md` still carries stale OPS-03 gate wording after the active handoff moved to `tester -> reviewer`: the document says the current remaining gate is Tester re-verification before Reviewer closeout resumes. It also remains long and dominated by closed `PLN-07` / `DEV-07` / `DEV-08` / `DEV-09` history, so the OPS-03 current-state/history separation acceptance is not met.
+  - The attached Karpathy-style behavior guidance is not yet integrated as the compact workflow/skill guidance required by OPS-03. Searches across root and `standard-template` role workflows plus `day_start` / `day_wrap_up` skills found no explicit `Think Before Coding`, `Simplicity First`, `Surgical Changes`, or `Goal-Driven Execution` guidance. The current implementation should be treated as partial day-start/day-wrap-up reflection, not completed adoption.
+- Required remediation:
+  - Refresh the `CURRENT_STATE.md` update path so transition/current-focus text cannot remain on a completed previous gate after handoff, and move closed-lane history out of the current-state surface while preserving authoritative history elsewhere.
+  - Add regression coverage or validator checks that catch stale current gate text and excessive closed-lane history in `CURRENT_STATE.md`.
+  - Add a thin reusable behavior guidance surface for the four Karpathy-style principles and wire it into the relevant root and `standard-template` role workflows/skills without making the ZIP a runtime dependency.
+  - Include Tester workflow expectations for comparing implementation against requirements/acceptance and handing improvement requests back to Developer when requirements are not met.
+  - Rerun root/starter tests, validator, PMW export, validation report, and Tester workflow verification after remediation.
+- Packet exit decision:
+  - hold
+- Next handoff:
+  - Developer should remediate the current-state/history split and agent behavior guidance adoption gaps, then return to Tester.
+- Status: hold; Developer remediation required
+
 ## 2026-05-03 OPS-03 Review Finding
 
 - Scope: packet exit closeout review for `OPS-03` harness operation reliability and friction reduction after Tester re-verification passed.

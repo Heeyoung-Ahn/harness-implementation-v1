@@ -30,6 +30,15 @@ The brief should make the first execution step obvious while preserving workflow
 - evidence gaps that would make the next action unsafe to start
 - the first concrete action
 
+## Behavior Checks
+
+- Apply `.agents/rules/agent_behavior.md` before recommending non-trivial work.
+- Use `Think Before Coding`: state important assumptions, surface ambiguity, and flag SSOT conflicts instead of guessing.
+- Use `Simplicity First`: recommend the smallest next workflow/action that can safely move the approved scope.
+- Use `Surgical Changes`: do not fold unrelated cleanup or adjacent improvements into the first action.
+- Use `Goal-Driven Execution`: make the first action verifiable against the approved project design SSOT, active packet, and gate evidence.
+- Treat human-and-Planner-approved project design SSOT as binding for the next owner.
+
 ## Output Contract
 
 Return a concise start brief with these sections:

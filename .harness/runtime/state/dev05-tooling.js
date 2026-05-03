@@ -328,7 +328,7 @@ function buildTransitionPlan({ store, repoRoot, options }) {
   const status = options.status ?? transitionDefaults.status ?? workItem?.status ?? "in_progress";
   const sourceRef = options.sourceRef ?? workItem?.sourceRef ?? releaseState?.sourceRef ?? ".agents/artifacts/TASK_LIST.md";
   const gateProfile = resolveTransitionGateProfile({ options, workItem, repoRoot });
-  const packetReadyForCode = readPacketReadyForCode(repoRoot, sourceRef);
+  const packetReadyForCode = readPacketReadyForCode(repoRoot, sourceRef) || workItem?.metadata?.readyForCode || null;
   const closeDecisions = parseListOption(options.closeDecision ?? options.closeDecisions);
   const openReadyForCodeDecision = workItem ? findOpenReadyForCodeTransitionDecision(store, workItem) : null;
   const summary =
@@ -383,6 +383,7 @@ function buildTransitionPlan({ store, repoRoot, options }) {
     apply: false,
     transition,
     workItemId: workItemId ?? null,
+    workItemTitle: workItem?.title ?? null,
     fromOwner,
     toOwner,
     status,
@@ -400,6 +401,7 @@ function buildTransitionPlan({ store, repoRoot, options }) {
       ".agents/artifacts/TASK_LIST.md",
       ".agents/artifacts/CURRENT_STATE.md",
       ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+      ".agents/artifacts/PROJECT_PROGRESS.md",
       ".harness/operating_state.sqlite",
       ".agents/runtime/generated-state-docs/CURRENT_STATE.md",
       ".agents/runtime/generated-state-docs/TASK_LIST.md",
@@ -460,6 +462,7 @@ function applyTransitionPlan({ store, repoRoot, outputDir, plan, options }) {
     ...(store.getWorkItem(plan.workItemId)?.metadata ?? {}),
     gateProfile: plan.gateProfile,
     ...(plan.readyForCode === "approved" ? { readyForCode: "approved" } : {}),
+    ...(isClosedStatus(plan.status) ? { closedAt: timestamp, closedBy: plan.toOwner ?? "unknown" } : {}),
     lastTransition: {
       transition: plan.transition,
       fromOwner: plan.fromOwner,
@@ -529,6 +532,7 @@ function applyTransitionPlan({ store, repoRoot, outputDir, plan, options }) {
   updateCanonicalTaskList({ repoRoot, plan, timestamp });
   updateCanonicalCurrentState({ repoRoot, plan, timestamp });
   updateCanonicalImplementationPlan({ repoRoot, plan });
+  updateCanonicalProjectProgress({ repoRoot, plan });
   const generatedDocs = writeGeneratedStateDocs({ store, outputDir });
   const pmwExport = writePmwProjectExport({ store, repoRoot, outputDir });
 
@@ -616,16 +620,47 @@ function updateCanonicalTaskList({ repoRoot, plan, timestamp }) {
     return;
   }
   let content = fs.readFileSync(taskListPath, "utf8");
-  content = updateMarkdownTableRow(content, "## Active Locks", "Task ID", plan.workItemId, {
-    Owner: plan.toOwner,
-    Status: "active",
-    Notes: `${plan.transition}; gate ${plan.gateProfile}; ${plan.nextAction}`
-  });
-  content = updateMarkdownTableRow(content, "## Active Tasks", "Task ID", plan.workItemId, {
-    Owner: plan.toOwner,
-    Status: plan.status,
-    Verification: `gate ${plan.gateProfile}; ${plan.nextAction}`
-  });
+  if (isClosedStatus(plan.status)) {
+    content = removeMarkdownTableRow(content, "## Active Locks", "Task ID", plan.workItemId);
+    content = ensureMarkdownTablePlaceholderRow(content, "## Active Locks", [
+      "-",
+      "None",
+      "-",
+      "clear",
+      "-",
+      "-"
+    ]);
+    content = removeMarkdownTableRow(content, "## Active Tasks", "Task ID", plan.workItemId);
+    content = ensureMarkdownTablePlaceholderRow(content, "## Active Tasks", [
+      "-",
+      "None",
+      "-",
+      "-",
+      "clear",
+      "-",
+      "-",
+      "-"
+    ]);
+    content = removeMarkdownTableRow(content, "## Completed Tasks", "Task ID", "-");
+    content = upsertMarkdownTableRow(content, "## Completed Tasks", "Task ID", plan.workItemId, {
+      "Task ID": plan.workItemId,
+      Title: plan.workItemTitle ?? plan.workItemId,
+      "Completed At": timestamp.slice(0, 10),
+      Verification: `transition ${plan.fromOwner ?? "unknown"} -> ${plan.toOwner ?? "unknown"}; gate ${plan.gateProfile}`,
+      Notes: `${plan.summary} ${plan.nextAction}`.trim()
+    });
+  } else {
+    content = updateMarkdownTableRow(content, "## Active Locks", "Task ID", plan.workItemId, {
+      Owner: plan.toOwner,
+      Status: "active",
+      Notes: `${plan.transition}; gate ${plan.gateProfile}; ${plan.nextAction}`
+    });
+    content = updateMarkdownTableRow(content, "## Active Tasks", "Task ID", plan.workItemId, {
+      Owner: plan.toOwner,
+      Status: plan.status,
+      Verification: `gate ${plan.gateProfile}; ${plan.nextAction}`
+    });
+  }
   content = prependSectionBullet(
     content,
     "## Handoff Log",
@@ -650,6 +685,12 @@ function updateCanonicalCurrentState({ repoRoot, plan, timestamp }) {
     `\`${plan.workItemId}`,
     buildCurrentWorkItemStateBullet(plan)
   );
+  content = replaceOrPrependSectionBulletContaining(
+    content,
+    "## Current Truth Notes",
+    `\`${plan.workItemId}`,
+    buildCurrentTruthNote(plan)
+  );
   content = prependSectionBullet(
     content,
     "## Latest Handoff Summary",
@@ -664,20 +705,57 @@ function updateCanonicalImplementationPlan({ repoRoot, plan }) {
     return;
   }
   let content = fs.readFileSync(implementationPlanPath, "utf8");
-  content = replaceSectionBullets(content, "## Operator Next Action", [
-    `- \`${plan.workItemId}\` active handoff is \`${plan.fromOwner ?? "unknown"} -> ${plan.toOwner}\`.`,
-    `- ${plan.nextAction}`,
-    `- Source packet: \`${plan.sourceRef}\`.`,
-    "- Preserve packet-before-code, PMW read-only authority, generated-doc immutability, root/starter sync, Tester/Reviewer separation, and human approval gates."
-  ]);
+  content = replaceSectionBullets(
+    content,
+    "## Operator Next Action",
+    isClosedStatus(plan.status)
+      ? [
+          `- \`${plan.workItemId}\` is closed; latest closeout handoff is \`${plan.fromOwner ?? "unknown"} -> ${plan.toOwner}\`.`,
+          `- ${plan.nextAction}`,
+          `- Source packet: \`${plan.sourceRef}\`.`,
+          "- Preserve packet-before-code, PMW read-only authority, generated-doc immutability, root/starter sync, Tester/Reviewer separation, and human approval gates."
+        ]
+      : [
+          `- \`${plan.workItemId}\` active handoff is \`${plan.fromOwner ?? "unknown"} -> ${plan.toOwner}\`.`,
+          `- ${plan.nextAction}`,
+          `- Source packet: \`${plan.sourceRef}\`.`,
+          "- Preserve packet-before-code, PMW read-only authority, generated-doc immutability, root/starter sync, Tester/Reviewer separation, and human approval gates."
+        ]
+  );
   fs.writeFileSync(implementationPlanPath, content, "utf8");
 }
 
 function buildCurrentWorkItemStateBullet(plan) {
+  if (isClosedStatus(plan.status)) {
+    return `- \`${plan.workItemId}\` is closed; latest handoff is \`${plan.fromOwner ?? "unknown"} -> ${plan.toOwner}\`. ${plan.nextAction}`;
+  }
   const approvalText = plan.readyForCode === "approved"
     ? "Ready For Code is approved"
     : `Ready For Code status is ${plan.readyForCode ?? "unknown"}`;
   return `- \`${plan.workItemId}\` ${approvalText}; active handoff is \`${plan.fromOwner ?? "unknown"} -> ${plan.toOwner}\`. ${plan.nextAction}`;
+}
+
+function buildCurrentTruthNote(plan) {
+  if (isClosedStatus(plan.status)) {
+    return `- \`${plan.workItemId}\` is closed. Latest handoff is \`${plan.fromOwner ?? "unknown"} -> ${plan.toOwner}\`; stage is \`${plan.currentStage ?? "unknown"}\`; gate profile is \`${plan.gateProfile ?? "unknown"}\`.`;
+  }
+  return `- \`${plan.workItemId}\` remains the active work item. Current handoff is \`${plan.fromOwner ?? "unknown"} -> ${plan.toOwner}\`; stage is \`${plan.currentStage ?? "unknown"}\`; gate profile is \`${plan.gateProfile ?? "unknown"}\`.`;
+}
+
+function updateCanonicalProjectProgress({ repoRoot, plan }) {
+  const progressPath = path.resolve(repoRoot, ".agents/artifacts/PROJECT_PROGRESS.md");
+  if (!fs.existsSync(progressPath)) {
+    return;
+  }
+  const progressStatus = isClosedStatus(plan.status)
+    ? "done"
+    : (plan.currentStage ?? plan.status ?? "in_progress");
+  let content = fs.readFileSync(progressPath, "utf8");
+  content = updateMarkdownTableRow(content, "## Progress Board", "Task ID", plan.workItemId, {
+    Status: progressStatus,
+    Notes: `${plan.summary} ${plan.nextAction}`.trim()
+  });
+  fs.writeFileSync(progressPath, content, "utf8");
 }
 
 function updateMarkdownTableRow(content, sectionHeading, keyColumn, keyValue, updates) {
@@ -710,6 +788,87 @@ function updateMarkdownTableRow(content, sectionHeading, keyColumn, keyValue, up
     return `${content.slice(0, range.start)}${updatedSection}${content.slice(range.end)}`;
   }
   return content;
+}
+
+function upsertMarkdownTableRow(content, sectionHeading, keyColumn, keyValue, updates) {
+  const updated = updateMarkdownTableRow(content, sectionHeading, keyColumn, keyValue, updates);
+  if (updated !== content) {
+    return updated;
+  }
+
+  const range = findSectionRange(content, sectionHeading);
+  if (!range) {
+    return content;
+  }
+  const section = content.slice(range.start, range.end);
+  const lines = section.split(/\r?\n/);
+  const tableStart = lines.findIndex((line) => line.trim().startsWith("|"));
+  if (tableStart === -1 || !lines[tableStart + 1]?.includes("---")) {
+    return content;
+  }
+  const headers = parseTableCells(lines[tableStart]);
+  const row = headers.map((header) => updates[header] ?? "");
+  let insertIndex = tableStart + 2;
+  while (insertIndex < lines.length && lines[insertIndex].trim().startsWith("|")) {
+    insertIndex += 1;
+  }
+  lines.splice(insertIndex, 0, `| ${row.map(escapeMarkdownCell).join(" | ")} |`);
+  return `${content.slice(0, range.start)}${lines.join("\n")}${content.slice(range.end)}`;
+}
+
+function removeMarkdownTableRow(content, sectionHeading, keyColumn, keyValue) {
+  const range = findSectionRange(content, sectionHeading);
+  if (!range) {
+    return content;
+  }
+  const section = content.slice(range.start, range.end);
+  const lines = section.split(/\r?\n/);
+  const tableStart = lines.findIndex((line) => line.trim().startsWith("|"));
+  if (tableStart === -1 || !lines[tableStart + 1]?.includes("---")) {
+    return content;
+  }
+  const headers = parseTableCells(lines[tableStart]);
+  const keyIndex = headers.indexOf(keyColumn);
+  if (keyIndex === -1) {
+    return content;
+  }
+  for (let index = tableStart + 2; index < lines.length; index += 1) {
+    if (!lines[index].trim().startsWith("|")) {
+      break;
+    }
+    const cells = parseTableCells(lines[index]);
+    if (cells[keyIndex] !== keyValue) {
+      continue;
+    }
+    lines.splice(index, 1);
+    return `${content.slice(0, range.start)}${lines.join("\n")}${content.slice(range.end)}`;
+  }
+  return content;
+}
+
+function ensureMarkdownTablePlaceholderRow(content, sectionHeading, rowValues) {
+  const range = findSectionRange(content, sectionHeading);
+  if (!range) {
+    return content;
+  }
+  const section = content.slice(range.start, range.end);
+  const lines = section.split(/\r?\n/);
+  const tableStart = lines.findIndex((line) => line.trim().startsWith("|"));
+  if (tableStart === -1 || !lines[tableStart + 1]?.includes("---")) {
+    return content;
+  }
+  const dataRows = [];
+  for (let index = tableStart + 2; index < lines.length; index += 1) {
+    if (!lines[index].trim().startsWith("|")) {
+      break;
+    }
+    dataRows.push(lines[index]);
+  }
+  if (dataRows.length > 0) {
+    return content;
+  }
+  lines.splice(tableStart + 2, 0, `| ${rowValues.map(escapeMarkdownCell).join(" | ")} |`);
+  return `${content.slice(0, range.start)}${lines.join("\n")}${content.slice(range.end)}`;
 }
 
 function prependSectionBullet(content, sectionHeading, bullet) {
@@ -1189,6 +1348,11 @@ function recommendNextActionFromState(store, validation, repoRoot = process.cwd(
   const activeWork = store.listWorkItems().find((item) => !isClosedStatus(item.status));
   if (activeWork?.nextAction) {
     return activeWork.nextAction;
+  }
+
+  const latestHandoffNextAction = store.listRecentHandoffs(1)[0]?.payload?.nextFirstAction;
+  if (latestHandoffNextAction) {
+    return latestHandoffNextAction;
   }
 
   return "No blocker is recorded. Continue with the current approved packet or open the next planning lane.";

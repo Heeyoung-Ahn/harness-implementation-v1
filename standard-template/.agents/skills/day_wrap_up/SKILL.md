@@ -30,6 +30,15 @@ Do not claim a clean closeout if any of these remain ambiguous:
 - unresolved blocker owner or status
 - unclear next responsible workflow or handoff route
 
+## Behavior Checks
+
+- Apply `.agents/rules/agent_behavior.md` before changing live state or recommending closeout.
+- Use `Think Before Coding`: name unresolved assumptions, ambiguity, SSOT conflicts, and approval gaps.
+- Use `Simplicity First`: record only the current day's real delta and avoid speculative next-lane scope.
+- Use `Surgical Changes`: reconcile state for the work that actually happened; do not rewrite unrelated history.
+- Use `Goal-Driven Execution`: tie verification and next first action to concrete checks, the approved project design SSOT, active packet, and gate evidence.
+- If Developer, Tester, or Reviewer work remains, preserve their authority and hand off instead of self-approving.
+
 ## Output Contract
 
 Return a concise closeout with:

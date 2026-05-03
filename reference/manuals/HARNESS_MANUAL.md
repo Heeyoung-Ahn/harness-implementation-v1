@@ -60,6 +60,28 @@
 2. PMW를 write authority로 쓰지 않는다.
 3. generated와 governance가 충돌하면 생성 경로를 고친다.
 
+## 2.1 에이전트 행동 기준
+
+모든 에이전트는 `.agents/rules/agent_behavior.md`를 공통 행동 기준으로 적용한다.
+
+이 기준은 `andrej-karpathy-skills-main.zip`의 핵심을 하네스 방식으로 흡수한 것이다. 외부 plugin 구조나 ZIP을 runtime dependency로 가져오지는 않는다.
+
+핵심 원칙:
+
+1. `Think Before Coding`: 가정, 모호함, SSOT 충돌, 위험한 추측을 먼저 드러낸다.
+2. `Simplicity First`: 승인된 범위를 만족하는 가장 작은 변경을 우선한다.
+3. `Surgical Changes`: 현재 요청/packet/검증과 직접 연결되는 줄만 바꾼다.
+4. `Goal-Driven Execution`: 성공 기준을 검증 가능한 체크로 바꾸고 evidence를 남긴다.
+
+역할 기준:
+
+- Planner: scope, acceptance, approval boundary, project design SSOT를 확정한다.
+- Developer: `REQUIREMENTS.md`, `ARCHITECTURE_GUIDE.md`, `IMPLEMENTATION_PLAN.md`, active packet, 승인된 design/source artifact에 맞게 구현한다.
+- Tester: 같은 SSOT 기준으로 검증하고 mismatch는 Developer에게 돌려보낸다.
+- Reviewer: source parity, evidence, residual debt, Tester/Developer 역할 준수 여부를 확인한다.
+
+PMW Artifact Library에서는 `REQUIREMENTS.md`, `ARCHITECTURE_GUIDE.md`, `IMPLEMENTATION_PLAN.md` 같은 전체 프로젝트 설계/개요 문서를 항상 찾을 수 있어야 한다. PMW는 읽기 표면일 뿐이며 write authority가 아니다.
+
 ## 3. 설치 방식
 
 ### 3.1 권장 방식 (Windows 설치형)

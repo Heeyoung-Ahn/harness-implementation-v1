@@ -11,11 +11,12 @@ This file is the constitutional entry point for Antigravity and any other agent 
 1. `AGENTS.md`
 2. `.agents/artifacts/CURRENT_STATE.md`
 3. `.agents/artifacts/TASK_LIST.md`
-4. the workflow file that matches the requested lane
-5. the minimum baseline artifacts required by the active task
-6. only the explicitly activated optional profile artifacts required by the active task
-7. the active project packet and authoritative source artifacts when the task depends on them
-8. only the additional reference material required by the active task
+4. `.agents/rules/agent_behavior.md`
+5. the workflow file that matches the requested lane
+6. the minimum baseline artifacts required by the active task
+7. only the explicitly activated optional profile artifacts required by the active task
+8. the active project packet and authoritative source artifacts when the task depends on them
+9. only the additional reference material required by the active task
 
 ## Truth Ownership
 
@@ -35,6 +36,8 @@ This file is the constitutional entry point for Antigravity and any other agent 
 ## Minimal Operating Rules
 
 - respect explicit user orders exactly
+- apply `.agents/rules/agent_behavior.md` before non-trivial planning, coding, testing, review, handoff, or closeout work
+- treat human-and-Planner-approved project design SSOT as the guiding instruction layer for every agent
 - refresh `CURRENT_STATE.md`, `TASK_LIST.md`, and target files before writing
 - use the matching workflow before doing state-changing work
 - treat `Core` as always active, `Optional Profile` as explicit-only, and `Project Packet` as required before project-specific code or cutover work

@@ -87,8 +87,17 @@ test("builds a fresh context restoration read model from designated summary sour
   assert.equal(model.projectOverviewBand.phaseDetails[1].remainingItems[0].taskId, "DEV-03");
   assert.equal(model.actionBoard.cards.currentTask.owner, "developer");
   assert.equal(model.reEntryBaton.targetWorkflow, ".agents/workflows/dev.md");
-  assert.equal(model.artifactLibrary.groups.length, 3);
+  assert.equal(model.artifactLibrary.groups.length, 4);
   assert.equal(model.artifactLibrary.groups[0].items[0].path, ".agents/artifacts/CURRENT_STATE.md");
+  assert.equal(model.artifactLibrary.groups[1].id, "project_design_overview");
+  assert.deepEqual(
+    model.artifactLibrary.groups[1].items.slice(0, 3).map((item) => item.path),
+    [
+      ".agents/artifacts/REQUIREMENTS.md",
+      ".agents/artifacts/ARCHITECTURE_GUIDE.md",
+      ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+    ]
+  );
   assert.equal(model.operatorCommands.selectionMode, "selected_project");
   assert.equal(model.operatorCommands.logRetention, "session");
   assert.deepEqual(

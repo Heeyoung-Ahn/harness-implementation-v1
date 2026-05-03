@@ -41,6 +41,10 @@ test("PMW home page renders the DEV-07 first-view sections and artifact preview 
     `http://127.0.0.1:${address.port}/api/artifact?project=${encodeURIComponent("alpha-project")}&path=${encodeURIComponent(".agents/artifacts/CURRENT_STATE.md")}`
   );
   const artifactPayload = await artifactRes.json();
+  const designArtifactRes = await fetch(
+    `http://127.0.0.1:${address.port}/api/artifact?project=${encodeURIComponent("alpha-project")}&path=${encodeURIComponent(".agents/artifacts/REQUIREMENTS.md")}`
+  );
+  const designArtifactPayload = await designArtifactRes.json();
   const escapedArtifactRes = await fetch(
     `http://127.0.0.1:${address.port}/api/artifact?project=${encodeURIComponent("alpha-project")}&path=${encodeURIComponent("../alpha-project-private/SECRET.md")}`
   );
@@ -84,6 +88,9 @@ test("PMW home page renders the DEV-07 first-view sections and artifact preview 
   assert.match(html, /Action Board/);
   assert.match(html, /Re-entry Baton/);
   assert.match(html, /Artifact Library/);
+  assert.match(html, /max-width:1680px/);
+  assert.match(html, /grid-template-columns:minmax\(260px,340px\) minmax\(0,1fr\)/);
+  assert.match(html, /max-height:72vh/);
   assert.match(html, /Operator Commands/);
   assert.match(html, /Diagnostics/);
   assert.match(html, /href="#project-overview"/);
@@ -126,7 +133,18 @@ test("PMW home page renders the DEV-07 first-view sections and artifact preview 
   );
   assert.equal(apiPayload.readModel.context.actionBoard.cards.currentTask.owner, "developer");
   assert.equal(apiPayload.readModel.context.reEntryBaton.targetWorkflow, ".agents/workflows/dev.md");
+  assert.equal(
+    apiPayload.readModel.context.artifactLibrary.groups.some(
+      (group) =>
+        group.id === "project_design_overview" &&
+        group.items.some((item) => item.path === ".agents/artifacts/REQUIREMENTS.md") &&
+        group.items.some((item) => item.path === ".agents/artifacts/ARCHITECTURE_GUIDE.md") &&
+        group.items.some((item) => item.path === ".agents/artifacts/IMPLEMENTATION_PLAN.md")
+    ),
+    true
+  );
   assert.equal(artifactPayload.ok, true);
+  assert.equal(designArtifactPayload.ok, true);
   assert.equal(escapedArtifactPayload.ok, false);
   assert.match(escapedArtifactPayload.message, /escapes the selected project/);
   assert.equal(runPayload.ok, true);
@@ -150,6 +168,7 @@ test("PMW home page renders the DEV-07 first-view sections and artifact preview 
   assert.equal(completedHandoffSession.entries[0].handoffBaton.nextWorkAgent, "developer");
   assert.match(completedHandoffSession.entries[0].handoffBaton.nextWorkSummary, /Implement DEV-09/);
   assert.match(artifactPayload.preview, /Current state preview/);
+  assert.match(designArtifactPayload.preview, /Requirements preview/);
   assert.equal(apiPayload.readModel.context.operatorCommands.terminalOnly[1].command, "npm test");
   assert.equal(
     apiPayload.readModel.context.operatorCommands.terminalOnly[2].command,
@@ -162,6 +181,9 @@ function seedProject(root, id, name, stage) {
   fs.mkdirSync(path.join(repoRoot, ".agents", "runtime"), { recursive: true });
   fs.mkdirSync(path.join(repoRoot, ".agents", "artifacts"), { recursive: true });
   fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"), "Current state preview\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "REQUIREMENTS.md"), "Requirements preview\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "ARCHITECTURE_GUIDE.md"), "Architecture preview\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "IMPLEMENTATION_PLAN.md"), "Implementation plan preview\n", "utf8");
   fs.writeFileSync(
     path.join(repoRoot, "package.json"),
     `${JSON.stringify(
@@ -353,6 +375,30 @@ function seedProject(root, id, name, stage) {
                     path: ".agents/artifacts/CURRENT_STATE.md",
                     title: "Current State",
                     kind: "governance",
+                    previewable: true
+                  }
+                ]
+              },
+              {
+                id: "project_design_overview",
+                label: "Project Design And Overview",
+                items: [
+                  {
+                    path: ".agents/artifacts/REQUIREMENTS.md",
+                    title: "Requirements",
+                    kind: "project_design_ssot",
+                    previewable: true
+                  },
+                  {
+                    path: ".agents/artifacts/ARCHITECTURE_GUIDE.md",
+                    title: "Architecture Guide",
+                    kind: "project_design_ssot",
+                    previewable: true
+                  },
+                  {
+                    path: ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+                    title: "Implementation Plan",
+                    kind: "project_design_ssot",
                     previewable: true
                   }
                 ]

@@ -6,6 +6,12 @@
 ## Mission
 - Execute deployment or cutover only after review, validation, dependency, and human approval gates are closed.
 
+## Behavior Contract
+- Apply `.agents/rules/agent_behavior.md` before state-changing work.
+- Use `Think Before Coding`, `Simplicity First`, `Surgical Changes`, and `Goal-Driven Execution` as the default execution checks.
+- Treat the human-and-Planner-approved project design SSOT as binding; surface conflicts instead of silently resolving them.
+- Keep every changed line traceable to the user request, approved packet, or required verification evidence.
+
 ## Authority
 - Confirm deployment readiness and execute the explicitly approved release path.
 - Record deployment or cutover evidence required by the lane.
@@ -34,9 +40,10 @@
 - Clear success/failure status and rollback note when applicable.
 
 ## Turn Close Reporting
-- At the end of every turn, report what was completed in this turn.
-- Report the next recommended agent workflow and the concrete work that workflow should perform next.
-- If no next work exists, state `None` explicitly.
+- At the end of every turn, report in two blocks: `Current Work` and `Next Work`.
+- `Current Work` must include work completed this turn, issues encountered, and decisions made.
+- `Next Work` must include the next recommended agent workflow, concrete next work, expected issues or risks, and expected decisions or approval points.
+- If no next work, expected issue, or expected decision exists, state `None` explicitly for that item.
 
 ## Handoff Rules
 - Hand off to `Documenter` after a clean deploy/closeout path.

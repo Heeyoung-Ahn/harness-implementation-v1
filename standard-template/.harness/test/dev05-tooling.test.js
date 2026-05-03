@@ -638,6 +638,453 @@ test("transition preview is review-first and apply updates state surfaces", () =
   afterStore.close();
 });
 
+test("transition refreshes keyed current-state truth notes on tester-to-reviewer handoff", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-transition-truth-note-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_OPS-03_TRANSITION_TRUTH_NOTE_TEST.md";
+  writeOpsPacket(repoRoot, packetPath, { gateProfile: "contract", includeManifest: true });
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"),
+    [
+      "# Current State",
+      "",
+      "## Snapshot",
+      "- Current Stage: verification",
+      "- Current Focus: OPS-03 revised implementation complete; Tester verifying design access.",
+      "",
+      "## Next Recommended Agent",
+      "- Tester",
+      "",
+      "## Open Decisions / Blockers",
+      "- `OPS-03` Ready For Code is approved; Tester verification is pending.",
+      "",
+      "## Current Truth Notes",
+      "- `OPS-03` revised developer evidence remains queued for Tester verification.",
+      "",
+      "## Latest Handoff Summary",
+      "- none"
+    ].join("\n"),
+    "utf8"
+  );
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "TASK_LIST.md"),
+    [
+      "# Task List",
+      "",
+      "## Active Locks",
+      "| Task ID | Scope | Owner | Status | Started At | Notes |",
+      "|---|---|---|---|---|---|",
+      "| OPS-03 | Harness operation friction reduction | tester | active | 2026-05-03 | verification |",
+      "",
+      "## Active Tasks",
+      "| Task ID | Title | Scope | Owner | Status | Priority | Depends On | Verification |",
+      "|---|---|---|---|---|---|---|---|",
+      "| OPS-03 | Harness operation reliability and friction reduction packet | revised OPS-03 closeout | tester | review | P0 | DEV-09 | tester verification pending |",
+      "- Next first action: Reviewer should assess revised OPS-03 closeout readiness.",
+      "",
+      "## Blocked Tasks",
+      "| Task ID | Blocker | Owner | Status | Unblock Condition | Verification |",
+      "|---|---|---|---|---|---|",
+      "| - | None | - | clear | - | - |",
+      "",
+      "## Completed Tasks",
+      "| Task ID | Title | Completed At | Verification | Notes |",
+      "|---|---|---|---|---|",
+      "| - | None | - | - | - |",
+      "",
+      "## Handoff Log",
+      "- none"
+    ].join("\n"),
+    "utf8"
+  );
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-03T01:20:00.000Z") });
+  store.setReleaseState({
+    currentStage: "verification",
+    releaseGateState: "open",
+    currentFocus: "OPS-03 revised implementation complete; Tester verifying design access.",
+    releaseGoal: "Validate keyed CURRENT_STATE transition refresh",
+    sourceRef: packetPath
+  });
+  store.upsertWorkItem({
+    workItemId: "OPS-03",
+    title: "Harness operation reliability and friction reduction packet",
+    status: "review",
+    nextAction: "Reviewer should assess revised OPS-03 closeout readiness.",
+    owner: "tester",
+    sourceRef: packetPath,
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  store.upsertArtifact({
+    artifactId: "PKT-01_OPS-03_TRANSITION_TRUTH_NOTE_TEST",
+    path: packetPath,
+    category: "task_packet",
+    title: "OPS-03 transition truth-note packet",
+    sourceRef: packetPath
+  });
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  store.close();
+
+  const applied = runTransition({
+    repoRoot,
+    dbPath,
+    outputDir: repoRoot,
+    args: [
+      "--transition",
+      "tester-to-reviewer",
+      "--work-item",
+      "OPS-03",
+      "--summary",
+      "Tester verification completed.",
+      "--next-action",
+      "Reviewer should assess revised OPS-03 closeout readiness.",
+      "--current-focus",
+      "OPS-03 under reviewer closeout assessment.",
+      "--apply"
+    ]
+  });
+
+  assert.equal(applied.ok, true);
+  assert.equal(applied.apply, true);
+  const currentState = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"), "utf8");
+  assert.doesNotMatch(currentState, /Tester verification is pending/);
+  assert.doesNotMatch(currentState, /queued for Tester verification/);
+  assert.match(
+    currentState,
+    /`OPS-03` Ready For Code is approved; active handoff is `tester -> reviewer`\./
+  );
+  assert.match(
+    currentState,
+    /`OPS-03` remains the active work item\. Current handoff is `tester -> reviewer`; stage is `review`; gate profile is `contract`\./
+  );
+});
+
+test("transition preserves Ready For Code state when reviewer handoff source is review report", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-transition-review-source-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_OPS-03_TRANSITION_REVIEW_SOURCE_TEST.md";
+  writeOpsPacket(repoRoot, packetPath, { gateProfile: "contract", includeManifest: true });
+  fs.writeFileSync(
+    path.join(repoRoot, "reference", "artifacts", "REVIEW_REPORT.md"),
+    "# Review Report\n\n## OPS-03 Finding\n- Reviewer requested remediation.\n",
+    "utf8"
+  );
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"),
+    [
+      "# Current State",
+      "",
+      "## Snapshot",
+      "- Current Stage: review",
+      "- Current Focus: OPS-03 under reviewer closeout assessment.",
+      "",
+      "## Next Recommended Agent",
+      "- Reviewer",
+      "",
+      "## Open Decisions / Blockers",
+      "- `OPS-03` Ready For Code is approved; active handoff is `tester -> reviewer`. Reviewer should assess revised OPS-03 closeout readiness.",
+      "",
+      "## Current Truth Notes",
+      "- `OPS-03` remains the active work item. Current handoff is `tester -> reviewer`; stage is `review`; gate profile is `contract`.",
+      "",
+      "## Latest Handoff Summary",
+      "- none"
+    ].join("\n"),
+    "utf8"
+  );
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "TASK_LIST.md"),
+    [
+      "# Task List",
+      "",
+      "## Active Locks",
+      "| Task ID | Scope | Owner | Status | Started At | Notes |",
+      "|---|---|---|---|---|---|",
+      "| OPS-03 | Harness operation friction reduction | reviewer | active | 2026-05-03 | review |",
+      "",
+      "## Active Tasks",
+      "| Task ID | Title | Scope | Owner | Status | Priority | Depends On | Verification |",
+      "|---|---|---|---|---|---|---|---|",
+      "| OPS-03 | Harness operation reliability and friction reduction packet | revised OPS-03 closeout | reviewer | review | P0 | DEV-09 | review closeout pending |",
+      "- Next first action: Developer should remediate the current-state transition issue.",
+      "",
+      "## Blocked Tasks",
+      "| Task ID | Blocker | Owner | Status | Unblock Condition | Verification |",
+      "|---|---|---|---|---|---|",
+      "| - | None | - | clear | - | - |",
+      "",
+      "## Completed Tasks",
+      "| Task ID | Title | Completed At | Verification | Notes |",
+      "|---|---|---|---|---|",
+      "| - | None | - | - | - |",
+      "",
+      "## Handoff Log",
+      "- none"
+    ].join("\n"),
+    "utf8"
+  );
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-03T01:25:00.000Z") });
+  store.setReleaseState({
+    currentStage: "review",
+    releaseGateState: "open",
+    currentFocus: "OPS-03 under reviewer closeout assessment.",
+    releaseGoal: "Validate review-report transition fallback",
+    sourceRef: packetPath
+  });
+  store.upsertWorkItem({
+    workItemId: "OPS-03",
+    title: "Harness operation reliability and friction reduction packet",
+    status: "review",
+    nextAction: "Reviewer should assess revised OPS-03 closeout readiness.",
+    owner: "reviewer",
+    sourceRef: packetPath,
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  store.upsertArtifact({
+    artifactId: "PKT-01_OPS-03_TRANSITION_REVIEW_SOURCE_TEST",
+    path: packetPath,
+    category: "task_packet",
+    title: "OPS-03 transition review-source packet",
+    sourceRef: packetPath
+  });
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  store.close();
+
+  const applied = runTransition({
+    repoRoot,
+    dbPath,
+    outputDir: repoRoot,
+    args: [
+      "--transition",
+      "reviewer-to-developer",
+      "--work-item",
+      "OPS-03",
+      "--from",
+      "reviewer",
+      "--to",
+      "developer",
+      "--status",
+      "in_progress",
+      "--source-ref",
+      "reference/artifacts/REVIEW_REPORT.md",
+      "--summary",
+      "Reviewer requested remediation.",
+      "--next-action",
+      "Developer should remediate the transition issue.",
+      "--current-stage",
+      "implementation",
+      "--current-focus",
+      "OPS-03 stale CURRENT_STATE remediation in progress.",
+      "--apply"
+    ]
+  });
+
+  assert.equal(applied.ok, true);
+  assert.equal(applied.apply, true);
+  const currentState = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"), "utf8");
+  assert.match(
+    currentState,
+    /`OPS-03` Ready For Code is approved; active handoff is `reviewer -> developer`\./
+  );
+  assert.doesNotMatch(currentState, /Ready For Code status is ;/);
+});
+
+test("terminal transition closes active task bookkeeping and preserves planner next action", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-transition-closeout-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_OPS-03_TRANSITION_CLOSEOUT_TEST.md";
+  writeOpsPacket(repoRoot, packetPath, { gateProfile: "contract", includeManifest: true });
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"),
+    [
+      "# Current State",
+      "",
+      "## Snapshot",
+      "- Current Stage: planning",
+      "- Current Focus: OPS-03 closeout approved; Planner selecting the next lane.",
+      "",
+      "## Next Recommended Agent",
+      "- Planner",
+      "",
+      "## Open Decisions / Blockers",
+      "- `OPS-03` Ready For Code is approved; active handoff is `reviewer -> planner`. Planner should record OPS-03 closeout and choose the next approved lane.",
+      "",
+      "## Current Truth Notes",
+      "- `OPS-03` remains the active work item. Current handoff is `reviewer -> planner`; stage is `planning`; gate profile is `contract`.",
+      "",
+      "## Latest Handoff Summary",
+      "- none"
+    ].join("\n"),
+    "utf8"
+  );
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "TASK_LIST.md"),
+    [
+      "# Task List",
+      "",
+      "## Active Locks",
+      "| Task ID | Scope | Owner | Status | Started At | Notes |",
+      "|---|---|---|---|---|---|",
+      "| OPS-03 | Harness operation reliability and friction reduction | planner | active | 2026-05-03 | reviewer-to-planner closeout pending |",
+      "",
+      "## Active Tasks",
+      "| Task ID | Title | Scope | Owner | Status | Priority | Depends On | Verification |",
+      "|---|---|---|---|---|---|---|---|",
+      "| OPS-03 | Harness operation reliability and friction reduction packet | revised OPS-03 closeout | planner | planning | P0 | DEV-09 | planner closeout pending |",
+      "- Next first action: Planner should record OPS-03 closeout and choose the next approved lane.",
+      "",
+      "## Blocked Tasks",
+      "| Task ID | Blocker | Owner | Status | Unblock Condition | Verification |",
+      "|---|---|---|---|---|---|",
+      "| - | None | - | clear | - | - |",
+      "",
+      "## Completed Tasks",
+      "| Task ID | Title | Completed At | Verification | Notes |",
+      "|---|---|---|---|---|",
+      "| - | None | - | - | - |",
+      "",
+      "## Handoff Log",
+      "- none"
+    ].join("\n"),
+    "utf8"
+  );
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "PROJECT_PROGRESS.md"),
+    [
+      "# Project Progress",
+      "",
+      "## Summary",
+      "Transition closeout test board.",
+      "",
+      "## Progress Board",
+      "| Phase | Task ID | Task | Status | Notes | Source |",
+      "| --- | --- | --- | --- | --- | --- |",
+      `| Ops | OPS-03 | Harness operation reliability and friction reduction | planning | Reviewer approved closeout; planner bookkeeping pending. | ${packetPath} |`
+    ].join("\n"),
+    "utf8"
+  );
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "IMPLEMENTATION_PLAN.md"),
+    [
+      "# Implementation Plan",
+      "",
+      "## Operator Next Action",
+      "- `OPS-03` active handoff is `reviewer -> planner`.",
+      "- Planner should record OPS-03 closeout and choose the next approved lane.",
+      `- Source packet: \`${packetPath}\`.`,
+      "- Preserve packet-before-code, PMW read-only authority, generated-doc immutability, root/starter sync, Tester/Reviewer separation, and human approval gates."
+    ].join("\n"),
+    "utf8"
+  );
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-03T01:40:00.000Z") });
+  store.setReleaseState({
+    currentStage: "planning",
+    releaseGateState: "open",
+    currentFocus: "OPS-03 closeout approved; Planner selecting the next lane.",
+    releaseGoal: "Validate planner closeout bookkeeping",
+    sourceRef: packetPath
+  });
+  store.upsertWorkItem({
+    workItemId: "OPS-03",
+    title: "Harness operation reliability and friction reduction packet",
+    status: "planning",
+    nextAction: "Planner should record OPS-03 closeout and choose the next approved lane.",
+    owner: "planner",
+    sourceRef: packetPath,
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  store.upsertArtifact({
+    artifactId: "PKT-01_OPS-03_TRANSITION_CLOSEOUT_TEST",
+    path: packetPath,
+    category: "task_packet",
+    title: "OPS-03 transition closeout packet",
+    sourceRef: packetPath
+  });
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  store.close();
+
+  const applied = runTransition({
+    repoRoot,
+    dbPath,
+    outputDir: repoRoot,
+    args: [
+      "--transition",
+      "planner-closeout",
+      "--work-item",
+      "OPS-03",
+      "--from",
+      "planner",
+      "--to",
+      "planner",
+      "--status",
+      "done",
+      "--source-ref",
+      packetPath,
+      "--summary",
+      "Planner recorded OPS-03 closeout after reviewer approval.",
+      "--next-action",
+      "Planner should choose the next approved lane and open the next packet only after human agreement.",
+      "--current-stage",
+      "planning",
+      "--current-focus",
+      "OPS-03 closed; Planner selecting the next approved lane.",
+      "--apply"
+    ]
+  });
+
+  assert.equal(applied.ok, true);
+  assert.equal(applied.apply, true);
+
+  const taskList = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "TASK_LIST.md"), "utf8");
+  assert.doesNotMatch(taskList, /\| OPS-03 \| Harness operation reliability and friction reduction \| planner \| active \|/);
+  assert.doesNotMatch(taskList, /\| OPS-03 \| Harness operation reliability and friction reduction packet \| revised OPS-03 closeout \| planner \| planning \|/);
+  assert.match(taskList, /\| - \| None \| - \| clear \| - \| - \|/);
+  assert.match(taskList, /\| - \| None \| - \| - \| clear \| - \| - \| - \|/);
+  assert.match(
+    taskList,
+    /\| OPS-03 \| Harness operation reliability and friction reduction packet \| 2026-05-03 \| transition planner -> planner; gate contract \| Planner recorded OPS-03 closeout after reviewer approval\. Planner should choose the next approved lane and open the next packet only after human agreement\. \|/
+  );
+
+  const currentState = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"), "utf8");
+  assert.match(
+    currentState,
+    /`OPS-03` is closed; latest handoff is `planner -> planner`\. Planner should choose the next approved lane and open the next packet only after human agreement\./
+  );
+  assert.match(
+    currentState,
+    /`OPS-03` is closed\. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`\./
+  );
+
+  const implementationPlan = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "IMPLEMENTATION_PLAN.md"), "utf8");
+  assert.match(implementationPlan, /`OPS-03` is closed; latest closeout handoff is `planner -> planner`\./);
+  assert.match(implementationPlan, /Planner should choose the next approved lane and open the next packet only after human agreement\./);
+
+  const projectProgress = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "PROJECT_PROGRESS.md"), "utf8");
+  assert.match(
+    projectProgress,
+    /\| Ops \| OPS-03 \| Harness operation reliability and friction reduction \| done \| Planner recorded OPS-03 closeout after reviewer approval\. Planner should choose the next approved lane and open the next packet only after human agreement\. \|/
+  );
+
+  const afterStore = createOperatingStateStore({ dbPath });
+  assert.equal(afterStore.getWorkItem("OPS-03").status, "done");
+  assert.equal(afterStore.getWorkItem("OPS-03").metadata.closedBy, "planner");
+  afterStore.close();
+
+  const status = buildHarnessStatus({ repoRoot, dbPath, outputDir: repoRoot });
+  assert.equal(status.openWorkItems, 0);
+  assert.equal(status.assignment, null);
+  assert.equal(status.nextOwner, "Planner");
+  assert.equal(
+    status.nextAction,
+    "Planner should choose the next approved lane and open the next packet only after human agreement."
+  );
+});
+
 test("validator blocks incomplete workflow contracts", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-workflow-contract-invalid-"));
   seedStandardRepo(repoRoot);
@@ -676,6 +1123,41 @@ test("validator blocks incomplete workflow contracts", () => {
         item.code === "workflow_contract_section_missing" &&
         item.path === ".agents/workflows/plan.md" &&
         item.section === "## Turn Close Reporting"
+    ),
+    true
+  );
+});
+
+test("validator blocks missing reusable agent behavior guidance", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-agent-behavior-invalid-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "skills", "day_start", "SKILL.md"),
+    "# Day Start\n\n## Behavior Checks\n- Missing the concrete four-principle behavior markers.\n",
+    "utf8"
+  );
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-03T00:00:00.000Z") });
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "OPS-03 behavior guidance validation",
+    releaseGoal: "Block thin behavior guidance regression",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  store.close();
+
+  const result = runValidator({ repoRoot, dbPath, outputDir: repoRoot });
+  assert.equal(result.ok, false);
+  assert.equal(
+    result.findings.some(
+      (item) =>
+        item.code === "skill_behavior_guidance_incomplete" &&
+        item.path === ".agents/skills/day_start/SKILL.md" &&
+        item.marker === "Think Before Coding"
     ),
     true
   );
@@ -850,7 +1332,10 @@ function writeOpsPacket(repoRoot, packetPath, { gateProfile, includeManifest, re
 
 function seedStandardRepo(repoRoot) {
   fs.mkdirSync(path.join(repoRoot, ".agents", "artifacts"), { recursive: true });
+  fs.mkdirSync(path.join(repoRoot, ".agents", "rules"), { recursive: true });
   fs.mkdirSync(path.join(repoRoot, ".agents", "runtime", "generated-state-docs"), { recursive: true });
+  fs.mkdirSync(path.join(repoRoot, ".agents", "skills", "day_start"), { recursive: true });
+  fs.mkdirSync(path.join(repoRoot, ".agents", "skills", "day_wrap_up"), { recursive: true });
   fs.mkdirSync(path.join(repoRoot, ".agents", "workflows"), { recursive: true });
   fs.mkdirSync(path.join(repoRoot, "reference", "artifacts"), { recursive: true });
   fs.mkdirSync(path.join(repoRoot, "reference", "packets"), { recursive: true });
@@ -862,6 +1347,9 @@ function seedStandardRepo(repoRoot) {
   fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "PROJECT_PROGRESS.md"), "# Project Progress\n", "utf8");
   fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"), "# Current State\n", "utf8");
   fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "PREVENTIVE_MEMORY.md"), "# Preventive Memory\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, ".agents", "rules", "agent_behavior.md"), agentBehaviorGuideFixture(), "utf8");
+  fs.writeFileSync(path.join(repoRoot, ".agents", "skills", "day_start", "SKILL.md"), skillBehaviorFixture("Day Start"), "utf8");
+  fs.writeFileSync(path.join(repoRoot, ".agents", "skills", "day_wrap_up", "SKILL.md"), skillBehaviorFixture("Day Wrap Up"), "utf8");
   writeWorkflowContractFixtures(repoRoot);
   fs.writeFileSync(path.join(repoRoot, "reference", "artifacts", "UI_DESIGN.md"), "# UI Design\n", "utf8");
   fs.writeFileSync(path.join(repoRoot, "reference", "artifacts", "SYSTEM_CONTEXT.md"), "# System Context\n", "utf8");
@@ -957,6 +1445,11 @@ function buildWorkflowContract({ title, role, mustRead }) {
     "## Mission",
     "- Own the lane-specific work and keep governance state explicit.",
     "",
+    "## Behavior Contract",
+    "- Apply `.agents/rules/agent_behavior.md` before state-changing work.",
+    "- Use `Think Before Coding`, `Simplicity First`, `Surgical Changes`, and `Goal-Driven Execution` as the default execution checks.",
+    "- Treat the human-and-Planner-approved project design SSOT as binding; surface conflicts instead of silently resolving them.",
+    "",
     "## Authority",
     "- Update artifacts inside the workflow lane after required approvals are present.",
     "",
@@ -988,6 +1481,44 @@ function buildWorkflowContract({ title, role, mustRead }) {
     "",
     "## Escalation Rules",
     "- Ask the user when governance state and requested execution conflict."
+  ].join("\n");
+}
+
+function agentBehaviorGuideFixture() {
+  return [
+    "# Agent Behavior Contract",
+    "",
+    "## Think Before Coding",
+    "- Surface assumptions and ambiguity.",
+    "",
+    "## Simplicity First",
+    "- Keep the approved solution small.",
+    "",
+    "## Surgical Changes",
+    "- Change only lines tied to the approved request.",
+    "",
+    "## Goal-Driven Execution",
+    "- Verify against concrete success criteria.",
+    "",
+    "## Project Design SSOT Precedence",
+    "- Developer implements to the approved design.",
+    "- Tester verifies against the approved design.",
+    "- Reviewer checks evidence and source parity.",
+    "- PMW read-only surfaces must not become write authority."
+  ].join("\n");
+}
+
+function skillBehaviorFixture(title) {
+  return [
+    `# ${title}`,
+    "",
+    "## Behavior Checks",
+    "- Apply `.agents/rules/agent_behavior.md` before recommending non-trivial work.",
+    "- Use `Think Before Coding` to surface assumptions.",
+    "- Use `Simplicity First` to keep recommendations small.",
+    "- Use `Surgical Changes` to avoid unrelated cleanup.",
+    "- Use `Goal-Driven Execution` to define concrete checks.",
+    "- Treat the approved project design SSOT as binding."
   ].join("\n");
 }
 

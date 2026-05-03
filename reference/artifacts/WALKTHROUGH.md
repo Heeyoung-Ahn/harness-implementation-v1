@@ -2,6 +2,87 @@
 
 Use this artifact to record verification evidence and manual test results.
 
+## 2026-05-03 OPS-03 CURRENT_STATE Transition Remediation Tester Re-Verification
+
+- Scope: tester re-verification for the revised `OPS-03` closeout-remediation after Reviewer found stale `CURRENT_STATE.md` transition wording and reviewer-source Ready For Code display drift.
+- Environment: local maintainer workspace on Windows PowerShell.
+- Tested scope:
+  - Root and `standard-template` `dev05-tooling` regression coverage for keyed current-state truth-note refresh on `tester-to-reviewer`.
+  - Root and `standard-template` `dev05-tooling` regression coverage for reviewer-to-developer transitions that use `reference/artifacts/REVIEW_REPORT.md` as `sourceRef` while preserving `Ready For Code: approved`.
+  - Root and `standard-template` full regression suites after the remediation.
+  - Root validator, PMW export, validation report, and canonical `CURRENT_STATE.md` state after the remediation handoff returned to `developer -> tester`.
+- Evidence:
+  - root `node --test .harness\test\dev05-tooling.test.js`: 20/20 pass.
+  - `standard-template` `node --test standard-template\.harness\test\dev05-tooling.test.js`: 20/20 pass.
+  - root `npm.cmd test`: 46/46 pass.
+  - `standard-template` `npm.cmd test`: 46/46 pass.
+  - root `npm.cmd run harness:validate`: `ok: true`, `cutoverReady: true`, findings `[]`.
+  - root `npm.cmd run harness:pmw-export`: pass; PMW read-model now keeps the active packet source on `reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md` and shows the active handoff as `developer -> tester`.
+  - root `npm.cmd run harness:validation-report`: pass, gate decision `pass`, findings `[]`.
+  - canonical `.agents/artifacts/CURRENT_STATE.md` no longer contains stale `Tester verification ... pending` wording and now reports `- \`OPS-03\` remains the active work item. Current handoff is \`developer -> tester\`; stage is \`verification\`; gate profile is \`contract\`.`
+- Untested scope:
+  - No additional PMW browser visual walkthrough was performed because the remediation changed transition/current-state behavior and regression coverage already verified the affected runtime paths.
+  - Reviewer closeout was not performed in this tester pass.
+- Result: tester re-verification passed; no Tester-discovered remediation item remains for the CURRENT_STATE transition fix.
+- Handoff:
+  - Reviewer should re-check OPS-03 closeout readiness against the approved SSOT, revised walkthrough evidence, review findings history, residual debt disposition, and validation outputs.
+
+## 2026-05-03 OPS-03 Revised-Scope Tester Verification
+
+- Scope: tester verification for the revised `OPS-03` scope after Developer implemented sufficient behavior guidance adoption, project-design SSOT precedence, workflow closeout reporting, and PMW Artifact Library design access.
+- Environment: local maintainer workspace on Windows PowerShell.
+- Tested scope:
+  - Root and `standard-template` reusable behavior-guidance, transition, read-model, and PMW-read-surface targeted regression coverage.
+  - `pmw-app` server/test coverage for widened artifact preview layout and project-design Artifact Library access.
+  - Root and `standard-template` full regression suites after the revised OPS-03 implementation.
+  - Root validator, PMW export, and validation report regeneration after the revised implementation.
+  - SSOT alignment against `REQUIREMENTS.md`, `ARCHITECTURE_GUIDE.md`, `IMPLEMENTATION_PLAN.md`, and `reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md`.
+- Evidence:
+  - root `node --test .harness\test\dev05-tooling.test.js .harness\test\context-restoration-read-model.test.js .harness\test\pmw-read-surface.test.js`: 24/24 pass.
+  - `standard-template` `node --test standard-template\.harness\test\dev05-tooling.test.js standard-template\.harness\test\context-restoration-read-model.test.js standard-template\.harness\test\pmw-read-surface.test.js`: 24/24 pass.
+  - `pmw-app` `npm.cmd test`: 2/2 pass.
+  - root `npm.cmd test`: 44/44 pass.
+  - `standard-template` `npm.cmd test`: 44/44 pass.
+  - root `npm.cmd run harness:validate`: `ok: true`, `cutoverReady: true`, findings `[]`.
+  - root `npm.cmd run harness:pmw-export`: pass; PMW read-model exposes `Project Design And Overview` with `REQUIREMENTS.md`, `ARCHITECTURE_GUIDE.md`, `IMPLEMENTATION_PLAN.md`, and related overview/design artifacts.
+  - root `npm.cmd run harness:validation-report`: pass, gate decision `pass`, findings `[]`.
+- Untested scope:
+  - No additional manual PMW browser visual walkthrough was performed in this pass. Revised PMW width/category behavior was covered through `pmw-app` regression tests and exported read-model evidence rather than a new browser session.
+  - Reviewer closeout was not performed in this tester pass.
+- Result: tester verification passed; no Tester-discovered remediation item remains for the revised OPS-03 scope.
+- Handoff:
+  - Reviewer should inspect closeout readiness against the approved SSOT, tester evidence, residual debt disposition, PMW Artifact Library design access evidence, and validation outputs.
+
+## 2026-05-03 OPS-03 Reviewer-Finding Remediation Tester Re-Verification
+
+- Scope: tester re-verification for `OPS-03` after Reviewer found transition approval and validation-result reporting gaps.
+- Environment: local maintainer workspace on Windows PowerShell.
+- Tested scope:
+  - `planner-to-developer` transition blocks when packet `Ready For Code` is not approved.
+  - `planner-to-developer` transition blocks when an open Ready For Code decision for the packet is not closed through `--close-decision`.
+  - `harness:transition --apply` reports post-apply validation-report failure at top level with `ok: false`.
+  - `.agents/artifacts/IMPLEMENTATION_PLAN.md` `## Operator Next Action` is refreshed as the PMW Next Action source.
+  - Root and `standard-template` regression coverage stays synchronized.
+  - PMW export, validation report, handoff routing, and next-action evidence stay fresh after Tester handoff.
+- Evidence:
+  - root `node --test .harness\test\dev05-tooling.test.js`: 17/17 pass.
+  - `standard-template` `node --test standard-template\.harness\test\dev05-tooling.test.js`: 17/17 pass.
+  - root `npm.cmd test`: 43/43 pass.
+  - `standard-template` `npm.cmd test`: 43/43 pass.
+  - `pmw-app` `npm.cmd test`: 2/2 pass.
+  - root `npm.cmd run harness:validate`: `ok: true`, `cutoverReady: true`, findings `[]`.
+  - root `npm.cmd run harness:pmw-export`: pass; PMW `Next Action` and Re-entry Baton reflected the active OPS-03 handoff.
+  - root `npm.cmd run harness:validation-report`: pass, gate decision `pass`, findings `[]`.
+  - `npm.cmd run harness:transition -- --transition tester-to-reviewer --work-item OPS-03 ...`: preview passed, then apply passed with validation report `ok: true` and finding count `0`.
+  - Post-handoff root `npm.cmd run harness:handoff`: `routeStatus: ready`, next owner `reviewer`, route `.agents/workflows/review.md`.
+  - Post-handoff root `npm.cmd run harness:next`: validation pass, next owner `reviewer`, next task `OPS-03`.
+- Untested scope:
+  - No PMW browser visual verification was performed because the remediation changed transition guards, canonical state refresh, and read-model evidence rather than browser layout.
+  - No arbitrary shell execution was tested because it remains outside the approved PMW launcher boundary.
+- Result: tester re-verification passed; no Tester-discovered remediation item remains.
+- Handoff:
+  - Reviewer should review OPS-03 closeout readiness, residual debt disposition, transition guard evidence, validation evidence, and decide packet exit.
+
 ## 2026-05-02 DEV-09 PMW Phase-1 Command Launcher Tester Verification
 
 - Scope: tester verification for the approved `DEV-09` PMW phase-1 command launcher and handoff execution packet.

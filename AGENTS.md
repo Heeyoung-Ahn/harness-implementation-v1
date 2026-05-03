@@ -5,13 +5,14 @@ This file is the Codex entry point for the standard multi-IDE, multi-agent harne
 ## Load Order
 
 1. Read `.agents/rules/workspace.md`.
-2. Read `.agents/artifacts/CURRENT_STATE.md`.
-3. Read `.agents/artifacts/TASK_LIST.md`.
-4. Read the workflow that matches the active lane.
-5. Read only the baseline artifacts required for the active task.
-6. If an optional profile is explicitly active, read only the profile artifacts required by the active task.
-7. If the active task depends on a project packet or authoritative source, read that packet/source before state-changing work.
-8. Read only the additional reference material required by the active task.
+2. Read `.agents/rules/agent_behavior.md`.
+3. Read `.agents/artifacts/CURRENT_STATE.md`.
+4. Read `.agents/artifacts/TASK_LIST.md`.
+5. Read the workflow that matches the active lane.
+6. Read only the baseline artifacts required for the active task.
+7. If an optional profile is explicitly active, read only the profile artifacts required by the active task.
+8. If the active task depends on a project packet or authoritative source, read that packet/source before state-changing work.
+9. Read only the additional reference material required by the active task.
 
 ## Truth Contract
 

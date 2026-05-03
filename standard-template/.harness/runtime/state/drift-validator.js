@@ -36,6 +36,41 @@ const WORKFLOW_CONTRACT_PATHS = [
   ".agents/workflows/review.md",
   ".agents/workflows/test.md"
 ];
+const AGENT_BEHAVIOR_GUIDE_PATH = ".agents/rules/agent_behavior.md";
+const AGENT_BEHAVIOR_SKILL_PATHS = [
+  ".agents/skills/day_start/SKILL.md",
+  ".agents/skills/day_wrap_up/SKILL.md"
+];
+const AGENT_BEHAVIOR_GUIDE_REQUIRED_MARKERS = [
+  "# Agent Behavior Contract",
+  "Think Before Coding",
+  "Simplicity First",
+  "Surgical Changes",
+  "Goal-Driven Execution",
+  "Project Design SSOT Precedence",
+  "Developer implements",
+  "Tester verifies",
+  "Reviewer checks",
+  "PMW read-only"
+];
+const WORKFLOW_BEHAVIOR_REQUIRED_MARKERS = [
+  "## Behavior Contract",
+  ".agents/rules/agent_behavior.md",
+  "Think Before Coding",
+  "Simplicity First",
+  "Surgical Changes",
+  "Goal-Driven Execution",
+  "project design SSOT"
+];
+const SKILL_BEHAVIOR_REQUIRED_MARKERS = [
+  "## Behavior Checks",
+  ".agents/rules/agent_behavior.md",
+  "Think Before Coding",
+  "Simplicity First",
+  "Surgical Changes",
+  "Goal-Driven Execution",
+  "project design SSOT"
+];
 const TASK_PACKET_DIRECTORY = "reference/packets";
 const TASK_PACKET_ARTIFACT_CATEGORY = "task_packet";
 const TASK_PACKET_DISCOVERY_EXCLUDED_FILES = new Set([
@@ -896,6 +931,88 @@ function validateWorkflowContractRoot({ label, rootPath, displayPrefix }, findin
         message: `${displayPath} is missing required workflow contract section ${section}.`
       });
     }
+    validateRequiredContentMarkers({
+      content,
+      markers: WORKFLOW_BEHAVIOR_REQUIRED_MARKERS,
+      code: "workflow_behavior_guidance_missing",
+      severity: "error",
+      path: displayPath,
+      root: label,
+      findings
+    });
+  }
+
+  validateAgentBehaviorGuidanceRoot({ label, rootPath, displayPrefix }, findings);
+}
+
+function validateAgentBehaviorGuidanceRoot({ label, rootPath, displayPrefix }, findings) {
+  const guidePath = path.resolve(rootPath, AGENT_BEHAVIOR_GUIDE_PATH);
+  const guideDisplayPath = displayPrefix
+    ? path.posix.join(displayPrefix, AGENT_BEHAVIOR_GUIDE_PATH)
+    : AGENT_BEHAVIOR_GUIDE_PATH;
+
+  if (!fs.existsSync(guidePath)) {
+    findings.push({
+      code: "agent_behavior_guidance_missing",
+      severity: "error",
+      path: guideDisplayPath,
+      root: label,
+      message: `${guideDisplayPath} is required so reusable agent behavior guidance cannot silently regress.`
+    });
+  } else {
+    validateRequiredContentMarkers({
+      content: fs.readFileSync(guidePath, "utf8"),
+      markers: AGENT_BEHAVIOR_GUIDE_REQUIRED_MARKERS,
+      code: "agent_behavior_guidance_incomplete",
+      severity: "error",
+      path: guideDisplayPath,
+      root: label,
+      findings
+    });
+  }
+
+  for (const relativePath of AGENT_BEHAVIOR_SKILL_PATHS) {
+    const skillPath = path.resolve(rootPath, relativePath);
+    const displayPath = displayPrefix
+      ? path.posix.join(displayPrefix, relativePath)
+      : relativePath;
+
+    if (!fs.existsSync(skillPath)) {
+      findings.push({
+        code: "skill_behavior_guidance_missing",
+        severity: "error",
+        path: displayPath,
+        root: label,
+        message: `${displayPath} must include reusable day-start/day-wrap-up behavior guidance.`
+      });
+      continue;
+    }
+
+    validateRequiredContentMarkers({
+      content: fs.readFileSync(skillPath, "utf8"),
+      markers: SKILL_BEHAVIOR_REQUIRED_MARKERS,
+      code: "skill_behavior_guidance_incomplete",
+      severity: "error",
+      path: displayPath,
+      root: label,
+      findings
+    });
+  }
+}
+
+function validateRequiredContentMarkers({ content, markers, code, severity, path: artifactPath, root, findings }) {
+  for (const marker of markers) {
+    if (content.includes(marker)) {
+      continue;
+    }
+    findings.push({
+      code,
+      severity,
+      path: artifactPath,
+      root,
+      marker,
+      message: `${artifactPath} is missing required reusable behavior guidance marker: ${marker}.`
+    });
   }
 }
 
@@ -908,6 +1025,8 @@ function validateStarterSync(repoRoot, findings) {
   const syncPaths = [
     "AGENTS.md",
     ".agents/rules/workspace.md",
+    AGENT_BEHAVIOR_GUIDE_PATH,
+    ...AGENT_BEHAVIOR_SKILL_PATHS,
     ".agents/scripts/init-project.js",
     ".harness/runtime/state/context-restoration-read-model.js",
     ".harness/runtime/state/dev05-cli.js",

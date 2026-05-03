@@ -14,6 +14,8 @@ Conflict rules:
 - DB hot-state must be reconciled to governance truth before gate close.
 - Generated docs are never edited manually.
 - PMW is never write authority.
+- Human-and-Planner-approved project design SSOT inside governance Markdown and approved project artifacts is the guiding instruction layer for all agent roles.
+- Developer implements to the approved design SSOT, Tester verifies implementation against it without directly fixing defects, and Reviewer evaluates source parity/evidence/residual debt against it.
 
 ## Repository Layout Ownership
 - Harness runtime code lives under `.harness/runtime/*`.
@@ -40,6 +42,12 @@ Conflict rules:
 - Projection and Generation: generated state docs / PMW read model
 - PMW Read Surface: summary cards, detail panel, artifact viewer, settings
 - Improvement Memory: recurring inefficiency records and promoted improvement tasks
+
+## PMW Project Design Access
+- PMW remains a read surface, but it must make whole-project design and overview artifacts easy to inspect.
+- Artifact Library must expose a stable project-design/overview category for `REQUIREMENTS.md`, `ARCHITECTURE_GUIDE.md`, `IMPLEMENTATION_PLAN.md`, and equivalent approved design/overview sources.
+- Artifact body layout should allocate enough horizontal reading width for long-form design documents instead of forcing narrow preview wrapping.
+- PMW design access does not create write authority; canonical changes still flow through governance Markdown, DB reconciliation, generated docs, validation, and handoff evidence.
 
 ## Operating Principles
 - Context continuity: state, rationale, handoff, and source trace must support fast context restoration across sessions and agents.

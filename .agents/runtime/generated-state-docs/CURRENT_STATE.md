@@ -1,20 +1,20 @@
 # CURRENT_STATE
 
 ## Technical Facts
-- Release stage: verification
+- Release stage: planning
 - Release gate state: open
-- Release goal: preserve the V1.2 installable standard harness baseline while defining the approved V1.3 direction where PMW remains a separate installable multi-project operator console, workflow Markdown becomes explicit agent-role contracts, and reusable profiles PRF-04 through PRF-09 stay intact
-- Generated at: 2026-05-02T15:51:23.083Z
+- Release goal: preserve the V1.2 installable standard harness baseline while keeping the V1.3 PMW operator-console/workflow-contract direction intact and strengthening OPS-03 without weakening SSOT, approval, PMW read-only, Tester/Reviewer separation, or root/starter sync contracts
+- Generated at: 2026-05-03T02:44:20.428Z
 
 ## Current Focus Summary
-- OPS-03 tester re-verification after reviewer-finding remediation
+- PLN-08 planning is active; Planner is defining the V1.3 phase-2 PMW command-surface lane after OPS-03 closeout.
 
 ## Current Focus Detail
-- Stage: verification
+- Stage: planning
 - Gate state: open
-- Goal: preserve the V1.2 installable standard harness baseline while defining the approved V1.3 direction where PMW remains a separate installable multi-project operator console, workflow Markdown becomes explicit agent-role contracts, and reusable profiles PRF-04 through PRF-09 stay intact
-- Focus: OPS-03 tester re-verification after reviewer-finding remediation
-- Source: reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md
+- Goal: preserve the V1.2 installable standard harness baseline while keeping the V1.3 PMW operator-console/workflow-contract direction intact and strengthening OPS-03 without weakening SSOT, approval, PMW read-only, Tester/Reviewer separation, or root/starter sync contracts
+- Focus: PLN-08 planning is active; Planner is defining the V1.3 phase-2 PMW command-surface lane after OPS-03 closeout.
+- Source: reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md
 
 ## Decision Required Summary
 - 0 open decisions require attention.
@@ -27,5 +27,5 @@
 
 ## Generation Metadata
 - Generated docs: CURRENT_STATE.md, TASK_LIST.md
-- Source revision: 2026-05-02T15:51:23.083Z
+- Source revision: 2026-05-03T02:44:20.428Z
 - Sync status: fresh at generation time

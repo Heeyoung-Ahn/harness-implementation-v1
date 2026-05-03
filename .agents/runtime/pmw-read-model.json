@@ -1,13 +1,13 @@
 {
   "schemaVersion": "standard-harness-pmw-read-model/v1",
-  "generatedAt": "2026-05-02T15:56:44.955Z",
+  "generatedAt": "2026-05-03T02:46:09.869Z",
   "project": {
     "id": "harness-implementation-v1",
     "name": "harness-implementation-v1",
     "repoRoot": "C:\\Newface\\30 Github\\harness-implementation-v1"
   },
   "context": {
-    "generatedAt": "2026-05-02T15:56:45.111Z",
+    "generatedAt": "2026-05-03T02:46:09.975Z",
     "loadOrder": [
       "release_state_and_generation_metadata",
       "open_decisions_gate_risks_and_next_action",
@@ -16,12 +16,12 @@
       "stale_diagnostics"
     ],
     "releaseState": {
-      "currentStage": "verification",
+      "currentStage": "planning",
       "releaseGateState": "open",
-      "currentFocus": "OPS-03 tester re-verification after reviewer-finding remediation",
-      "releaseGoal": "preserve the V1.2 installable standard harness baseline while defining the approved V1.3 direction where PMW remains a separate installable multi-project operator console, workflow Markdown becomes explicit agent-role contracts, and reusable profiles PRF-04 through PRF-09 stay intact",
-      "sourceRef": "reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md",
-      "updatedAt": "2026-05-02T15:51:23.082Z"
+      "currentFocus": "PLN-08 planning is active; Planner is defining the V1.3 phase-2 PMW command-surface lane after OPS-03 closeout.",
+      "releaseGoal": "preserve the V1.2 installable standard harness baseline while keeping the V1.3 PMW operator-console/workflow-contract direction intact and strengthening OPS-03 without weakening SSOT, approval, PMW read-only, Tester/Reviewer separation, or root/starter sync contracts",
+      "sourceRef": "reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md",
+      "updatedAt": "2026-05-03T02:44:20.426Z"
     },
     "freshness": {
       "status": "fresh",
@@ -33,14 +33,14 @@
         {
           "projectionName": "CURRENT_STATE.md",
           "freshnessState": "fresh",
-          "generatedAt": "2026-05-02T15:51:23.083Z",
-          "checksum": "52fb90eed45eefa22194c18d2729146b06574f741d2c30b8a3aef15b86f58b63"
+          "generatedAt": "2026-05-03T02:44:20.428Z",
+          "checksum": "6d15ffae50beef33f00e5653b345c023fa59c1ebfd70506066350b1526dc32a5"
         },
         {
           "projectionName": "TASK_LIST.md",
           "freshnessState": "fresh",
-          "generatedAt": "2026-05-02T15:51:23.083Z",
-          "checksum": "797227a0ad09914b487a8e650969fc9e92e24bbd6615cafef99cf49ae470f701"
+          "generatedAt": "2026-05-03T02:44:20.428Z",
+          "checksum": "b3d19b14c7f14632f6a39b1cc1b1eb521634ab889881263ca5091d6db29de86d"
         }
       ]
     },
@@ -101,18 +101,18 @@
         "id": "current_focus",
         "label": "Current Focus",
         "count": 1,
-        "headline": "OPS-03 tester re-verification after reviewer-finding remediation",
+        "headline": "PLN-08 planning is active; Planner is defining the V1.3 phase-2 PMW command-surface lane after OPS-03 closeout.",
         "supportingText": null,
         "status": "ready",
         "summaryLines": [
-          "OPS-03 tester re-verification after reviewer-finding remediation"
+          "PLN-08 planning is active; Planner is defining the V1.3 phase-2 PMW command-surface lane after OPS-03 closeout."
         ],
         "detail": {
-          "currentStage": "verification",
+          "currentStage": "planning",
           "releaseGateState": "open",
-          "releaseGoal": "preserve the V1.2 installable standard harness baseline while defining the approved V1.3 direction where PMW remains a separate installable multi-project operator console, workflow Markdown becomes explicit agent-role contracts, and reusable profiles PRF-04 through PRF-09 stay intact",
-          "currentFocus": "OPS-03 tester re-verification after reviewer-finding remediation",
-          "sourceRef": "reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md"
+          "releaseGoal": "preserve the V1.2 installable standard harness baseline while keeping the V1.3 PMW operator-console/workflow-contract direction intact and strengthening OPS-03 without weakening SSOT, approval, PMW read-only, Tester/Reviewer separation, or root/starter sync contracts",
+          "currentFocus": "PLN-08 planning is active; Planner is defining the V1.3 phase-2 PMW command-surface lane after OPS-03 closeout.",
+          "sourceRef": "reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md"
         },
         "source": {
           "path": "CURRENT_STATE.md",
@@ -128,7 +128,7 @@
           },
           {
             "kind": "canonical_source",
-            "path": "reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md"
+            "path": "reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md"
           }
         ]
       },
@@ -136,22 +136,30 @@
         "id": "next_action",
         "label": "Next Action",
         "count": 1,
-        "headline": "`OPS-03` active handoff is `developer -> tester`.",
-        "supportingText": "Re-verify OPS-03 reviewer-finding remediation: Ready For Code transition guards, open-decision guard, post-apply validation failure reporting, Implementation Plan PMW Next Action freshness, tests, validator, PMW export, and validation report.",
+        "headline": "`PLN-08` active handoff is `planner -> planner`.",
+        "supportingText": "Planner should finish the PLN-08 draft and get user approval on the phase-2 PMW command promotion scope before any implementation packet opens.",
         "status": "ready",
         "summaryLines": [
-          "`OPS-03` active handoff is `developer -> tester`.",
-          "Re-verify OPS-03 reviewer-finding remediation: Ready For Code transition guards, open-decision guard, post-apply validation failure reporting, Implementation Plan PMW Next Action freshness, tests, validator, PMW export, and validation report.",
-          "Source packet: `reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md`.",
+          "`PLN-08` active handoff is `planner -> planner`.",
+          "Planner should finish the PLN-08 draft and get user approval on the phase-2 PMW command promotion scope before any implementation packet opens.",
+          "Source packet: `reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md`.",
           "Preserve packet-before-code, PMW read-only authority, generated-doc immutability, root/starter sync, Tester/Reviewer separation, and human approval gates."
         ],
         "items": [
           {
+            "id": "PLN-08",
+            "title": "V1.3 PMW phase-2 command surface planning",
+            "status": "planning",
+            "nextAction": "Planner should finish the PLN-08 draft and get user approval on the phase-2 PMW command promotion scope before any implementation packet opens.",
+            "owner": "planner",
+            "sourceRef": "reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md"
+          },
+          {
             "id": "OPS-03",
             "title": "Harness operation reliability and friction reduction packet",
-            "status": "review",
-            "nextAction": "Re-verify OPS-03 reviewer-finding remediation: Ready For Code transition guards, open-decision guard, post-apply validation failure reporting, Implementation Plan PMW Next Action freshness, tests, validator, PMW export, and validation report.",
-            "owner": "tester",
+            "status": "done",
+            "nextAction": "Planner should choose the next approved lane; do not reopen implementation without a new human-approved packet.",
+            "owner": "planner",
             "sourceRef": "reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md"
           },
           {
@@ -425,6 +433,10 @@
           },
           {
             "kind": "canonical_source",
+            "path": "reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md"
+          },
+          {
+            "kind": "canonical_source",
             "path": "reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md"
           },
           {
@@ -488,13 +500,13 @@
     },
     "projectOverviewBand": {
       "heading": "Project Overview Band",
-      "projectGoal": "preserve the V1.2 installable standard harness baseline while defining the approved V1.3 direction where PMW remains a separate installable multi-project operator console, workflow Markdown becomes explicit agent-role contracts, and reusable profiles PRF-04 through PRF-09 stay intact",
-      "currentFocus": "OPS-03 tester re-verification after reviewer-finding remediation",
-      "stage": "verification",
+      "projectGoal": "preserve the V1.2 installable standard harness baseline while keeping the V1.3 PMW operator-console/workflow-contract direction intact and strengthening OPS-03 without weakening SSOT, approval, PMW read-only, Tester/Reviewer separation, or root/starter sync contracts",
+      "currentFocus": "PLN-08 planning is active; Planner is defining the V1.3 phase-2 PMW command-surface lane after OPS-03 closeout.",
+      "stage": "planning",
       "gate": "open",
       "metrics": {
-        "totalTracked": 44,
-        "done": 43,
+        "totalTracked": 45,
+        "done": 44,
         "active": 1,
         "openWorkItems": 1,
         "freshness": "fresh"
@@ -502,9 +514,9 @@
       "phaseSummary": [
         {
           "phase": "Planning",
-          "total": 10,
+          "total": 11,
           "done": 10,
-          "active": 0
+          "active": 1
         },
         {
           "phase": "Design",
@@ -539,8 +551,8 @@
         {
           "phase": "Ops",
           "total": 3,
-          "done": 2,
-          "active": 1
+          "done": 3,
+          "active": 0
         },
         {
           "phase": "Security",
@@ -570,9 +582,9 @@
       "phaseDetails": [
         {
           "phase": "Planning",
-          "total": 10,
+          "total": 11,
           "done": 10,
-          "active": 0,
+          "active": 1,
           "completedItems": [
             {
               "taskId": "PLN-00",
@@ -645,7 +657,15 @@
               "source": "reference/artifacts/STANDARD_HARNESS_WBMS_SIMULATION_REPORT.md"
             }
           ],
-          "remainingItems": []
+          "remainingItems": [
+            {
+              "taskId": "PLN-08",
+              "title": "V1.3 PMW phase-2 command surface planning",
+              "status": "planning",
+              "notes": "Draft opened on 2026-05-03 to decide whether `doctor`, `test`, and `validation-report` stay terminal-only or move into a later PMW command-surface packet.",
+              "source": "reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md"
+            }
+          ]
         },
         {
           "phase": "Design",
@@ -849,9 +869,16 @@
         {
           "phase": "Ops",
           "total": 3,
-          "done": 2,
-          "active": 1,
+          "done": 3,
+          "active": 0,
           "completedItems": [
+            {
+              "taskId": "OPS-03",
+              "title": "Harness operation reliability and friction reduction",
+              "status": "done",
+              "notes": "Planner recorded OPS-03 closeout after reviewer-approved exit and remediation re-verification. Planner should choose the next approved lane; do not reopen implementation without a new human-approved packet.",
+              "source": "reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md"
+            },
             {
               "taskId": "OPS-02",
               "title": "Environment topology contract",
@@ -867,15 +894,7 @@
               "source": ".agents/artifacts/IMPLEMENTATION_PLAN.md"
             }
           ],
-          "remainingItems": [
-            {
-              "taskId": "OPS-03",
-              "title": "Harness operation reliability and friction reduction",
-              "status": "verification",
-              "notes": "Rebaselined on 2026-05-02 and implemented through gate profiles, approval/SSOT consistency guards, transition automation, PMW/read-model metadata, current-state handoff freshness, and thin agent behavior guidance; after Reviewer found transition guard/reporting gaps, Developer remediated them and handed to Tester for re-verification.",
-              "source": "reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md"
-            }
-          ]
+          "remainingItems": []
         },
         {
           "phase": "Security",
@@ -985,7 +1004,7 @@
         },
         {
           "kind": "canonical_source",
-          "path": "reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md"
+          "path": "reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md"
         },
         {
           "kind": "canonical_source",
@@ -1024,12 +1043,12 @@
         },
         "currentTask": {
           "label": "Current Task",
-          "taskId": "OPS-03",
-          "title": "Harness operation reliability and friction reduction packet",
-          "status": "review",
-          "owner": "tester",
-          "workflow": ".agents/workflows/test.md",
-          "summary": "Re-verify OPS-03 reviewer-finding remediation: Ready For Code transition guards, open-decision guard, post-apply validation failure reporting, Implementation Plan PMW Next Action freshness, tests, validator, PMW export, and validation report.",
+          "taskId": "PLN-08",
+          "title": "V1.3 PMW phase-2 command surface planning",
+          "status": "planning",
+          "owner": "planner",
+          "workflow": ".agents/workflows/plan.md",
+          "summary": "Planner should finish the PLN-08 draft and get user approval on the phase-2 PMW command promotion scope before any implementation packet opens.",
           "gateProfile": {
             "id": "contract",
             "label": "Contract",
@@ -1051,15 +1070,15 @@
             ],
             "source": "work_item_metadata"
           },
-          "sourceRef": "reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md"
+          "sourceRef": "reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md"
         },
         "nextTask": {
           "label": "Next Task",
           "taskId": null,
           "title": "Next Lane Step",
           "status": "queued",
-          "owner": "tester",
-          "workflow": ".agents/workflows/test.md",
+          "owner": "planner",
+          "workflow": ".agents/workflows/plan.md",
           "gateProfile": {
             "id": "contract",
             "label": "Contract",
@@ -1081,46 +1100,47 @@
             ],
             "source": "work_item_metadata"
           },
-          "summary": "Re-verify OPS-03 reviewer-finding remediation: Ready For Code transition guards, open-decision guard, post-apply validation failure reporting, Implementation Plan PMW Next Action freshness, tests, validator, PMW export, and validation report.",
-          "sourceRef": "reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md"
+          "summary": "Planner should finish the PLN-08 draft and get user approval on the phase-2 PMW command promotion scope before any implementation packet opens.",
+          "sourceRef": "reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md"
         }
       }
     },
     "reEntryBaton": {
       "heading": "Re-entry Baton",
       "latestHandoff": {
-        "headline": "[developer -> tester] Developer remediated Reviewer transition findings: Ready For Code handoff guards, open-decision guard, post-apply validation failure reporting, and PMW Next Action freshness.",
-        "fromRole": "developer",
-        "toRole": "tester",
-        "createdAt": "2026-05-02T15:51:23.083Z"
+        "headline": "[planner -> planner] Opened PLN-08 planning lane to define the V1.3 phase-2 PMW command-surface scope after OPS-03 closeout.",
+        "fromRole": "planner",
+        "toRole": "planner",
+        "createdAt": "2026-05-03T02:44:20.428Z"
       },
-      "previousWorkAgent": "developer",
-      "previousWorkSummary": "Developer remediated Reviewer transition findings: Ready For Code handoff guards, open-decision guard, post-apply validation failure reporting, and PMW Next Action freshness.",
-      "nextWorkAgent": "tester",
-      "nextWorkSummary": "Re-verify OPS-03 reviewer-finding remediation: Ready For Code transition guards, open-decision guard, post-apply validation failure reporting, Implementation Plan PMW Next Action freshness, tests, validator, PMW export, and validation report.",
-      "nextOwner": "tester",
-      "targetWorkflow": ".agents/workflows/test.md",
+      "previousWorkAgent": "planner",
+      "previousWorkSummary": "OPS-03 closeout is recorded and the preventive-memory promotion loop is closed.",
+      "nextWorkAgent": "planner",
+      "nextWorkSummary": "Planner should finish the PLN-08 draft and get user approval on the phase-2 PMW command promotion scope before any implementation packet opens.",
+      "nextOwner": "planner",
+      "targetWorkflow": ".agents/workflows/plan.md",
       "routeStatus": "ready",
       "activeTask": {
-        "taskId": "OPS-03",
-        "title": "Harness operation reliability and friction reduction packet"
+        "taskId": "PLN-08",
+        "title": "V1.3 PMW phase-2 command surface planning"
       },
       "requiredSsot": [
         ".agents/artifacts/CURRENT_STATE.md",
         ".agents/artifacts/TASK_LIST.md",
         ".agents/artifacts/IMPLEMENTATION_PLAN.md",
-        "reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md"
+        ".agents/artifacts/REQUIREMENTS.md",
+        "reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md"
       ],
       "pendingApprovals": [],
-      "fallbackSummary": "Re-verify OPS-03 reviewer-finding remediation: Ready For Code transition guards, open-decision guard, post-apply validation failure reporting, Implementation Plan PMW Next Action freshness, tests, validator, PMW export, and validation report."
+      "fallbackSummary": "Planner should finish the PLN-08 draft and get user approval on the phase-2 PMW command promotion scope before any implementation packet opens."
     },
     "gateProfile": {
       "heading": "Gate Profile",
       "activeTask": {
-        "taskId": "OPS-03",
-        "title": "Harness operation reliability and friction reduction packet",
-        "owner": "tester",
-        "status": "review"
+        "taskId": "PLN-08",
+        "title": "V1.3 PMW phase-2 command surface planning",
+        "owner": "planner",
+        "status": "planning"
       },
       "activeProfile": {
         "id": "contract",
@@ -1152,13 +1172,13 @@
       "sourceTrace": [
         {
           "kind": "active_task_packet",
-          "path": "reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md"
+          "path": "reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md"
         }
       ]
     },
     "artifactLibrary": {
       "heading": "Artifact Library",
-      "previewTitle": "reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md",
+      "previewTitle": "reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md",
       "groups": [
         {
           "id": "execution_truth",
@@ -1177,15 +1197,63 @@
               "previewable": true
             },
             {
+              "path": ".agents/artifacts/PROJECT_PROGRESS.md",
+              "title": "Project Progress",
+              "kind": "governance",
+              "previewable": true
+            }
+          ]
+        },
+        {
+          "id": "project_design_overview",
+          "label": "Project Design And Overview",
+          "items": [
+            {
+              "path": ".agents/artifacts/REQUIREMENTS.md",
+              "title": "Requirements",
+              "kind": "project_design_ssot",
+              "previewable": true
+            },
+            {
+              "path": ".agents/artifacts/ARCHITECTURE_GUIDE.md",
+              "title": "Architecture Guide",
+              "kind": "project_design_ssot",
+              "previewable": true
+            },
+            {
               "path": ".agents/artifacts/IMPLEMENTATION_PLAN.md",
               "title": "Implementation Plan",
-              "kind": "governance",
+              "kind": "project_design_ssot",
               "previewable": true
             },
             {
               "path": ".agents/artifacts/PROJECT_PROGRESS.md",
               "title": "Project Progress",
-              "kind": "governance",
+              "kind": "project_overview",
+              "previewable": true
+            },
+            {
+              "path": ".agents/artifacts/ACTIVE_PROFILES.md",
+              "title": "Active Profiles",
+              "kind": "project_overview",
+              "previewable": true
+            },
+            {
+              "path": "reference/artifacts/UI_DESIGN.md",
+              "title": "UI Design",
+              "kind": "project_design_reference",
+              "previewable": true
+            },
+            {
+              "path": "reference/artifacts/PRODUCT_UX_ARCHETYPE.md",
+              "title": "Product UX Archetype",
+              "kind": "project_design_reference",
+              "previewable": true
+            },
+            {
+              "path": "reference/artifacts/SYSTEM_CONTEXT.md",
+              "title": "System Context",
+              "kind": "project_overview_reference",
               "previewable": true
             }
           ]
@@ -1195,8 +1263,8 @@
           "label": "Active Packet And Registered Packets",
           "items": [
             {
-              "path": "reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md",
-              "title": "PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION",
+              "path": "reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md",
+              "title": "PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT",
               "kind": "active_packet",
               "previewable": true
             },
@@ -1221,6 +1289,12 @@
             {
               "path": "reference/packets/PKT-01_DEV-09_PMW_PHASE_1_COMMAND_LAUNCHER_AND_HANDOFF_EXECUTION.md",
               "title": "PKT-01 DEV-09 PMW Phase-1 Command Launcher And Handoff Execution",
+              "kind": "task_packet",
+              "previewable": true
+            },
+            {
+              "path": "reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md",
+              "title": "PKT-01 OPS-03 Harness Operation Friction Reduction",
               "kind": "task_packet",
               "previewable": true
             },
@@ -1255,8 +1329,14 @@
               "previewable": true
             },
             {
-              "path": "reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md",
-              "title": "PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION",
+              "path": ".agents/artifacts/REQUIREMENTS.md",
+              "title": "REQUIREMENTS",
+              "kind": "required_ssot",
+              "previewable": true
+            },
+            {
+              "path": "reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md",
+              "title": "PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT",
               "kind": "required_ssot",
               "previewable": true
             },
@@ -1289,7 +1369,7 @@
         },
         {
           "kind": "canonical_source",
-          "path": "reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md"
+          "path": "reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md"
         },
         {
           "kind": "canonical_source",
@@ -1424,27 +1504,28 @@
     },
     "recentHandoff": {
       "status": "ready",
-      "headline": "[developer -> tester] Developer remediated Reviewer transition findings: Ready For Code handoff guards, open-decision guard, post-apply validation failure reporting, and PMW Next Action freshness.",
-      "createdAt": "2026-05-02T15:51:23.083Z",
-      "fromRole": "developer",
-      "toRole": "tester",
+      "headline": "[planner -> planner] Opened PLN-08 planning lane to define the V1.3 phase-2 PMW command-surface scope after OPS-03 closeout.",
+      "createdAt": "2026-05-03T02:44:20.428Z",
+      "fromRole": "planner",
+      "toRole": "planner",
       "payload": {
-        "transition": "developer-to-tester",
-        "workItemId": "OPS-03",
+        "transition": "planner-open-lane",
+        "workItemId": "PLN-08",
         "gateProfile": "contract",
-        "completedScope": "Developer remediated Reviewer transition findings: Ready For Code handoff guards, open-decision guard, post-apply validation failure reporting, and PMW Next Action freshness.",
-        "nextFirstAction": "Re-verify OPS-03 reviewer-finding remediation: Ready For Code transition guards, open-decision guard, post-apply validation failure reporting, Implementation Plan PMW Next Action freshness, tests, validator, PMW export, and validation report.",
+        "completedScope": "OPS-03 closeout is recorded and the preventive-memory promotion loop is closed.",
+        "nextFirstAction": "Planner should finish the PLN-08 draft and get user approval on the phase-2 PMW command promotion scope before any implementation packet opens.",
         "requiredSsot": [
           ".agents/artifacts/CURRENT_STATE.md",
           ".agents/artifacts/TASK_LIST.md",
           ".agents/artifacts/IMPLEMENTATION_PLAN.md",
-          "reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md"
+          ".agents/artifacts/REQUIREMENTS.md",
+          "reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md"
         ]
       },
       "sourceTrace": [
         {
           "kind": "canonical_source",
-          "path": "reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md"
+          "path": "reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md"
         }
       ]
     },
@@ -1452,19 +1533,19 @@
       {
         "code": "handoff_route",
         "severity": "info",
-        "owner": "tester",
-        "workflow": ".agents/workflows/test.md",
+        "owner": "planner",
+        "workflow": ".agents/workflows/plan.md",
         "routeStatus": "ready",
         "resolvedBy": "active_task_owner",
-        "currentStateNextAgent": "Tester",
-        "taskId": "OPS-03",
-        "taskTitle": "Harness operation reliability and friction reduction packet",
-        "taskStatus": "review",
+        "currentStateNextAgent": "Planner",
+        "taskId": "PLN-08",
+        "taskTitle": "V1.3 PMW phase-2 command surface planning",
+        "taskStatus": "planning",
         "workflowDetailsExists": true,
         "workflowMissingSections": [],
-        "fromRole": "developer",
-        "toRole": "tester",
-        "message": "handoff.md routes to .agents/workflows/test.md for tester: [OPS-03] Harness operation reliability and friction reduction packet."
+        "fromRole": "planner",
+        "toRole": "planner",
+        "message": "handoff.md routes to .agents/workflows/plan.md for planner: [PLN-08] V1.3 PMW phase-2 command surface planning."
       }
     ]
   }

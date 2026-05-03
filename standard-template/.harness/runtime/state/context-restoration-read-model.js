@@ -661,8 +661,20 @@ function buildArtifactLibrary({ repoRoot, releaseState, latestHandoff, nextActio
     [
       { path: ".agents/artifacts/CURRENT_STATE.md", title: "Current State", kind: "governance" },
       { path: ".agents/artifacts/TASK_LIST.md", title: "Task List", kind: "governance" },
-      { path: ".agents/artifacts/IMPLEMENTATION_PLAN.md", title: "Implementation Plan", kind: "governance" },
       { path: PROJECT_PROGRESS_DOC, title: "Project Progress", kind: "governance" }
+    ],
+    "path"
+  );
+  const projectDesignOverview = uniqueItems(
+    [
+      { path: ".agents/artifacts/REQUIREMENTS.md", title: "Requirements", kind: "project_design_ssot" },
+      { path: ".agents/artifacts/ARCHITECTURE_GUIDE.md", title: "Architecture Guide", kind: "project_design_ssot" },
+      { path: ".agents/artifacts/IMPLEMENTATION_PLAN.md", title: "Implementation Plan", kind: "project_design_ssot" },
+      { path: ".agents/artifacts/PROJECT_PROGRESS.md", title: "Project Progress", kind: "project_overview" },
+      { path: ".agents/artifacts/ACTIVE_PROFILES.md", title: "Active Profiles", kind: "project_overview" },
+      { path: "reference/artifacts/UI_DESIGN.md", title: "UI Design", kind: "project_design_reference" },
+      { path: "reference/artifacts/PRODUCT_UX_ARCHETYPE.md", title: "Product UX Archetype", kind: "project_design_reference" },
+      { path: "reference/artifacts/SYSTEM_CONTEXT.md", title: "System Context", kind: "project_overview_reference" }
     ],
     "path"
   );
@@ -694,6 +706,7 @@ function buildArtifactLibrary({ repoRoot, releaseState, latestHandoff, nextActio
     previewTitle: currentPacketPath ?? ".agents/artifacts/CURRENT_STATE.md",
     groups: [
       { id: "execution_truth", label: "Execution Truth", items: mapArtifactItems(repoRoot, executionTruth) },
+      { id: "project_design_overview", label: "Project Design And Overview", items: mapArtifactItems(repoRoot, projectDesignOverview) },
       { id: "active_packets", label: "Active Packet And Registered Packets", items: mapArtifactItems(repoRoot, packetItems) },
       { id: "evidence", label: "Evidence And Generated Outputs", items: mapArtifactItems(repoRoot, evidenceItems) }
     ],

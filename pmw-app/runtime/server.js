@@ -150,7 +150,7 @@ function buildArtifactPayload({ projectId, artifactPath }) {
   }
 
   const raw = fs.readFileSync(absolutePath, "utf8");
-  const maxChars = 12000;
+  const maxChars = 50000;
   return {
     ok: true,
     path: artifactPath,
@@ -479,7 +479,7 @@ function renderHtml() {
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{margin:0;background:radial-gradient(circle at top,#fbf7ee 0,#f4f1e7 42%,#efe8d9 100%);color:var(--ink);font:14px/1.58 Segoe UI,Arial,sans-serif}
-main{max-width:1380px;margin:0 auto;padding:24px}
+main{max-width:1680px;margin:0 auto;padding:24px}
 h1,h2,h3{margin:0}
 h1{font-size:28px;letter-spacing:.02em}
 h2{font-size:22px}
@@ -536,14 +536,15 @@ button:disabled{opacity:.55;cursor:default}
 .baton-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px}
 .baton-list{margin:0;padding-left:18px}
 .baton-list li{margin:6px 0}
-.artifact-layout{display:grid;grid-template-columns:320px 1fr;gap:12px}
+.artifact-layout{display:grid;grid-template-columns:minmax(260px,340px) minmax(0,1fr);gap:16px;align-items:start}
 .artifact-group{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:10px}
 .artifact-group:first-child{margin-top:0}
 .artifact-button{width:100%;text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fdfbf6;margin-top:8px}
 .artifact-button.active{border-color:var(--accent);background:var(--accent-soft)}
 .artifact-meta{font-size:12px;color:var(--muted)}
-.preview{background:#fbfaf6;border:1px solid var(--line);border-radius:14px;padding:12px}
-pre{white-space:pre-wrap;word-break:break-word;background:#eef0e8;border:1px solid #c6ccbe;border-radius:12px;padding:14px;color:#141914;font:13px/1.68 Consolas,"Cascadia Code","Segoe UI",Arial,sans-serif}
+.preview{background:#fbfaf6;border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
+.preview pre{min-height:560px;max-height:72vh;overflow:auto}
+pre{white-space:pre-wrap;word-break:normal;overflow-wrap:anywhere;background:#eef0e8;border:1px solid #c6ccbe;border-radius:12px;padding:14px;color:#141914;font:13px/1.68 Consolas,"Cascadia Code","Segoe UI",Arial,sans-serif}
 .command-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .command-col{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px}
 .command-item{border-top:1px solid #ebe5d8;padding-top:10px;margin-top:10px}

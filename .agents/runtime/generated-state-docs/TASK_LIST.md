@@ -1,10 +1,10 @@
 # TASK_LIST
 
 ## Technical Facts
-- Open work items: 33
+- Open work items: 34
 - Open blocked or at-risk items: 0
 - Recent handoffs captured: 10
-- Generated at: 2026-05-02T15:51:23.083Z
+- Generated at: 2026-05-03T02:44:20.428Z
 
 ## Blocked / At Risk Summary
 - 0 open blocker or risks require attention.
@@ -18,7 +18,8 @@
 ## Work Item Detail
 | ID | Title | Status | Next Action |
 |---|---|---|---|
-| OPS-03 | Harness operation reliability and friction reduction packet | review | Re-verify OPS-03 reviewer-finding remediation: Ready For Code transition guards, open-decision guard, post-apply validation failure reporting, Implementation Plan PMW Next Action freshness, tests, validator, PMW export, and validation report. |
+| PLN-08 | V1.3 PMW phase-2 command surface planning | planning | Planner should finish the PLN-08 draft and get user approval on the phase-2 PMW command promotion scope before any implementation packet opens. |
+| OPS-03 | Harness operation reliability and friction reduction packet | done | Planner should choose the next approved lane; do not reopen implementation without a new human-approved packet. |
 | PLN-07 | V1.3 PMW operator console and workflow-contract planning | done | Closed on 2026-05-02 after DEV-07, DEV-08, and DEV-09 packet closeouts; preserve V1.3 PMW evidence while OPS-03 proceeds. |
 | DEV-09 | PMW phase-1 command launcher and handoff execution packet | done | Closed on 2026-05-02 after Tester verification and Reviewer packet exit approval; preserve DEV-09 command launcher and handoff baton evidence. |
 | DEV-08 | Workflow contracts and handoff routing packet | done | Closed on 2026-05-02 after Reviewer approved packet exit closeout; no open DEV-08 finding remains. |
@@ -53,18 +54,18 @@
 | DEV-04 | PMW read surface | done | Closed after browser verification passed at http://127.0.0.1:4173. |
 
 ## Handoff Log
-- 2026-05-02T15:51:23.083Z: [developer -> tester] Developer remediated Reviewer transition findings: Ready For Code handoff guards, open-decision guard, post-apply validation failure reporting, and PMW Next Action freshness.
-- 2026-05-02T15:45:08.393Z: [reviewer -> developer] Reviewer found transition approval and validation-result reporting gaps; Developer remediation required.
-- 2026-05-02T15:39:05.804Z: [tester -> reviewer] OPS-03 Tester re-verification passed after Developer remediation; mixed timestamp handoff ordering, transition canonical-doc updates, PMW Re-entry Baton/recentHandoff freshness, root/starter/PMW tests, validator, PMW export, and validation report passed.
-- 2026-05-02T15:36:31.614Z: [developer -> tester] OPS-03 Developer remediated PMW stale handoff ordering and transition canonical-doc update gaps; root/starter/PMW tests and validator pass.
-- 2026-05-02T15:29:54.731Z: [tester -> developer] OPS-03 Tester verification found stale PMW handoff evidence despite passing tests and validator.
-- 2026-05-02T15:19:20.730Z: [developer -> tester] OPS-03 Developer reconciliation completed: root/starter sync restored, approval-state consistency guarded, tests and validator pass, PMW export/report refreshed.
-- 2026-05-03T00:01:03.3222041+09:00: [developer -> developer] OPS-03 partial implementation audit completed | keep/revise/drop classification recorded in packet | next reconcile root/starter sync drift and failing root tests
-- 2026-05-02T23:56:00.8130243+09:00: [planner -> developer] OPS-03 Ready For Code explicitly approved | Developer starts by auditing interrupted partial implementation | classify each existing change as keep/revise/drop before continuing implementation
-- 2026-05-02T00:00:05.000Z: [reviewer -> planner] DEV-09 packet exit approved | no open finding remains | finalize OPS-03 harness operation friction reduction plan
-- 2026-05-02T00:00:04.000Z: [tester -> reviewer] DEV-09 Tester verification passed | PMW Actions / Terminal Actions, confirmation boundaries, result surface, terminal-only guidance, and handoff baton verified
+- 2026-05-03T02:44:20.428Z: [planner -> planner] Opened PLN-08 planning lane to define the V1.3 phase-2 PMW command-surface scope after OPS-03 closeout.
+- 2026-05-03T01:54:09.472Z: [planner -> planner] Planner recorded OPS-03 closeout after reviewer-approved exit and remediation re-verification.
+- 2026-05-03T01:37:43.766Z: [reviewer -> planner] OPS-03 packet exit approved after revised-scope remediation and re-verification; Planner should record closeout and choose the next lane.
+- 2026-05-03T01:36:16.467Z: [tester -> reviewer] Tester re-verified the CURRENT_STATE transition remediation; stale wording is gone, reviewer-source Ready For Code handling is preserved, and validation evidence passed.
+- 2026-05-03T01:34:33.236Z: [developer -> tester] Developer remediated CURRENT_STATE transition stale wording and Ready For Code fallback handling; regression coverage and validation evidence passed.
+- 2026-05-03T01:26:09.488Z: [reviewer -> developer] Reviewer found stale CURRENT_STATE transition wording after tester handoff; Developer should remediate the update path and add coverage.
+- 2026-05-03T01:24:14.669Z: [tester -> reviewer] Tester verified the revised OPS-03 scope against the approved SSOT; behavior guidance, project-design precedence, PMW Artifact Library access, and validation evidence passed.
+- 2026-05-03T01:07:35.822Z: [developer -> tester] Developer implemented the revised OPS-03 scope: sufficient behavior guidance, project-design SSOT precedence, workflow closeout reporting, PMW design Artifact Library access, and validation coverage.
+- 2026-05-03T00:30:46.849Z: [planner -> developer] OPS-03 revised scope Ready For Code approved by user; Developer starts revised implementation.
+- 2026-05-03T00:20:16.647Z: [planner -> user] OPS-03 revised agreement finalized; Ready For Code for revised scope is pending user approval.
 
 ## Generation Metadata
 - Generated docs: CURRENT_STATE.md, TASK_LIST.md
-- Source revision: 2026-05-02T15:51:23.083Z
+- Source revision: 2026-05-03T02:44:20.428Z
 - Sync status: fresh at generation time

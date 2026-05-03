@@ -91,7 +91,9 @@
   - one command at a time per project
   - PMW command result logs are session-scoped
 - `handoff` in V1.3 is not guidance-only; it is approved to launch the next workflow selected by the approved routing rules.
-- `OPS-03` is the active follow-up direction for harness operation reliability: reduce repeated state-sync friction, prevent approval-state/SSOT drift after interruptions, and adopt lightweight agent behavior guidance without weakening packet-before-code, human approval, PMW read-only authority, generated-doc immutability, Tester/Reviewer separation, or root/starter synchronization.
+- `OPS-03` is the active follow-up direction for harness operation reliability: reduce repeated state-sync friction, prevent approval-state/SSOT drift after interruptions, sufficiently integrate the attached Karpathy-style agent behavior guidance, make human-and-Planner-approved project design SSOT the guiding instruction layer for all agents, and improve PMW access to whole-project design artifacts without weakening packet-before-code, human approval, PMW read-only authority, generated-doc immutability, Tester/Reviewer separation, or root/starter synchronization.
+- Human-and-Planner-approved project design SSOT guides every downstream agent: Developer implements according to it, Tester verifies implementation against it, and Reviewer checks source parity/evidence/residual debt against it.
+- PMW Artifact Library must keep whole-project design and overview artifacts always discoverable in one stable category, including `REQUIREMENTS.md`, `ARCHITECTURE_GUIDE.md`, `IMPLEMENTATION_PLAN.md`, and approved equivalents. The artifact body reading area must be wide enough for long design documents to be read comfortably.
 
 ## Layer Model
 - `Core`: 모든 복잡한 프로젝트에 공통으로 필요한 표준 계약, 게이트, validator enforcement
@@ -312,9 +314,14 @@
 - 각 개발 작업 단위 종료 시 packet exit quality gate 결과, refactor review, cleanup decision이 기록된다.
 - release / cutover 전에 security review가 수행되고 critical finding이 남지 않는다.
 - workflow Markdown contracts define explicit role naming, authority, non-authority, required SSOT, required outputs, handoff rules, and stop conditions.
+- Every workflow turn-close report uses two user-facing blocks: `Current Work` for completed work, encountered issues, and decisions made; `Next Work` for the next workflow, concrete next work, expected issues/risks, and expected decisions/approval points.
 - `Tester` workflow does not directly fix defects and instead hands remediation back to `Developer`.
 - `Planner` workflow does not start implementation before approval.
+- Human-and-Planner-approved project design SSOT is explicitly treated as the guiding instruction layer for all agent behavior.
+- Developer, Tester, and Reviewer workflow contracts state their relationship to the approved project design SSOT: implement to it, verify against it, and review source parity/evidence against it.
+- Karpathy-style guidance from the attached package is sufficiently reflected in reusable workflow/skill/manual guidance and coverage, including assumption disclosure, confusion management, tradeoff surfacing, warranted pushback, simplicity-first implementation, surgical edits, and goal-driven verification.
 - PMW remains independently installable and supports multiple registered projects while exposing a selected-project command catalog boundary.
+- PMW Artifact Library exposes a stable project-design/overview category with `REQUIREMENTS.md`, `ARCHITECTURE_GUIDE.md`, `IMPLEMENTATION_PLAN.md`, and approved equivalent project-wide design artifacts, and the document body has enough width for practical long-form reading.
 - V1.3 phase-1 PMW launcher scope and terminal-only guided command split are documented and enforced by the exported operator-command contract.
 - improvement candidate는 human review를 거쳐야만 core/profile/project follow-up item 또는 baseline update로 승격된다.
 - 재사용 가능한 표준 하네스 변경은 `standard-template/`의 대응 starter, code, test, reference 자산이 함께 갱신될 때만 완료로 본다.

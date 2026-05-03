@@ -79,6 +79,16 @@ test("writePmwProjectExport writes a PMW-readable manifest and read model withou
   );
   assert.equal(result.readModel.context.actionBoard.cards.currentTask.gateProfile.id, "standard");
   assert.equal(result.readModel.context.gateProfile.activeProfile.id, "standard");
+  assert.equal(
+    result.readModel.context.artifactLibrary.groups.some(
+      (group) =>
+        group.id === "project_design_overview" &&
+        group.items.some((item) => item.path === ".agents/artifacts/REQUIREMENTS.md") &&
+        group.items.some((item) => item.path === ".agents/artifacts/ARCHITECTURE_GUIDE.md") &&
+        group.items.some((item) => item.path === ".agents/artifacts/IMPLEMENTATION_PLAN.md")
+    ),
+    true
+  );
 });
 
 function seedRepo(repoRoot) {
