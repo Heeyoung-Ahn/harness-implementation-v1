@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { resolveGeneratedDocReadPath } from "./harness-paths.js";
+import { ACTIVE_CONTEXT_JSON, ACTIVE_CONTEXT_MARKDOWN } from "./active-context.js";
+import { AGENT_TRACES_DIR, VALIDATION_REPORT_JSON, resolveGeneratedDocReadPath } from "./harness-paths.js";
 import { CURRENT_STATE_DOC, TASK_LIST_DOC, calculateChecksum } from "./generate-state-docs.js";
 import { GATE_PROFILE_IDS, resolveGateProfile } from "./gate-profiles.js";
 import {
@@ -11,7 +12,10 @@ import {
 } from "./release-baseline.js";
 import {
   WORKFLOW_CONTRACT_SECTIONS,
-  findMissingWorkflowContractSections
+  findMissingWorkflowContractSections,
+  prioritizeOpenWorkItems,
+  selectActiveWorkItem,
+  resolveHandoffExecution
 } from "./workflow-routing.js";
 
 const REQUIRED_SECTIONS = {
@@ -23,6 +27,8 @@ const PACKET_TEMPLATE_PATH = "reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE
 const SOURCE_WAVE_LEDGER_PATH = "reference/artifacts/AUTHORITATIVE_SOURCE_WAVE_LEDGER.md";
 const ACTIVE_PROFILES_PATH = ".agents/artifacts/ACTIVE_PROFILES.md";
 const TASK_LIST_PATH = ".agents/artifacts/TASK_LIST.md";
+const CURRENT_STATE_PATH = ".agents/artifacts/CURRENT_STATE.md";
+const IMPLEMENTATION_PLAN_PATH = ".agents/artifacts/IMPLEMENTATION_PLAN.md";
 const REPOSITORY_LAYOUT_PATH = "reference/artifacts/REPOSITORY_LAYOUT_OWNERSHIP.md";
 const GATE_PROFILE_CONTRACT_PATH = ".harness/runtime/state/gate-profiles.js";
 const WORKFLOW_CONTRACT_PATHS = [
@@ -391,6 +397,13 @@ const TASK_PACKET_REQUIRED_HEADER_ITEMS = [
   { label: "Existing system dependency" },
   { label: "New authoritative source impact" }
 ];
+const ACTIVE_CONTEXT_MARKDOWN_REQUIRED_MARKERS = [
+  "# 활성 컨텍스트",
+  "## 시작 계약",
+  "## 다음 작업",
+  "## 먼저 다시 읽을 항목",
+  "## 검증 상태"
+];
 
 const TASK_PACKET_PROFILE_FIELD_REQUIREMENTS = {
   "PRF-01": [
@@ -520,6 +533,7 @@ export function validateGeneratedStateDocs({
     validateRiskParity(store, taskListContent, findings);
   }
 
+  validateActiveContextContract({ store, repoRoot, outputDir, findings });
   validateSourceRefs(store, repoRoot, findings);
   validateFreshness(store, findings);
   validateHarnessOwnedPaths(repoRoot, findings);
@@ -1275,9 +1289,7 @@ function validateRegisteredTaskPackets(store, repoRoot, findings) {
 }
 
 function validateGateProfileContracts(store, repoRoot, findings) {
-  const activePacketWorkItems = store
-    .listWorkItems()
-    .filter((item) => !isClosedWorkItemStatus(item.status))
+  const activePacketWorkItems = prioritizeOpenWorkItems(store.listWorkItems(), { repoRoot })
     .filter((item) => item.sourceRef?.startsWith(`${TASK_PACKET_DIRECTORY}/`) && item.sourceRef.endsWith(".md"))
     .filter((item) => item.sourceRef !== PACKET_TEMPLATE_PATH);
 
@@ -2288,7 +2300,12 @@ function validateFreshness(store, findings) {
     return;
   }
 
-  for (const projectionName of [CURRENT_STATE_DOC, TASK_LIST_DOC]) {
+  for (const projectionName of [
+    CURRENT_STATE_DOC,
+    TASK_LIST_DOC,
+    ACTIVE_CONTEXT_JSON,
+    ACTIVE_CONTEXT_MARKDOWN
+  ]) {
     const projection = store.getGenerationState(projectionName);
     if (!projection) {
       continue;
@@ -2302,6 +2319,382 @@ function validateFreshness(store, findings) {
         message: `${projectionName} is stale relative to the latest DB mutation timestamp.`
       });
     }
+  }
+}
+
+function validateActiveContextContract({ store, repoRoot, outputDir, findings }) {
+  const jsonPath = path.resolve(outputDir, ACTIVE_CONTEXT_JSON);
+  const markdownPath = path.resolve(outputDir, ACTIVE_CONTEXT_MARKDOWN);
+  const jsonContent = readRequiredUtf8File({
+    filePath: jsonPath,
+    findings,
+    missingCode: "active_context_missing",
+    missingMessage: `${ACTIVE_CONTEXT_JSON} is required as the first re-entry contract surface.`,
+    pathKey: "path"
+  });
+  const markdownContent = readRequiredUtf8File({
+    filePath: markdownPath,
+    findings,
+    missingCode: "active_context_missing",
+    missingMessage: `${ACTIVE_CONTEXT_MARKDOWN} is required as the human-facing re-entry contract surface.`,
+    pathKey: "path"
+  });
+
+  if (jsonContent != null) {
+    validateProjectionState(store, ACTIVE_CONTEXT_JSON, jsonContent, findings);
+    validateActiveContextJson({ store, repoRoot, content: jsonContent, findings });
+  }
+
+  if (markdownContent != null) {
+    validateProjectionState(store, ACTIVE_CONTEXT_MARKDOWN, markdownContent, findings);
+    validateRequiredContentMarkers({
+      content: markdownContent,
+      markers: ACTIVE_CONTEXT_MARKDOWN_REQUIRED_MARKERS,
+      code: "active_context_markdown_incomplete",
+      severity: "error",
+      path: ACTIVE_CONTEXT_MARKDOWN,
+      root: "root",
+      findings
+    });
+  }
+}
+
+function validateActiveContextJson({ store, repoRoot, content, findings }) {
+  let context;
+  try {
+    context = JSON.parse(content);
+  } catch (error) {
+    findings.push({
+      code: "active_context_json_parse_failed",
+      severity: "error",
+      path: ACTIVE_CONTEXT_JSON,
+      message: `${ACTIVE_CONTEXT_JSON} is not valid JSON: ${error.message}`
+    });
+    return;
+  }
+
+  const requiredChecks = [
+    [context.schemaVersion, "schemaVersion"],
+    [context.reentryContract?.firstRead === ACTIVE_CONTEXT_JSON, "reentryContract.firstRead"],
+    [Array.isArray(context.reentryContract?.mustReadNext) && context.reentryContract.mustReadNext.length > 0, "reentryContract.mustReadNext"],
+    [typeof context.reentryContract?.digest === "string" && context.reentryContract.digest.length > 0, "reentryContract.digest"],
+    [typeof context.nextWork?.action === "string" && context.nextWork.action.length > 0, "nextWork.action"],
+    [typeof context.nextWork?.owner === "string" && context.nextWork.owner.length > 0, "nextWork.owner"],
+    [typeof context.sources?.currentState === "string" && context.sources.currentState.length > 0, "sources.currentState"],
+    [typeof context.sources?.taskList === "string" && context.sources.taskList.length > 0, "sources.taskList"],
+    [typeof context.sources?.validationReport === "string" && context.sources.validationReport.length > 0, "sources.validationReport"]
+  ];
+
+  for (const [passed, field] of requiredChecks) {
+    if (passed) {
+      continue;
+    }
+    findings.push({
+      code: "active_context_contract_missing_field",
+      severity: "error",
+      path: ACTIVE_CONTEXT_JSON,
+      field,
+      message: `${ACTIVE_CONTEXT_JSON} is missing required contract field ${field}.`
+    });
+  }
+
+  const mustReadNext = context.reentryContract?.mustReadNext ?? [];
+  for (const requiredPath of [CURRENT_STATE_PATH, TASK_LIST_PATH, VALIDATION_REPORT_JSON]) {
+    if (mustReadNext.includes(requiredPath)) {
+      continue;
+    }
+    findings.push({
+      code: "active_context_must_read_missing",
+      severity: "error",
+      path: ACTIVE_CONTEXT_JSON,
+      requiredPath,
+      message: `${ACTIVE_CONTEXT_JSON} mustReadNext does not include ${requiredPath}.`
+    });
+  }
+
+  const latestHandoff = store.listRecentHandoffs(1)[0] ?? null;
+  const workItems = store.listWorkItems();
+  const handoffExecution = resolveHandoffExecution({
+    repoRoot,
+    workItems,
+    latestHandoff,
+    includeWorkflowDetails: true
+  });
+  const expectedWorkflow =
+    handoffExecution.workflow === "manual_selection_required" ? null : handoffExecution.workflow;
+  const expectedActiveTask = selectActiveWorkItem(workItems, { repoRoot });
+
+  if ((context.nextWork?.workflow ?? null) !== expectedWorkflow) {
+    findings.push({
+      code: "active_context_route_mismatch",
+      severity: "error",
+      path: ACTIVE_CONTEXT_JSON,
+      message: `${ACTIVE_CONTEXT_JSON} nextWork.workflow does not match the current workflow routing result.`
+    });
+  }
+
+  if ((context.nextWork?.owner ?? null) !== (handoffExecution.owner ?? null)) {
+    findings.push({
+      code: "active_context_route_mismatch",
+      severity: "error",
+      path: ACTIVE_CONTEXT_JSON,
+      message: `${ACTIVE_CONTEXT_JSON} nextWork.owner does not match the current workflow routing result.`
+    });
+  }
+
+  if ((context.selectedLane?.workItemId ?? null) !== (expectedActiveTask?.workItemId ?? null)) {
+    findings.push({
+      code: "active_context_route_mismatch",
+      severity: "error",
+      path: ACTIVE_CONTEXT_JSON,
+      message: `${ACTIVE_CONTEXT_JSON} selectedLane.workItemId does not match the active work item.`
+    });
+  }
+
+  if (expectedWorkflow && !mustReadNext.includes(expectedWorkflow)) {
+    findings.push({
+      code: "active_context_must_read_missing",
+      severity: "error",
+      path: ACTIVE_CONTEXT_JSON,
+      requiredPath: expectedWorkflow,
+      message: `${ACTIVE_CONTEXT_JSON} mustReadNext does not include the next workflow contract ${expectedWorkflow}.`
+    });
+  }
+
+  if (context.sources?.activePacket && !mustReadNext.includes(context.sources.activePacket)) {
+    findings.push({
+      code: "active_context_must_read_missing",
+      severity: "error",
+      path: ACTIVE_CONTEXT_JSON,
+      requiredPath: context.sources.activePacket,
+      message: `${ACTIVE_CONTEXT_JSON} mustReadNext does not include the active packet source.`
+    });
+  }
+
+  const sourceTrace = context.reentryContract?.sourceTrace ?? [];
+  for (const requiredPath of [CURRENT_STATE_PATH, TASK_LIST_PATH, IMPLEMENTATION_PLAN_PATH]) {
+    if (sourceTrace.includes(requiredPath)) {
+      continue;
+    }
+    findings.push({
+      code: "active_context_source_trace_missing",
+      severity: "error",
+      path: ACTIVE_CONTEXT_JSON,
+      requiredPath,
+      message: `${ACTIVE_CONTEXT_JSON} sourceTrace does not include ${requiredPath}.`
+    });
+  }
+
+  validateActiveContextValidationParity({ context, repoRoot, findings });
+  validateActiveWorkItemSemanticTrace({ context, repoRoot, findings });
+}
+
+function validateActiveContextValidationParity({ context, repoRoot, findings }) {
+  const report = readValidationReportSummary(repoRoot);
+  if (!report || !context.validation) {
+    return;
+  }
+
+  const parityFields = [
+    ["ok", context.validation.ok, report.ok],
+    ["cutoverReady", context.validation.cutoverReady, report.cutoverReady],
+    ["findingCount", context.validation.findingCount, report.findingCount],
+    ["blockingFindingCount", context.validation.blockingFindingCount, report.blockingFindingCount],
+    ["gateDecision", context.validation.gateDecision, report.gateDecision]
+  ];
+  for (const [field, contextValue, reportValue] of parityFields) {
+    if (contextValue === reportValue) {
+      continue;
+    }
+    findings.push({
+      code: "validation_report_context_parity_break",
+      severity: "error",
+      path: ACTIVE_CONTEXT_JSON,
+      field,
+      message: `${ACTIVE_CONTEXT_JSON} validation.${field} does not match ${VALIDATION_REPORT_JSON}.`
+    });
+  }
+
+  if ((context.validation.executedAt ?? null) !== (report.executedAt ?? null)) {
+    findings.push({
+      code: "active_context_validation_executed_at_mismatch",
+      severity: "error",
+      path: ACTIVE_CONTEXT_JSON,
+      message: `${ACTIVE_CONTEXT_JSON} validation.executedAt does not match ${VALIDATION_REPORT_JSON}.`
+    });
+  }
+
+  const contextTracePath = context.validation.traceSummary?.path ?? null;
+  const reportTracePath = report.traceSummary?.path ?? null;
+  if ((contextTracePath ?? null) !== (reportTracePath ?? null)) {
+    findings.push({
+      code: "validation_report_context_parity_break",
+      severity: "error",
+      path: ACTIVE_CONTEXT_JSON,
+      field: "traceSummary.path",
+      message: `${ACTIVE_CONTEXT_JSON} validation.traceSummary.path does not match ${VALIDATION_REPORT_JSON}.`
+    });
+  }
+}
+
+function validateActiveWorkItemSemanticTrace({ context, repoRoot, findings }) {
+  const activeTask = context.activeTask;
+  if (!activeTask?.workItemId) {
+    return;
+  }
+  const traceContractActive = /qlt-02/i.test(`${activeTask.workItemId} ${activeTask.sourceRef ?? ""}`);
+  if (!traceContractActive) {
+    return;
+  }
+
+  const report = readValidationReportSummary(repoRoot);
+  const expectedRelativePath = `${AGENT_TRACES_DIR}/${activeTask.workItemId}.json`;
+  const tracePath = path.resolve(repoRoot, expectedRelativePath);
+  const traceContent = readRequiredUtf8File({
+    filePath: tracePath,
+    findings,
+    missingCode: "required_semantic_trace_missing",
+    missingMessage: `${expectedRelativePath} is required for the active work item semantic trace contract.`,
+    pathKey: "tracePath"
+  });
+  if (traceContent == null) {
+    return;
+  }
+
+  let trace;
+  try {
+    trace = JSON.parse(traceContent);
+  } catch (error) {
+    findings.push({
+      code: "required_semantic_trace_missing",
+      severity: "error",
+      tracePath: expectedRelativePath,
+      message: `${expectedRelativePath} is not valid JSON: ${error.message}`
+    });
+    return;
+  }
+
+  for (const field of [
+    "schemaVersion",
+    "workItemId",
+    "packetId",
+    "role",
+    "workflow",
+    "turnClosedAt",
+    "requiredSsot",
+    "declaredReadEvidence",
+    "approvedDesignRefs",
+    "implementationRefs",
+    "verificationRefs",
+    "semanticTrace",
+    "selfCheck",
+    "handoff"
+  ]) {
+    if (trace[field] !== undefined && trace[field] !== null) {
+      continue;
+    }
+    findings.push({
+      code: "required_semantic_trace_missing",
+      severity: "error",
+      tracePath: expectedRelativePath,
+      field,
+      message: `${expectedRelativePath} is missing required field ${field}.`
+    });
+  }
+
+  if ((trace.workItemId ?? null) !== activeTask.workItemId) {
+    findings.push({
+      code: "contradictory_evidence",
+      severity: "error",
+      tracePath: expectedRelativePath,
+      message: `${expectedRelativePath} workItemId does not match the active work item.`
+    });
+  }
+
+  const expectedPacketId = context.sources?.activePacket
+    ? path.basename(context.sources.activePacket, path.extname(context.sources.activePacket))
+    : null;
+  if (expectedPacketId && (trace.packetId ?? null) !== expectedPacketId) {
+    findings.push({
+      code: "contradictory_evidence",
+      severity: "error",
+      tracePath: expectedRelativePath,
+      message: `${expectedRelativePath} packetId does not match the active packet source.`
+    });
+  }
+
+  if ((trace.role ?? null) !== (activeTask.owner ?? null)) {
+    findings.push({
+      code: "contradictory_evidence",
+      severity: "error",
+      tracePath: expectedRelativePath,
+      message: `${expectedRelativePath} role does not match the active work item owner.`
+    });
+  }
+
+  if (report?.executedAt && (trace.turnClosedAt ?? null) !== report.executedAt) {
+    findings.push({
+      code: "stale_evidence",
+      severity: "error",
+      tracePath: expectedRelativePath,
+      message: `${expectedRelativePath} turnClosedAt does not match ${VALIDATION_REPORT_JSON} executedAt.`
+    });
+  }
+
+  for (const ref of [
+    ...(Array.isArray(trace.requiredSsot) ? trace.requiredSsot : []),
+    ...(Array.isArray(trace.declaredReadEvidence) ? trace.declaredReadEvidence : []),
+    ...(Array.isArray(trace.approvedDesignRefs) ? trace.approvedDesignRefs : []),
+    ...(Array.isArray(trace.implementationRefs) ? trace.implementationRefs : []),
+    ...(Array.isArray(trace.verificationRefs) ? trace.verificationRefs : [])
+  ]) {
+    if (!ref || fs.existsSync(path.resolve(repoRoot, ref))) {
+      continue;
+    }
+    findings.push({
+      code: "broken_source_reference",
+      severity: "error",
+      tracePath: expectedRelativePath,
+      sourceRef: ref,
+      message: `${expectedRelativePath} points to missing source reference ${ref}.`
+    });
+  }
+
+  if ((trace.declaredReadEvidence?.length ?? 0) < 3) {
+    findings.push({
+      code: "evidence_linkage_thin",
+      severity: "warn",
+      tracePath: expectedRelativePath,
+      message: `${expectedRelativePath} has thin declaredReadEvidence linkage for reviewer review.`
+    });
+  }
+}
+
+function readValidationReportSummary(repoRoot) {
+  const reportPath = path.resolve(repoRoot, VALIDATION_REPORT_JSON);
+  if (!fs.existsSync(reportPath)) {
+    return null;
+  }
+
+  try {
+    const report = JSON.parse(fs.readFileSync(reportPath, "utf8"));
+    const resolved = report?.report ?? report;
+    const findings = Array.isArray(resolved.findings) ? resolved.findings : [];
+    return {
+      ok: Boolean(resolved.ok),
+      cutoverReady: resolved.cutoverReady != null ? Boolean(resolved.cutoverReady) : Boolean(resolved.ok),
+      findingCount:
+        typeof resolved.findingCount === "number" ? resolved.findingCount : findings.length,
+      blockingFindingCount:
+        typeof resolved.blockingFindingCount === "number"
+          ? resolved.blockingFindingCount
+          : findings.filter((finding) => finding?.severity === "error").length,
+      gateDecision: resolved.gateDecision ?? (resolved.ok ? "pass" : "hold"),
+      executedAt: resolved.executedAt ?? null,
+      traceSummary: resolved.traceSummary ?? null
+    };
+  } catch {
+    return null;
   }
 }
 

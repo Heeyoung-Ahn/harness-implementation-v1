@@ -12,31 +12,50 @@ This file keeps thin, durable prevention rules for repeated process or quality i
 
 ## Active Preventive Rules
 
-- Rule ID: PMW-ORIENTATION-001
+- Rule ID: CONTEXT-ORIENTATION-001
 - Repeated Mistake / Trigger: During long-running work, interruptions, stale generated state, or side topics make the operator lose the whole picture, current lane, why-now context, or return point.
-- Preventive Rule: Before closing any PMW-facing work item, ensure the repo-local operating state is backfilled, regenerate the designated docs, and verify that the PMW first view exposes `current lane`, `next gate / why now`, and `return point` while also answering `결정해야 할 것`, `막힌 것`, and `다음 작업` within 30 seconds.
-- Check Method: Run `npm.cmd test`, start `npm.cmd run pmw:start`, and compare the browser-rendered PMW at `http://127.0.0.1:4173` against the approved packet contract, including the header/meta strip, fixed 4-card grid, artifact preview, and diagnostics hierarchy.
-- Promotion Origin: Standardized into the baseline during DEV-04 / TST-02 / REV-01 closeout.
+- Preventive Rule: Before closing any operator-facing baseline change, ensure the repo-local operating state is backfilled, regenerate the designated docs, and verify that CLI plus Active Context expose `current lane`, `next gate / why now`, and `return point` while also answering `결정해야 할 것`, `막힌 것`, and `다음 작업` within 30 seconds.
+- Check Method: Run `npm.cmd test`, `npm.cmd run harness:context`, `npm.cmd run harness:status`, and compare `ACTIVE_CONTEXT.md` plus the CLI summaries against the approved packet contract, including current work, blockers, next action, latest handoff, and source traces.
+- Promotion Origin: Standardized during DEV-04 / TST-02 / REV-01 PMW orientation work, then rebaselined to CLI-first Active Context during DEV-11 closeout on 2026-05-04.
 - Linked Follow-Up Item: none
-- Source / Evidence: User feedback on 2026-04-19 in this repo and `C:\Newface\10 Antigravity\14 wmbs`, plus DEV-04 browser verification evidence in `.harness\pmw-home.png`, `.harness\pmw-full.png`, and `.harness\pmw-dev05.png`.
+- Source / Evidence: User feedback on 2026-04-19 in this repo and `C:\Newface\10 Antigravity\14 wmbs`, plus DEV-11 CLI-first context evidence in `reference/artifacts/WALKTHROUGH.md` and `reference/artifacts/REVIEW_REPORT.md`.
 
 - Rule ID: REL-BASELINE-001
-- Repeated Mistake / Trigger: Installable release surfaces (`standard-template/`, `installer/`, `pmw-app/`, `packaging/`, manuals, `dist/`) move to a new baseline label while root SSOT, DB hot-state, generated docs, or validator messages still describe the previous release.
-- Preventive Rule: Any lane that changes the installable payload, separate PMW behavior, packaging label, or release manual must update the shared release-baseline constant, root `.agents/artifacts/*`, `.harness/operating_state.sqlite`, generated docs, validation report, and the matching starter runtime/test guardrail in the same lane. Closeout is blocked if maintainer release surfaces and SSOT disagree.
-- Check Method: Run root `npm.cmd test`, `npm.cmd run harness:validation-report`, `node --test pmw-app/test/*.test.js`, and `npm.cmd test` in `standard-template/`; review validator findings for `release_baseline_*` codes.
+- Repeated Mistake / Trigger: Installable release surfaces (`standard-template/`, `installer/`, `packaging/`, manuals, `dist/`) move to a new baseline label while root SSOT, DB hot-state, generated docs, or validator messages still describe the previous release.
+- Preventive Rule: Any lane that changes the installable payload, Active Context behavior, packaging label, or release manual must update the shared release-baseline constant, root `.agents/artifacts/*`, `.harness/operating_state.sqlite`, generated docs, validation report, and the matching starter runtime/test guardrail in the same lane. Closeout is blocked if maintainer release surfaces and SSOT disagree.
+- Check Method: Run root `npm.cmd test`, `npm.cmd run harness:validate`, `npm.cmd run harness:validation-report`, and `npm.cmd test` in `standard-template/`; review validator findings for `release_baseline_*` codes and confirm the rebuilt release payload/manual sweep matches the active baseline.
 - Promotion Origin: Standardized into the baseline during `REL-02` closeout on 2026-04-27.
 - Linked Follow-Up Item: none
 - Source / Evidence: commit `b225956` shipped installable V1.2 surfaces while root SSOT and DB remained on V1.1 until `REL-02` reconciliation on 2026-04-27.
 
 - Rule ID: OPS-STATE-SYNC-001
 - Repeated Mistake / Trigger: Reusable runtime or PMW lanes close with task truth split across `CURRENT_STATE`, `TASK_LIST`, DB hot-state, generated docs, PMW export, validation report, and handoff evidence.
-- Preventive Rule: Open, transfer, and close reusable lanes only through the structured transition path. Terminal transitions must move active/completed task bookkeeping, project progress, generated docs, PMW export, validation evidence, and next-action surfaces together in the same turn; do not close the lane by manual doc edits alone.
-- Check Method: Use transition preview/apply, then run root/starter tests, `validate`, `pmw-export`, and `validation-report`, and confirm `status`/`next` report the same next owner and next action.
+- Preventive Rule: Open, transfer, and close reusable lanes only through the structured transition path. Terminal transitions must move active/completed task bookkeeping, project progress, generated docs, Active Context, validation evidence, and next-action surfaces together in the same turn; do not close the lane by manual doc edits alone.
+- Check Method: Use transition preview/apply, then run root/starter tests, `validate`, `context`, and `validation-report`, and confirm `status` / `next` / `ACTIVE_CONTEXT.*` report the same next owner and next action.
 - Promotion Origin: Promoted from `OPS-HARNESS-FRICTION-004` after `OPS-03` Tester re-verification, Reviewer closeout, and Planner closeout on 2026-05-03.
 - Linked Follow-Up Item: `OPS-03` (closed 2026-05-03)
-- Source / Evidence: `reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md`, `reference/artifacts/REVIEW_REPORT.md`, `reference/artifacts/WALKTHROUGH.md`, and `dev05-tooling` transition regression coverage in root/starter.
+- Source / Evidence: `reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md`, `reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md`, `reference/artifacts/REVIEW_REPORT.md`, `reference/artifacts/WALKTHROUGH.md`, and `dev05-tooling` transition regression coverage in root/starter.
+
+- Rule ID: ACTIVE-CONTEXT-REENTRY-001
+- Repeated Mistake / Trigger: Session-start or closeout changes leave `ACTIVE_CONTEXT` behind canonical truth, so the next agent re-enters through stale lane/workflow/action data or broad rereads instead of the compact contract surface.
+- Preventive Rule: Treat `.agents/runtime/ACTIVE_CONTEXT.json` as the mandatory first AI re-entry surface for reusable lanes, keep `.agents/runtime/ACTIVE_CONTEXT.md` as the human fallback, and block closeout if validator-visible Active Context freshness/parity or copied-starter bootstrap routing evidence is missing.
+- Check Method: Run root and `standard-template` `npm.cmd test`, root `npm.cmd run harness:validate`, `npm.cmd run harness:validation-report`, `npm.cmd run harness:context`, and copied-starter `harness:init/context/next/handoff/validate`; confirm `ACTIVE_CONTEXT` exposes lane, next workflow, must-read guidance, source trace, and validation state aligned with the live handoff.
+- Promotion Origin: Promoted from `OPS-04` after Developer implementation, Tester verification, and Reviewer closeout on 2026-05-04.
+- Linked Follow-Up Item: `OPS-04` (closed 2026-05-04)
+- Source / Evidence: `reference/packets/PKT-01_OPS-04_SESSION_START_CONTEXT_ASSURANCE_AND_CLOSEOUT_GATE_HARDENING.md`, `reference/artifacts/WALKTHROUGH.md`, `reference/artifacts/REVIEW_REPORT.md`, and Active Context / validator regression coverage in root and `standard-template`.
 
 ## Promotion Candidates
+
+- Candidate ID: QLT-TRANSITION-REFRESH-001
+- Issue Pattern: structured role transition apply가 DB handoff와 generated-doc metadata는 먼저 갱신하지만, 같은 직후에 읽은 `ACTIVE_CONTEXT` 또는 validation artifacts가 이전 owner/workflow snapshot을 잠깐 유지할 수 있다.
+- Why It Matters: tester-to-reviewer 같은 closeout handoff 직후에 operator나 다음 agent가 stale derived state를 먼저 읽으면, 실제 handoff는 성공했는데도 재생성 전 snapshot을 근거로 다음 workflow를 잘못 해석할 수 있다.
+- Proposed Target Layer: core
+- Proposed Target Artifact / Follow-Up Item: `PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md`
+- Promotion Status: approved
+- Human Review Boundary: the user approved `OPS-06` on 2026-05-04 as the next narrow packet after `QLT-02`; implementation remains blocked until explicit `Ready For Code`.
+- Linked Follow-Up Item: `OPS-06`
+- Needed Refinement: narrow implementation still needs a final Ready For Code decision on whether synchronous transition-time refresh or stronger derived-surface source selection is the minimal fix.
+- Source / Evidence: `reference/artifacts/WALKTHROUGH.md`, `reference/artifacts/REVIEW_REPORT.md`, and the repeated `developer -> tester` / `tester -> reviewer` refresh observations during QLT-02 closeout on 2026-05-04.
 
 - Candidate ID: OPS-HARNESS-FRICTION-004
 - Issue Pattern: 하네스 core/PMW 작업을 닫을 때마다 `CURRENT_STATE`, `TASK_LIST`, packet, DB hot-state, generated docs, PMW export, validation report, handoff log를 사람이 반복적으로 맞춰야 하며, 중단 후 승인 상태와 정본 상태가 갈라질 수 있다.

@@ -1,17 +1,17 @@
 # Task List
 
 ## Current Release Target
-- Rebaseline the standard harness toward a CLI-first core by drafting `PLN-09`, superseding the active PMW extension lane, preserving governance gates, fully removing PMW from the active reusable baseline, and splitting the remaining SSOT into AI-facing and human-facing surfaces.
+- Preserve the V1.3 CLI-first PMW-free reusable baseline closed by `DEV-11`, then use `PLN-10` to decide whether the reproduced post-closeout derived-state lag opens as a narrow packet before `OPS-05`.
 
 ## Active Locks
 | Task ID | Scope | Owner | Status | Started At | Notes |
 |---|---|---|---|---|---|
-| DEV-11 | CLI-first PMW decommission and active context implementation | tester | active | 2026-05-03 | developer-to-tester; gate release; Verify the implementation against the packet acceptance criteria. |
+| - | None | - | clear | - | - |
 
 ## Active Tasks
 | Task ID | Title | Scope | Owner | Status | Priority | Depends On | Verification |
 |---|---|---|---|---|---|---|---|
-| DEV-11 | CLI-first PMW decommission and active context implementation packet | Concrete implementation packet for complete PMW removal, active-context replacement, AI/human SSOT split, root/starter sync, validator changes, manuals, packaging, and clean starter acceptance. | tester | review | P0 | PLN-09 | gate release; Verify the implementation against the packet acceptance criteria. |
+| - | None | - | - | clear | - | - | - |
 - Preserve historical PMW evidence only; active implementation changes `standard-template/`, `installer/`, `packaging/`, and `reference/manuals/` to the PMW-free V1.3 baseline.
 - Keep root `.agents/artifacts/*`, `.harness/operating_state.sqlite`, `.agents/runtime/generated-state-docs/*`, and `.agents/artifacts/VALIDATION_REPORT.*` aligned with the same active planning baseline.
 - Keep `PRF-04` through `PRF-09` as the current approved reusable profile catalog.
@@ -19,9 +19,9 @@
 - Treat `reference/packets/PKT-01_DEV-09_PMW_PHASE_1_COMMAND_LAUNCHER_AND_HANDOFF_EXECUTION.md` as the closed evidence packet for the PMW phase-1 command launcher and handoff execution scope.
 - Treat `reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md` as the closed evidence packet for the expanded harness operation reliability lane.
 - Treat `reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md` and `reference/packets/PKT-01_DEV-10_PMW_PHASE_2_DOCTOR_PROMOTION_AND_USABILITY_REMEDIATION.md` as superseded by `PLN-09` / `DEV-11`; do not implement DEV-10 unless the user explicitly opens a new PMW revival lane.
-- Treat `reference/planning/PLN-09_CLI_FIRST_REBASELINE_AND_PMW_DECOMMISSION_DRAFT.md` as the active planning draft for the next user decision.
-- Treat `reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md` as the approved active implementation packet.
-- Next first action: Verify the implementation against the packet acceptance criteria.
+- Treat `reference/planning/PLN-09_CLI_FIRST_REBASELINE_AND_PMW_DECOMMISSION_DRAFT.md` and `reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md` as closed baseline evidence for the PMW-free V1.3 direction.
+- Treat `reference/planning/PLN-10_POST_DEV11_HARDENING_AND_RELEASE_ASSURANCE_DRAFT.md` as the selected next planning draft; do not open the first follow-up packet until the user agrees on the revised split beginning with context assurance.
+- Next first action: Close Ready For Code for OPS-06 before implementation opens.
 - Proposed CLI-first command surface is `status`, `next`, `explain`, `doctor`, `handoff`, `transition`, `validate`, `validation-report`, and new `context`.
 - Treat any future release-baseline mismatch between code, manuals, packaging, DB hot-state, or canonical artifacts as a blocking validator failure.
 
@@ -42,8 +42,27 @@
 | DEV-09 | PMW phase-1 command launcher and handoff execution packet | 2026-05-02 | PMW app tests, root/starter tests, status/next/explain/validate/handoff/pmw-export/validation-report evidence, Reviewer closeout | Closed after implementing and verifying the approved PMW Actions / Terminal Actions split, confirmation boundaries, selected-project execution, session result surface, and handoff baton context. |
 | OPS-03 | Harness operation reliability and friction reduction packet | 2026-05-03 | transition planner -> planner; gate contract | Planner recorded OPS-03 closeout after reviewer-approved exit and remediation re-verification. Planner should choose the next approved lane; do not reopen implementation without a new human-approved packet. |
 | PLN-09 | CLI-first harness rebaseline and PMW decommission planning | 2026-05-03 | DEV-11 packet approved for implementation | Planning closed after user approved DEV-11 scope and requested implementation, tests, and review. |
+| DEV-11 | CLI-first PMW decommission and active context implementation packet | 2026-05-03 | transition planner -> planner; gate release | Planner recorded DEV-11 closeout after reviewer approval. Planner should keep PLN-10 as the selected next planning lane and open the next packet only after human agreement. |
+| OPS-04 | Session-start context assurance and closeout gate hardening | 2026-05-04 | transition planner -> planner; gate contract | Planner recorded OPS-04 closeout after reviewer approval. Planner should choose the next approved lane and open the next packet only after human agreement. |
+| QLT-02 | Evidence validation, semantic trace, and agent eval / CI gating | 2026-05-04 | transition planner -> planner; gate contract | Planner recorded QLT-02 closeout after reviewer approval. Planner should keep PLN-10 active and decide whether OPS-05 or a narrower hardening lane opens next. |
 
 ## Handoff Log
+- 2026-05-04: [planner -> planner] User approved OPS-06 as the next narrow packet under PLN-10. | Close Ready For Code for OPS-06 before implementation opens.
+- 2026-05-04: [planner -> planner] Planner recorded QLT-02 closeout after reviewer approval. | Planner should keep PLN-10 active and decide whether OPS-05 or a narrower hardening lane opens next.
+- 2026-05-04: [reviewer -> planner] Packet exit approved; Planner should choose or refine the next lane. | Plan the next approved lane or close remaining planning decisions.
+- 2026-05-04: [tester -> reviewer] Tester verification completed; Reviewer should assess packet exit readiness. | Review implementation, evidence, residual debt, and closeout readiness.
+- 2026-05-04: [developer -> tester] Developer implementation completed; Tester should verify the approved scope. | Verify the implementation against the packet acceptance criteria.
+- 2026-05-04: [planner -> planner] User approved narrowed QLT-02 phase-1 scope; planner should now close Ready For Code for the local evidence-contract implementation packet. | Close Ready For Code for the narrowed QLT-02 phase-1 packet before implementation opens.
+- 2026-05-04: [planner -> planner] Opened QLT-02 draft under PLN-10 for evidence-validation, semantic trace, and agent eval / CI gating planning. | Review the QLT-02 packet draft and decide whether to approve, adjust, or hold the detailed agreement before implementation opens.
+- 2026-05-04: [planner -> planner] Planner recorded OPS-04 closeout after reviewer approval. | Planner should choose the next approved lane and open the next packet only after human agreement.
+- 2026-05-04: [reviewer -> planner] OPS-04 packet exit approved after reviewer confirmed first-read ACTIVE_CONTEXT contract, closeout validation gating, and root/starter parity. | Planner should record OPS-04 closeout, reconcile completed-task state, and choose the next approved follow-up lane from PLN-10.
+- 2026-05-04: [tester -> reviewer] Tester verified ACTIVE_CONTEXT re-entry behavior, closeout validation gating, and root/starter parity with clean copied-starter smoke. | Reviewer should assess OPS-04 closeout readiness against the approved packet, walkthrough evidence, validation outputs, and root/starter synchronization.
+- 2026-05-04: [developer -> tester] OPS-04 implementation completed with session-start context assurance and closeout gate hardening. | Tester should verify ACTIVE_CONTEXT re-entry behavior, closeout validation gating, and template parity using the recorded regression evidence.
+- 2026-05-04: [planner -> developer] Planning approved; implementation can proceed. | Implement the approved packet scope and hand off to Tester.
+- 2026-05-04: [planner -> planner] Opened OPS-04 draft under PLN-10 for session-start context assurance and closeout-gate hardening. | Review the OPS-04 packet draft and decide whether to approve, adjust, or hold the detailed agreement before implementation opens.
+- 2026-05-03: [planner -> planner] Planner recorded DEV-11 closeout after reviewer approval. | Planner should keep PLN-10 as the selected next planning lane and open the next packet only after human agreement.
+- 2026-05-03: [reviewer -> planner] DEV-11 packet exit approved; Planner should record closeout and choose the next lane. | Planner should record DEV-11 closeout, reconcile completed-task state, and choose the next approved lane.
+- 2026-05-03: [tester -> reviewer] Tester verification completed. | Reviewer should assess DEV-11 closeout readiness.
 - 2026-05-03: [tester -> developer] Developer briefly reopens DEV-11 to finalize the corrected tester handoff wording. | Finalize the corrected developer-to-tester handoff.
 - 2026-05-03: [tester -> developer] Developer resumes after tester-state refresh to reissue the clean tester handoff. | Reissue the clean tester handoff after the CURRENT_STATE remediation.
 - 2026-05-03: [tester -> tester] Tester state refreshed after DEV-11 CURRENT_STATE remediation. | Verify the implementation against the packet acceptance criteria.

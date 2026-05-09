@@ -11,6 +11,7 @@ import {
   summarizeGateProfile
 } from "./gate-profiles.js";
 import {
+  AGENT_TRACES_DIR,
   ACTIVE_PROFILES_MARKDOWN,
   ARTIFACT_PATHS,
   CUTOVER_REPORT_JSON,
@@ -24,6 +25,55 @@ import { looksLikeStarterPlaceholder } from "./init-project.js";
 import { createOperatingStateStore, DEFAULT_DB_PATH } from "./operating-state-store.js";
 import { RELEASE_BASELINE, isInstallableReleaseMaintainerRepo } from "./release-baseline.js";
 import { isClosedStatus, resolveHandoffExecution, selectActiveWorkItem } from "./workflow-routing.js";
+
+const AGENT_TRACE_SCHEMA_VERSION = "standard-harness-agent-trace/v1";
+const PHASE1_HARD_FAIL_CODES = [
+  "missing_required_evidence",
+  "broken_source_reference",
+  "contradictory_evidence",
+  "stale_evidence",
+  "required_semantic_trace_missing",
+  "validation_report_context_parity_break",
+  "active_context_validation_executed_at_mismatch"
+];
+const PHASE1_WARNING_CODES = ["evidence_linkage_thin", "reviewer_rationale_thin"];
+const PHASE1_REVIEWER_ONLY_CODES = [
+  "design_intent_fulfillment",
+  "work_fit_assessment",
+  "domain_specific_business_rule_judgment"
+];
+const PHASE1_CANDIDATE_GATES = [
+  {
+    id: "required-evidence-present",
+    phase: "candidate-only",
+    description: "Required evidence artifacts exist for the active work item."
+  },
+  {
+    id: "source-references-resolve",
+    phase: "candidate-only",
+    description: "Referenced packet, SSOT, validation, and trace sources resolve locally."
+  },
+  {
+    id: "semantic-trace-present",
+    phase: "candidate-only",
+    description: "A lightweight semantic trace artifact exists for the active work item."
+  },
+  {
+    id: "evidence-non-contradictory",
+    phase: "candidate-only",
+    description: "Trace, packet, and active work metadata do not contradict each other."
+  },
+  {
+    id: "evidence-freshness",
+    phase: "candidate-only",
+    description: "Validation and trace timestamps match the current report turn."
+  },
+  {
+    id: "validation-context-parity",
+    phase: "candidate-only",
+    description: "Validation report and ACTIVE_CONTEXT expose the same validation summary."
+  }
+];
 
 export const STANDARD_PATH_MIGRATIONS = {
   "REQUIREMENTS.md": ARTIFACT_PATHS.requirements,
@@ -216,31 +266,107 @@ export function explainCurrentBlockers({ repoRoot = process.cwd(), outputDir = r
 
 export function writeValidationReport({ repoRoot = process.cwd(), outputDir = repoRoot, dbPath = DEFAULT_DB_PATH } = {}) {
   const status = buildHarnessStatus({ repoRoot, outputDir, dbPath });
-  const validation = runValidator({ repoRoot, outputDir, dbPath });
   const root = path.resolve(repoRoot);
   const markdownPath = path.resolve(root, VALIDATION_REPORT_MARKDOWN);
   const jsonPath = path.resolve(root, VALIDATION_REPORT_JSON);
+  const executedAt = new Date().toISOString();
+  const draftReport = {
+    ok: true,
+    command: "validation-report",
+    validatorVersion: RELEASE_BASELINE.validatorVersion,
+    executedAt,
+    cutoverReady: true,
+    profileSummary: status.activeProfiles,
+    findings: [],
+    nextAction: status.nextAction,
+    gateDecision: "pass"
+  };
+  const draftTraceArtifact = withStore({ dbPath, repoRoot }, (store) =>
+    writeAgentTraceArtifact({
+      store,
+      repoRoot: root,
+      outputDir,
+      executedAt: draftReport.executedAt,
+      report: draftReport
+    })
+  );
+  draftReport.traceSummary = draftTraceArtifact?.summary ?? null;
+  draftReport.candidateGates = PHASE1_CANDIDATE_GATES;
+  fs.mkdirSync(path.dirname(markdownPath), { recursive: true });
+  fs.writeFileSync(markdownPath, buildValidationReportMarkdown(draftReport), "utf8");
+  fs.writeFileSync(jsonPath, `${JSON.stringify(draftReport, null, 2)}\n`, "utf8");
+  const validation = runValidator({ repoRoot, outputDir, dbPath });
   const report = {
     ok: validation.ok,
     command: "validation-report",
     validatorVersion: RELEASE_BASELINE.validatorVersion,
-    executedAt: new Date().toISOString(),
+    executedAt,
+    cutoverReady: validation.cutoverReady,
     profileSummary: status.activeProfiles,
     findings: validation.findings,
     nextAction: status.nextAction,
     gateDecision: validation.ok ? "pass" : "hold"
   };
+  const traceArtifact = withStore({ dbPath, repoRoot }, (store) =>
+    writeAgentTraceArtifact({
+      store,
+      repoRoot: root,
+      outputDir,
+      executedAt: report.executedAt,
+      report
+    })
+  );
+  report.traceSummary = traceArtifact?.summary ?? null;
+  report.candidateGates = PHASE1_CANDIDATE_GATES;
 
-  fs.mkdirSync(path.dirname(markdownPath), { recursive: true });
   fs.writeFileSync(markdownPath, buildValidationReportMarkdown(report), "utf8");
   fs.writeFileSync(jsonPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+  withStore({ dbPath, repoRoot }, (store) =>
+    writeActiveContext({
+      store,
+      repoRoot,
+      outputDir,
+      validation: report
+    })
+  );
+  const finalizedValidation = runValidator({ repoRoot, outputDir, dbPath });
+  const finalizedReport = {
+    ...report,
+    ok: finalizedValidation.ok,
+    cutoverReady: finalizedValidation.cutoverReady,
+    findings: finalizedValidation.findings,
+    gateDecision: finalizedValidation.ok ? "pass" : "hold"
+  };
+  finalizedReport.nextAction = withStore({ dbPath, repoRoot }, (store) =>
+    recommendNextActionFromState(store, finalizedValidation, repoRoot)
+  );
+  const finalizedTraceArtifact = withStore({ dbPath, repoRoot }, (store) =>
+    writeAgentTraceArtifact({
+      store,
+      repoRoot: root,
+      outputDir,
+      executedAt: finalizedReport.executedAt,
+      report: finalizedReport
+    })
+  );
+  finalizedReport.traceSummary = finalizedTraceArtifact?.summary ?? null;
+  fs.writeFileSync(markdownPath, buildValidationReportMarkdown(finalizedReport), "utf8");
+  fs.writeFileSync(jsonPath, `${JSON.stringify(finalizedReport, null, 2)}\n`, "utf8");
+  withStore({ dbPath, repoRoot }, (store) =>
+    writeActiveContext({
+      store,
+      repoRoot,
+      outputDir,
+      validation: finalizedReport
+    })
+  );
 
   return {
-    ok: validation.ok,
+    ok: finalizedValidation.ok,
     command: "validation-report",
     markdownPath,
     jsonPath,
-    report
+    report: finalizedReport
   };
 }
 
@@ -267,7 +393,28 @@ export function runTransition({
     return applied;
   }
 
+  withStore({ dbPath, repoRoot }, (store) =>
+    writeActiveContext({
+      store,
+      repoRoot,
+      outputDir
+    })
+  );
   const validationReport = writeValidationReport({ repoRoot, outputDir, dbPath });
+  const activeContext = withStore({ dbPath, repoRoot }, (store) =>
+    writeActiveContext({
+      store,
+      repoRoot,
+      outputDir,
+      validation: {
+        ok: validationReport.ok,
+        cutoverReady: validationReport.report.cutoverReady,
+        findings: validationReport.report.findings,
+        gateDecision: validationReport.report.gateDecision,
+        executedAt: validationReport.report.executedAt
+      }
+    })
+  );
   const validationReportSummary = {
     ok: validationReport.ok,
     markdownPath: validationReport.markdownPath,
@@ -285,7 +432,11 @@ export function runTransition({
           ...(applied.errors ?? []),
           "Transition apply completed, but validation report failed; do not treat this handoff as clean."
         ],
-    validationReport: validationReportSummary
+    validationReport: validationReportSummary,
+    activeContext: {
+      jsonPath: activeContext.jsonPath,
+      markdownPath: activeContext.markdownPath
+    }
   };
 }
 
@@ -611,7 +762,6 @@ function applyTransitionPlan({ store, repoRoot, outputDir, plan, options }) {
   updateCanonicalImplementationPlan({ repoRoot, plan });
   updateCanonicalProjectProgress({ repoRoot, plan });
   const generatedDocs = writeGeneratedStateDocs({ store, outputDir });
-  const activeContext = writeActiveContext({ store, repoRoot, outputDir });
 
   return {
     ...plan,
@@ -619,11 +769,7 @@ function applyTransitionPlan({ store, repoRoot, outputDir, plan, options }) {
     apply: true,
     appliedAt: timestamp,
     handoff,
-    generatedDocs,
-    activeContext: {
-      jsonPath: activeContext.jsonPath,
-      markdownPath: activeContext.markdownPath
-    }
+    generatedDocs
   };
 }
 
@@ -1485,7 +1631,7 @@ function recommendNextActionFromState(store, validation, repoRoot = process.cwd(
     return "The current release is closed. Review the latest handoff and open the next approved lane.";
   }
 
-  const activeWork = selectActiveWorkItem(store.listWorkItems());
+  const activeWork = selectActiveWorkItem(store.listWorkItems(), { repoRoot });
   if (activeWork?.nextAction) {
     return activeWork.nextAction;
   }
@@ -1556,6 +1702,7 @@ function buildValidationReportMarkdown(report) {
     "## Summary",
     `- Executed at: ${report.executedAt}`,
     `- Validator version: ${report.validatorVersion}`,
+    `- Cutover ready: ${report.cutoverReady ? "yes" : "no"}`,
     `- Gate decision: ${report.gateDecision}`,
     `- Next action: ${report.nextAction}`,
     "",
@@ -1581,7 +1728,146 @@ function buildValidationReportMarkdown(report) {
     }
   }
 
+  lines.push("", "## Semantic Trace");
+  if (!report.traceSummary) {
+    lines.push("- none");
+  } else {
+    lines.push(`- Path: ${report.traceSummary.path}`);
+    lines.push(`- Work item: ${report.traceSummary.workItemId}`);
+    lines.push(`- Packet: ${report.traceSummary.packetId}`);
+    lines.push(`- Turn closed at: ${report.traceSummary.turnClosedAt}`);
+    lines.push(`- Status: ${report.traceSummary.semanticTraceStatus}`);
+    lines.push(`- Warning count: ${report.traceSummary.warningCount}`);
+  }
+
+  lines.push("", "## Candidate Gates");
+  for (const gate of report.candidateGates ?? []) {
+    lines.push(`- ${gate.id}: ${gate.phase} / ${gate.description}`);
+  }
+
   return `${lines.join("\n")}\n`;
+}
+
+function writeAgentTraceArtifact({ store, repoRoot, outputDir, executedAt, report }) {
+  const workItems = store.listWorkItems();
+  const activeTask = selectActiveWorkItem(workItems, { repoRoot });
+  if (!activeTask?.workItemId) {
+    return null;
+  }
+
+  const latestHandoff = store.listRecentHandoffs(1)[0] ?? null;
+  const handoffExecution = resolveHandoffExecution({
+    repoRoot,
+    workItems,
+    latestHandoff,
+    includeWorkflowDetails: true
+  });
+  const packetId = activeTask.sourceRef ? path.basename(activeTask.sourceRef, path.extname(activeTask.sourceRef)) : null;
+  const requiredSsot = uniquePathList(
+    latestHandoff?.payload?.requiredSsot ?? [
+      ARTIFACT_PATHS.active,
+      ".agents/artifacts/TASK_LIST.md",
+      ARTIFACT_PATHS.plan,
+      activeTask.sourceRef
+    ]
+  );
+  const declaredReadEvidence = uniquePathList([
+    ARTIFACT_PATHS.requirements,
+    ARTIFACT_PATHS.architecture,
+    ARTIFACT_PATHS.plan,
+    ARTIFACT_PATHS.preventive,
+    activeTask.sourceRef,
+    VALIDATION_REPORT_JSON
+  ]);
+  const approvedDesignRefs = uniquePathList([
+    ARTIFACT_PATHS.requirements,
+    ARTIFACT_PATHS.architecture,
+    ARTIFACT_PATHS.plan,
+    activeTask.sourceRef
+  ]);
+  const implementationRefs = [];
+  const verificationRefs = uniquePathList([VALIDATION_REPORT_JSON, VALIDATION_REPORT_MARKDOWN]);
+  const warningCount = buildAgentTraceWarnings({
+    requiredSsot,
+    declaredReadEvidence,
+    approvedDesignRefs
+  }).length;
+  const trace = {
+    schemaVersion: AGENT_TRACE_SCHEMA_VERSION,
+    workItemId: activeTask.workItemId,
+    packetId,
+    role: activeTask.owner ?? latestHandoff?.toRole ?? null,
+    workflow:
+      handoffExecution.workflow === "manual_selection_required" ? null : handoffExecution.workflow,
+    turnClosedAt: executedAt,
+    requiredSsot,
+    declaredReadEvidence,
+    approvedDesignRefs,
+    implementationRefs,
+    verificationRefs,
+    semanticTrace: {
+      hardFailCodes: PHASE1_HARD_FAIL_CODES,
+      warningCodes: PHASE1_WARNING_CODES,
+      reviewerOnlyCodes: PHASE1_REVIEWER_ONLY_CODES,
+      candidateGateIds: PHASE1_CANDIDATE_GATES.map((gate) => gate.id),
+      sourceRefsResolved: allRefsResolve(repoRoot, [
+        ...requiredSsot,
+        ...declaredReadEvidence,
+        ...approvedDesignRefs,
+        ...implementationRefs,
+        ...verificationRefs
+      ]),
+      validatorGateDecision: report.gateDecision,
+      readyForCode: activeTask.metadata?.readyForCode ?? null
+    },
+    selfCheck: {
+      findingCount: report.findings.length,
+      blockingFindingCount: report.findings.filter((finding) => finding?.severity === "error").length,
+      warningCount
+    },
+    handoff: latestHandoff
+      ? {
+          createdAt: latestHandoff.createdAt,
+          fromRole: latestHandoff.fromRole,
+          toRole: latestHandoff.toRole,
+          sourceRef: latestHandoff.sourceRef ?? null,
+          summary: latestHandoff.handoffSummary
+        }
+      : null
+  };
+
+  const relativePath = `${AGENT_TRACES_DIR}/${activeTask.workItemId}.json`;
+  const absolutePath = path.resolve(outputDir, relativePath);
+  fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
+  fs.writeFileSync(absolutePath, `${JSON.stringify(trace, null, 2)}\n`, "utf8");
+
+  return {
+    summary: {
+      path: relativePath,
+      workItemId: trace.workItemId,
+      packetId: trace.packetId,
+      turnClosedAt: trace.turnClosedAt,
+      semanticTraceStatus: warningCount > 0 ? "warning" : "pass",
+      warningCount,
+      candidateGateCount: PHASE1_CANDIDATE_GATES.length
+    }
+  };
+}
+
+function buildAgentTraceWarnings({ requiredSsot, declaredReadEvidence, approvedDesignRefs }) {
+  const warnings = [];
+  if (declaredReadEvidence.length < Math.max(3, Math.min(requiredSsot.length, approvedDesignRefs.length))) {
+    warnings.push("evidence_linkage_thin");
+  }
+  return warnings;
+}
+
+function allRefsResolve(repoRoot, refs) {
+  return refs.every((ref) => !ref || fs.existsSync(path.resolve(repoRoot, ref)));
+}
+
+function uniquePathList(paths) {
+  return [...new Set((paths ?? []).filter((item) => typeof item === "string" && item.length > 0))];
 }
 
 function resolveDbPath(repoRoot, dbPath) {

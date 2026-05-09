@@ -1,21 +1,71 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { ACTIVE_PROFILES_MARKDOWN, GENERATED_DOCS_DIR, VALIDATION_REPORT_JSON } from "./harness-paths.js";
-import { CURRENT_STATE_DOC, TASK_LIST_DOC } from "./generate-state-docs.js";
-import { prioritizeOpenWorkItems } from "./workflow-routing.js";
+import {
+  ACTIVE_PROFILES_MARKDOWN,
+  GENERATED_DOCS_DIR,
+  VALIDATION_REPORT_JSON,
+  VALIDATION_REPORT_MARKDOWN
+} from "./harness-paths.js";
+import { CURRENT_STATE_DOC, TASK_LIST_DOC, calculateChecksum } from "./generate-state-docs.js";
+import { prioritizeOpenWorkItems, resolveHandoffExecution } from "./workflow-routing.js";
 
 export const ACTIVE_CONTEXT_JSON = ".agents/runtime/ACTIVE_CONTEXT.json";
 export const ACTIVE_CONTEXT_MARKDOWN = ".agents/runtime/ACTIVE_CONTEXT.md";
 
+const CURRENT_STATE_PATH = ".agents/artifacts/CURRENT_STATE.md";
+const TASK_LIST_PATH = ".agents/artifacts/TASK_LIST.md";
+const IMPLEMENTATION_PLAN_PATH = ".agents/artifacts/IMPLEMENTATION_PLAN.md";
+const PROJECT_PROGRESS_PATH = ".agents/artifacts/PROJECT_PROGRESS.md";
+const PREVENTIVE_MEMORY_PATH = ".agents/artifacts/PREVENTIVE_MEMORY.md";
+const ACTIVE_CONTEXT_SCHEMA_VERSION = "standard-harness-active-context/v2";
+
 export function writeActiveContext({ store, repoRoot = process.cwd(), outputDir = repoRoot, validation = null } = {}) {
   const root = path.resolve(repoRoot);
-  const context = buildActiveContext({ store, repoRoot: root, validation });
+  const generationTimestamp =
+    store.getLatestOperationalTimestamp() ?? store.getLatestMutationTimestamp() ?? new Date().toISOString();
+  const resolvedValidation = resolveValidationSummary({ repoRoot: root, validation });
+  const context = buildActiveContext({
+    store,
+    repoRoot: root,
+    validation: resolvedValidation,
+    generatedAt: generationTimestamp
+  });
   const jsonPath = path.resolve(outputDir, ACTIVE_CONTEXT_JSON);
   const markdownPath = path.resolve(outputDir, ACTIVE_CONTEXT_MARKDOWN);
+  const jsonContent = `${JSON.stringify(context, null, 2)}\n`;
+  const markdownContent = renderActiveContextMarkdown(context);
+  const sourceRevision = store.getLatestOperationalTimestamp() ?? "empty-store";
 
-  writeText(jsonPath, `${JSON.stringify(context, null, 2)}\n`);
-  writeText(markdownPath, renderActiveContextMarkdown(context));
+  writeText(jsonPath, jsonContent);
+  writeText(markdownPath, markdownContent);
+
+  store.refreshProjection({
+    projectionName: ACTIVE_CONTEXT_JSON,
+    checksum: calculateChecksum(jsonContent),
+    generatedAt: generationTimestamp,
+    sourceRevision,
+    freshnessState: "fresh",
+    metadata: {
+      bytes: Buffer.byteLength(jsonContent, "utf8"),
+      lineCount: jsonContent.split("\n").length,
+      format: "json",
+      contractDigest: context.reentryContract.digest
+    }
+  });
+  store.refreshProjection({
+    projectionName: ACTIVE_CONTEXT_MARKDOWN,
+    checksum: calculateChecksum(markdownContent),
+    generatedAt: generationTimestamp,
+    sourceRevision,
+    freshnessState: "fresh",
+    metadata: {
+      bytes: Buffer.byteLength(markdownContent, "utf8"),
+      lineCount: markdownContent.split("\n").length,
+      format: "markdown",
+      contractDigest: context.reentryContract.digest
+    }
+  });
 
   return {
     ok: true,
@@ -26,20 +76,75 @@ export function writeActiveContext({ store, repoRoot = process.cwd(), outputDir 
   };
 }
 
-export function buildActiveContext({ store, repoRoot = process.cwd(), validation = null } = {}) {
+export function buildActiveContext({
+  store,
+  repoRoot = process.cwd(),
+  validation = null,
+  generatedAt = new Date().toISOString()
+} = {}) {
   const root = path.resolve(repoRoot);
   const releaseState = store.getReleaseState("current");
   const workItems = store.listWorkItems();
-  const openWorkItems = prioritizeOpenWorkItems(workItems);
+  const openWorkItems = prioritizeOpenWorkItems(workItems, { repoRoot: root });
   const activeTask = openWorkItems[0] ?? null;
   const latestHandoff = store.listRecentHandoffs(1)[0] ?? null;
   const openDecisions = store.listDecisions({ status: "open", decisionNeeded: true });
   const openRisks = store.listGateRisks({ status: "open" });
-  const generatedDocs = store.listGenerationStates();
+  const handoffExecution = resolveHandoffExecution({
+    repoRoot: root,
+    workItems,
+    latestHandoff,
+    includeWorkflowDetails: true
+  });
+  const nextWorkflow = handoffExecution.workflow === "manual_selection_required" ? null : handoffExecution.workflow;
+  const workflowReadFirst = normalizePathList(handoffExecution.workflowDetails?.readFirst ?? []);
+  const currentStateMustRead = normalizePathList(
+    readSectionBulletList(path.resolve(root, CURRENT_STATE_PATH), "## Must Read Next")
+  );
+  const activePacket = activeTask?.sourceRef ?? releaseState?.sourceRef ?? null;
+  const mustReadNext = uniquePathList([
+    nextWorkflow,
+    CURRENT_STATE_PATH,
+    TASK_LIST_PATH,
+    ...workflowReadFirst,
+    ...currentStateMustRead,
+    activePacket,
+    VALIDATION_REPORT_JSON
+  ]);
+  const sourceTrace = uniquePathList([
+    CURRENT_STATE_PATH,
+    TASK_LIST_PATH,
+    IMPLEMENTATION_PLAN_PATH,
+    activePacket,
+    VALIDATION_REPORT_JSON
+  ]);
+  const activeTaskSummary = activeTask
+    ? {
+        workItemId: activeTask.workItemId,
+        title: activeTask.title,
+        status: activeTask.status,
+        owner: activeTask.owner ?? null,
+        nextAction: activeTask.nextAction ?? null,
+        sourceRef: activeTask.sourceRef ?? null,
+        gateProfile: activeTask.metadata?.gateProfile ?? null,
+        readyForCode: activeTask.metadata?.readyForCode ?? null,
+        workflow: nextWorkflow,
+        workflowRouteStatus: handoffExecution.routeStatus
+      }
+    : null;
+  const reentryContract = {
+    firstRead: ACTIVE_CONTEXT_JSON,
+    fallbackHumanView: ACTIVE_CONTEXT_MARKDOWN,
+    nextWorkflow,
+    workflowRouteStatus: handoffExecution.routeStatus,
+    mustReadNext,
+    sourceTrace
+  };
+  reentryContract.digest = calculateChecksum(JSON.stringify(reentryContract));
 
   return {
-    schemaVersion: "standard-harness-active-context/v1",
-    generatedAt: new Date().toISOString(),
+    schemaVersion: ACTIVE_CONTEXT_SCHEMA_VERSION,
+    generatedAt,
     project: {
       repoRoot: root,
       name: releaseState?.metadata?.projectName ?? path.basename(root)
@@ -51,25 +156,19 @@ export function buildActiveContext({ store, repoRoot = process.cwd(), validation
       goal: releaseState?.releaseGoal ?? "unknown",
       sourceRef: releaseState?.sourceRef ?? null
     },
-    activeTask: activeTask
-      ? {
-          workItemId: activeTask.workItemId,
-          title: activeTask.title,
-          status: activeTask.status,
-          owner: activeTask.owner ?? null,
-          nextAction: activeTask.nextAction ?? null,
-          sourceRef: activeTask.sourceRef ?? null,
-          gateProfile: activeTask.metadata?.gateProfile ?? null,
-          readyForCode: activeTask.metadata?.readyForCode ?? null
-        }
-      : null,
+    selectedLane: activeTaskSummary,
+    activeTask: activeTaskSummary,
     nextWork: {
-      owner: activeTask?.owner ?? latestHandoff?.toRole ?? "planner",
+      owner: handoffExecution.owner ?? activeTask?.owner ?? latestHandoff?.toRole ?? "planner",
+      workflow: nextWorkflow,
+      workflowRouteStatus: handoffExecution.routeStatus,
+      resolvedBy: handoffExecution.resolvedBy,
       action:
         activeTask?.nextAction ??
         latestHandoff?.payload?.nextFirstAction ??
         "No active task is recorded. Review CURRENT_STATE and TASK_LIST."
     },
+    reentryContract,
     blockers: openRisks.map((risk) => ({
       riskId: risk.riskId,
       title: risk.title,
@@ -90,75 +189,244 @@ export function buildActiveContext({ store, repoRoot = process.cwd(), validation
           toRole: latestHandoff.toRole,
           summary: latestHandoff.handoffSummary,
           sourceRef: latestHandoff.sourceRef ?? null,
-          nextFirstAction: latestHandoff.payload?.nextFirstAction ?? null
+          nextFirstAction: latestHandoff.payload?.nextFirstAction ?? null,
+          requiredSsot: normalizePathList(latestHandoff.payload?.requiredSsot ?? [])
         }
       : null,
-    validation: validation
-      ? {
-          ok: Boolean(validation.ok),
-          cutoverReady: Boolean(validation.cutoverReady),
-          findingCount: validation.findings?.length ?? 0,
-          blockingFindingCount: validation.findings?.filter((item) => item.severity === "error").length ?? 0
-        }
-      : null,
-    generatedDocs: generatedDocs.map((doc) => ({
-      projectionName: doc.projectionName,
-      generatedAt: doc.generatedAt,
-      freshnessState: doc.freshnessState,
-      sourceRevision: doc.sourceRevision ?? null
-    })),
+    validation: validation ?? null,
+    generatedDocs: store
+      .listGenerationStates()
+      .filter(
+        (doc) =>
+          doc.projectionName !== ACTIVE_CONTEXT_JSON &&
+          doc.projectionName !== ACTIVE_CONTEXT_MARKDOWN
+      )
+      .map((doc) => ({
+        projectionName: doc.projectionName,
+        generatedAt: doc.generatedAt,
+        freshnessState: doc.freshnessState,
+        sourceRevision: doc.sourceRevision ?? null
+      })),
     sources: {
-      currentState: ".agents/artifacts/CURRENT_STATE.md",
-      taskList: ".agents/artifacts/TASK_LIST.md",
-      implementationPlan: ".agents/artifacts/IMPLEMENTATION_PLAN.md",
-      projectProgress: ".agents/artifacts/PROJECT_PROGRESS.md",
+      currentState: CURRENT_STATE_PATH,
+      taskList: TASK_LIST_PATH,
+      implementationPlan: IMPLEMENTATION_PLAN_PATH,
+      projectProgress: PROJECT_PROGRESS_PATH,
+      preventiveMemory: PREVENTIVE_MEMORY_PATH,
       activeProfiles: ACTIVE_PROFILES_MARKDOWN,
       generatedCurrentState: `${GENERATED_DOCS_DIR}/${CURRENT_STATE_DOC}`,
       generatedTaskList: `${GENERATED_DOCS_DIR}/${TASK_LIST_DOC}`,
       validationReport: VALIDATION_REPORT_JSON,
-      activePacket: activeTask?.sourceRef ?? releaseState?.sourceRef ?? null
+      validationReportMarkdown: VALIDATION_REPORT_MARKDOWN,
+      workflowContract: nextWorkflow,
+      activePacket
     }
   };
 }
 
 function renderActiveContextMarkdown(context) {
-  const task = context.activeTask;
+  const task = context.selectedLane;
   const handoff = context.latestHandoff;
   const validation = context.validation;
   const lines = [
     "# 활성 컨텍스트",
     "",
+    "## 시작 계약",
+    `- 첫 AI 재진입 읽기: ${context.reentryContract.firstRead}`,
+    `- 사람 확인용 보조 문서: ${context.reentryContract.fallbackHumanView}`,
+    `- 다음 workflow: ${context.nextWork.workflow ?? "수동 선택 필요"}`,
+    task
+      ? `- 선택된 lane: ${task.workItemId} / ${task.status} / 담당 ${task.owner ?? "미지정"}`
+      : "- 선택된 lane: 현재 열린 작업 없음",
+    `- 계약 digest: ${context.reentryContract.digest}`,
+    "",
     "## 현재 작업",
     `- 단계: ${context.release.stage}`,
     `- 게이트: ${context.release.gate}`,
     `- 초점: ${context.release.focus}`,
+    `- 목표: ${context.release.goal}`,
     task
-      ? `- 작업: ${task.workItemId} / ${task.title} / ${task.status} / 담당 ${task.owner ?? "미지정"}`
+      ? `- 작업: ${task.workItemId} / ${task.title} / Ready For Code ${task.readyForCode ?? "미기록"}`
       : "- 작업: 현재 열린 작업 없음",
     "",
     "## 다음 작업",
     `- 다음 담당: ${context.nextWork.owner}`,
+    `- 다음 workflow: ${context.nextWork.workflow ?? "수동 선택 필요"}`,
+    `- route 상태: ${context.nextWork.workflowRouteStatus}`,
     `- 다음 행동: ${context.nextWork.action}`,
     "",
+    "## 먼저 다시 읽을 항목",
+    ...(context.reentryContract.mustReadNext.length > 0
+      ? context.reentryContract.mustReadNext.map((item) => `- ${item}`)
+      : ["- 추가 읽기 항목 없음"]),
+    "",
     "## 결정과 막힘",
-    `- 열린 결정: ${context.decisions.length}`,
-    `- 열린 막힘/위험: ${context.blockers.length}`,
+    ...(context.decisions.length > 0
+      ? context.decisions.map((decision) => `- 결정 필요: ${decision.decisionId} / ${decision.title}`)
+      : ["- 열린 결정 없음"]),
+    ...(context.blockers.length > 0
+      ? context.blockers.map((blocker) => `- 막힘: ${blocker.riskId} / ${blocker.severity} / ${blocker.title}`)
+      : ["- 열린 막힘 없음"]),
     "",
     "## 최근 인계",
     handoff
       ? `- ${handoff.createdAt}: ${handoff.fromRole} -> ${handoff.toRole} / ${handoff.summary}`
       : "- 기록 없음",
+    ...(handoff?.requiredSsot?.length ? handoff.requiredSsot.map((item) => `- 인계 기준 SSOT: ${item}`) : []),
     "",
     "## 검증 상태",
     validation
-      ? `- ${validation.ok ? "통과" : "실패"} (${validation.blockingFindingCount}개 blocking finding)`
+      ? `- ${validation.ok ? "통과" : "실패"} / gate ${validation.gateDecision ?? (validation.ok ? "pass" : "hold")} / blocking ${validation.blockingFindingCount}개`
       : "- 아직 이 컨텍스트에 검증 결과가 연결되지 않음",
+    ...(validation?.executedAt ? [`- 마지막 검증 시각: ${validation.executedAt}`] : []),
+    ...(validation?.traceSummary
+      ? [
+          `- semantic trace: ${validation.traceSummary.workItemId ?? "unknown"} / ${validation.traceSummary.semanticTraceStatus ?? "unknown"} / candidate gates ${validation.traceSummary.candidateGateCount ?? 0}개`
+        ]
+      : []),
     "",
     "## 출처",
     ...Object.entries(context.sources).map(([key, value]) => `- ${key}: ${value ?? "없음"}`)
   ];
 
   return `${lines.join("\n")}\n`;
+}
+
+function resolveValidationSummary({ repoRoot, validation }) {
+  const inline = summarizeValidation(validation);
+  const persisted = readPersistedValidationSummary(repoRoot);
+  if (inline && persisted) {
+    return {
+      ...persisted,
+      ...inline,
+      executedAt: inline.executedAt ?? persisted.executedAt ?? null,
+      traceSummary: inline.traceSummary ?? persisted.traceSummary ?? null,
+      candidateGates: inline.candidateGates ?? persisted.candidateGates ?? []
+    };
+  }
+  if (inline) {
+    return inline;
+  }
+  return persisted;
+}
+
+function readPersistedValidationSummary(repoRoot) {
+  const reportPath = path.resolve(repoRoot, VALIDATION_REPORT_JSON);
+  if (!fs.existsSync(reportPath)) {
+    return null;
+  }
+
+  try {
+    const report = JSON.parse(fs.readFileSync(reportPath, "utf8"));
+    return summarizeValidation(report);
+  } catch {
+    return null;
+  }
+}
+
+function summarizeValidation(validation) {
+  const resolved = validation?.report ?? validation;
+  if (!resolved) {
+    return null;
+  }
+
+  const findings = Array.isArray(resolved.findings) ? resolved.findings : [];
+  const blockingFindingCount =
+    resolved.blockingFindingCount ??
+    findings.filter((item) => item?.severity === "error").length;
+  const findingCount = resolved.findingCount ?? findings.length;
+  const gateDecision = resolved.gateDecision ?? (resolved.ok ? "pass" : "hold");
+
+  return {
+    ok: Boolean(resolved.ok),
+    cutoverReady:
+      resolved.cutoverReady != null ? Boolean(resolved.cutoverReady) : gateDecision === "pass",
+    findingCount,
+    blockingFindingCount,
+    gateDecision,
+    executedAt: resolved.executedAt ?? resolved.generatedAt ?? null,
+    traceSummary: summarizeTraceSummary(resolved.traceSummary),
+    candidateGates: Array.isArray(resolved.candidateGates) ? resolved.candidateGates : []
+  };
+}
+
+function summarizeTraceSummary(traceSummary) {
+  if (!traceSummary || typeof traceSummary !== "object") {
+    return null;
+  }
+
+  return {
+    path: typeof traceSummary.path === "string" ? traceSummary.path : null,
+    workItemId: typeof traceSummary.workItemId === "string" ? traceSummary.workItemId : null,
+    packetId: typeof traceSummary.packetId === "string" ? traceSummary.packetId : null,
+    turnClosedAt: typeof traceSummary.turnClosedAt === "string" ? traceSummary.turnClosedAt : null,
+    semanticTraceStatus:
+      typeof traceSummary.semanticTraceStatus === "string" ? traceSummary.semanticTraceStatus : null,
+    warningCount:
+      typeof traceSummary.warningCount === "number" ? traceSummary.warningCount : 0,
+    candidateGateCount:
+      typeof traceSummary.candidateGateCount === "number" ? traceSummary.candidateGateCount : 0
+  };
+}
+
+function readSectionBulletList(filePath, heading) {
+  if (!fs.existsSync(filePath)) {
+    return [];
+  }
+  const section = sliceSection(fs.readFileSync(filePath, "utf8"), heading);
+  if (!section) {
+    return [];
+  }
+  return section
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("- "))
+    .map((line) => line.slice(2).trim());
+}
+
+function sliceSection(content, heading) {
+  const start = content.indexOf(heading);
+  if (start === -1) {
+    return null;
+  }
+
+  const afterStart = content.slice(start + heading.length).trimStart();
+  const nextHeadingMatch = afterStart.match(/\n##\s+/);
+  if (!nextHeadingMatch) {
+    return afterStart.trimEnd();
+  }
+
+  return afterStart.slice(0, nextHeadingMatch.index).trimEnd();
+}
+
+function normalizePathList(values) {
+  return uniquePathList(values.map(normalizePathValue));
+}
+
+function uniquePathList(values) {
+  const seen = new Set();
+  const result = [];
+
+  for (const value of values) {
+    const normalized = normalizePathValue(value);
+    if (!normalized || seen.has(normalized)) {
+      continue;
+    }
+    seen.add(normalized);
+    result.push(normalized);
+  }
+
+  return result;
+}
+
+function normalizePathValue(value) {
+  const text = String(value ?? "").trim();
+  if (!text) {
+    return null;
+  }
+
+  const backtickMatch = text.match(/^`([^`]+)`$/);
+  return backtickMatch ? backtickMatch[1].trim() : text;
 }
 
 function writeText(targetPath, content) {

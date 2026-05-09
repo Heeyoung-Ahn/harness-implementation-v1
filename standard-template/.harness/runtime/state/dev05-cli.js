@@ -148,6 +148,7 @@ function formatHumanSummary(result) {
       `- JSON: ${result.jsonPath}`,
       `- Markdown: ${result.markdownPath}`,
       `- Current task: ${result.context.activeTask?.workItemId ?? "none"}`,
+      `- Next workflow: ${result.context.nextWork.workflow ?? "manual_selection_required"}`,
       `- Next action: ${result.context.nextWork.action}`
     ].join("\n");
   }

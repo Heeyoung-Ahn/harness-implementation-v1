@@ -2,13 +2,55 @@
   "ok": true,
   "command": "validation-report",
   "validatorVersion": "v1.3",
-  "executedAt": "2026-05-03T10:13:42.939Z",
+  "executedAt": "2026-05-09T13:52:41.962Z",
+  "cutoverReady": true,
   "profileSummary": {
     "path": ".agents/artifacts/ACTIVE_PROFILES.md",
     "status": "empty",
     "profiles": []
   },
   "findings": [],
-  "nextAction": "Verify the implementation against the packet acceptance criteria.",
-  "gateDecision": "pass"
+  "nextAction": "Close Ready For Code for OPS-06 before implementation opens.",
+  "gateDecision": "pass",
+  "traceSummary": {
+    "path": ".agents/runtime/agent-traces/OPS-06.json",
+    "workItemId": "OPS-06",
+    "packetId": "PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT",
+    "turnClosedAt": "2026-05-09T13:52:41.962Z",
+    "semanticTraceStatus": "pass",
+    "warningCount": 0,
+    "candidateGateCount": 6
+  },
+  "candidateGates": [
+    {
+      "id": "required-evidence-present",
+      "phase": "candidate-only",
+      "description": "Required evidence artifacts exist for the active work item."
+    },
+    {
+      "id": "source-references-resolve",
+      "phase": "candidate-only",
+      "description": "Referenced packet, SSOT, validation, and trace sources resolve locally."
+    },
+    {
+      "id": "semantic-trace-present",
+      "phase": "candidate-only",
+      "description": "A lightweight semantic trace artifact exists for the active work item."
+    },
+    {
+      "id": "evidence-non-contradictory",
+      "phase": "candidate-only",
+      "description": "Trace, packet, and active work metadata do not contradict each other."
+    },
+    {
+      "id": "evidence-freshness",
+      "phase": "candidate-only",
+      "description": "Validation and trace timestamps match the current report turn."
+    },
+    {
+      "id": "validation-context-parity",
+      "phase": "candidate-only",
+      "description": "Validation report and ACTIVE_CONTEXT expose the same validation summary."
+    }
+  ]
 }

@@ -1,10 +1,11 @@
 # Validation Report
 
 ## Summary
-- Executed at: 2026-05-03T10:13:42.939Z
+- Executed at: 2026-05-09T13:52:41.962Z
 - Validator version: v1.3
+- Cutover ready: yes
 - Gate decision: pass
-- Next action: Verify the implementation against the packet acceptance criteria.
+- Next action: Close Ready For Code for OPS-06 before implementation opens.
 
 ## Active Profiles
 - Source: .agents/artifacts/ACTIVE_PROFILES.md
@@ -13,3 +14,19 @@
 
 ## Findings
 - none
+
+## Semantic Trace
+- Path: .agents/runtime/agent-traces/OPS-06.json
+- Work item: OPS-06
+- Packet: PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT
+- Turn closed at: 2026-05-09T13:52:41.962Z
+- Status: pass
+- Warning count: 0
+
+## Candidate Gates
+- required-evidence-present: candidate-only / Required evidence artifacts exist for the active work item.
+- source-references-resolve: candidate-only / Referenced packet, SSOT, validation, and trace sources resolve locally.
+- semantic-trace-present: candidate-only / A lightweight semantic trace artifact exists for the active work item.
+- evidence-non-contradictory: candidate-only / Trace, packet, and active work metadata do not contradict each other.
+- evidence-freshness: candidate-only / Validation and trace timestamps match the current report turn.
+- validation-context-parity: candidate-only / Validation report and ACTIVE_CONTEXT expose the same validation summary.

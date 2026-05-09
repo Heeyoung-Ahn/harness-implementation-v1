@@ -4,6 +4,7 @@ import path from "node:path";
 import { resolveArtifactPath } from "./harness-paths.js";
 
 export const CURRENT_STATE_NEXT_AGENT_SECTION = "## Next Recommended Agent";
+const CANONICAL_TASK_LIST_PATH = ".agents/artifacts/TASK_LIST.md";
 export const WORKFLOW_CONTRACT_SECTIONS = [
   "## Role",
   "## Mission",
@@ -31,12 +32,16 @@ const HANDOFF_WORKFLOW_ROUTES = [
   { workflow: ".agents/workflows/plan.md", aliases: ["planner", "maintainer", "planning", "기획", "유지보수"] }
 ];
 
-export function prioritizeOpenWorkItems(workItems = []) {
-  return workItems.filter((workItem) => !isClosedStatus(workItem.status)).sort(compareActiveWorkItems);
+export function prioritizeOpenWorkItems(workItems = [], { repoRoot = null } = {}) {
+  const lifecycleHints = repoRoot ? readCanonicalTaskLifecycleHints({ repoRoot }) : null;
+  return workItems
+    .filter((workItem) => !isClosedStatus(workItem.status))
+    .filter((workItem) => !isCanonicallyClosedWorkItem(workItem, lifecycleHints))
+    .sort(compareActiveWorkItems);
 }
 
-export function selectActiveWorkItem(workItems = []) {
-  return prioritizeOpenWorkItems(workItems)[0] ?? null;
+export function selectActiveWorkItem(workItems = [], options = {}) {
+  return prioritizeOpenWorkItems(workItems, options)[0] ?? null;
 }
 
 export function workflowForOwner(owner) {
@@ -55,7 +60,7 @@ export function resolveHandoffExecution({
   includeWorkflowDetails = false
 } = {}) {
   const currentStateNextAgent = resolveCurrentStateNextAgent({ repoRoot });
-  const activeWorkItem = selectActiveWorkItem(workItems);
+  const activeWorkItem = selectActiveWorkItem(workItems, { repoRoot });
   const owner = activeWorkItem?.owner ?? currentStateNextAgent ?? latestHandoff?.toRole ?? "unassigned";
   const workflow = workflowForOwner(owner);
   const workflowDetailsForStatus = readWorkflowDetails({ repoRoot, workflow });
@@ -315,4 +320,55 @@ function aliasMatchesOwner(normalizedOwner, alias) {
   }
 
   return normalizedOwner.includes(normalizedAlias);
+}
+
+function isCanonicallyClosedWorkItem(workItem, lifecycleHints) {
+  if (!lifecycleHints?.completed?.size || !workItem?.workItemId) {
+    return false;
+  }
+  if (lifecycleHints.active.has(workItem.workItemId)) {
+    return false;
+  }
+  return lifecycleHints.completed.has(workItem.workItemId);
+}
+
+function readCanonicalTaskLifecycleHints({ repoRoot = process.cwd() } = {}) {
+  const taskListPath = path.resolve(repoRoot, CANONICAL_TASK_LIST_PATH);
+  if (!fs.existsSync(taskListPath)) {
+    return null;
+  }
+
+  const content = fs.readFileSync(taskListPath, "utf8");
+  return {
+    active: new Set(readTaskIdsFromTable(content, "## Active Tasks")),
+    completed: new Set(readTaskIdsFromTable(content, "## Completed Tasks"))
+  };
+}
+
+function readTaskIdsFromTable(content, heading) {
+  const section = sliceSection(content, heading);
+  if (!section) {
+    return [];
+  }
+
+  const lines = section
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("|"));
+  if (lines.length < 3) {
+    return [];
+  }
+
+  return lines
+    .slice(2)
+    .map(parseTableCells)
+    .map((cells) => cells[0] ?? null)
+    .filter((taskId) => taskId && taskId !== "-");
+}
+
+function parseTableCells(line) {
+  return line
+    .split("|")
+    .slice(1, -1)
+    .map((cell) => cell.trim());
 }

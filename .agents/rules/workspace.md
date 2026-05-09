@@ -9,21 +9,22 @@ This file is the constitutional entry point for Antigravity and any other agent 
 ## Entry Load Policy
 
 1. `AGENTS.md`
-2. `.agents/artifacts/CURRENT_STATE.md`
-3. `.agents/artifacts/TASK_LIST.md`
-4. `.agents/rules/agent_behavior.md`
-5. the workflow file that matches the requested lane
-6. the minimum baseline artifacts required by the active task
-7. only the explicitly activated optional profile artifacts required by the active task
-8. the active project packet and authoritative source artifacts when the task depends on them
-9. only the additional reference material required by the active task
+2. `.agents/rules/agent_behavior.md`
+3. `.agents/runtime/ACTIVE_CONTEXT.json`
+4. the workflow file that matches the requested lane or `ACTIVE_CONTEXT.nextWork.workflow`
+5. `.agents/artifacts/CURRENT_STATE.md`
+6. `.agents/artifacts/TASK_LIST.md`
+7. the minimum baseline artifacts required by the active task or `ACTIVE_CONTEXT.reentryContract.mustReadNext`
+8. only the explicitly activated optional profile artifacts required by the active task
+9. the active project packet and authoritative source artifacts when the task depends on them
+10. only the additional reference material required by the active task
 
 ## Truth Ownership
 
 - governance Markdown truth: `.agents/artifacts/*`
 - hot operational DB state: `.harness/operating_state.sqlite`
 - generated operational summaries: `.agents/runtime/generated-state-docs/*`
-- Active Context: `.agents/runtime/ACTIVE_CONTEXT.json` and `.agents/runtime/ACTIVE_CONTEXT.md` are generated re-entry summaries
+- Active Context: `.agents/runtime/ACTIVE_CONTEXT.json` and `.agents/runtime/ACTIVE_CONTEXT.md` are generated re-entry summaries and first-read re-entry contracts
 - optional extension material: `reference/*`
 
 ## Conflict Rule
@@ -32,6 +33,7 @@ This file is the constitutional entry point for Antigravity and any other agent 
 - DB hot-state must be reconciled to governance truth before gate close
 - generated docs are never edited manually
 - Active Context is never write authority
+- Active Context must be regenerated when freshness drift appears before broad rereads continue
 
 ## Minimal Operating Rules
 

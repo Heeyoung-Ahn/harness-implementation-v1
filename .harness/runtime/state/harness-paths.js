@@ -3,6 +3,7 @@ import path from "node:path";
 
 export const GENERATED_DOCS_DIR = ".agents/runtime/generated-state-docs";
 export const RUNTIME_REPORTS_DIR = ".agents/runtime/reports";
+export const AGENT_TRACES_DIR = ".agents/runtime/agent-traces";
 export const CUTOVER_REPORT_MARKDOWN = `${RUNTIME_REPORTS_DIR}/CUTOVER_PRECHECK.md`;
 export const CUTOVER_REPORT_JSON = `${RUNTIME_REPORTS_DIR}/CUTOVER_PRECHECK.json`;
 export const VALIDATION_REPORT_MARKDOWN = ".agents/artifacts/VALIDATION_REPORT.md";

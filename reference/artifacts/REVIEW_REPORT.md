@@ -2,6 +2,147 @@
 
 Use this artifact when the project enters a formal review gate.
 
+## 2026-05-04 QLT-02 Closeout Approval
+
+- Scope: final closeout review for `QLT-02` phase-1 local evidence-contract implementation after tester verification passed and the active handoff moved to `reviewer`.
+- Entry condition:
+  - `QLT-02` is in canonical reviewer state through the `tester -> reviewer` transition.
+  - Tester evidence covers root/starter full suites, validator/report/context, semantic trace summary, candidate-gate summary, and clean copied-starter smoke.
+- Evidence reviewed:
+  - `reference/packets/PKT-01_QLT-02_EVIDENCE_VALIDATION_SEMANTIC_TRACE_AND_AGENT_EVAL_CI_GATING.md`
+  - `reference/artifacts/WALKTHROUGH.md`
+  - `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`
+  - `reference/artifacts/REVIEW_REPORT.md`
+  - `.agents/artifacts/CURRENT_STATE.md`
+  - `.agents/artifacts/TASK_LIST.md`
+  - `.agents/artifacts/VALIDATION_REPORT.md`
+  - `.agents/artifacts/VALIDATION_REPORT.json`
+  - `.agents/runtime/ACTIVE_CONTEXT.json`
+  - `.agents/runtime/agent-traces/QLT-02.json`
+  - `.harness/runtime/state/active-context.js`
+  - `.harness/runtime/state/dev05-tooling.js`
+  - `.harness/runtime/state/drift-validator.js`
+  - root and `standard-template` regression coverage under `.harness/test/*`
+- Findings:
+  - no open review finding remains.
+- Review result:
+  - The approved phase-1 hard-fail boundary stayed inside the user-approved set. No evidence shows silent promotion of thin linkage, reviewer-rationale weakness, design-intent fulfillment, work fitness, or domain-specific judgment into validator-blocking behavior.
+  - Validation report, `ACTIVE_CONTEXT`, walkthrough evidence, and the lightweight trace artifact agree on the semantic trace summary, candidate-gate summary, and `ACTIVE_CONTEXT.validation.executedAt` parity requirement.
+  - Root and `standard-template` remain synchronized across runtime, validator, tests, and generated evidence behavior for the reviewed reusable changes.
+  - Tester evidence confirms the copied-starter bootstrap path still routes `context`, `next`, and `validate` through the expected `PLN-00` / `Planner` baseline after initialization.
+  - Residual debt disposition: no blocking implementation defect remains in the reviewed QLT-02 scope. Transition-time derived artifact refresh timing remains a follow-up candidate only because the canonical state becomes clean after the approved regeneration path and validator evidence stays green.
+- Validation:
+  - root `node --test .harness/test/*.test.js`: 51/51 pass.
+  - `standard-template` `node --test .harness/test/*.test.js`: 51/51 pass.
+  - root `node .harness/runtime/state/dev05-cli.js validate`: findings `[]`.
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`: gate decision `pass`.
+  - root `node .harness/runtime/state/dev05-cli.js context`: reviewer-state `ACTIVE_CONTEXT` contract present.
+  - clean copied starter `harness:init`, `harness:context`, `harness:next`, and `harness:validate`: pass.
+- Packet exit decision:
+  - approved
+- Next handoff:
+  - Planner should record QLT-02 closeout, reconcile completed-task state, and choose the next approved lane.
+- Status: done
+
+## 2026-05-04 OPS-04 Closeout Approval
+
+- Scope: final closeout review for `OPS-04` session-start context assurance and closeout gate hardening after tester verification passed and the active handoff moved to `reviewer`.
+- Entry condition:
+  - `OPS-04` is in canonical reviewer state through the `tester -> reviewer` transition.
+  - Tester evidence covers root/starter full suites, validator/report/context, and clean copied-starter smoke.
+- Evidence reviewed:
+  - `reference/packets/PKT-01_OPS-04_SESSION_START_CONTEXT_ASSURANCE_AND_CLOSEOUT_GATE_HARDENING.md`
+  - `reference/artifacts/WALKTHROUGH.md`
+  - `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`
+  - `.agents/artifacts/CURRENT_STATE.md`
+  - `.agents/artifacts/TASK_LIST.md`
+  - `.agents/artifacts/VALIDATION_REPORT.md`
+  - `.agents/runtime/ACTIVE_CONTEXT.json`
+  - `.harness/runtime/state/active-context.js`
+  - `.harness/runtime/state/dev05-tooling.js`
+  - `.harness/runtime/state/drift-validator.js`
+  - root and `standard-template` regression coverage under `.harness/test/*`
+- Findings:
+  - no open review finding remains.
+- Review result:
+  - The approved OPS-04 scope is present in the reusable runtime/workflow surfaces: `ACTIVE_CONTEXT` is the compact first-read re-entry surface, the validator enforces Active Context freshness/parity, and Developer closeout now requires explicit validation/report evidence before forward handoff.
+  - Root and `standard-template` stay synchronized across runtime, workflow, skill, doc, and test surfaces for the reviewed changes.
+  - Tester evidence confirms the copied-starter bootstrap path still routes `context`, `next`, `handoff`, and `validate` through the expected `PLN-00` / `Planner` baseline after initialization.
+  - Residual debt disposition: no blocking implementation defect remains in the reviewed OPS-04 scope. Installer/package rebuild execution was not repeated in this lane because packaging changes were out of scope for OPS-04 and no reviewed evidence suggested a packaging-specific regression.
+- Validation:
+  - root `npm.cmd test`: 48/48 pass.
+  - `standard-template` `npm.cmd test`: 48/48 pass.
+  - root `npm.cmd run harness:validate`: findings `[]`.
+  - root `npm.cmd run harness:validation-report`: gate decision `pass`.
+  - root `npm.cmd run harness:context`: reviewer-state `ACTIVE_CONTEXT` contract present.
+  - clean copied starter `harness:init`, `harness:context`, `harness:next`, `harness:handoff`, and `harness:validate`: pass.
+- Packet exit decision:
+  - approved
+- Next handoff:
+  - Planner should record OPS-04 closeout, reconcile completed-task state, and choose the next approved lane.
+- Status: done
+
+## 2026-05-04 DEV-11 Closeout Approval
+
+- Scope: final closeout review for `DEV-11` after the review-gate alignment refresh and packet exit-evidence completion.
+- Entry condition:
+  - Canonical review-gate state was refreshed through the final `tester -> reviewer` transition.
+  - DEV-11 packet `## 15. Packet Exit Quality Gate` was populated with implementation delta, source parity, residual debt disposition, validation evidence, and closeout notes.
+- Evidence reviewed:
+  - `reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md`
+  - `reference/artifacts/WALKTHROUGH.md`
+  - `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`
+  - `.agents/artifacts/CURRENT_STATE.md`
+  - `.agents/artifacts/TASK_LIST.md`
+  - `.agents/artifacts/VALIDATION_REPORT.md`
+  - `.agents/runtime/ACTIVE_CONTEXT.json`
+- Findings:
+  - no open review finding remains.
+- Review result:
+  - Canonical review-gate state is aligned: `CURRENT_STATE.md`, `TASK_LIST.md`, `VALIDATION_REPORT.*`, and `ACTIVE_CONTEXT.*` all point to the live `tester -> reviewer` handoff and reviewer closeout step.
+  - DEV-11 packet exit evidence is complete enough for closeout and matches the approved PMW-free CLI-first V1.3 scope.
+  - Final tester evidence covers root/starter full suites, validator, validation report, clean copied-starter acceptance, and rebuilt V1.3 payload PMW-reference sweep.
+  - Residual debt disposition: no active implementation defect remains. The empty root `pmw-app/` directory is maintainer-workspace residue only and is not part of the active runtime or shipped payload.
+- Validation:
+  - root `npm.cmd test`: 46/46 pass.
+  - `standard-template` `npm.cmd test`: 46/46 pass.
+  - root `npm.cmd run harness:validate`: findings `[]`.
+  - root `npm.cmd run harness:validation-report`: gate decision `pass`.
+  - root `npm.cmd run harness:context`: review-gate state aligned before closeout transition.
+- Packet exit decision:
+  - approved
+- Next handoff:
+  - Planner should record DEV-11 closeout, reconcile completed-task state, and choose the next approved lane.
+- Status: done
+
+## 2026-05-04 DEV-11 Closeout Re-Check
+
+- Scope: closeout readiness re-check for `DEV-11` after the follow-up tester pass that revalidated the `CURRENT_STATE` wording fix and reran root/starter full suites plus validation evidence.
+- Entry condition:
+  - The latest tester walkthrough confirms the reviewer-reported `CURRENT_STATE` wording drift is gone for the live `developer -> tester` state.
+  - Root/starter full tests, validator, and validation report passed again in the latest tester pass.
+- Evidence reviewed:
+  - `reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md`
+  - `reference/artifacts/WALKTHROUGH.md`
+  - `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`
+  - `.agents/artifacts/CURRENT_STATE.md`
+  - `.agents/artifacts/TASK_LIST.md`
+  - `.agents/artifacts/VALIDATION_REPORT.md`
+- Findings:
+  - The live canonical state still has not advanced into the review gate. `CURRENT_STATE.md`, `TASK_LIST.md`, and `VALIDATION_REPORT.md` all still point to Tester verification rather than Reviewer closeout, so the closeout review is being attempted against a repo state that has not formally entered `tester -> reviewer`.
+  - The DEV-11 packet exit-quality section is still entirely pending, including exit recommendation, source parity result, residual debt disposition, validation/cleanup evidence, and closeout notes. The packet exit gate reference says these fields must be populated before approval.
+- Risk:
+  - Approving closeout now would bypass the packet's own active-task parity and closeout-evidence contract.
+  - The repo would record DEV-11 as reviewed/closed without a canonical reviewer-stage handoff or completed packet-exit evidence.
+- Required remediation:
+  - Apply the final `tester -> reviewer` transition for DEV-11 so `CURRENT_STATE.md`, `TASK_LIST.md`, and `VALIDATION_REPORT.md` all reflect the review gate consistently.
+  - Refresh the DEV-11 packet exit-quality section with implementation delta, source parity, residual debt disposition, validation/cleanup evidence, and a concrete exit recommendation before attempting final approval.
+- Packet exit decision:
+  - hold
+- Next handoff:
+  - Reviewer should resume only after the review-gate state and packet exit evidence are both aligned; no new implementation defect is opened by this re-check.
+- Status: hold; closeout-state/evidence alignment required
+
 ## 2026-05-03 DEV-11 Closeout Readiness Review
 
 - Scope: closeout readiness review for `DEV-11` after final Tester re-verification passed and the active handoff moved to `tester -> reviewer`.

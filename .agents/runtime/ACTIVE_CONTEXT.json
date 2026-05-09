@@ -1,54 +1,154 @@
 {
-  "schemaVersion": "standard-harness-active-context/v1",
-  "generatedAt": "2026-05-03T10:11:30.915Z",
+  "schemaVersion": "standard-harness-active-context/v2",
+  "generatedAt": "2026-05-04T11:07:08.808Z",
   "project": {
     "repoRoot": "C:\\Newface\\30 Github\\harness-implementation-v1",
     "name": "harness-implementation-v1"
   },
   "release": {
-    "stage": "verification",
+    "stage": "planning",
     "gate": "open",
-    "focus": "V1.3 CLI-first PMW-free harness baseline is implemented and verified; DEV-11 implementation is ready for Tester verification.",
+    "focus": "V1.3 CLI-first PMW-free harness baseline is approved and closed; OPS-06 is approved as the next narrow packet; Ready For Code is the remaining approval boundary.",
     "goal": "Preserve the V1.3 installable standard harness baseline while implementing DEV-11 PMW removal and Active Context replacement under the release gate.",
-    "sourceRef": "reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md"
+    "sourceRef": "reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md"
+  },
+  "selectedLane": {
+    "workItemId": "OPS-06",
+    "title": "Derived-state refresh parity after closeout",
+    "status": "draft",
+    "owner": "planner",
+    "nextAction": "Close Ready For Code for OPS-06 before implementation opens.",
+    "sourceRef": "reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md",
+    "gateProfile": "contract",
+    "readyForCode": "pending",
+    "workflow": ".agents/workflows/plan.md",
+    "workflowRouteStatus": "ready"
   },
   "activeTask": {
-    "workItemId": "DEV-11",
-    "title": "CLI-first PMW decommission and active context implementation packet",
-    "status": "review",
-    "owner": "tester",
-    "nextAction": "Verify the implementation against the packet acceptance criteria.",
-    "sourceRef": "reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md",
-    "gateProfile": "release",
-    "readyForCode": "approved"
+    "workItemId": "OPS-06",
+    "title": "Derived-state refresh parity after closeout",
+    "status": "draft",
+    "owner": "planner",
+    "nextAction": "Close Ready For Code for OPS-06 before implementation opens.",
+    "sourceRef": "reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md",
+    "gateProfile": "contract",
+    "readyForCode": "pending",
+    "workflow": ".agents/workflows/plan.md",
+    "workflowRouteStatus": "ready"
   },
   "nextWork": {
-    "owner": "tester",
-    "action": "Verify the implementation against the packet acceptance criteria."
+    "owner": "planner",
+    "workflow": ".agents/workflows/plan.md",
+    "workflowRouteStatus": "ready",
+    "resolvedBy": "active_task_owner",
+    "action": "Close Ready For Code for OPS-06 before implementation opens."
+  },
+  "reentryContract": {
+    "firstRead": ".agents/runtime/ACTIVE_CONTEXT.json",
+    "fallbackHumanView": ".agents/runtime/ACTIVE_CONTEXT.md",
+    "nextWorkflow": ".agents/workflows/plan.md",
+    "workflowRouteStatus": "ready",
+    "mustReadNext": [
+      ".agents/workflows/plan.md",
+      ".agents/artifacts/CURRENT_STATE.md",
+      ".agents/artifacts/TASK_LIST.md",
+      ".agents/artifacts/REQUIREMENTS.md",
+      ".agents/artifacts/ARCHITECTURE_GUIDE.md",
+      ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+      ".agents/artifacts/PREVENTIVE_MEMORY.md",
+      "reference/planning/PLN-10_POST_DEV11_HARDENING_AND_RELEASE_ASSURANCE_DRAFT.md",
+      "reference/planning/PLN-09_CLI_FIRST_REBASELINE_AND_PMW_DECOMMISSION_DRAFT.md",
+      "reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md",
+      "reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md",
+      "reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md",
+      ".agents/artifacts/VALIDATION_REPORT.json"
+    ],
+    "sourceTrace": [
+      ".agents/artifacts/CURRENT_STATE.md",
+      ".agents/artifacts/TASK_LIST.md",
+      ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+      "reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md",
+      ".agents/artifacts/VALIDATION_REPORT.json"
+    ],
+    "digest": "d70a4baf83e4a182f9d4b6c2d4f877d3c6686a1b7ec77b87b6501891973c0dd9"
   },
   "blockers": [],
   "decisions": [],
   "latestHandoff": {
-    "createdAt": "2026-05-03T10:11:30.883Z",
-    "fromRole": "developer",
-    "toRole": "tester",
-    "summary": "[developer -> tester] Developer implementation completed; Tester should verify the approved scope.",
-    "sourceRef": "reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md",
-    "nextFirstAction": "Verify the implementation against the packet acceptance criteria."
+    "createdAt": "2026-05-04T11:07:08.808Z",
+    "fromRole": "planner",
+    "toRole": "planner",
+    "summary": "[planner -> planner] User approved OPS-06 as the next narrow packet under PLN-10.",
+    "sourceRef": "reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md",
+    "nextFirstAction": "Close Ready For Code for OPS-06 before implementation opens.",
+    "requiredSsot": [
+      ".agents/artifacts/CURRENT_STATE.md",
+      ".agents/artifacts/TASK_LIST.md",
+      ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+      "reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md"
+    ]
   },
-  "validation": null,
+  "validation": {
+    "ok": true,
+    "cutoverReady": true,
+    "findingCount": 0,
+    "blockingFindingCount": 0,
+    "gateDecision": "pass",
+    "executedAt": "2026-05-09T13:52:41.962Z",
+    "traceSummary": {
+      "path": ".agents/runtime/agent-traces/OPS-06.json",
+      "workItemId": "OPS-06",
+      "packetId": "PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT",
+      "turnClosedAt": "2026-05-09T13:52:41.962Z",
+      "semanticTraceStatus": "pass",
+      "warningCount": 0,
+      "candidateGateCount": 6
+    },
+    "candidateGates": [
+      {
+        "id": "required-evidence-present",
+        "phase": "candidate-only",
+        "description": "Required evidence artifacts exist for the active work item."
+      },
+      {
+        "id": "source-references-resolve",
+        "phase": "candidate-only",
+        "description": "Referenced packet, SSOT, validation, and trace sources resolve locally."
+      },
+      {
+        "id": "semantic-trace-present",
+        "phase": "candidate-only",
+        "description": "A lightweight semantic trace artifact exists for the active work item."
+      },
+      {
+        "id": "evidence-non-contradictory",
+        "phase": "candidate-only",
+        "description": "Trace, packet, and active work metadata do not contradict each other."
+      },
+      {
+        "id": "evidence-freshness",
+        "phase": "candidate-only",
+        "description": "Validation and trace timestamps match the current report turn."
+      },
+      {
+        "id": "validation-context-parity",
+        "phase": "candidate-only",
+        "description": "Validation report and ACTIVE_CONTEXT expose the same validation summary."
+      }
+    ]
+  },
   "generatedDocs": [
     {
       "projectionName": "CURRENT_STATE.md",
-      "generatedAt": "2026-05-03T10:11:30.883Z",
+      "generatedAt": "2026-05-04T11:07:08.808Z",
       "freshnessState": "fresh",
-      "sourceRevision": "2026-05-03T10:11:30.883Z"
+      "sourceRevision": "2026-05-04T11:07:08.808Z"
     },
     {
       "projectionName": "TASK_LIST.md",
-      "generatedAt": "2026-05-03T10:11:30.883Z",
+      "generatedAt": "2026-05-04T11:07:08.808Z",
       "freshnessState": "fresh",
-      "sourceRevision": "2026-05-03T10:11:30.883Z"
+      "sourceRevision": "2026-05-04T11:07:08.808Z"
     }
   ],
   "sources": {
@@ -56,10 +156,13 @@
     "taskList": ".agents/artifacts/TASK_LIST.md",
     "implementationPlan": ".agents/artifacts/IMPLEMENTATION_PLAN.md",
     "projectProgress": ".agents/artifacts/PROJECT_PROGRESS.md",
+    "preventiveMemory": ".agents/artifacts/PREVENTIVE_MEMORY.md",
     "activeProfiles": ".agents/artifacts/ACTIVE_PROFILES.md",
     "generatedCurrentState": ".agents/runtime/generated-state-docs/CURRENT_STATE.md",
     "generatedTaskList": ".agents/runtime/generated-state-docs/TASK_LIST.md",
     "validationReport": ".agents/artifacts/VALIDATION_REPORT.json",
-    "activePacket": "reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md"
+    "validationReportMarkdown": ".agents/artifacts/VALIDATION_REPORT.md",
+    "workflowContract": ".agents/workflows/plan.md",
+    "activePacket": "reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md"
   }
 }

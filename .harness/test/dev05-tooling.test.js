@@ -14,8 +14,10 @@ import {
   runTransition,
   runCutoverPreflight,
   runValidator,
+  writeValidationReport,
   writeCutoverReport
 } from "../runtime/state/dev05-tooling.js";
+import { writeActiveContext } from "../runtime/state/active-context.js";
 import { initializeProjectStarter } from "../runtime/state/init-project.js";
 import { createOperatingStateStore } from "../runtime/state/operating-state-store.js";
 import { writeGeneratedStateDocs } from "../runtime/state/generate-state-docs.js";
@@ -83,7 +85,7 @@ test("cutover preflight passes when validator is clean and no migration changes 
     nextAction: "Run preflight",
     sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
   });
-  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeStateSurfaces({ store, repoRoot });
   store.close();
 
   const validator = runValidator({ repoRoot, dbPath, outputDir: repoRoot });
@@ -118,7 +120,7 @@ test("cutover preflight fails when validator errors or migration changes remain"
     nextAction: "Run preflight",
     sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
   });
-  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeStateSurfaces({ store, repoRoot });
   store.close();
 
   fs.writeFileSync(
@@ -153,7 +155,7 @@ test("cutover preflight fails when the rollback bundle is incomplete", () => {
     nextAction: "Run preflight",
     sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
   });
-  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeStateSurfaces({ store, repoRoot });
   store.close();
 
   fs.unlinkSync(path.join(repoRoot, ".agents", "artifacts", "PREVENTIVE_MEMORY.md"));
@@ -166,6 +168,59 @@ test("cutover preflight fails when the rollback bundle is incomplete", () => {
     true
   );
   assert.equal(preflight.blockers.some((item) => item.code === "rollback_bundle_missing"), true);
+});
+
+test("validation report writes a lightweight semantic trace summary for the active work item", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-validation-trace-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-04T10:10:00.000Z") });
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "QLT-02 semantic evidence contract",
+    releaseGoal: "Persist lightweight semantic trace artifacts",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+  store.upsertWorkItem({
+    workItemId: "QLT-02",
+    title: "Evidence validation",
+    status: "in_progress",
+    owner: "developer",
+    nextAction: "Implement the approved packet scope and hand off to Tester.",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  store.appendHandoff({
+    handoffId: "qlt-02-planner-to-developer",
+    handoffSummary: "Planning approved; implementation can proceed.",
+    fromRole: "planner",
+    toRole: "developer",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+    payload: {
+      nextFirstAction: "Implement the approved packet scope and hand off to Tester.",
+      requiredSsot: [
+        ".agents/artifacts/CURRENT_STATE.md",
+        ".agents/artifacts/TASK_LIST.md",
+        ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+      ]
+    }
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const report = writeValidationReport({ repoRoot, dbPath, outputDir: repoRoot });
+  const tracePath = path.join(repoRoot, ".agents", "runtime", "agent-traces", "QLT-02.json");
+  const trace = JSON.parse(fs.readFileSync(tracePath, "utf8"));
+
+  assert.equal(report.ok, true);
+  assert.equal(report.report.traceSummary?.path, ".agents/runtime/agent-traces/QLT-02.json");
+  assert.equal(report.report.traceSummary?.workItemId, "QLT-02");
+  assert.equal(Array.isArray(report.report.candidateGates), true);
+  assert.equal(report.report.candidateGates.length > 0, true);
+  assert.equal(trace.workItemId, "QLT-02");
+  assert.equal(trace.turnClosedAt, report.report.executedAt);
 });
 
 test("cutover report writes markdown and json evidence files", () => {
@@ -188,7 +243,7 @@ test("cutover report writes markdown and json evidence files", () => {
     nextAction: "Write cutover report",
     sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
   });
-  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeStateSurfaces({ store, repoRoot });
   store.close();
 
   const report = writeCutoverReport({ repoRoot, dbPath, outputDir: repoRoot });
@@ -290,7 +345,7 @@ test("validator enforces gate profile evidence for active packet work", () => {
     title: "OPS-03 gate profile test packet",
     sourceRef: packetPath
   });
-  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeStateSurfaces({ store, repoRoot });
   store.close();
 
   const result = runValidator({ repoRoot, dbPath, outputDir: repoRoot });
@@ -337,7 +392,7 @@ test("validator blocks packet-header-only Ready For Code approval", () => {
     title: "OPS-03 Ready For Code consistency packet",
     sourceRef: packetPath
   });
-  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeStateSurfaces({ store, repoRoot });
   store.close();
 
   const result = runValidator({ repoRoot, dbPath, outputDir: repoRoot });
@@ -382,7 +437,7 @@ test("transition blocks planner-to-developer before Ready For Code approval", ()
     title: "OPS-03 transition Ready For Code guard packet",
     sourceRef: packetPath
   });
-  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeStateSurfaces({ store, repoRoot });
   store.close();
 
   const preview = runTransition({
@@ -434,7 +489,7 @@ test("transition blocks planner-to-developer until Ready For Code decision is cl
     title: "OPS-03 transition decision guard packet",
     sourceRef: packetPath
   });
-  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeStateSurfaces({ store, repoRoot });
   store.close();
 
   const blockedPreview = runTransition({
@@ -494,7 +549,7 @@ test("transition apply reports post-apply validation failure at top level", () =
     title: "OPS-03 transition validation reporting packet",
     sourceRef: packetPath
   });
-  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeStateSurfaces({ store, repoRoot });
   store.close();
 
   const applied = runTransition({
@@ -508,7 +563,48 @@ test("transition apply reports post-apply validation failure at top level", () =
   assert.equal(applied.ok, false);
   assert.equal(applied.validationReport.ok, false);
   assert.equal(applied.validationReport.findingCount > 0, true);
+  assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.json")), true);
   assert.match(applied.errors.join("\n"), /validation report failed/);
+});
+
+test("validator blocks incomplete active context re-entry contract", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-active-context-contract-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-04T02:00:00.000Z") });
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "OPS-04 active context contract",
+    releaseGoal: "Block incomplete re-entry contract",
+    sourceRef: ".agents/artifacts/CURRENT_STATE.md"
+  });
+  store.upsertWorkItem({
+    workItemId: "OPS-04",
+    title: "Session-start context assurance",
+    status: "in_progress",
+    nextAction: "Finish the active context contract.",
+    owner: "developer",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.json"),
+    JSON.stringify({ schemaVersion: "broken" }, null, 2),
+    "utf8"
+  );
+
+  const result = runValidator({ repoRoot, dbPath, outputDir: repoRoot });
+  assert.equal(result.ok, false);
+  assert.equal(result.findings.some((item) => item.code === "checksum_mismatch"), true);
+  assert.equal(
+    result.findings.some((item) => item.code === "active_context_contract_missing_field"),
+    true
+  );
 });
 
 test("transition preview is review-first and apply updates state surfaces", () => {
@@ -600,7 +696,7 @@ test("transition preview is review-first and apply updates state surfaces", () =
     title: "OPS-03 transition test packet",
     sourceRef: packetPath
   });
-  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeStateSurfaces({ store, repoRoot });
   store.close();
 
   const preview = runTransition({
@@ -750,7 +846,7 @@ test("transition refreshes keyed current-state truth notes on tester-to-reviewer
     title: "OPS-03 transition truth-note packet",
     sourceRef: packetPath
   });
-  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeStateSurfaces({ store, repoRoot });
   store.close();
 
   const applied = runTransition({
@@ -877,7 +973,7 @@ test("transition applies reviewer-to-developer defaults and preserves Ready For 
     title: "OPS-03 transition review-source packet",
     sourceRef: packetPath
   });
-  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeStateSurfaces({ store, repoRoot });
   store.close();
 
   const applied = runTransition({
@@ -1003,7 +1099,7 @@ test("transition infers reviewer-to-developer remediation wording for explicit c
     title: "OPS-03 transition review-custom packet",
     sourceRef: packetPath
   });
-  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeStateSurfaces({ store, repoRoot });
   store.close();
 
   const applied = runTransition({
@@ -1136,7 +1232,7 @@ test("release transition preserves the release-baseline focus prefix", () => {
     title: "DEV-11 release focus transition test packet",
     sourceRef: packetPath
   });
-  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeStateSurfaces({ store, repoRoot });
   store.close();
 
   const applied = runTransition({
@@ -1274,7 +1370,7 @@ test("terminal transition closes active task bookkeeping and preserves planner n
     title: "OPS-03 transition closeout packet",
     sourceRef: packetPath
   });
-  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeStateSurfaces({ store, repoRoot });
   store.close();
 
   const applied = runTransition({
@@ -1316,7 +1412,7 @@ test("terminal transition closes active task bookkeeping and preserves planner n
   assert.match(taskList, /\| - \| None \| - \| - \| clear \| - \| - \| - \|/);
   assert.match(
     taskList,
-    /\| OPS-03 \| Harness operation reliability and friction reduction packet \| 2026-05-03 \| transition planner -> planner; gate contract \| Planner recorded OPS-03 closeout after reviewer approval\. Planner should choose the next approved lane and open the next packet only after human agreement\. \|/
+    /\| OPS-03 \| Harness operation reliability and friction reduction packet \| \d{4}-\d{2}-\d{2} \| transition planner -> planner; gate contract \| Planner recorded OPS-03 closeout after reviewer approval\. Planner should choose the next approved lane and open the next packet only after human agreement\. \|/
   );
 
   const currentState = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"), "utf8");
@@ -1381,7 +1477,7 @@ test("validator blocks incomplete workflow contracts", () => {
     releaseGoal: "Block incomplete workflow contracts",
     sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
   });
-  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeStateSurfaces({ store, repoRoot });
   store.close();
 
   const result = runValidator({ repoRoot, dbPath, outputDir: repoRoot });
@@ -1416,7 +1512,7 @@ test("validator blocks missing reusable agent behavior guidance", () => {
     releaseGoal: "Block thin behavior guidance regression",
     sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
   });
-  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeStateSurfaces({ store, repoRoot });
   store.close();
 
   const result = runValidator({ repoRoot, dbPath, outputDir: repoRoot });
@@ -1463,7 +1559,7 @@ test("handoff resolves from CURRENT_STATE when no open task exists", () => {
     toRole: "developer",
     sourceRef: ".agents/artifacts/CURRENT_STATE.md"
   });
-  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeStateSurfaces({ store, repoRoot });
   store.close();
 
   const status = buildHarnessStatus({ repoRoot, dbPath, outputDir: repoRoot });
@@ -1487,6 +1583,113 @@ test("handoff resolves from CURRENT_STATE when no open task exists", () => {
       item.includes("next concrete work")
     ),
     true
+  );
+});
+
+test("status and validation report ignore a DB-open work item that canonical TASK_LIST already closed", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-closeout-parity-status-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_QLT-02_CLOSEOUT_PARITY_TEST.md";
+  fs.writeFileSync(path.join(repoRoot, packetPath), "# Packet\n", "utf8");
+
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"),
+    [
+      "# Current State",
+      "",
+      "## Snapshot",
+      "- Current Stage: planning",
+      "- Current Focus: QLT-02 closed; Planner selecting the next lane.",
+      "",
+      "## Next Recommended Agent",
+      "- Planner",
+      "",
+      "## Open Decisions / Blockers",
+      "- `QLT-02` is closed; latest handoff is `planner -> planner`. Planner should choose the next approved lane and open the next packet only after human agreement.",
+      "",
+      "## Current Truth Notes",
+      "- `QLT-02` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.",
+      "",
+      "## Latest Handoff Summary",
+      "- 2026-05-04: `[planner -> planner] Planner recorded QLT-02 closeout after reviewer approval.`"
+    ].join("\n"),
+    "utf8"
+  );
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "TASK_LIST.md"),
+    [
+      "# Task List",
+      "",
+      "## Active Locks",
+      "| Task ID | Scope | Owner | Status | Started At | Notes |",
+      "|---|---|---|---|---|---|",
+      "| - | None | - | clear | - | - |",
+      "",
+      "## Active Tasks",
+      "| Task ID | Title | Scope | Owner | Status | Priority | Depends On | Verification |",
+      "|---|---|---|---|---|---|---|---|",
+      "| - | None | - | - | clear | - | - | - |",
+      "",
+      "## Blocked Tasks",
+      "| Task ID | Blocker | Owner | Status | Unblock Condition | Verification |",
+      "|---|---|---|---|---|---|",
+      "| - | None | - | clear | - | - |",
+      "",
+      "## Completed Tasks",
+      "| Task ID | Title | Completed At | Verification | Notes |",
+      "|---|---|---|---|---|",
+      "| QLT-02 | Evidence validation, semantic trace, and agent eval / CI gating | 2026-05-04 | transition planner -> planner; gate contract | Planner recorded QLT-02 closeout after reviewer approval. |",
+      "",
+      "## Handoff Log",
+      "- 2026-05-04: [planner -> planner] Planner recorded QLT-02 closeout after reviewer approval. | Planner should choose the next approved lane and open the next packet only after human agreement."
+    ].join("\n"),
+    "utf8"
+  );
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-04T11:15:00.000Z") });
+  store.setReleaseState({
+    currentStage: "planning",
+    releaseGateState: "open",
+    currentFocus: "QLT-02 closed; Planner selecting the next lane.",
+    releaseGoal: "Keep status and validation aligned with canonical closeout state.",
+    sourceRef: ".agents/artifacts/CURRENT_STATE.md"
+  });
+  store.upsertWorkItem({
+    workItemId: "QLT-02",
+    title: "Evidence validation, semantic trace, and agent eval / CI gating",
+    status: "planning",
+    owner: "planner",
+    nextAction: "Planner should record QLT-02 closeout and choose the next approved lane.",
+    sourceRef: packetPath,
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  store.appendHandoff({
+    handoffId: "qlt-02-planner-closeout",
+    handoffSummary: "Planner recorded QLT-02 closeout after reviewer approval.",
+    fromRole: "planner",
+    toRole: "planner",
+    sourceRef: packetPath,
+    payload: {
+      nextFirstAction: "Planner should choose the next approved lane and open the next packet only after human agreement."
+    }
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const status = buildHarnessStatus({ repoRoot, dbPath, outputDir: repoRoot });
+  assert.equal(status.assignment, null);
+  assert.equal(
+    status.nextAction,
+    "Planner should choose the next approved lane and open the next packet only after human agreement."
+  );
+
+  const report = writeValidationReport({ repoRoot, dbPath, outputDir: repoRoot });
+  assert.equal(report.ok, true);
+  assert.equal(report.report.traceSummary ?? null, null);
+  assert.equal(
+    report.report.nextAction,
+    "Planner should choose the next approved lane and open the next packet only after human agreement."
   );
 });
 
@@ -1514,7 +1717,7 @@ test("handoff routes designer owners to the design workflow contract", () => {
     releaseGoal: "Route designer work to design.md",
     sourceRef: ".agents/artifacts/CURRENT_STATE.md"
   });
-  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeStateSurfaces({ store, repoRoot });
   store.close();
 
   const handoff = resolveHandoff({ repoRoot, dbPath, outputDir: repoRoot });
@@ -1627,6 +1830,15 @@ function seedStandardRepo(repoRoot) {
   fs.writeFileSync(path.join(repoRoot, "reference", "artifacts", "daily", "2026-04-20.md"), "# Daily\n", "utf8");
   fs.writeFileSync(path.join(repoRoot, "reference", "packets", "PKT-01_DEV-04_PMW_READ_SURFACE.md"), "# Packet\n", "utf8");
   seedProfileAwareValidatorFixtures(repoRoot);
+}
+
+function writeStateSurfaces({
+  store,
+  repoRoot,
+  validation = { ok: true, cutoverReady: true, findings: [], gateDecision: "pass" }
+}) {
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeActiveContext({ store, repoRoot, outputDir: repoRoot, validation });
 }
 
 function writeWorkflowContractFixtures(repoRoot) {
@@ -1824,3 +2036,4 @@ function resetCopiedStarterToFreshState(repoRoot) {
     fs.rmSync(path.join(repoRoot, ".harness", `operating_state.sqlite${suffix}`), { force: true });
   }
 }
+

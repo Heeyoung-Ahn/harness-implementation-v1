@@ -10,6 +10,7 @@ import {
   TASK_LIST_DOC,
   writeGeneratedStateDocs
 } from "../runtime/state/generate-state-docs.js";
+import { writeActiveContext } from "../runtime/state/active-context.js";
 import { validateGeneratedStateDocs } from "../runtime/state/drift-validator.js";
 import { RELEASE_BASELINE } from "../runtime/state/release-baseline.js";
 import {
@@ -75,6 +76,7 @@ test("writes deterministic generated docs and validates them successfully", () =
   });
 
   writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeActiveContext({ store, repoRoot, outputDir: repoRoot });
 
   const currentState = fs.readFileSync(generatedDocPath(repoRoot, CURRENT_STATE_DOC), "utf8");
   const taskList = fs.readFileSync(generatedDocPath(repoRoot, TASK_LIST_DOC), "utf8");
@@ -113,6 +115,7 @@ test("treats empty-state placeholder rows as zero-count detail", () => {
   });
 
   writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeActiveContext({ store, repoRoot, outputDir: repoRoot });
 
   const result = validateGeneratedStateDocs({
     store,
@@ -292,6 +295,7 @@ test("detects missing active profile declaration artifact", () => {
   });
 
   writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeActiveContext({ store, repoRoot, outputDir: repoRoot });
   fs.unlinkSync(path.join(repoRoot, ".agents", "artifacts", "ACTIVE_PROFILES.md"));
 
   const result = validateGeneratedStateDocs({
@@ -325,6 +329,7 @@ test("detects structured task table headers, locks, and completed verification d
   });
 
   writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeActiveContext({ store, repoRoot, outputDir: repoRoot });
   fs.writeFileSync(
     path.join(repoRoot, ".agents", "artifacts", "TASK_LIST.md"),
     `# Task List
@@ -408,6 +413,7 @@ test("detects missing required evidence in registered concrete task packets", ()
   });
 
   writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeActiveContext({ store, repoRoot, outputDir: repoRoot });
 
   const result = validateGeneratedStateDocs({
     store,
@@ -658,6 +664,7 @@ test("ignores legacy packet files that do not match the current concrete packet 
   );
 
   writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeActiveContext({ store, repoRoot, outputDir: repoRoot });
 
   const result = validateGeneratedStateDocs({
     store,
@@ -667,6 +674,163 @@ test("ignores legacy packet files that do not match the current concrete packet 
 
   assert.equal(result.ok, true);
   assert.deepEqual(result.findings, []);
+
+  store.close();
+});
+
+test("detects missing required semantic trace for the active work item", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-generated-docs-missing-trace-"));
+  seedRepoFiles(repoRoot);
+
+  const store = createOperatingStateStore({
+    dbPath: path.join(repoRoot, ".harness", "operating_state.sqlite"),
+    now: createClock("2026-05-04T10:20:00.000Z")
+  });
+
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "QLT-02 semantic trace validation",
+    releaseGoal: "Fail when the active work item has no trace artifact",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+  const packetPath = writeConcreteTaskPacketFixture(repoRoot, {
+    fileName: "PKT-01_QLT-02_TRACE_PACKET.md",
+    header: {
+      "Ready For Code": "approve",
+      "User-facing impact": "medium",
+      "UX archetype status": "approved",
+      "Environment topology status": "approved",
+      "Authoritative source intake status": "approved"
+    },
+    fields: {
+      "UX archetype reference": "reference/artifacts/PRODUCT_UX_ARCHETYPE.md",
+      "Selected UX archetype": "operator evidence context",
+      "Environment topology reference": "reference/artifacts/DEPLOYMENT_PLAN.md",
+      "Source environment": "maintainer repo",
+      "Target environment": "maintainer repo",
+      "Execution target": "local machine",
+      "Transfer boundary": "root plus standard-template",
+      "Rollback boundary": "revert local runtime changes",
+      "Authoritative source intake reference": ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+      "Authoritative source disposition": "implemented",
+      "Current implementation impact": "validator and active context",
+      "Existing plan conflict": "none",
+      "Impacted packet set scope": "single-packet"
+    }
+  });
+  store.upsertWorkItem({
+    workItemId: "QLT-02",
+    title: "Evidence validation",
+    status: "in_progress",
+    owner: "developer",
+    nextAction: "Implement semantic evidence contract",
+    sourceRef: packetPath,
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  store.upsertArtifact({
+    artifactId: "qlt-02-trace-packet",
+    path: packetPath,
+    category: "task_packet",
+    title: "QLT-02 trace packet",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "VALIDATION_REPORT.json"),
+    `${JSON.stringify(
+      {
+        ok: true,
+        command: "validation-report",
+        executedAt: "2026-05-04T10:21:00.000Z",
+        cutoverReady: true,
+        findings: [],
+        gateDecision: "pass",
+        traceSummary: {
+          path: ".agents/runtime/agent-traces/QLT-02.json",
+          workItemId: "QLT-02",
+          packetId: "PKT-01_QLT-02_TRACE_PACKET",
+          turnClosedAt: "2026-05-04T10:21:00.000Z",
+          semanticTraceStatus: "pass",
+          warningCount: 0,
+          candidateGateCount: 6
+        }
+      },
+      null,
+      2
+    )}\n`,
+    "utf8"
+  );
+  writeActiveContext({ store, repoRoot, outputDir: repoRoot });
+
+  const result = validateGeneratedStateDocs({
+    store,
+    outputDir: repoRoot,
+    repoRoot
+  });
+
+  const codes = new Set(result.findings.map((finding) => finding.code));
+  assert.equal(result.ok, false);
+  assert.equal(codes.has("required_semantic_trace_missing"), true);
+
+  store.close();
+});
+
+test("detects ACTIVE_CONTEXT validation executedAt parity mismatch", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-generated-docs-context-parity-"));
+  seedRepoFiles(repoRoot);
+
+  const store = createOperatingStateStore({
+    dbPath: path.join(repoRoot, ".harness", "operating_state.sqlite"),
+    now: createClock("2026-05-04T10:30:00.000Z")
+  });
+
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "QLT-02 context parity",
+    releaseGoal: "Fail when ACTIVE_CONTEXT validation executedAt drifts from validation report",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "VALIDATION_REPORT.json"),
+    `${JSON.stringify(
+      {
+        ok: true,
+        command: "validation-report",
+        executedAt: "2026-05-04T10:31:00.000Z",
+        cutoverReady: true,
+        findings: [],
+        gateDecision: "pass"
+      },
+      null,
+      2
+    )}\n`,
+    "utf8"
+  );
+  writeActiveContext({
+    store,
+    repoRoot,
+    outputDir: repoRoot,
+    validation: {
+      ok: true,
+      cutoverReady: true,
+      findings: [],
+      gateDecision: "pass",
+      executedAt: "2026-05-04T10:30:59.000Z"
+    }
+  });
+
+  const result = validateGeneratedStateDocs({
+    store,
+    outputDir: repoRoot,
+    repoRoot
+  });
+
+  const codes = new Set(result.findings.map((finding) => finding.code));
+  assert.equal(result.ok, false);
+  assert.equal(codes.has("active_context_validation_executed_at_mismatch"), true);
 
   store.close();
 });
@@ -695,6 +859,7 @@ test("detects release baseline drift between maintainer SSOT and installable rel
   });
 
   writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeActiveContext({ store, repoRoot, outputDir: repoRoot });
 
   const result = validateGeneratedStateDocs({
     store,

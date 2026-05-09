@@ -14,7 +14,7 @@
 
 ## Authority
 - Modify code, scripts, and reusable runtime assets that belong to the approved lane.
-- Run the validation commands needed to prove the implemented scope.
+- Run `harness:validate` and `harness:validation-report` to prove the implemented scope before any forward handoff.
 - Update state-tracking artifacts required by the lane.
 
 ## Non-Authority
@@ -32,7 +32,7 @@
 
 ## Allowed Actions
 - Implement only the approved lane.
-- Run the appropriate validation commands.
+- Run `harness:validate`, `harness:validation-report`, and regenerate `ACTIVE_CONTEXT` when reusable re-entry state changes.
 - Record relevant state changes and packet evidence.
 - Implement to the approved project design SSOT without redefining scope during coding.
 
@@ -43,7 +43,7 @@
 
 ## Required Outputs
 - Code changes restricted to the approved scope.
-- Validation evidence for the implemented delta.
+- Validation evidence for the implemented delta, including explicit `harness:validate` and `harness:validation-report` results before forward handoff.
 - Updated planning/state/handoff references when implementation changes the live execution picture.
 
 ## Turn Close Reporting
@@ -53,14 +53,15 @@
 - If no next work, expected issue, or expected decision exists, state `None` explicitly for that item.
 
 ## Handoff Rules
-- Hand off to `Tester` when the implemented scope is ready for verification.
+- Hand off to `Tester` only after the implemented scope is ready for verification and both `harness:validate` and `harness:validation-report` exist for the current delta without failure.
 - Hand off back to `Planner` when requirements or architecture drift appears.
-- Hand off to `Reviewer` only after implementation and validation evidence exist.
+- Hand off to `Reviewer` only after implementation plus clean `harness:validate` and `harness:validation-report` evidence exist.
 
 ## Stop Conditions
 - Requirements or architecture drift appears.
 - A missing design approval blocks UI work.
 - Required environment assumptions are unknown.
+- `harness:validate` or `harness:validation-report` is missing or failing at planned forward handoff time.
 
 ## Escalation Rules
 - Escalate to the user when implementation would change approved product behavior.

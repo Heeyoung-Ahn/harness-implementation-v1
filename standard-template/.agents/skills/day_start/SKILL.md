@@ -12,16 +12,18 @@ The brief should make the first execution step obvious while preserving workflow
 
 ## Read Order
 
-1. `.agents/artifacts/CURRENT_STATE.md`
-2. `.agents/artifacts/TASK_LIST.md`
-3. `.agents/workflows/pm.md`
-4. the workflow file for the next recommended owner when it is clear from current state
-5. `.agents/artifacts/PREVENTIVE_MEMORY.md` only if directly relevant
-6. the most recent note under `reference/artifacts/daily/` when today's scope needs recent delta context
-7. any immediately relevant repository evidence
+1. `.agents/runtime/ACTIVE_CONTEXT.json`
+2. the workflow file named by `ACTIVE_CONTEXT.nextWork.workflow`, or `.agents/workflows/pm.md` when the route is unclear
+3. `.agents/artifacts/CURRENT_STATE.md`
+4. `.agents/artifacts/TASK_LIST.md`
+5. the explicit `ACTIVE_CONTEXT.reentryContract.mustReadNext` items that are still unread
+6. `.agents/artifacts/PREVENTIVE_MEMORY.md` only if directly relevant
+7. the most recent note under `reference/artifacts/daily/` when today's scope needs recent delta context
+8. any immediately relevant repository evidence
 
 ## What To Extract
 
+- context assurance: selected lane, next workflow, must-read-next list, and stale/missing fallback status
 - current state and release target
 - what changed recently
 - blockers, risks, or pending confirmations
@@ -43,18 +45,20 @@ The brief should make the first execution step obvious while preserving workflow
 
 Return a concise start brief with these sections:
 
-1. Current State
-2. What Changed Recently
-3. What Needs Attention First
-4. Today's Top Priorities
-5. Next Recommended Workflow
-6. Evidence Gaps
-7. First Action
+1. Context Assurance
+2. Current State
+3. What Changed Recently
+4. What Needs Attention First
+5. Today's Top Priorities
+6. Next Recommended Workflow
+7. Evidence Gaps
+8. First Action
 
 ## Rules
 
 - Use the user's language.
 - Treat `.agents/artifacts/CURRENT_STATE.md` as the live execution truth unless direct evidence contradicts it.
+- Start by echoing the `ACTIVE_CONTEXT` first-read contract: selected lane, next workflow, must-read-next list, and whether fallback reading was required.
 - If direct evidence contradicts the saved state, flag the mismatch instead of silently resolving it.
 - Read preventive rules only when they directly affect today's scope.
 - Do not bulk-restate project history.

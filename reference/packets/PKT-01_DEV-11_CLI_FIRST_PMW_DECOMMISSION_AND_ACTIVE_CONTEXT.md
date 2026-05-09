@@ -6,7 +6,7 @@
 - Implementation owner after approval: `Developer`
 - This packet supersedes `PLN-08` and `DEV-10` as active implementation direction.
 - PMW is removed completely from the active baseline. It is not retained as an optional sidecar in the core repository, default starter, or release package.
-- Ready For Code approved by user on 2026-05-03. Developer implementation is active.
+- Ready For Code approved by user on 2026-05-03. Reviewer approved packet exit on 2026-05-04; Planner closeout is the remaining bookkeeping step.
 
 ## Purpose
 Implement the CLI-first harness rebaseline that removes PMW and all PMW-only maintenance burden from the active root/starter baseline, while preserving governance strength and reducing repeated harness alignment time and token cost.
@@ -14,7 +14,7 @@ Implement the CLI-first harness rebaseline that removes PMW and all PMW-only mai
 ## Quick Decision Header
 | Item | Proposed | Why | Status |
 |---|---|---|---|
-| Work item | DEV-11 CLI-first PMW decommission and active context | `PLN-09` approved the direction to remove PMW completely and split AI/human SSOT | draft |
+| Work item | DEV-11 CLI-first PMW decommission and active context | `PLN-09` approved the direction to remove PMW completely and split AI/human SSOT | approved |
 | Ready For Code | approve | implementation changes runtime, tests, manuals, packaging, validator, and starter payload | approved |
 | Human sync needed | yes | user approved the concrete removal packet before code changes | approved |
 | Gate profile | release | installable payload, release baseline, root/starter sync, and manuals change | approved |
@@ -28,7 +28,7 @@ Implement the CLI-first harness rebaseline that removes PMW and all PMW-only mai
 | Domain foundation status | approved | no product domain data change; no domain artifact required for this core harness packet | approved |
 | Authoritative source intake status | approved | user direction, `PLN-09`, and `평가.MD` are incorporated | approved |
 | Shared-source wave status | approved | `PLN-08` / `DEV-10` are superseded; closed PMW packets remain history | approved |
-| Packet exit gate status | pending | implementation and verification in progress | pending |
+| Packet exit gate status | approved | implementation, tester verification, and reviewer closeout are complete | approved |
 | Improvement promotion status | proposed | promote CLI-first active context and PMW-decommission lessons to preventive memory after closeout | proposed |
 | Existing system dependency | none | no external product integration | not-needed |
 | New authoritative source impact | analyzed | PMW-specific evaluation fixes are superseded by removal; active-task parity and command contract remain accepted | approved |
@@ -268,7 +268,7 @@ Implement the CLI-first harness rebaseline that removes PMW and all PMW-only mai
 | Domain foundation approval | no | planner | not-needed | no product domain data change |
 | Authoritative source disposition approval | yes | user/planner | approved-direction | PMW removal and AI/human SSOT split accepted |
 | Source wave rebaseline approval | yes | user/planner | approved-direction | `PLN-08` / `DEV-10` superseded |
-| Packet exit quality gate approval | yes | reviewer | pending | closeout after implementation and verification |
+| Packet exit quality gate approval | yes | reviewer | approved | reviewer approved closeout on 2026-05-04 after review-gate alignment and packet-exit evidence refresh |
 | Improvement promotion decision | yes | planner/reviewer | pending | promote lessons after closeout only |
 | Ready For Code sign-off | yes | user | approved | user approved DEV-11 scope and requested implementation, tests, and review |
 
@@ -320,20 +320,26 @@ Implement the CLI-first harness rebaseline that removes PMW and all PMW-only mai
 
 ## 15. Packet Exit Quality Gate
 - Packet exit quality gate reference: `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`
-- Exit recommendation: pending
-- Implementation delta summary: pending
-- Source parity result: pending
-- Refactor / residual debt disposition: pending
-- UX conformance result: not-needed after PMW removal
-- Topology / schema conformance result: pending release/root/starter verification
-- Validation / security / cleanup evidence: pending
+- Exit recommendation: approve; implementation, tester verification, review-gate alignment, and packet-exit evidence are complete.
+- Implementation delta summary:
+  Implemented the CLI-first PMW-free V1.3 baseline by removing PMW runtime/package/manual obligations from the active root and `standard-template`, adding `harness:context` plus `.agents/runtime/ACTIVE_CONTEXT.json` and `.agents/runtime/ACTIVE_CONTEXT.md`, aligning transition/current-state refresh behavior, updating packaged starter manuals and release payloads, and preserving PMW only as historical evidence.
+- Source parity result: aligned with the approved DEV-11 scope. Active root/starter state, release-baseline wording, validation artifacts, active context, and rebuilt V1.3 payload evidence all reflect PMW-free CLI-first operation; `PLN-08` / `DEV-10` remain superseded and no active PMW closeout dependency remains.
+- Refactor / residual debt disposition:
+  no active implementation defect remains for DEV-11. The only noted residue is an empty maintainer-workspace `pmw-app/` directory held by an external directory handle; it is absent from active runtime/payload evidence and is not treated as a release blocker.
+- UX conformance result:
+  not-needed after PMW removal. Reviewer/tester evidence confirms the active user-facing surface is terminal CLI plus Active Context artifacts, with human-facing state expressed in Korean operational terms and AI-facing state exported as compact structured context.
+- Topology / schema conformance result:
+  aligned. No DB schema change was required. Root and copied-starter flows now operate without PMW, and rebuilt `dist/standard-harness-v1.3` / `dist/windows-exe-v1.3` evidence showed no active PMW runtime/manual dependency in the shipped V1.3 baseline.
+- Validation / security / cleanup evidence: root `npm.cmd test` and `standard-template` `npm.cmd test` passed at 46/46 in the final CURRENT_STATE-remediation tester pass; root `npm.cmd run harness:validate` passed with no findings; root `npm.cmd run harness:validation-report` passed and now points next action to `Reviewer should assess DEV-11 closeout readiness.`; final tester evidence also recorded clean copied-starter `harness:init/context/next/handoff/validate` acceptance and a rebuilt V1.3 payload PMW-reference sweep with no active matches for `pmw-export`, `project-manifest`, `pmw-read-model`, `PMW_MANUAL`, `pmw-app`, or `PMW_OUTPUT_DIR`.
 - Deferred follow-up item:
   Security automation, agent eval/trace, semantic evidence validation, CI/PR integration, and release artifact audit hardening remain follow-up lanes unless user expands scope.
 - Improvement candidate reference:
   `OPS-STATE-SYNC-001` extension candidate for CLI-first active context and PMW removal.
 - Proposed target layer: core
-- Promotion status / linked follow-up item: pending
-- Closeout notes: pending
+- Promotion status / linked follow-up item:
+  pending planner/reviewer disposition after DEV-11 closeout; no linked follow-up item is opened inside this packet yet.
+- Closeout notes:
+  Canonical review-gate alignment was restored before final review. Reviewer approved DEV-11 closeout on 2026-05-04 after confirming `CURRENT_STATE.md`, `TASK_LIST.md`, `VALIDATION_REPORT.*`, and `ACTIVE_CONTEXT.*` matched the live review gate and packet-exit evidence.
 
 ## 16. Reopen Trigger
 - User decides to restore PMW to the core baseline.

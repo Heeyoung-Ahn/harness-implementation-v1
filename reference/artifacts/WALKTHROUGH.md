@@ -2,6 +2,83 @@
 
 Use this artifact to record verification evidence and manual test results.
 
+## 2026-05-04 QLT-02 Tester Verification
+
+- Scope: independent tester verification for `QLT-02` phase-1 local evidence-contract implementation after the approved `developer -> tester` handoff.
+- Environment: local maintainer workspace on Windows PowerShell plus a clean copied starter smoke under `C:\tmp\qlt02-starter-smoke-20260504`.
+- Tested scope:
+  - Root full harness regression suite after the QLT-02 implementation.
+  - `standard-template` full harness regression suite after reusable root/starter synchronization.
+  - Root `harness:validate`, `harness:validation-report`, and `harness:context`.
+  - Phase-1 semantic trace artifact, validation report trace summary, candidate-gate summary, and `ACTIVE_CONTEXT.validation.executedAt` parity.
+  - Clean copied starter `harness:init`, `harness:context`, `harness:next`, and `harness:validate`.
+- Evidence:
+  - root `node --test .harness/test/*.test.js`: 51/51 pass.
+  - `standard-template` `node --test .harness/test/*.test.js`: 51/51 pass.
+  - root `node .harness/runtime/state/dev05-cli.js validate`: `ok: true`, `cutoverReady: true`, findings `[]`.
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`: pass, gate decision `pass`, next action `Verify the implementation against the packet acceptance criteria.`.
+  - root `node .harness/runtime/state/dev05-cli.js context`: pass and reports `QLT-02`, workflow `.agents/workflows/test.md`, tester ownership, semantic trace summary, candidate gates, and `validation.executedAt` parity with the validation report.
+  - `.agents/runtime/agent-traces/QLT-02.json` exists at the approved path and includes the approved phase-1 minimum field set plus the expected hard-fail, warning-only, reviewer-only, and candidate-gate classifications.
+  - clean copied starter `npm.cmd run harness:init -- --non-interactive --project-name "QLT-02 Tester Smoke" --profiles none`: pass.
+  - clean copied starter `npm.cmd run harness:context`: pass and reports bootstrap task `PLN-00`, workflow `.agents/workflows/plan.md`, and structured `mustReadNext` / `sourceTrace` data in `ACTIVE_CONTEXT`.
+  - clean copied starter `npm.cmd run harness:next`: pass and routes the next task to `Planner` / `PLN-00`.
+  - clean copied starter `npm.cmd run harness:validate`: `ok: true`, `cutoverReady: true`, findings `[]`.
+- Untested scope:
+  - No actual GitHub Actions, PR comment, branch protection, or hosted eval wiring was tested because this packet intentionally limits CI/PR work to candidate-gate definition only.
+  - No additional domain-specific reviewer judgment was exercised because design-intent fulfillment, work fitness, and business-rule assessment remain reviewer-only in phase-1.
+- Result: tester verification passed. No tester-discovered QLT-02 remediation item remains for the approved phase-1 scope.
+- Handoff:
+  - Reviewer should inspect phase-1 hard-fail boundaries, warning split, semantic trace summary contract, candidate-gate summary, copied-starter smoke evidence, and root/starter parity against the approved packet.
+
+## 2026-05-04 OPS-04 Tester Verification
+
+- Scope: independent tester verification for `OPS-04` session-start context assurance and closeout gate hardening after the approved Developer handoff.
+- Environment: local maintainer workspace on Windows PowerShell plus a clean copied starter smoke under `C:\tmp\ops04-starter-smoke-20260504121905`.
+- Tested scope:
+  - Root full regression suite after the OPS-04 implementation.
+  - `standard-template` full regression suite after the root/starter synchronization.
+  - Root `harness:validate`, `harness:validation-report`, and `harness:context`.
+  - Clean copied starter `harness:init`, `harness:context`, `harness:next`, `harness:handoff`, and `harness:validate`.
+  - ACTIVE_CONTEXT bootstrap routing and closeout validation behavior in the copied starter.
+- Evidence:
+  - root `npm.cmd test`: 48/48 pass.
+  - `standard-template` `npm.cmd test`: 48/48 pass.
+  - root `npm.cmd run harness:validate`: `ok: true`, `cutoverReady: true`, findings `[]`.
+  - root `npm.cmd run harness:validation-report`: pass, gate decision `pass`, findings `[]`.
+  - root `npm.cmd run harness:context`: pass and reports `OPS-04`, workflow `.agents/workflows/test.md`, and the expected tester next action.
+  - clean copied starter `npm.cmd run harness:init -- --non-interactive --project-name "OPS-04 Tester Smoke" --profiles none`: pass.
+  - clean copied starter `npm.cmd run harness:context`: pass and reports bootstrap task `PLN-00`, workflow `.agents/workflows/plan.md`, and structured `mustReadNext` / `sourceTrace` data in `ACTIVE_CONTEXT`.
+  - clean copied starter `npm.cmd run harness:next`: pass and routes the next task to `Planner` / `PLN-00`.
+  - clean copied starter `npm.cmd run harness:handoff`: pass with `routeStatus: ready`, next owner `Planner`, and route `.agents/workflows/plan.md`.
+  - clean copied starter `npm.cmd run harness:validate`: `ok: true`, `cutoverReady: true`, findings `[]`.
+- Untested scope:
+  - No additional Windows EXE installer execution was performed in this tester pass.
+  - No new release-payload packaging/build run was performed because OPS-04 changed reusable governance/runtime surfaces rather than packaging outputs.
+- Result: tester verification passed. No tester-discovered OPS-04 remediation item remains.
+- Handoff:
+  - Reviewer should inspect OPS-04 closeout readiness against the approved packet, tester evidence, active-context first-read contract, closeout validation-gate behavior, and root/starter parity.
+
+## 2026-05-03 DEV-11 Tester Review-Gate Alignment And Exit-Evidence Refresh
+
+- Scope: finalize the DEV-11 tester-side handoff into the review gate by applying the canonical `tester -> reviewer` transition and refreshing packet-exit evidence so Reviewer can resume closeout on aligned state.
+- Environment: local maintainer workspace on Windows PowerShell.
+- Tested / refreshed scope:
+  - `tester-to-reviewer` transition preview and apply for `DEV-11`.
+  - Canonical `CURRENT_STATE.md`, `TASK_LIST.md`, `VALIDATION_REPORT.*`, and `ACTIVE_CONTEXT.*` alignment after the handoff.
+  - DEV-11 packet `## 15. Packet Exit Quality Gate` evidence refresh from the already-recorded implementation/test/payload results.
+  - Post-refresh root `harness:validate`, `harness:validation-report`, and `harness:context`.
+- Evidence:
+  - `npm.cmd run harness:transition -- --transition tester-to-reviewer --work-item DEV-11 ...`: preview pass, then apply pass.
+  - canonical `CURRENT_STATE.md` now reports `Current Stage: review`, next recommended agent `Reviewer`, active handoff `tester -> reviewer`, and `PKT-01_DEV-11... is Ready For Code approved and in Reviewer closeout review.`
+  - canonical `TASK_LIST.md` now reports DEV-11 owner `reviewer` and next first action `Reviewer should assess DEV-11 closeout readiness.`
+  - root `npm.cmd run harness:validate`: `ok: true`, `cutoverReady: true`, findings `[]`.
+  - root `npm.cmd run harness:validation-report`: pass, gate decision `pass`, next action `Reviewer should assess DEV-11 closeout readiness.`
+  - root `npm.cmd run harness:context`: pass and now reports release stage `review`, owner `reviewer`, and next action `Reviewer should assess DEV-11 closeout readiness.`
+  - DEV-11 packet exit-quality section now records implementation delta, source parity, residual debt disposition, topology result, validation/cleanup evidence, deferred follow-up scope, and closeout notes instead of leaving the section entirely pending.
+- Residual note:
+  - No new implementation defect was found in this pass. The empty root `pmw-app/` directory remains a maintainer-workspace residue only and is not treated as active payload/runtime debt.
+- Result: reviewer-gate state and packet-exit evidence are aligned. DEV-11 is ready for Reviewer closeout to resume.
+
 ## 2026-05-03 DEV-11 Tester Re-Verification For CURRENT_STATE And Validation Evidence
 
 - Scope: independent tester re-verification focused on the reviewer-reported `CURRENT_STATE.md` phase-wording drift fix and on whether root/starter regression plus validation evidence remain clean for `DEV-11`.
