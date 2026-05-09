@@ -1,12 +1,12 @@
 # Current State
 
 ## Snapshot
-- Current Stage: planning
-- Current Focus: V1.3 CLI-first PMW-free harness baseline is approved and closed; OPS-06 is approved as the next narrow packet; Ready For Code is the remaining approval boundary.
+- Current Stage: implementation
+- Current Focus: V1.3 CLI-first PMW-free harness baseline is approved and closed; OPS-06 implementation is in progress.
 - Current Release Goal: Preserve the V1.3 installable standard harness baseline while implementing DEV-11 PMW removal and Active Context replacement under the release gate.
 
 ## Next Recommended Agent
-- Planner
+- Developer
 
 ## Must Read Next
 - `.agents/artifacts/REQUIREMENTS.md`
@@ -20,7 +20,7 @@
 - `reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md`
 
 ## Open Decisions / Blockers
-- `OPS-06` Ready For Code status is hold; active handoff is `planner -> planner`. Close Ready For Code for OPS-06 before implementation opens.
+- `OPS-06` Ready For Code is approved; active handoff is `planner -> developer`. Implement the approved packet scope and hand off to Tester.
 - `QLT-02` is closed; latest handoff is `planner -> planner`. Planner should keep PLN-10 active and decide whether OPS-05 or a narrower hardening lane opens next.
 - No external blocker is open.
 - `DEV-11` is closed; latest handoff is `planner -> planner`. Planner should keep PLN-10 as the selected next planning lane and open the next packet only after human agreement.
@@ -36,7 +36,7 @@
 - User direction on 2026-05-03: remaining SSOT should split into AI-facing SSOT and human-facing SSOT. Human-facing SSOT uses Korean and easy terms; AI-facing SSOT prioritizes compact deterministic machine use.
 
 ## Current Truth Notes
-- `OPS-06` remains the active work item. Current handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
+- `OPS-06` remains the active work item. Current handoff is `planner -> developer`; stage is `implementation`; gate profile is `contract`.
 - `QLT-02` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
 - `OPS-04` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
 - `DEV-11` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `release`.
@@ -52,6 +52,7 @@
 - PMW remains historical closed-lane evidence only. `PLN-09` now proceeds on complete PMW removal from the active baseline and replacement of PMW read-model/export obligations with CLI-first active context.
 
 ## Latest Handoff Summary
+- 2026-05-09: `[planner -> developer] Planning approved; implementation can proceed.`
 - 2026-05-04: `[planner -> planner] User approved OPS-06 as the next narrow packet under PLN-10.`
 - 2026-05-04: `[planner -> planner] Planner recorded QLT-02 closeout after reviewer approval.`
 - 2026-05-04: `[reviewer -> planner] Packet exit approved; Planner should choose or refine the next lane.`

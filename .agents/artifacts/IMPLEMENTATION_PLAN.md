@@ -959,7 +959,7 @@ transfer-bound or airgapped delivery 환경에서 반복되는 bundle handoff와
 8. 구현 후 `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`를 사용해 packet exit quality gate reference, source parity, residual debt disposition, UX/topology/schema conformance, validation/security/cleanup evidence, deferred follow-up item을 정리하고, 반복 friction이 보이면 `.agents/artifacts/PREVENTIVE_MEMORY.md`에 improvement candidate reference, proposed target layer, promotion status, linked follow-up item을 남긴 뒤 closeout hold 조건이 없을 때만 security review와 validator check를 함께 닫는다.
 
 ## Operator Next Action
-- `OPS-06` active handoff is `planner -> planner`.
-- Close Ready For Code for OPS-06 before implementation opens.
+- `OPS-06` active handoff is `planner -> developer`.
+- Implement the approved packet scope and hand off to Tester.
 - Source packet: `reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md`.
 - Preserve packet-before-code, active-context derived authority, generated-doc immutability, root/starter sync, Tester/Reviewer separation, and human approval gates.

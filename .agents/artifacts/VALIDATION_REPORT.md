@@ -1,11 +1,11 @@
 # Validation Report
 
 ## Summary
-- Executed at: 2026-05-09T13:52:41.962Z
+- Executed at: 2026-05-09T14:02:50.113Z
 - Validator version: v1.3
 - Cutover ready: yes
 - Gate decision: pass
-- Next action: Close Ready For Code for OPS-06 before implementation opens.
+- Next action: Implement the approved packet scope and hand off to Tester.
 
 ## Active Profiles
 - Source: .agents/artifacts/ACTIVE_PROFILES.md
@@ -19,7 +19,7 @@
 - Path: .agents/runtime/agent-traces/OPS-06.json
 - Work item: OPS-06
 - Packet: PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT
-- Turn closed at: 2026-05-09T13:52:41.962Z
+- Turn closed at: 2026-05-09T14:02:50.113Z
 - Status: pass
 - Warning count: 0
 

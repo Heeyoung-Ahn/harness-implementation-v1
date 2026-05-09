@@ -5,7 +5,7 @@
 - Planning owner: `Planner`
 - Implementation owner after Ready For Code approval: `Developer`
 - On 2026-05-04, the user approved this packet as the next narrow follow-up after `QLT-02` closeout.
-- Detailed packet scope is approved for planning purposes; implementation remains blocked until explicit `Ready For Code`.
+- Detailed packet scope is approved for planning purposes, and the user approved `Ready For Code`.
 
 ## Purpose
 Close the now-confirmed gap where canonical human-facing closeout state can move forward while AI-facing derived re-entry state still presents the just-closed work item as active.
@@ -23,7 +23,7 @@ This packet defines:
 | Item | Proposed | Why | Status |
 |---|---|---|---|
 | Work item | OPS-06 derived-state refresh parity after closeout | `QLT-02` closeout reproduced a first-reentry-state mismatch after planner closeout; this is smaller and more urgent than opening `OPS-05` first | approved |
-| Ready For Code | hold | the user approved this as the next narrow packet, but did not yet approve implementation | pending |
+| Ready For Code | approved | the user explicitly approved implementation for this narrow closeout-parity fix | approved |
 | Human sync needed | yes | this packet changes the next-lane sequence under `PLN-10` and now has explicit user packet-selection approval | approved |
 | Gate profile | contract | reusable runtime, validator, Active Context, and closeout bookkeeping behavior are affected | draft |
 | User-facing impact | medium | no new product feature is added, but operator and AI re-entry trust after closeout changes materially | draft |
@@ -33,10 +33,10 @@ This packet defines:
 | UX archetype status | approved | the lane only hardens existing operator-facing state and evidence surfaces | approved |
 | UX deviation status | none | not applicable | not-needed |
 | Environment topology status | approved | local maintainer repository only; no deploy/cutover topology change is proposed | approved |
-| Domain foundation status | not-needed | no product-domain or DB design work is involved | not-needed |
+| Domain foundation status | approved | no product-domain or DB design work is involved in this lane | approved |
 | Authoritative source intake status | approved | the 2026-05-04 reproduced closeout mismatch is now an explicit planning input under `PLN-10` | approved |
 | Shared-source wave status | not-needed | single proposed packet | not-needed |
-| Packet exit gate status | pending | no implementation lane is active yet | draft |
+| Packet exit gate status | pending | implementation is underway; packet exit review remains pending | draft |
 | Improvement promotion status | approved | this packet supersedes `QLT-TRANSITION-REFRESH-001` as the approved narrow planning lane for the reproduced closeout-parity risk | approved |
 | Existing system dependency | none | no external product/runtime integration is required | not-needed |
 | New authoritative source impact | analyzed | `QLT-02` closeout evidence changes the recommended next-lane order inside `PLN-10` | approved |
@@ -186,7 +186,7 @@ This packet defines:
 | Source wave rebaseline approval | no | planner | not-needed | single packet |
 | Packet exit quality gate approval | yes | user/planner | approved | the user approved this packet as the next narrow lane before `OPS-05`; implementation approval remains separate |
 | Improvement promotion decision | yes | user/planner | approved | `QLT-TRANSITION-REFRESH-001` should now be treated as superseded by this packet if implementation later opens |
-| Ready For Code sign-off | yes | user | pending | packet selection is approved, but implementation remains blocked until explicit Ready For Code approval |
+| Ready For Code sign-off | yes | user | approved | the user explicitly approved implementation for OPS-06 |
 
 ## 13. Implementation Notes
 - keep the lane narrow; do not let it absorb `OPS-05` or broader `QLT-02` work
@@ -198,7 +198,7 @@ This packet defines:
 - Gate profile:
   contract
 - Verification manifest:
-  - approved packet scope and Ready For Code before implementation opens
+  - approved packet scope and Ready For Code
   - targeted closeout-parity regression tests
   - root `node --test .harness/test/*.test.js`
   - `standard-template` `node --test .harness/test/*.test.js`

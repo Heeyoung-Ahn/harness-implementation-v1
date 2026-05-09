@@ -4,7 +4,7 @@
 - Open work items: 38
 - Open blocked or at-risk items: 0
 - Recent handoffs captured: 10
-- Generated at: 2026-05-04T11:07:08.808Z
+- Generated at: 2026-05-09T14:01:06.031Z
 
 ## Blocked / At Risk Summary
 - 0 open blocker or risks require attention.
@@ -18,7 +18,7 @@
 ## Work Item Detail
 | ID | Title | Status | Next Action |
 |---|---|---|---|
-| OPS-06 | Derived-state refresh parity after closeout | draft | Close Ready For Code for OPS-06 before implementation opens. |
+| OPS-06 | Derived-state refresh parity after closeout | in_progress | Implement the approved packet scope and hand off to Tester. |
 | QLT-02 | Evidence validation, semantic trace, and agent eval / CI gating | completed | Planner should keep PLN-10 active and decide whether OPS-05 or a narrower hardening lane opens next. |
 | OPS-04 | Session-start context assurance and closeout gate hardening | done | Planner should choose the next approved lane and open the next packet only after human agreement. |
 | DEV-11 | CLI-first PMW decommission and active context implementation packet | done | Planner should keep PLN-10 as the selected next planning lane and open the next packet only after human agreement. |
@@ -58,6 +58,7 @@
 | DEV-04 | PMW read surface | done | Closed after browser verification passed at http://127.0.0.1:4173. |
 
 ## Handoff Log
+- 2026-05-09T14:01:06.031Z: [planner -> developer] Planning approved; implementation can proceed.
 - 2026-05-04T11:07:08.808Z: [planner -> planner] User approved OPS-06 as the next narrow packet under PLN-10.
 - 2026-05-04T10:37:53.960Z: [planner -> planner] Planner recorded QLT-02 closeout after reviewer approval.
 - 2026-05-04T10:34:11.768Z: [reviewer -> planner] Packet exit approved; Planner should choose or refine the next lane.
@@ -67,9 +68,8 @@
 - 2026-05-04T09:38:39.409Z: [planner -> planner] User approved narrowed QLT-02 phase-1 scope; planner should now close Ready For Code for the local evidence-contract implementation packet.
 - 2026-05-04T03:55:30.933Z: [planner -> planner] Opened QLT-02 draft under PLN-10 for evidence-validation, semantic trace, and agent eval / CI gating planning.
 - 2026-05-04T03:26:58.187Z: [planner -> planner] Planner recorded OPS-04 closeout after reviewer approval.
-- 2026-05-04T03:26:10.498Z: [reviewer -> planner] OPS-04 packet exit approved after reviewer confirmed first-read ACTIVE_CONTEXT contract, closeout validation gating, and root/starter parity.
 
 ## Generation Metadata
 - Generated docs: CURRENT_STATE.md, TASK_LIST.md
-- Source revision: 2026-05-04T11:07:08.808Z
+- Source revision: 2026-05-09T14:01:06.031Z
 - Sync status: fresh at generation time
