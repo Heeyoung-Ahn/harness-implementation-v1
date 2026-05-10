@@ -4,21 +4,21 @@
 - 첫 AI 재진입 읽기: .agents/runtime/ACTIVE_CONTEXT.json
 - 사람 확인용 보조 문서: .agents/runtime/ACTIVE_CONTEXT.md
 - 다음 workflow: .agents/workflows/plan.md
-- 선택된 lane: 현재 열린 작업 없음
-- 계약 digest: c25a50cd71cec2e4a43e1e1be68d1df69d00bf62cc8905b3e7129a44247a9270
+- 선택된 lane: PLN-11 / planning / 담당 planner
+- 계약 digest: cf3dcc1a119cf7aa6ea389fb7f71284102dad3629fb8c6c6f1af425218b87a6c
 
 ## 현재 작업
 - 단계: planning
 - 게이트: open
-- 초점: V1.3 CLI-first PMW-free harness baseline is stable; OPS-07 is closed; the reusable baseline is on planner hold with no active lane.
+- 초점: V1.3 CLI-first PMW-free harness baseline is stable; PLN-11 is open as the next planning lane to split the next reusable follow-up work into 2 + 2 sequence.
 - 목표: Preserve the V1.3 installable standard harness baseline while implementing DEV-11 PMW removal and Active Context replacement under the release gate.
-- 작업: 현재 열린 작업 없음
+- 작업: PLN-11 / Post-OPS07 runtime generalization and process friction reduction / Ready For Code not-needed
 
 ## 다음 작업
-- 다음 담당: Planner
+- 다음 담당: planner
 - 다음 workflow: .agents/workflows/plan.md
 - route 상태: ready
-- 다음 행동: Keep the reusable baseline on planning hold until a new approved lane is selected.
+- 다음 행동: Review the PLN-11 draft and decide whether to approve, adjust, or hold the proposed 2 + 2 sequence before any implementation packet opens.
 
 ## 먼저 다시 읽을 항목
 - .agents/workflows/plan.md
@@ -28,9 +28,9 @@
 - .agents/artifacts/ARCHITECTURE_GUIDE.md
 - .agents/artifacts/IMPLEMENTATION_PLAN.md
 - .agents/artifacts/PREVENTIVE_MEMORY.md
-- reference/packets/PKT-01_OPS-07_PLANNER_HOLD_CLOSEOUT_AUTOMATION.md
-- reference/planning/PLN-10_POST_DEV11_HARDENING_AND_RELEASE_ASSURANCE_DRAFT.md
+- reference/planning/PLN-11_POST_OPS07_RUNTIME_GENERALIZATION_AND_PROCESS_FRICTION_REDUCTION_DRAFT.md
 - reference/packets/PKT-01_OPS-05_RELEASE_ASSURANCE_AND_SECURITY_AUTOMATION_HARDENING.md
+- reference/packets/PKT-01_QLT-02_EVIDENCE_VALIDATION_SEMANTIC_TRACE_AND_AGENT_EVAL_CI_GATING.md
 - .agents/artifacts/VALIDATION_REPORT.json
 
 ## 결정과 막힘
@@ -38,15 +38,16 @@
 - 열린 막힘 없음
 
 ## 최근 인계
-- 2026-05-10T14:32:03.263Z: planner -> planner / [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.
+- 2026-05-10T14:49:37.885Z: planner -> planner / [planner -> planner] Opened PLN-11 draft to split the next reusable follow-up work into runtime-generalization phase 1 and process-friction phase 2.
 - 인계 기준 SSOT: .agents/artifacts/CURRENT_STATE.md
 - 인계 기준 SSOT: .agents/artifacts/TASK_LIST.md
 - 인계 기준 SSOT: .agents/artifacts/IMPLEMENTATION_PLAN.md
-- 인계 기준 SSOT: reference/packets/PKT-01_OPS-07_PLANNER_HOLD_CLOSEOUT_AUTOMATION.md
+- 인계 기준 SSOT: reference/planning/PLN-11_POST_OPS07_RUNTIME_GENERALIZATION_AND_PROCESS_FRICTION_REDUCTION_DRAFT.md
 
 ## 검증 상태
 - 통과 / gate pass / blocking 0개
-- 마지막 검증 시각: 2026-05-10T14:32:03.525Z
+- 마지막 검증 시각: 2026-05-10T14:49:48.456Z
+- semantic trace: PLN-11 / pass / candidate gates 6개
 
 ## 출처
 - currentState: .agents/artifacts/CURRENT_STATE.md
@@ -60,4 +61,4 @@
 - validationReport: .agents/artifacts/VALIDATION_REPORT.json
 - validationReportMarkdown: .agents/artifacts/VALIDATION_REPORT.md
 - workflowContract: .agents/workflows/plan.md
-- activePacket: reference/packets/PKT-01_OPS-07_PLANNER_HOLD_CLOSEOUT_AUTOMATION.md
+- activePacket: reference/planning/PLN-11_POST_OPS07_RUNTIME_GENERALIZATION_AND_PROCESS_FRICTION_REDUCTION_DRAFT.md

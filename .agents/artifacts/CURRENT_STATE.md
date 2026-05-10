@@ -2,7 +2,7 @@
 
 ## Snapshot
 - Current Stage: planning
-- Current Focus: V1.3 CLI-first PMW-free harness baseline is stable; OPS-07 is closed; the reusable baseline is on planner hold with no active lane.
+- Current Focus: V1.3 CLI-first PMW-free harness baseline is stable; `PLN-11` is open as the next planning lane to split the next reusable follow-up work into `2 + 2` sequence.
 - Current Release Goal: Preserve the V1.3 installable standard harness baseline while implementing DEV-11 PMW removal and Active Context replacement under the release gate.
 
 ## Next Recommended Agent
@@ -14,16 +14,15 @@
 - `.agents/artifacts/IMPLEMENTATION_PLAN.md`
 - `.agents/artifacts/TASK_LIST.md`
 - `.agents/artifacts/PREVENTIVE_MEMORY.md`
-- `reference/packets/PKT-01_OPS-07_PLANNER_HOLD_CLOSEOUT_AUTOMATION.md`
-- `reference/planning/PLN-10_POST_DEV11_HARDENING_AND_RELEASE_ASSURANCE_DRAFT.md`
+- `reference/planning/PLN-11_POST_OPS07_RUNTIME_GENERALIZATION_AND_PROCESS_FRICTION_REDUCTION_DRAFT.md`
 - `reference/packets/PKT-01_OPS-05_RELEASE_ASSURANCE_AND_SECURITY_AUTOMATION_HARDENING.md`
+- `reference/packets/PKT-01_QLT-02_EVIDENCE_VALIDATION_SEMANTIC_TRACE_AND_AGENT_EVAL_CI_GATING.md`
 
 ## Open Decisions / Blockers
-- `OPS-07` is closed; latest handoff is `planner -> planner`. Keep the reusable baseline on planning hold until a new approved lane is selected.
+- `PLN-11` is now the active planning lane. The next decision is whether to approve the proposed `2 + 2` follow-up split and open `OPS-08` first.
 - No external blocker is open.
-- `OPS-07` must stay narrow: one-step `planner hold / no active lane` closeout semantics only, without broad planner workflow redesign.
-- Later CI/PR execution wiring should open only if unattended or multi-operator evidence automation becomes the next immediate reusable gap.
-- Later external-release-specific hardening should open only if a concrete deployment or security boundary requires more than the current `OPS-05` local-first pre-review baseline.
+- Phase 1 should stay limited to reusable runtime/validator generalization: `OPS-08` then `QLT-03`.
+- Phase 2 should stay parked for later planning/process-friction work: `OPS-09` then `PLN-12`, unless a stronger urgency appears.
 - Human-facing SSOT must be Korean-first, easy to read, and operator-oriented; AI-facing SSOT must be compact, deterministic, structured, and source-traced.
 - User clarification on 2026-05-03: the Karpathy-style guide should not be reduced to thin guidance. It should be sufficiently reflected while staying compatible with this harness's SSOT, approval, workflow, Tester, Reviewer, Active Context derived-state, and root/starter sync contracts.
 - User requirement on 2026-05-03: human-and-Planner-approved project design SSOT guides all other agents. Developer implements to it, Tester verifies against it, and Reviewer checks closeout/evidence against it.
@@ -33,6 +32,7 @@
 - User direction on 2026-05-03: remaining SSOT should split into AI-facing SSOT and human-facing SSOT. Human-facing SSOT uses Korean and easy terms; AI-facing SSOT prioritizes compact deterministic machine use.
 
 ## Current Truth Notes
+- `PLN-11` is open as the selected next planning lane after `OPS-07`; owner is `planner`; gate profile is `contract`.
 - `OPS-07` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
 - `PLN-10` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
 - `OPS-05` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
@@ -45,13 +45,14 @@
 - `PLN-07`, `DEV-07`, `DEV-08`, and `DEV-09` remain closed. Their detailed history lives in `.agents/artifacts/PROJECT_PROGRESS.md`, `reference/artifacts/REVIEW_REPORT.md`, and their packet files.
 - `OPS-03` is closed and its preventive-memory candidate can be treated as promoted baseline guidance.
 - `PLN-08` and `PKT-01_DEV-10_PMW_PHASE_2_DOCTOR_PROMOTION_AND_USABILITY_REMEDIATION.md` are superseded for now by `PLN-09`; do not implement DEV-10 unless the user explicitly opens a new PMW revival lane.
-- `PLN-09` planning and `DEV-11` implementation are closed. `PLN-10` is also closed after sequencing `OPS-04`, `QLT-02`, `OPS-06`, and `OPS-05`; keep planning hold until a new approved lane is selected.
+- `PLN-09` planning and `DEV-11` implementation are closed. `PLN-10` is also closed after sequencing `OPS-04`, `QLT-02`, `OPS-06`, and `OPS-05`; `PLN-11` now decides the next `2 + 2` reusable follow-up split.
 - `PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md` is closed with the latest handoff `planner -> planner`.
 - `OPS-03` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
 - Generated state docs under `.agents/runtime/generated-state-docs/*` remain derived output and must not be edited manually.
 - PMW remains historical closed-lane evidence only. `PLN-09` now proceeds on complete PMW removal from the active baseline and replacement of PMW read-model/export obligations with CLI-first active context.
 
 ## Latest Handoff Summary
+- 2026-05-10: `[planner -> planner] Opened PLN-11 draft to split the next reusable follow-up work into runtime-generalization phase 1 and process-friction phase 2.`
 - 2026-05-10: `[planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.`
 - 2026-05-10: `[developer -> developer] Developer lane remains active after OPS-07 Ready For Code approval metadata reconciliation.`
 - 2026-05-10: `[planner -> developer] Planning approved; implementation can proceed.`

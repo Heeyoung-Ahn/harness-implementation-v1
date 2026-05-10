@@ -2,7 +2,7 @@
   "ok": true,
   "command": "validation-report",
   "validatorVersion": "v1.3",
-  "executedAt": "2026-05-10T14:32:03.525Z",
+  "executedAt": "2026-05-10T14:49:48.456Z",
   "cutoverReady": true,
   "profileSummary": {
     "path": ".agents/artifacts/ACTIVE_PROFILES.md",
@@ -10,9 +10,17 @@
     "profiles": []
   },
   "findings": [],
-  "nextAction": "Keep the reusable baseline on planning hold until a new approved lane is selected.",
+  "nextAction": "Review the PLN-11 draft and decide whether to approve, adjust, or hold the proposed 2 + 2 sequence before any implementation packet opens.",
   "gateDecision": "pass",
-  "traceSummary": null,
+  "traceSummary": {
+    "path": ".agents/runtime/agent-traces/PLN-11.json",
+    "workItemId": "PLN-11",
+    "packetId": "PLN-11_POST_OPS07_RUNTIME_GENERALIZATION_AND_PROCESS_FRICTION_REDUCTION_DRAFT",
+    "turnClosedAt": "2026-05-10T14:49:48.456Z",
+    "semanticTraceStatus": "pass",
+    "warningCount": 0,
+    "candidateGateCount": 6
+  },
   "candidateGates": [
     {
       "id": "required-evidence-present",

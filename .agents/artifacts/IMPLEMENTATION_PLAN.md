@@ -19,6 +19,8 @@
 
 2026-05-10 `OPS-07` opened next as a narrow planner-owned follow-up packet draft. Its only purpose is to make `planner hold / no active lane` closeout deterministic in one supported operation without reopening broader workflow redesign.
 
+2026-05-10 `PLN-11` opened next as the post-OPS07 planning lane. Its purpose is to sequence the next reusable follow-up work as runtime-generalization phase 1 (`OPS-08`, `QLT-03`) and parked process-friction phase 2 (`OPS-09`, `PLN-12`) instead of reopening one broad mixed lane.
+
 ## Follow-Up Phase Plan
 1. approved release-ready baseline을 보존하면서 follow-up planning lane을 연다.
 2. `PLN-03`으로 core / optional profile / project packet activation contract를 정의한다.
@@ -74,6 +76,43 @@
 - OPS-06 Derived-state refresh parity after closeout
 - OPS-05 Release-assurance and security-automation hardening
 - PLN-10 Post-DEV11 hardening and release assurance sequencing
+
+## PLN-11 Post-OPS07 Runtime Generalization And Process Friction Reduction
+
+### Goal
+Open the next planning lane after `OPS-07` without repeating the previous mixed-lane friction. The immediate objective is to split the next reusable work into a narrow runtime/validator generalization phase and a later packet/process-friction phase.
+
+### Status
+- Opened on 2026-05-10 as the active planner-owned lane after `OPS-07` closeout.
+- No implementation packet is open yet under `PLN-11`.
+
+### Input
+- `reference/planning/PLN-11_POST_OPS07_RUNTIME_GENERALIZATION_AND_PROCESS_FRICTION_REDUCTION_DRAFT.md`
+- `reference/packets/PKT-01_OPS-05_RELEASE_ASSURANCE_AND_SECURITY_AUTOMATION_HARDENING.md`
+- `reference/packets/PKT-01_QLT-02_EVIDENCE_VALIDATION_SEMANTIC_TRACE_AND_AGENT_EVAL_CI_GATING.md`
+- `.agents/artifacts/PREVENTIVE_MEMORY.md`
+- `.harness/runtime/state/dev05-tooling.js`
+- `.harness/runtime/state/drift-validator.js`
+- `reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md`
+
+### Required Output
+- approved `2 + 2` follow-up sequence
+- immediate next packet recommendation
+- explicit parked phase-2 follow-up boundary
+- synchronized planner state across canonical docs, DB hot-state, generated docs, and Active Context
+
+### Exit Criteria
+- the user can review one narrow planning draft instead of four mixed implementation asks
+- phase 1 is explicitly limited to reusable runtime/validator generalization
+- phase 2 is explicitly parked until phase 1 closes or urgency changes
+- no implementation opens until a concrete next packet is approved
+
+### Recommended Sequence
+- Phase 1: `OPS-08` reusable security-review evidence generalization, then `QLT-03` semantic trace and evidence gate generalization
+- Phase 2: parked `OPS-09` structured packet-exit metadata and closeout parser hardening, then parked `PLN-12` lane-typed packet minimums and approval-surface reduction
+
+### Operator Next Action
+- Review `PLN-11` and decide whether to approve, adjust, or hold the proposed `2 + 2` sequence before any implementation packet opens.
 
 ## DEV-06 Execution
 ### Goal

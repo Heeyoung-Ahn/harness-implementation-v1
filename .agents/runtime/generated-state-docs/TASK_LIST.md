@@ -1,10 +1,10 @@
 # TASK_LIST
 
 ## Technical Facts
-- Open work items: 40
+- Open work items: 41
 - Open blocked or at-risk items: 0
 - Recent handoffs captured: 10
-- Generated at: 2026-05-10T14:32:03.263Z
+- Generated at: 2026-05-10T14:49:37.889Z
 
 ## Blocked / At Risk Summary
 - 0 open blocker or risks require attention.
@@ -18,6 +18,7 @@
 ## Work Item Detail
 | ID | Title | Status | Next Action |
 |---|---|---|---|
+| PLN-11 | Post-OPS07 runtime generalization and process friction reduction | planning | Review the PLN-11 draft and decide whether to approve, adjust, or hold the proposed 2 + 2 sequence before any implementation packet opens. |
 | OPS-07 | Planner hold closeout automation | closed | Keep the reusable baseline on planning hold until a new approved lane is selected. |
 | OPS-06 | Derived-state refresh parity after closeout | closed | Keep the reusable baseline on planning hold until a new approved lane is selected. |
 | OPS-05 | Release-assurance and security-automation hardening | closed | Keep the reusable baseline on planning hold until a new approved lane is selected. |
@@ -60,6 +61,7 @@
 | DEV-04 | PMW read surface | done | Closed after browser verification passed at http://127.0.0.1:4173. |
 
 ## Handoff Log
+- 2026-05-10T14:49:37.885Z: [planner -> planner] Opened PLN-11 draft to split the next reusable follow-up work into runtime-generalization phase 1 and process-friction phase 2.
 - 2026-05-10T14:32:03.263Z: [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.
 - 2026-05-10T14:28:39.475Z: [reviewer -> planner] Packet exit approved; Planner should choose or refine the next lane.
 - 2026-05-10T14:26:19.935Z: [tester -> reviewer] Tester verification completed; Reviewer should assess packet exit readiness.
@@ -69,9 +71,8 @@
 - 2026-05-10T13:54:46.001Z: [planner -> planner] User approved the narrow OPS-07 detailed agreement; planner should now close Ready For Code before implementation opens.
 - 2026-05-10T13:46:34.874Z: [planner -> planner] Opened OPS-07 draft for planner hold closeout automation.
 - 2026-05-10T13:32:57.633Z: [planner -> planner] Planner recorded OPS-05 closeout and placed post-DEV11 follow-up planning on hold pending a new approved lane.
-- 2026-05-10T13:24:46.097Z: [reviewer -> planner] Packet exit approved; Planner should choose or refine the next lane.
 
 ## Generation Metadata
 - Generated docs: CURRENT_STATE.md, TASK_LIST.md
-- Source revision: 2026-05-10T14:32:03.263Z
+- Source revision: 2026-05-10T14:49:37.889Z
 - Sync status: fresh at generation time
