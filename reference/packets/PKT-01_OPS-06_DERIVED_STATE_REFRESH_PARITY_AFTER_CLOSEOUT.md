@@ -36,7 +36,7 @@ This packet defines:
 | Domain foundation status | approved | no product-domain or DB design work is involved in this lane | approved |
 | Authoritative source intake status | approved | the 2026-05-04 reproduced closeout mismatch is now an explicit planning input under `PLN-10` | approved |
 | Shared-source wave status | not-needed | single proposed packet | not-needed |
-| Packet exit gate status | pending | implementation is underway; packet exit review remains pending | draft |
+| Packet exit gate status | approved | reviewer closeout confirmed packet acceptance, parity evidence, and root/starter synchronization | approved |
 | Improvement promotion status | approved | this packet supersedes `QLT-TRANSITION-REFRESH-001` as the approved narrow planning lane for the reproduced closeout-parity risk | approved |
 | Existing system dependency | none | no external product/runtime integration is required | not-needed |
 | New authoritative source impact | analyzed | `QLT-02` closeout evidence changes the recommended next-lane order inside `PLN-10` | approved |
@@ -212,32 +212,24 @@ This packet defines:
 - The contract gate is carried by `## Verification Manifest` above.
 
 ## 15. Packet Exit Quality Gate
-- Packet exit quality gate reference:
-  `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`
-- Exit recommendation:
-  pending
-- Implementation delta summary:
-  pending
-- Source parity result:
-  pending
-- Refactor / residual debt disposition:
-  pending
+- Packet exit quality gate reference: `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`
+- Exit recommendation: approve; reviewer confirmed the approved OPS-06 scope, tester evidence, and closeout-parity acceptance with no open closeout finding.
+- Implementation delta summary: closeout-time active-task selection and derived-state refresh behavior now stop canonically closed work from remaining active in AI-facing re-entry and validation-derived surfaces.
+- Source parity result: aligned with the approved OPS-06 scope. Canonical `CURRENT_STATE.md`, `TASK_LIST.md`, `ACTIVE_CONTEXT.json`, and `VALIDATION_REPORT.json` agree on reviewer-stage `OPS-06` state and next action after the verified handoff path.
+- Refactor / residual debt disposition: no blocking residual implementation debt remains in the approved narrow lane; keep the separately observed one-shot post-transition stale-read risk as monitoring-only because it was not reproducible under the final reviewer-state refresh check.
 - UX conformance result:
   not-needed
 - Topology / schema conformance result:
   not-needed
-- Validation / security / cleanup evidence:
-  pending
+- Validation / security / cleanup evidence: root and `standard-template` `node --test .harness/test/*.test.js` passed at 53/53; root `node .harness/runtime/state/dev05-cli.js validate`, `validation-report`, and `context` all passed with reviewer-state parity.
 - Deferred follow-up item:
   `OPS-05`
 - Improvement candidate reference:
   `QLT-TRANSITION-REFRESH-001` (superseded by this approved `OPS-06` planning lane)
 - Proposed target layer:
   core
-- Promotion status / linked follow-up item:
-  pending-review / `OPS-06`
-- Closeout notes:
-  pending
+- Promotion status / linked follow-up item: promoted / `OPS-06` (closed 2026-05-09)
+- Closeout notes: Reviewer approved OPS-06 closeout on 2026-05-09 after tester evidence confirmed the reproduced closeout-parity defect no longer remained, root/`standard-template` synchronization stayed intact, and final reviewer-stage context/report freshness checks aligned.
 
 ## 16. Reopen Trigger
 - the user decides this issue should stay preventive-memory-only instead of opening implementation

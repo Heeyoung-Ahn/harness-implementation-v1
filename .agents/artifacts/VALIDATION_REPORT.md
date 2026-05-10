@@ -1,7 +1,7 @@
 # Validation Report
 
 ## Summary
-- Executed at: 2026-05-09T14:02:50.113Z
+- Executed at: 2026-05-09T15:24:14.877Z
 - Validator version: v1.3
 - Cutover ready: yes
 - Gate decision: pass
@@ -16,10 +16,10 @@
 - none
 
 ## Semantic Trace
-- Path: .agents/runtime/agent-traces/OPS-06.json
-- Work item: OPS-06
-- Packet: PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT
-- Turn closed at: 2026-05-09T14:02:50.113Z
+- Path: .agents/runtime/agent-traces/OPS-05.json
+- Work item: OPS-05
+- Packet: PKT-01_OPS-05_RELEASE_ASSURANCE_AND_SECURITY_AUTOMATION_HARDENING
+- Turn closed at: 2026-05-09T15:24:14.877Z
 - Status: pass
 - Warning count: 0
 

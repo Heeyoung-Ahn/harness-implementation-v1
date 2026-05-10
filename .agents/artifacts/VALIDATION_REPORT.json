@@ -2,7 +2,7 @@
   "ok": true,
   "command": "validation-report",
   "validatorVersion": "v1.3",
-  "executedAt": "2026-05-09T14:02:50.113Z",
+  "executedAt": "2026-05-09T15:24:14.877Z",
   "cutoverReady": true,
   "profileSummary": {
     "path": ".agents/artifacts/ACTIVE_PROFILES.md",
@@ -13,10 +13,10 @@
   "nextAction": "Implement the approved packet scope and hand off to Tester.",
   "gateDecision": "pass",
   "traceSummary": {
-    "path": ".agents/runtime/agent-traces/OPS-06.json",
-    "workItemId": "OPS-06",
-    "packetId": "PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT",
-    "turnClosedAt": "2026-05-09T14:02:50.113Z",
+    "path": ".agents/runtime/agent-traces/OPS-05.json",
+    "workItemId": "OPS-05",
+    "packetId": "PKT-01_OPS-05_RELEASE_ASSURANCE_AND_SECURITY_AUTOMATION_HARDENING",
+    "turnClosedAt": "2026-05-09T15:24:14.877Z",
     "semanticTraceStatus": "pass",
     "warningCount": 0,
     "candidateGateCount": 6

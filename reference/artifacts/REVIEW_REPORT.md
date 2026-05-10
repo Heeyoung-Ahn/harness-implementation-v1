@@ -2,6 +2,47 @@
 
 Use this artifact when the project enters a formal review gate.
 
+## 2026-05-09 OPS-06 Closeout Approval
+
+- Scope: final closeout review for `OPS-06` derived-state refresh parity after closeout after tester verification passed and the active handoff moved to `reviewer`.
+- Entry condition:
+  - `OPS-06` is in canonical reviewer state through the `tester -> reviewer` transition.
+  - Tester evidence covers root/starter full suites, validator/report/context, packet acceptance parity, and reusable root/starter synchronization.
+- Evidence reviewed:
+  - `reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md`
+  - `reference/artifacts/WALKTHROUGH.md`
+  - `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`
+  - `reference/artifacts/REVIEW_REPORT.md`
+  - `.agents/artifacts/CURRENT_STATE.md`
+  - `.agents/artifacts/TASK_LIST.md`
+  - `.agents/artifacts/VALIDATION_REPORT.md`
+  - `.agents/artifacts/VALIDATION_REPORT.json`
+  - `.agents/runtime/ACTIVE_CONTEXT.json`
+  - `.agents/runtime/agent-traces/OPS-06.json`
+  - `.harness/runtime/state/workflow-routing.js`
+  - `.harness/runtime/state/active-context.js`
+  - `.harness/runtime/state/dev05-tooling.js`
+  - `.harness/runtime/state/drift-validator.js`
+  - root and `standard-template` regression coverage under `.harness/test/*`
+- Findings:
+  - no open review finding remains.
+- Review result:
+  - The approved narrow OPS-06 scope is present in the reusable runtime and validator surfaces: canonically closed work is no longer selected as the active task in AI-facing re-entry or validation-derived next-work summaries.
+  - Canonical `CURRENT_STATE.md`, `TASK_LIST.md`, `ACTIVE_CONTEXT.json`, and `VALIDATION_REPORT.json` agree on the reviewer-stage `OPS-06` state and next action after the verified handoff path.
+  - Root and `standard-template` remain synchronized across the reviewed runtime, validator, and regression-test changes.
+  - Residual debt disposition: no blocking implementation defect remains in the reviewed OPS-06 scope. A one-shot stale read was observed immediately after a prior handoff command, but it did not reproduce under the final reviewer freshness check and is treated as monitoring-only rather than a closeout blocker.
+- Validation:
+  - root `node --test .harness/test/*.test.js`: 53/53 pass.
+  - `standard-template` `node --test .harness/test/*.test.js`: 53/53 pass.
+  - root `node .harness/runtime/state/dev05-cli.js validate`: findings `[]`.
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`: gate decision `pass`, reviewer next action aligned.
+  - root `node .harness/runtime/state/dev05-cli.js context`: review-gate `ACTIVE_CONTEXT` contract present.
+- Packet exit decision:
+  - approved
+- Next handoff:
+  - Planner should record OPS-06 closeout, reconcile completed-task state, and choose the next approved lane.
+- Status: done
+
 ## 2026-05-04 QLT-02 Closeout Approval
 
 - Scope: final closeout review for `QLT-02` phase-1 local evidence-contract implementation after tester verification passed and the active handoff moved to `reviewer`.

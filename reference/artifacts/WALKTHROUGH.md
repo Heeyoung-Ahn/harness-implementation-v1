@@ -2,6 +2,31 @@
 
 Use this artifact to record verification evidence and manual test results.
 
+## 2026-05-09 OPS-06 Tester Verification
+
+- Scope: independent tester verification for `OPS-06` closeout-parity hardening after the approved `developer -> tester` handoff.
+- Environment: local maintainer workspace on Windows PowerShell.
+- Tested scope:
+  - Packet acceptance against canonical closeout-state vs `ACTIVE_CONTEXT` / validation parity expectations.
+  - Root full harness regression suite after the OPS-06 implementation.
+  - `standard-template` full harness regression suite after reusable root/starter synchronization.
+  - Root `harness:validate`, `harness:validation-report`, and `harness:context`.
+  - Root/starter parity for the reusable OPS-06 runtime and test files.
+- Evidence:
+  - root `node --test .harness/test/*.test.js`: 53/53 pass, including the closeout-parity regressions `active context ignores a DB-open work item that canonical TASK_LIST already marks completed` and `status and validation report ignore a DB-open work item that canonical TASK_LIST already closed`.
+  - `standard-template` `node --test .harness/test/*.test.js`: 53/53 pass with the same reusable regression coverage.
+  - root `node .harness/runtime/state/dev05-cli.js validate`: `ok: true`, `cutoverReady: true`, findings `[]`.
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`: pass, gate decision `pass`, findings `[]`, next action `Verify the implementation against the packet acceptance criteria.` before reviewer handoff.
+  - root `node .harness/runtime/state/dev05-cli.js context`: pass and reports `OPS-06`, workflow `.agents/workflows/test.md`, tester ownership, and clean validation parity.
+  - canonical `.agents/artifacts/CURRENT_STATE.md`, `.agents/artifacts/TASK_LIST.md`, `.agents/runtime/ACTIVE_CONTEXT.json`, and `.agents/artifacts/VALIDATION_REPORT.json` all agree on the active work item `OPS-06`, tester ownership, and the packet acceptance verification next action.
+  - root/starter parity spot checks for `.harness/runtime/state/workflow-routing.js`, `.harness/runtime/state/active-context.js`, `.harness/runtime/state/dev05-tooling.js`, `.harness/runtime/state/drift-validator.js`, `.harness/test/active-context.test.js`, and `.harness/test/dev05-tooling.test.js` returned no file-content diff.
+- Untested scope:
+  - No copied-starter smoke was rerun in this tester pass because the approved OPS-06 change affects closeout-time active-task selection and derived-state parity, not starter bootstrap routing; the packet marks copied-starter smoke as conditional for bootstrap-routing or starter-derived-parity impact only.
+  - No reviewer closeout was performed in this tester pass.
+- Result: tester verification passed. No tester-discovered OPS-06 remediation item remains for the approved narrow closeout-parity scope.
+- Handoff:
+  - Reviewer should inspect OPS-06 closeout readiness against the approved packet acceptance, tester evidence, root/starter synchronization, and clean validation/context/report parity.
+
 ## 2026-05-04 QLT-02 Tester Verification
 
 - Scope: independent tester verification for `QLT-02` phase-1 local evidence-contract implementation after the approved `developer -> tester` handoff.

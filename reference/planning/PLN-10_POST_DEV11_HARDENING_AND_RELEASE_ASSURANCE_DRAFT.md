@@ -6,6 +6,7 @@
 - This draft is the selected next planning lane after the CLI-first PMW-free V1.3 baseline closed.
 - `OPS-04` is now closed.
 - `QLT-02` is now closed after reviewer approval, tester evidence, and planner closeout recording.
+- `OPS-06` is now closed after developer implementation, tester verification, reviewer approval, and planner closeout recording.
 - This draft does not approve implementation. It defines the remaining follow-up split after `OPS-04` and the real-project-readiness decision path.
 
 ## Purpose
@@ -34,20 +35,19 @@ Choose how to sequence the deferred follow-up work after `DEV-11`, using the clo
 - Decide whether session-start context assurance and closeout validation hardening open first as an ops lane.
 - Decide whether security automation hardening should remain a separate follow-up after the context-assurance work.
 - Decide the exact phase-1 boundary for agent trace, semantic evidence validation, validator-backed evidence checks, parity hardening, and deferred CI/PR follow-up work.
-- Decide whether the now-confirmed reviewer-to-planner derived-state lag should stay a preventive-memory candidate or be promoted into its own narrow hardening packet before `OPS-05`.
 - Decide whether release artifact audit hardening should stay coupled to security automation or become a release-specific follow-up.
 
 ## 3. Candidate Follow-Up Split
 - Candidate A: `OPS-04` session-start context assurance and closeout-gate planning.
   Covers `AGENTS.md` / `day_start` / workflow re-entry contract tightening, `ACTIVE_CONTEXT` schema expansion, freshness/parity enforcement for active context, transition-time validation/context alignment, and mandatory Developer closeout validation evidence.
 - Candidate B: `OPS-05` release-assurance and security-automation planning.
-  Covers dependency inventory, secret scan, release artifact audit hardening, and cutover/release evidence tightening.
+  Covers dependency inventory, secret scan, release artifact audit hardening, cutover/release evidence tightening, and the minimum reusable pre-review evidence needed when AI-assisted internal business apps are expected to face organizational IT/security review before deployment.
 - Candidate C: `QLT-02` evidence-validation and agent-eval planning.
   Covers phase-1 local semantic evidence contract work, validator-backed evidence checks, lightweight agent trace, validation/report/context parity hardening, and CI/PR candidate-gate definition with actual wiring deferred.
 - Candidate D: `OPS-06` narrow derived-state refresh parity hardening after `QLT-02`.
   Covers the reproduced closeout issue where canonical planner-facing state closes `QLT-02`, but `ACTIVE_CONTEXT` still reports the closed work item as active even after regeneration. Scope should stay limited to transition-time derived-surface refresh ordering and validator-visible parity for closed-work-item re-entry state.
 - Recommended sequence:
-  `OPS-04` was the correct first packet and is now closed. `QLT-02` is now closed as well, but it surfaced a narrower follow-up than originally expected: the transition/closeout derived-state lag is now reproduced at planner re-entry. Recommended sequence is to treat that lag as the next narrow packet candidate before `OPS-05`, and keep `OPS-05` immediately after it unless external release/security hardening becomes the more urgent risk.
+  `OPS-04`, `QLT-02`, and `OPS-06` are now all closed. The remaining deferred release/security gap is `OPS-05`, and the user has now clarified that this harness is for non-specialist operators using AI to deliver relatively large internal business apps that will likely face IT/security review before deployment. The recommended sequence is therefore to open `OPS-05` next as a planning packet draft while keeping `Ready For Code` blocked until the user explicitly approves the narrowed release/security boundary.
 
 ## 4. Non-Goal
 - Do not reopen PMW.
@@ -77,11 +77,10 @@ Choose how to sequence the deferred follow-up work after `DEV-11`, using the clo
 - New closeout finding from 2026-05-04: even after `QLT-02` reviewer approval, planner closeout recording, `validation-report`, and `context` reruns, canonical Markdown surfaces show `QLT-02` as closed while `ACTIVE_CONTEXT` still keeps `QLT-02` as the active task. This is stronger than a note-only candidate because it affects the first AI re-entry surface after a real closeout.
 
 ## 7. Open Decisions
-- After the closed `OPS-04`, should `QLT-02` evidence-validation / eval / CI planning open next, or should `OPS-05` security / release hardening open first?
-- After the closed `QLT-02`, should the reproduced derived-state lag open as its own narrow hardening packet before `OPS-05`, or should it remain a preventive-memory candidate only?
 - Which evidence weaknesses should fail hard in the first `QLT-02` implementation packet, and which should remain warning-level or reviewer-only?
 - What minimum lightweight agent trace shape is enough to support semantic evidence review without high governance cost?
 - Which exact CI/PR candidate gates should be recorded now so later execution wiring can stay narrow?
+- Should `OPS-05` open immediately for the current reusable baseline, or stay as a draft/hold packet until the first external/security-sensitive release boundary is nearer?
 
 ## 8. Human Sync / Approval Boundary
 | Decision Item | Needed | Owner | Status | Notes |
@@ -90,9 +89,10 @@ Choose how to sequence the deferred follow-up work after `DEV-11`, using the clo
 | First follow-up packet after PLN-10 | yes | user/planner | closed | `OPS-04` was approved, implemented, verified, reviewed, and closed |
 | Next packet after OPS-04 | yes | user/planner | approved | user directed Planner to proceed with `QLT-02`; narrowed phase-1 scope is approved and `Ready For Code` remains pending inside the packet |
 | Next packet after QLT-02 | yes | user/planner | approved | user approved `PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md` as the next narrow packet before `OPS-05`; `Ready For Code` remains separate |
-| Release/security follow-up sequence | yes | user/planner | pending | decide whether `OPS-05` opens immediately after the derived-state parity packet or only before the first external/security-sensitive release |
+| Next packet after OPS-06 | yes | user/planner | pending | recommend `PKT-01_OPS-05_RELEASE_ASSURANCE_AND_SECURITY_AUTOMATION_HARDENING.md` as the next planning packet draft; implementation approval remains separate |
+| Release/security follow-up sequence | yes | user/planner | pending | user clarified that likely internal IT/security review before deployment is a real near-term constraint; decide whether `OPS-05` therefore opens immediately for the current baseline or stays draft/hold |
 | Eval/CI split strategy | yes | user/planner | approved | define CI/PR candidate gates in `QLT-02`, but defer actual CI/PR execution wiring to a later narrow packet |
 
 ## 9. Recommended Next Action
-- Planner should keep `QLT-02` recorded as closed, treat `OPS-06` as the approved next narrow packet, and close only the remaining `Ready For Code` boundary before implementation opens.
-- Recommended sequence remains `OPS-06` before `OPS-05`. Do not open implementation until the user explicitly approves `Ready For Code` for `OPS-06`.
+- Planner should keep `OPS-06` recorded as closed, review `PKT-01_OPS-05_RELEASE_ASSURANCE_AND_SECURITY_AUTOMATION_HARDENING.md` as the next planning packet draft, and hold implementation until the user explicitly approves its detailed boundary and `Ready For Code`.
+- Recommended sequence is now `OPS-05` as the next follow-up candidate under `PLN-10`, with implementation still blocked behind a fresh user approval boundary.

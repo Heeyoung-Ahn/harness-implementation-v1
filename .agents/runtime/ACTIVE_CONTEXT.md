@@ -4,15 +4,15 @@
 - 첫 AI 재진입 읽기: .agents/runtime/ACTIVE_CONTEXT.json
 - 사람 확인용 보조 문서: .agents/runtime/ACTIVE_CONTEXT.md
 - 다음 workflow: .agents/workflows/dev.md
-- 선택된 lane: OPS-06 / in_progress / 담당 developer
-- 계약 digest: d3d6ba09a36fb587ec70b3d1104a6e83c432110ff48197b58d50f4fabc1c5ea7
+- 선택된 lane: OPS-05 / in_progress / 담당 developer
+- 계약 digest: 1aeeac115e9bde75ad56d5b0816c086678d27604294be42e1b5517e85eb2dcff
 
 ## 현재 작업
 - 단계: implementation
 - 게이트: open
-- 초점: V1.3 CLI-first PMW-free harness baseline is approved and closed; OPS-06 implementation is in progress.
+- 초점: V1.3 CLI-first PMW-free harness baseline is approved and closed; OPS-05 implementation is in progress.
 - 목표: Preserve the V1.3 installable standard harness baseline while implementing DEV-11 PMW removal and Active Context replacement under the release gate.
-- 작업: OPS-06 / Derived-state refresh parity after closeout / Ready For Code approved
+- 작업: OPS-05 / Release-assurance and security-automation hardening / Ready For Code approved
 
 ## 다음 작업
 - 다음 담당: developer
@@ -33,7 +33,7 @@
 - reference/planning/PLN-09_CLI_FIRST_REBASELINE_AND_PMW_DECOMMISSION_DRAFT.md
 - reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md
 - reference/packets/PKT-01_OPS-03_HARNESS_OPERATION_FRICTION_REDUCTION.md
-- reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md
+- reference/packets/PKT-01_OPS-05_RELEASE_ASSURANCE_AND_SECURITY_AUTOMATION_HARDENING.md
 - .agents/artifacts/VALIDATION_REPORT.json
 
 ## 결정과 막힘
@@ -41,16 +41,16 @@
 - 열린 막힘 없음
 
 ## 최근 인계
-- 2026-05-09T14:01:06.031Z: planner -> developer / [planner -> developer] Planning approved; implementation can proceed.
+- 2026-05-09T15:21:46.364Z: planner -> developer / [planner -> developer] Planning approved; implementation can proceed.
 - 인계 기준 SSOT: .agents/artifacts/CURRENT_STATE.md
 - 인계 기준 SSOT: .agents/artifacts/TASK_LIST.md
 - 인계 기준 SSOT: .agents/artifacts/IMPLEMENTATION_PLAN.md
-- 인계 기준 SSOT: reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md
+- 인계 기준 SSOT: reference/packets/PKT-01_OPS-05_RELEASE_ASSURANCE_AND_SECURITY_AUTOMATION_HARDENING.md
 
 ## 검증 상태
 - 통과 / gate pass / blocking 0개
-- 마지막 검증 시각: 2026-05-09T14:02:50.113Z
-- semantic trace: OPS-06 / pass / candidate gates 6개
+- 마지막 검증 시각: 2026-05-09T15:24:14.877Z
+- semantic trace: OPS-05 / pass / candidate gates 6개
 
 ## 출처
 - currentState: .agents/artifacts/CURRENT_STATE.md
@@ -64,4 +64,4 @@
 - validationReport: .agents/artifacts/VALIDATION_REPORT.json
 - validationReportMarkdown: .agents/artifacts/VALIDATION_REPORT.md
 - workflowContract: .agents/workflows/dev.md
-- activePacket: reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md
+- activePacket: reference/packets/PKT-01_OPS-05_RELEASE_ASSURANCE_AND_SECURITY_AUTOMATION_HARDENING.md
