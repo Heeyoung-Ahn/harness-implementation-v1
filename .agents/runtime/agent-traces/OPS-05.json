@@ -2,9 +2,9 @@
   "schemaVersion": "standard-harness-agent-trace/v1",
   "workItemId": "OPS-05",
   "packetId": "PKT-01_OPS-05_RELEASE_ASSURANCE_AND_SECURITY_AUTOMATION_HARDENING",
-  "role": "developer",
-  "workflow": ".agents/workflows/dev.md",
-  "turnClosedAt": "2026-05-09T15:24:14.877Z",
+  "role": "planner",
+  "workflow": ".agents/workflows/plan.md",
+  "turnClosedAt": "2026-05-10T13:24:46.376Z",
   "requiredSsot": [
     ".agents/artifacts/CURRENT_STATE.md",
     ".agents/artifacts/TASK_LIST.md",
@@ -67,10 +67,10 @@
     "warningCount": 0
   },
   "handoff": {
-    "createdAt": "2026-05-09T15:21:46.364Z",
-    "fromRole": "planner",
-    "toRole": "developer",
+    "createdAt": "2026-05-10T13:24:46.097Z",
+    "fromRole": "reviewer",
+    "toRole": "planner",
     "sourceRef": "reference/packets/PKT-01_OPS-05_RELEASE_ASSURANCE_AND_SECURITY_AUTOMATION_HARDENING.md",
-    "summary": "[planner -> developer] Planning approved; implementation can proceed."
+    "summary": "[reviewer -> planner] Packet exit approved; Planner should choose or refine the next lane."
   }
 }

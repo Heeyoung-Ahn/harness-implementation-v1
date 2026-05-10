@@ -2,6 +2,89 @@
 
 Use this artifact when the project enters a formal review gate.
 
+## 2026-05-10 OPS-07 Closeout Approval
+
+- Scope: final closeout review for `OPS-07` planner hold closeout automation after tester verification passed and the active handoff moved to `reviewer`.
+- Entry condition:
+  - `OPS-07` is in canonical reviewer state through the `tester -> reviewer` transition.
+  - Tester evidence covers root/starter full suites, validator/report/context, the no-active-lane acceptance contract, and reusable root/starter synchronization.
+- Evidence reviewed:
+  - `reference/packets/PKT-01_OPS-07_PLANNER_HOLD_CLOSEOUT_AUTOMATION.md`
+  - `reference/artifacts/WALKTHROUGH.md`
+  - `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`
+  - `reference/artifacts/REVIEW_REPORT.md`
+  - `.agents/artifacts/CURRENT_STATE.md`
+  - `.agents/artifacts/TASK_LIST.md`
+  - `.agents/artifacts/VALIDATION_REPORT.md`
+  - `.agents/artifacts/VALIDATION_REPORT.json`
+  - `.agents/runtime/ACTIVE_CONTEXT.json`
+  - `.agents/runtime/agent-traces/OPS-07.json`
+  - `.harness/runtime/state/workflow-routing.js`
+  - `.harness/runtime/state/dev05-tooling.js`
+  - `.harness/test/active-context.test.js`
+  - `.harness/test/dev05-tooling.test.js`
+  - the synchronized `standard-template` counterparts for those runtime and test files
+- Findings:
+  - no open review finding remains.
+- Review result:
+  - The approved narrow OPS-07 scope is present in the reusable transition/runtime surface: `planner-closeout-hold` exists as an explicit no-active-lane closeout path instead of relying on manual reconciliation.
+  - Reviewed evidence shows the no-active-lane contract is enforced: dedicated regressions prove `ACTIVE_CONTEXT.selectedLane = null`, `ACTIVE_CONTEXT.activeTask = null`, and `nextWork = Planner + .agents/workflows/plan.md` after the named closeout path runs.
+  - Reviewed evidence also shows the stale-item boundary stayed inside the approved packet scope: canonically closed planner-owned packets are reconciled, while other open work items cause explicit fail-fast behavior instead of silent state drift.
+  - Root and `standard-template` remain synchronized across the reviewed runtime and regression-test changes.
+  - Residual debt disposition: no blocking implementation defect remains in the reviewed OPS-07 scope. Live maintainer-repo execution of `planner-closeout-hold` was intentionally not performed during review because the repo needed to remain in the reviewer lane; this is acceptable here because the packet only requires reusable evidence for the supported path and the dedicated regression evidence is complete.
+- Validation:
+  - root `node --test .harness/test/*.test.js`: 57/57 pass.
+  - `standard-template` `node --test .harness/test/*.test.js`: 57/57 pass.
+  - root `node .harness/runtime/state/dev05-cli.js validate`: findings `[]`.
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`: gate decision `pass`, reviewer next action aligned.
+  - root `node .harness/runtime/state/dev05-cli.js context`: reviewer-state `ACTIVE_CONTEXT` contract present.
+- Packet exit decision:
+  - approved
+- Next handoff:
+  - Planner should record OPS-07 closeout, reconcile completed-task state, and keep the reusable baseline on planning hold until a new approved lane is selected.
+- Status: done
+
+## 2026-05-10 OPS-05 Closeout Approval
+
+- Scope: final closeout review for `OPS-05` reusable pre-review security/release evidence hardening after tester verification passed and the active handoff moved to `reviewer`.
+- Entry condition:
+  - `OPS-05` is in canonical reviewer state through the `tester -> reviewer` transition.
+  - Tester evidence covers root/starter full suites, validator/report/context, `Security Review Summary` acceptance, and reusable root/starter synchronization.
+- Evidence reviewed:
+  - `reference/packets/PKT-01_OPS-05_RELEASE_ASSURANCE_AND_SECURITY_AUTOMATION_HARDENING.md`
+  - `reference/artifacts/WALKTHROUGH.md`
+  - `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`
+  - `reference/artifacts/REVIEW_REPORT.md`
+  - `.agents/artifacts/CURRENT_STATE.md`
+  - `.agents/artifacts/TASK_LIST.md`
+  - `.agents/artifacts/VALIDATION_REPORT.md`
+  - `.agents/artifacts/VALIDATION_REPORT.json`
+  - `.agents/runtime/ACTIVE_CONTEXT.json`
+  - `.agents/runtime/agent-traces/OPS-05.json`
+  - `.harness/runtime/state/dev05-tooling.js`
+  - `standard-template/.harness/runtime/state/dev05-tooling.js`
+  - `.harness/test/dev05-tooling.test.js`
+  - `standard-template/.harness/test/dev05-tooling.test.js`
+- Findings:
+  - no open review finding remains.
+- Review result:
+  - The approved narrow OPS-05 scope is present in the reusable runtime/report surface: dependency inventory, local secret-scan baseline, release artifact audit, and an operator-readable `Security Review Summary` are all present in the validation evidence.
+  - The rendered `Security Review Summary` does not overstate the automation boundary. It explicitly states that internal IT/security review is still required and that the harness does not grant formal security approval.
+  - The reviewed evidence cleanly separates blocking `error`, non-blocking `warning`, and human-reviewed `review-required` categories, and the five required review-required capability categories remain explicit rather than collapsed into generic success wording.
+  - Root and `standard-template` remain synchronized across the reviewed runtime and regression-test changes.
+  - Residual debt disposition: no blocking implementation defect remains in the reviewed OPS-05 scope. Organization-specific security review remains intentionally out of scope for automation and is preserved as a human review boundary rather than a closeout defect.
+- Validation:
+  - root `node --test .harness/test/*.test.js`: 55/55 pass.
+  - `standard-template` `node --test .harness/test/*.test.js`: 55/55 pass.
+  - root `node .harness/runtime/state/dev05-cli.js validate`: findings `[]`.
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`: gate decision `pass`, reviewer next action aligned, `Security Review Summary` present.
+  - root `node .harness/runtime/state/dev05-cli.js context`: reviewer-state `ACTIVE_CONTEXT` contract present.
+- Packet exit decision:
+  - approved
+- Next handoff:
+  - Planner should record OPS-05 closeout, reconcile completed-task state, and choose the next approved lane.
+- Status: done
+
 ## 2026-05-09 OPS-06 Closeout Approval
 
 - Scope: final closeout review for `OPS-06` derived-state refresh parity after closeout after tester verification passed and the active handoff moved to `reviewer`.

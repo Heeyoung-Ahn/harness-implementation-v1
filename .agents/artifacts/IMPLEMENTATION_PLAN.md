@@ -15,6 +15,10 @@
 
 2026-05-03 user direction supersedes the active PMW extension path: `PLN-09` is now open as a CLI-first harness rebaseline and complete PMW removal planning lane. `PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md` is the concrete implementation packet draft for that direction. `PLN-08` / `DEV-10` must not proceed to implementation unless the user explicitly reopens PMW. The remaining SSOT must split into AI-facing compact deterministic state and human-facing Korean, easy-term operating documents.
 
+2026-05-10 `PLN-10` is closed after sequencing and closing `OPS-04`, `QLT-02`, `OPS-06`, and `OPS-05`. No additional post-DEV11 packet is open; later CI/PR execution wiring or broader release-specific hardening should open only when a new concrete trigger is approved.
+
+2026-05-10 `OPS-07` opened next as a narrow planner-owned follow-up packet draft. Its only purpose is to make `planner hold / no active lane` closeout deterministic in one supported operation without reopening broader workflow redesign.
+
 ## Follow-Up Phase Plan
 1. approved release-ready baseline을 보존하면서 follow-up planning lane을 연다.
 2. `PLN-03`으로 core / optional profile / project packet activation contract를 정의한다.
@@ -62,9 +66,14 @@
 - TST-02 PMW browser UX and 30-second comprehension check
 - REV-01 architecture / review gate
 
-### Active Follow-Up Tasks
+### Closed Follow-Up Tasks
 - PLN-09 CLI-first harness rebaseline and PMW decommission planning
 - DEV-11 CLI-first PMW decommission and active context implementation packet
+- OPS-04 Session-start context assurance and closeout gate hardening
+- QLT-02 Evidence validation, semantic trace, and agent eval / CI gating
+- OPS-06 Derived-state refresh parity after closeout
+- OPS-05 Release-assurance and security-automation hardening
+- PLN-10 Post-DEV11 hardening and release assurance sequencing
 
 ## DEV-06 Execution
 ### Goal
@@ -959,7 +968,7 @@ transfer-bound or airgapped delivery 환경에서 반복되는 bundle handoff와
 8. 구현 후 `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`를 사용해 packet exit quality gate reference, source parity, residual debt disposition, UX/topology/schema conformance, validation/security/cleanup evidence, deferred follow-up item을 정리하고, 반복 friction이 보이면 `.agents/artifacts/PREVENTIVE_MEMORY.md`에 improvement candidate reference, proposed target layer, promotion status, linked follow-up item을 남긴 뒤 closeout hold 조건이 없을 때만 security review와 validator check를 함께 닫는다.
 
 ## Operator Next Action
-- `OPS-05` active handoff is `planner -> developer`.
-- Implement the approved packet scope and hand off to Tester.
-- Source packet: `reference/packets/PKT-01_OPS-05_RELEASE_ASSURANCE_AND_SECURITY_AUTOMATION_HARDENING.md`.
+- `OPS-07` is closed; latest closeout handoff is `planner -> planner`.
+- Keep the reusable baseline on planning hold until a new approved lane is selected.
+- Source packet: `reference/packets/PKT-01_OPS-07_PLANNER_HOLD_CLOSEOUT_AUTOMATION.md`.
 - Preserve packet-before-code, active-context derived authority, generated-doc immutability, root/starter sync, Tester/Reviewer separation, and human approval gates.

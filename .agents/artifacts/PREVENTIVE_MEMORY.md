@@ -46,6 +46,17 @@ This file keeps thin, durable prevention rules for repeated process or quality i
 
 ## Promotion Candidates
 
+- Candidate ID: PLANNER-HOLD-CLOSEOUT-001
+- Issue Pattern: reviewer-approved packet을 닫은 뒤 다음 successor lane을 일부러 열지 않으면, canonical docs는 닫혔는데 DB hot-state, generated docs, `ACTIVE_CONTEXT`, `validation-report`가 stale planner-owned open item에 다시 끌려가면서 no-active-lane state를 한 번에 만들지 못한다.
+- Why It Matters: 정상적인 planner hold 상태가 전용 closeout path 없이 남아 있으면 first-read re-entry surface가 stale packet을 다시 active처럼 보이게 만들고, planner closeout이 불필요하게 느려진다.
+- Proposed Target Layer: core
+- Proposed Target Artifact / Follow-Up Item: `PKT-01_OPS-07_PLANNER_HOLD_CLOSEOUT_AUTOMATION.md`
+- Promotion Status: approved
+- Human Review Boundary: user directed Planner on 2026-05-10 to proceed immediately with the narrow follow-up after the improvement proposal; detailed agreement and `Ready For Code` remain separate approvals.
+- Linked Follow-Up Item: `OPS-07`
+- Needed Refinement: decide whether the reusable path should auto-reconcile obviously stale planner-owned closed packets or fail fast when ambiguous stale state remains.
+- Source / Evidence: repeated post-closeout reconciliation during `OPS-05` / `PLN-10` hold closeout on 2026-05-10, including stale `OPS-06` hot-state overriding `ACTIVE_CONTEXT` after canonical closeout.
+
 - Candidate ID: QLT-TRANSITION-REFRESH-001
 - Issue Pattern: structured role transition apply가 DB handoff와 generated-doc metadata는 먼저 갱신하지만, 같은 직후에 읽은 `ACTIVE_CONTEXT` 또는 validation artifacts가 이전 owner/workflow snapshot을 잠깐 유지할 수 있다.
 - Why It Matters: tester-to-reviewer 같은 closeout handoff 직후에 operator나 다음 agent가 stale derived state를 먼저 읽으면, 실제 handoff는 성공했는데도 재생성 전 snapshot을 근거로 다음 workflow를 잘못 해석할 수 있다.

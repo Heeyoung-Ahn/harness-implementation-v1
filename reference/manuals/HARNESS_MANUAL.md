@@ -1,6 +1,6 @@
 # Standard Harness Manual
 
-이 문서는 PMW가 제거된 표준 하네스 운영 매뉴얼이다. 현재 baseline의 재진입 표면은 CLI와 active context artifact다.
+이 문서는 웹 UI가 제거된 현재 표준 하네스 운영 매뉴얼이다. 현재 baseline의 재진입 표면은 CLI와 active context artifact다.
 
 ## 핵심 원칙
 - 사람용 SSOT는 `.agents/artifacts/*.md`의 한국어 운영 문서다.

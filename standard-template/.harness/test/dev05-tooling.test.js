@@ -223,6 +223,162 @@ test("validation report writes a lightweight semantic trace summary for the acti
   assert.equal(trace.turnClosedAt, report.report.executedAt);
 });
 
+test("OPS-05 validation report includes the Security Review Summary contract", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-ops05-security-review-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+
+  fs.writeFileSync(
+    path.join(repoRoot, "package.json"),
+    JSON.stringify(
+      {
+        name: "ops-05-root",
+        private: true,
+        type: "module",
+        engines: { node: ">=24.0.0" },
+        scripts: {
+          test: "node --test .harness/test/*.test.js",
+          "harness:init": "node .agents/scripts/init-project.js",
+          "harness:validate": "node .harness/runtime/state/dev05-cli.js validate",
+          "harness:doctor": "node .harness/runtime/state/dev05-cli.js doctor",
+          "harness:status": "node .harness/runtime/state/dev05-cli.js status",
+          "harness:next": "node .harness/runtime/state/dev05-cli.js next",
+          "harness:handoff": "node .harness/runtime/state/dev05-cli.js handoff",
+          "harness:explain": "node .harness/runtime/state/dev05-cli.js explain",
+          "harness:validation-report": "node .harness/runtime/state/dev05-cli.js validation-report",
+          "harness:context": "node .harness/runtime/state/dev05-cli.js context",
+          "harness:transition": "node .harness/runtime/state/dev05-cli.js transition",
+          "harness:migration-preview": "node .harness/runtime/state/dev05-cli.js migration-preview",
+          "harness:migration-apply": "node .harness/runtime/state/dev05-cli.js migration-apply",
+          "harness:cutover-preflight": "node .harness/runtime/state/dev05-cli.js cutover-preflight",
+          "harness:cutover-report": "node .harness/runtime/state/dev05-cli.js cutover-report",
+          "package:release": "node packaging/build-release-package.js",
+          "package:windows-exe": "node packaging/build-windows-exe-installers.js"
+        }
+      },
+      null,
+      2
+    ),
+    "utf8"
+  );
+  fs.mkdirSync(path.join(repoRoot, "standard-template"), { recursive: true });
+  fs.writeFileSync(
+    path.join(repoRoot, "standard-template", "package.json"),
+    JSON.stringify(
+      {
+        name: "ops-05-starter",
+        private: true,
+        type: "module",
+        engines: { node: ">=24.0.0" },
+        scripts: {
+          test: "node --test .harness/test/*.test.js"
+        }
+      },
+      null,
+      2
+    ),
+    "utf8"
+  );
+  fs.mkdirSync(path.join(repoRoot, "installer"), { recursive: true });
+  fs.mkdirSync(path.join(repoRoot, "packaging"), { recursive: true });
+  fs.mkdirSync(path.join(repoRoot, "reference", "manuals"), { recursive: true });
+  fs.writeFileSync(path.join(repoRoot, "installer", "install-harness.js"), "// installer\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, "installer", "INSTALL_HARNESS.cmd"), "@echo off\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, "packaging", "build-release-package.js"), "// package release\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, "packaging", "build-windows-exe-installers.js"), "// package windows\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, "reference", "manuals", "HARNESS_MANUAL.md"), "# Harness Manual\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, "standard-template", "README.md"), "# Starter\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, "standard-template", "START_HERE.md"), "# Start\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, "standard-template", "AGENTS.md"), "# Agents\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, "standard-template", "HARNESS_MANUAL.md"), "# Starter Manual\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, "standard-template", "INIT_STANDARD_HARNESS.cmd"), "@echo off\n", "utf8");
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-10T01:00:00.000Z") });
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "OPS-05 implementation is in progress.",
+    releaseGoal: "Produce reusable pre-review security and release evidence.",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+  store.upsertWorkItem({
+    workItemId: "OPS-05",
+    title: "Release-assurance and security-automation hardening",
+    status: "in_progress",
+    owner: "developer",
+    nextAction: "Implement the approved packet scope and hand off to Tester.",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const report = writeValidationReport({ repoRoot, dbPath, outputDir: repoRoot });
+  const markdown = fs.readFileSync(report.markdownPath, "utf8");
+
+  assert.equal(Boolean(report.report.securityReview), true);
+  assert.equal(report.report.securityReview?.reviewRequiredCategories.length, 5);
+  assert.equal(report.report.securityReview?.dependencyInventory.packages.length >= 2, true);
+  assert.match(markdown, /## Security Review Summary/);
+  assert.match(markdown, /Secret \/ credential exposure risk/);
+  assert.match(markdown, /This summary is for internal IT\/security review preparation only/);
+});
+
+test("OPS-05 validation report blocks private key findings and preserves warning severity", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-ops05-security-findings-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+
+  fs.writeFileSync(
+    path.join(repoRoot, "package.json"),
+    JSON.stringify(
+      {
+        name: "ops-05-root",
+        private: true,
+        type: "module",
+        engines: { node: ">=24.0.0" }
+      },
+      null,
+      2
+    ),
+    "utf8"
+  );
+  fs.mkdirSync(path.join(repoRoot, "reference", "manuals"), { recursive: true });
+  fs.writeFileSync(
+    path.join(repoRoot, "reference", "manuals", "HARNESS_MANUAL.md"),
+    "# Harness Manual\nPMW historical wording\n-----BEGIN PRIVATE KEY-----\nABC\n-----END PRIVATE KEY-----\n",
+    "utf8"
+  );
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-10T01:05:00.000Z") });
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "OPS-05 implementation is in progress.",
+    releaseGoal: "Produce reusable pre-review security and release evidence.",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+  store.upsertWorkItem({
+    workItemId: "OPS-05",
+    title: "Release-assurance and security-automation hardening",
+    status: "in_progress",
+    owner: "developer",
+    nextAction: "Implement the approved packet scope and hand off to Tester.",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const report = writeValidationReport({ repoRoot, dbPath, outputDir: repoRoot });
+  const findingCodes = new Set(report.report.findings.map((finding) => `${finding.severity}:${finding.code}`));
+
+  assert.equal(report.ok, false);
+  assert.equal(report.report.gateDecision, "hold");
+  assert.equal(findingCodes.has("error:secret_scan_private_key_detected"), true);
+  assert.equal(findingCodes.has("warning:release_artifact_stale_pmw_reference"), true);
+});
+
 test("cutover report writes markdown and json evidence files", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-cutover-report-"));
   seedStandardRepo(repoRoot);
@@ -1448,6 +1604,239 @@ test("terminal transition closes active task bookkeeping and preserves planner n
     status.nextAction,
     "Planner should choose the next approved lane and open the next packet only after human agreement."
   );
+});
+
+test("planner-closeout-hold closes the active packet, reconciles canonically closed planner items, and leaves no active lane", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-planner-closeout-hold-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_OPS-07_PLANNER_HOLD_CLOSEOUT_AUTOMATION.md";
+  writeOpsPacket(repoRoot, packetPath, { gateProfile: "contract", includeManifest: true });
+  fs.writeFileSync(
+    path.join(repoRoot, "reference", "packets", "PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md"),
+    "# Packet\n",
+    "utf8"
+  );
+
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"),
+    [
+      "# Current State",
+      "",
+      "## Snapshot",
+      "- Current Stage: planning",
+      "- Current Focus: OPS-07 closeout is approved; Planner should place the baseline on no-active-lane hold.",
+      "",
+      "## Next Recommended Agent",
+      "- Planner",
+      "",
+      "## Open Decisions / Blockers",
+      "- `OPS-07` Ready For Code is approved; active handoff is `reviewer -> planner`. Planner should place the reusable baseline on no-active-lane hold.",
+      "",
+      "## Current Truth Notes",
+      "- `OPS-07` remains the active work item. Current handoff is `reviewer -> planner`; stage is `planning`; gate profile is `contract`.",
+      "- `OPS-06` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.",
+      "",
+      "## Latest Handoff Summary",
+      "- none"
+    ].join("\n"),
+    "utf8"
+  );
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "TASK_LIST.md"),
+    [
+      "# Task List",
+      "",
+      "## Active Locks",
+      "| Task ID | Scope | Owner | Status | Started At | Notes |",
+      "|---|---|---|---|---|---|",
+      "| OPS-07 | Planner hold closeout automation | planner | active | 2026-05-10 | planner closeout pending |",
+      "",
+      "## Active Tasks",
+      "| Task ID | Title | Scope | Owner | Status | Priority | Depends On | Verification |",
+      "|---|---|---|---|---|---|---|---|",
+      "| OPS-07 | Planner hold closeout automation | one-step planner hold closeout | planner | planning | P0 | OPS-05 | planner closeout pending |",
+      "- Next first action: Planner should place the reusable baseline on no-active-lane hold.",
+      "",
+      "## Blocked Tasks",
+      "| Task ID | Blocker | Owner | Status | Unblock Condition | Verification |",
+      "|---|---|---|---|---|---|",
+      "| - | None | - | clear | - | - |",
+      "",
+      "## Completed Tasks",
+      "| Task ID | Title | Completed At | Verification | Notes |",
+      "|---|---|---|---|---|",
+      "| OPS-06 | Derived-state refresh parity after closeout | 2026-05-09 | transition planner -> planner; gate contract | Planner recorded OPS-06 closeout after reviewer approval. |",
+      "",
+      "## Handoff Log",
+      "- none"
+    ].join("\n"),
+    "utf8"
+  );
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "PROJECT_PROGRESS.md"),
+    [
+      "# Project Progress",
+      "",
+      "## Summary",
+      "OPS-07 planner hold closeout test board.",
+      "",
+      "## Progress Board",
+      "| Phase | Task ID | Task | Status | Notes | Source |",
+      "| --- | --- | --- | --- | --- | --- |",
+      `| Ops | OPS-07 | Planner hold closeout automation | planning | Reviewer approved closeout; planner hold automation closeout pending. | ${packetPath} |`
+    ].join("\n"),
+    "utf8"
+  );
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "IMPLEMENTATION_PLAN.md"),
+    [
+      "# Implementation Plan",
+      "",
+      "## Operator Next Action",
+      "- `OPS-07` active handoff is `reviewer -> planner`.",
+      "- Planner should place the reusable baseline on no-active-lane hold.",
+      `- Source packet: \`${packetPath}\`.`,
+      "- Preserve packet-before-code, Active Context derived-state boundaries, generated-doc immutability, root/starter sync, Tester/Reviewer separation, and human approval gates."
+    ].join("\n"),
+    "utf8"
+  );
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-10T02:00:00.000Z") });
+  store.setReleaseState({
+    currentStage: "planning",
+    releaseGateState: "open",
+    currentFocus: "OPS-07 closeout is approved; Planner should place the baseline on no-active-lane hold.",
+    releaseGoal: "Provide a one-step planner hold closeout path.",
+    sourceRef: packetPath
+  });
+  store.upsertWorkItem({
+    workItemId: "OPS-07",
+    title: "Planner hold closeout automation",
+    status: "planning",
+    nextAction: "Planner should place the reusable baseline on no-active-lane hold.",
+    owner: "planner",
+    sourceRef: packetPath,
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  store.upsertWorkItem({
+    workItemId: "OPS-06",
+    title: "Derived-state refresh parity after closeout",
+    status: "planning",
+    nextAction: "Stale planner entry should not survive hold closeout.",
+    owner: "planner",
+    sourceRef: "reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md",
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  store.upsertArtifact({
+    artifactId: "PKT-01_OPS-07_PLANNER_HOLD_CLOSEOUT_AUTOMATION",
+    path: packetPath,
+    category: "task_packet",
+    title: "OPS-07 planner hold closeout packet",
+    sourceRef: packetPath
+  });
+  store.upsertArtifact({
+    artifactId: "PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT",
+    path: "reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md",
+    category: "task_packet",
+    title: "OPS-06 derived-state refresh parity packet",
+    sourceRef: "reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md"
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const applied = runTransition({
+    repoRoot,
+    dbPath,
+    outputDir: repoRoot,
+    args: ["planner-closeout-hold", "--work-item", "OPS-07", "--apply"]
+  });
+
+  assert.equal(applied.apply, true);
+  assert.equal(applied.transition, "planner-closeout-hold");
+
+  const afterStore = createOperatingStateStore({ dbPath });
+  assert.equal(afterStore.getWorkItem("OPS-07").status, "closed");
+  assert.equal(afterStore.getWorkItem("OPS-06").status, "closed");
+  assert.equal(afterStore.getWorkItem("OPS-06").metadata.reconciledByPlannerCloseoutHold, true);
+  afterStore.close();
+
+  const context = JSON.parse(fs.readFileSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.json"), "utf8"));
+  assert.equal(context.activeTask, null);
+  assert.equal(context.selectedLane, null);
+  assert.equal(context.nextWork.owner, "Planner");
+  assert.equal(context.nextWork.workflow, ".agents/workflows/plan.md");
+  assert.equal(context.nextWork.action, "Keep the reusable baseline on planning hold until a new approved lane is selected.");
+
+  const status = buildHarnessStatus({ repoRoot, dbPath, outputDir: repoRoot });
+  assert.equal(status.assignment, null);
+  assert.equal(status.nextOwner, "Planner");
+});
+
+test("planner-closeout-hold fails fast when another non-stale open work item remains", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-planner-closeout-hold-blocked-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_OPS-07_PLANNER_HOLD_CLOSEOUT_AUTOMATION.md";
+  writeOpsPacket(repoRoot, packetPath, { gateProfile: "contract", includeManifest: true });
+
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "TASK_LIST.md"),
+    [
+      "# Task List",
+      "",
+      "## Active Tasks",
+      "| Task ID | Title | Scope | Owner | Status | Priority | Depends On | Verification |",
+      "|---|---|---|---|---|---|---|---|",
+      "| OPS-07 | Planner hold closeout automation | one-step planner hold closeout | planner | planning | P0 | OPS-05 | planner closeout pending |",
+      "| DEV-11 | CLI-first PMW decommission and active context | implementation lane | developer | in_progress | P0 | PLN-09 | implementation active |",
+      "",
+      "## Completed Tasks",
+      "| Task ID | Title | Completed At | Verification | Notes |",
+      "|---|---|---|---|---|",
+      "| - | None | - | - | - |"
+    ].join("\n"),
+    "utf8"
+  );
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-10T02:05:00.000Z") });
+  store.setReleaseState({
+    currentStage: "planning",
+    releaseGateState: "open",
+    currentFocus: "OPS-07 closeout is approved; Planner should place the baseline on no-active-lane hold.",
+    releaseGoal: "Provide a one-step planner hold closeout path.",
+    sourceRef: packetPath
+  });
+  store.upsertWorkItem({
+    workItemId: "OPS-07",
+    title: "Planner hold closeout automation",
+    status: "planning",
+    nextAction: "Planner should place the reusable baseline on no-active-lane hold.",
+    owner: "planner",
+    sourceRef: packetPath,
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  store.upsertWorkItem({
+    workItemId: "DEV-11",
+    title: "CLI-first PMW decommission and active context",
+    status: "in_progress",
+    nextAction: "Developer is still implementing DEV-11.",
+    owner: "developer",
+    sourceRef: "reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md",
+    metadata: { gateProfile: "release", readyForCode: "approved" }
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const preview = runTransition({
+    repoRoot,
+    dbPath,
+    outputDir: repoRoot,
+    args: ["planner-closeout-hold", "--work-item", "OPS-07"]
+  });
+
+  assert.equal(preview.ok, false);
+  assert.match(preview.errors.join("\n"), /planner-closeout-hold requires no other open work items; DEV-11/);
 });
 
 test("validator blocks incomplete workflow contracts", () => {

@@ -204,6 +204,8 @@ test("active context ignores a DB-open work item that canonical TASK_LIST alread
 
   assert.equal(context.activeTask, null);
   assert.equal(context.selectedLane, null);
+  assert.equal(context.nextWork.owner, "planner");
+  assert.equal(context.nextWork.workflow, ".agents/workflows/plan.md");
   assert.equal(
     context.nextWork.action,
     "Planner should choose the next approved lane and open the next packet only after human agreement."

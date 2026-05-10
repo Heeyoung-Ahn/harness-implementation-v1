@@ -44,6 +44,29 @@ export function selectActiveWorkItem(workItems = [], options = {}) {
   return prioritizeOpenWorkItems(workItems, options)[0] ?? null;
 }
 
+export function readCanonicalTaskLifecycleHints({ repoRoot = process.cwd() } = {}) {
+  const taskListPath = path.resolve(repoRoot, CANONICAL_TASK_LIST_PATH);
+  if (!fs.existsSync(taskListPath)) {
+    return null;
+  }
+
+  const content = fs.readFileSync(taskListPath, "utf8");
+  return {
+    active: new Set(readTaskIdsFromTable(content, "## Active Tasks")),
+    completed: new Set(readTaskIdsFromTable(content, "## Completed Tasks"))
+  };
+}
+
+export function isCanonicallyClosedWorkItem(workItem, lifecycleHints) {
+  if (!lifecycleHints?.completed?.size || !workItem?.workItemId) {
+    return false;
+  }
+  if (lifecycleHints.active.has(workItem.workItemId)) {
+    return false;
+  }
+  return lifecycleHints.completed.has(workItem.workItemId);
+}
+
 export function workflowForOwner(owner) {
   const matchingRoutes = matchingWorkflowRoutesForOwner(owner);
   if (matchingRoutes.length !== 1) {
@@ -320,29 +343,6 @@ function aliasMatchesOwner(normalizedOwner, alias) {
   }
 
   return normalizedOwner.includes(normalizedAlias);
-}
-
-function isCanonicallyClosedWorkItem(workItem, lifecycleHints) {
-  if (!lifecycleHints?.completed?.size || !workItem?.workItemId) {
-    return false;
-  }
-  if (lifecycleHints.active.has(workItem.workItemId)) {
-    return false;
-  }
-  return lifecycleHints.completed.has(workItem.workItemId);
-}
-
-function readCanonicalTaskLifecycleHints({ repoRoot = process.cwd() } = {}) {
-  const taskListPath = path.resolve(repoRoot, CANONICAL_TASK_LIST_PATH);
-  if (!fs.existsSync(taskListPath)) {
-    return null;
-  }
-
-  const content = fs.readFileSync(taskListPath, "utf8");
-  return {
-    active: new Set(readTaskIdsFromTable(content, "## Active Tasks")),
-    completed: new Set(readTaskIdsFromTable(content, "## Completed Tasks"))
-  };
 }
 
 function readTaskIdsFromTable(content, heading) {

@@ -2,6 +2,77 @@
 
 Use this artifact to record verification evidence and manual test results.
 
+## 2026-05-10 OPS-07 Tester Verification
+
+- Scope: independent tester verification for `OPS-07` planner hold closeout automation after the approved `developer -> tester` handoff.
+- Environment: local maintainer workspace on Windows PowerShell.
+- Tested scope:
+  - packet acceptance against the approved `planner hold / no active lane` closeout contract
+  - root full harness regression suite after the OPS-07 implementation
+  - `standard-template` full harness regression suite after reusable root/starter synchronization
+  - root `harness:validate`, `harness:validation-report`, and `harness:context`
+  - explicit regression coverage for:
+    - `planner-closeout-hold` success path with no active lane
+    - `selectedLane = null` and `activeTask = null`
+    - `nextWork = Planner + .agents/workflows/plan.md`
+    - stale planner-owned canonically closed packet reconciliation
+    - fail-fast behavior when another non-stale open work item remains
+  - root/starter parity for the reusable OPS-07 runtime and regression test files
+- Evidence:
+  - root `node --test .harness/test/*.test.js`: 57/57 pass, including the new OPS-07 regressions `planner-closeout-hold closes the active packet, reconciles canonically closed planner items, and leaves no active lane` and `planner-closeout-hold fails fast when another non-stale open work item remains`.
+  - `standard-template` `node --test .harness/test/*.test.js`: 57/57 pass with the same reusable OPS-07 coverage.
+  - root `node .harness/runtime/state/dev05-cli.js validate`: `ok: true`, `cutoverReady: true`, findings `[]`.
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`: pass, gate decision `pass`, findings `[]`, next action `Verify the implementation against the packet acceptance criteria.` in tester state.
+  - root `node .harness/runtime/state/dev05-cli.js context`: pass and reports `OPS-07`, workflow `.agents/workflows/test.md`, tester ownership, and validation parity with the latest validation report.
+  - targeted regression source check confirms root and `standard-template` both contain the same named-closeout acceptance coverage for:
+    - success path with no active lane
+    - explicit fail-fast on `DEV-11` as a remaining non-stale open work item
+  - root/starter parity check by file hash confirmed identical content for:
+    - `.harness/runtime/state/workflow-routing.js`
+    - `.harness/runtime/state/dev05-tooling.js`
+    - `.harness/test/active-context.test.js`
+    - `.harness/test/dev05-tooling.test.js`
+    and their `standard-template` counterparts.
+- Untested scope:
+  - No live `planner-closeout-hold` transition was executed against the maintainer repo itself during this tester pass because the repo is intentionally still in the active `OPS-07` review lane and an actual no-active-lane closeout would skip the required reviewer gate.
+  - No broader planner workflow redesign behavior was tested because the packet explicitly limits scope to the named one-step hold closeout path.
+- Result: tester verification passed. No tester-discovered OPS-07 remediation item remains for the approved narrow scope.
+- Handoff:
+  - Reviewer should inspect OPS-07 closeout readiness against the approved packet acceptance, no-active-lane regression evidence, stale-item reconciliation/fail-fast behavior, and root/starter synchronization evidence.
+
+## 2026-05-10 OPS-05 Tester Verification
+
+- Scope: independent tester verification for `OPS-05` reusable pre-review security/release evidence hardening after the approved `developer -> tester` handoff.
+- Environment: local maintainer workspace on Windows PowerShell.
+- Tested scope:
+  - packet acceptance against the approved `Security Review Summary`, severity, and review-required category contract
+  - root full harness regression suite after the OPS-05 implementation
+  - `standard-template` full harness regression suite after reusable root/starter synchronization
+  - root `harness:validate`, `harness:validation-report`, and `harness:context`
+  - root/starter parity for the reusable OPS-05 runtime and regression test files
+- Evidence:
+  - root `node --test .harness/test/*.test.js`: 55/55 pass, including the new OPS-05 regressions `OPS-05 validation report includes the Security Review Summary contract` and `OPS-05 validation report blocks private key findings and preserves warning severity`.
+  - `standard-template` `node --test .harness/test/*.test.js`: 55/55 pass with the same reusable OPS-05 coverage.
+  - root `node .harness/runtime/state/dev05-cli.js validate`: `ok: true`, `cutoverReady: true`, findings `[]`.
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`: pass, gate decision `pass`, findings `[]`, and a dedicated `Security Review Summary` section with:
+    - required fields present for summary status, checked scope, blocking errors, warnings, review-required categories, operator next actions, human review still required, and out-of-scope note
+    - severity wording that distinguishes `error`, `warning`, and `review-required` semantics without implying formal security approval
+    - explicit `dependency inventory`, `local secret scan`, and `release artifact audit` sections
+  - root `validation-report` rendered wording confirms the five required review-required categories without collapse:
+    - `Secret / credential exposure risk`
+    - `Third-party dependency risk visibility`
+    - `Shipped artifact / manual / starter payload review`
+    - `Deployment / cutover evidence completeness`
+    - `Organization-specific policy or network / environment review`
+  - root `node .harness/runtime/state/dev05-cli.js context`: pass and reports `OPS-05`, workflow `.agents/workflows/test.md`, tester ownership, and validation parity with the latest validation report.
+  - root/starter parity check by file hash confirmed identical content for `.harness/runtime/state/dev05-tooling.js` and `.harness/test/dev05-tooling.test.js` in root and `standard-template`.
+- Untested scope:
+  - No organization-specific security-review process or approval form was executed because the packet explicitly limits this lane to reusable pre-review preparation rather than formal security approval automation.
+  - No hosted CI, external scanner, or project-specific deployment runbook behavior was tested because those areas remain out of scope for `OPS-05`.
+- Result: tester verification passed. No tester-discovered OPS-05 remediation item remains for the approved narrow scope.
+- Handoff:
+  - Reviewer should inspect OPS-05 closeout readiness against the approved packet acceptance, `Security Review Summary` wording, severity/report semantics, review-required category reporting, and root/starter synchronization evidence.
+
 ## 2026-05-09 OPS-06 Tester Verification
 
 - Scope: independent tester verification for `OPS-06` closeout-parity hardening after the approved `developer -> tester` handoff.

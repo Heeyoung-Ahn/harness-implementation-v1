@@ -3,27 +3,29 @@
 ## Status
 - Draft opened on 2026-05-04 after `DEV-11` closeout approval.
 - Planning owner: `Planner`
-- This draft is the selected next planning lane after the CLI-first PMW-free V1.3 baseline closed.
+- This draft was the selected next planning lane after the CLI-first PMW-free V1.3 baseline closed.
 - `OPS-04` is now closed.
 - `QLT-02` is now closed after reviewer approval, tester evidence, and planner closeout recording.
 - `OPS-06` is now closed after developer implementation, tester verification, reviewer approval, and planner closeout recording.
-- This draft does not approve implementation. It defines the remaining follow-up split after `OPS-04` and the real-project-readiness decision path.
+- `OPS-05` is now closed after developer implementation, tester verification, reviewer approval, and planner closeout recording.
+- Closed on 2026-05-10 after sequencing and closing the post-DEV11 hardening/release-assurance follow-up split.
+- No additional post-DEV11 packet is opened by this closeout. Later CI/PR execution wiring or broader release-specific hardening must open as new user-approved lanes only when a concrete trigger exists.
 
 ## Purpose
-Choose how to sequence the deferred follow-up work after `DEV-11`, using the closed `OPS-04` hardening lane plus the new real-project-readiness assessment to decide whether quality/eval work or release/security work should open next.
+This draft sequenced the deferred follow-up work after `DEV-11`, using the real-project-readiness assessment to decide how `OPS-04`, `QLT-02`, `OPS-06`, and `OPS-05` should open and close.
 
 ## Quick Decision Header
 | Item | Proposed | Why | Status |
 |---|---|---|---|
-| Work item | PLN-10 post-DEV-11 hardening and release assurance | DEV-11 closed the PMW decommission lane, and post-closeout review confirmed additional context-restoration and closeout-gate hardening work before later security/eval follow-ups | draft |
-| Ready For Code | hold | implementation packets should open only after the follow-up split and approval boundary are defined | draft |
-| Human sync needed | yes | the next lane is selected, but `QLT-02` still needs explicit Ready For Code closure for the narrowed phase-1 implementation packet | approved |
-| Gate profile | contract | this lane defines packet boundaries and approval sequencing before implementation starts | draft |
-| User-facing impact | high | follow-up work changes session-start reliability for the primary CLI/context re-entry surface as well as later release assurance | draft |
-| Layer classification | core | these follow-ups affect reusable harness governance, validation, and release assurance | draft |
+| Work item | PLN-10 post-DEV-11 hardening and release assurance | DEV-11 closed the PMW decommission lane, and post-closeout review required a narrow follow-up split for context, evidence, parity, and release/security hardening | approved-closeout |
+| Ready For Code | not-needed | planning sequence is closed; any later packet must open under a new approval boundary | not-needed |
+| Human sync needed | yes | each follow-up packet required explicit user approval, and no additional packet opens by default after closeout | closed |
+| Gate profile | contract | this lane defined packet boundaries and approval sequencing before implementation started | approved-closeout |
+| User-facing impact | high | the closed follow-up sequence materially tightened re-entry reliability, evidence quality, and pre-review release/security posture | approved-closeout |
+| Layer classification | core | these follow-ups affected reusable harness governance, validation, and release assurance | approved-closeout |
 | Active profile dependencies | none | this is core baseline planning | not-needed |
 | Profile evidence status | not-needed | no optional profile is active | not-needed |
-| Packet exit gate status | pending | no implementation packet is active yet | draft |
+| Packet exit gate status | approved | the planned follow-up split is closed and no implementation packet remains active under this lane | approved |
 
 ## 1. Goal
 - Decide the next approved planning sequence after `DEV-11`.
@@ -47,7 +49,7 @@ Choose how to sequence the deferred follow-up work after `DEV-11`, using the clo
 - Candidate D: `OPS-06` narrow derived-state refresh parity hardening after `QLT-02`.
   Covers the reproduced closeout issue where canonical planner-facing state closes `QLT-02`, but `ACTIVE_CONTEXT` still reports the closed work item as active even after regeneration. Scope should stay limited to transition-time derived-surface refresh ordering and validator-visible parity for closed-work-item re-entry state.
 - Recommended sequence:
-  `OPS-04`, `QLT-02`, and `OPS-06` are now all closed. The remaining deferred release/security gap is `OPS-05`, and the user has now clarified that this harness is for non-specialist operators using AI to deliver relatively large internal business apps that will likely face IT/security review before deployment. The recommended sequence is therefore to open `OPS-05` next as a planning packet draft while keeping `Ready For Code` blocked until the user explicitly approves the narrowed release/security boundary.
+  `OPS-04`, `QLT-02`, `OPS-06`, and `OPS-05` are now all closed. This completes the planned post-DEV11 follow-up split inside `PLN-10`, so no additional packet is opened by default from this draft.
 
 ## 4. Non-Goal
 - Do not reopen PMW.
@@ -77,22 +79,21 @@ Choose how to sequence the deferred follow-up work after `DEV-11`, using the clo
 - New closeout finding from 2026-05-04: even after `QLT-02` reviewer approval, planner closeout recording, `validation-report`, and `context` reruns, canonical Markdown surfaces show `QLT-02` as closed while `ACTIVE_CONTEXT` still keeps `QLT-02` as the active task. This is stronger than a note-only candidate because it affects the first AI re-entry surface after a real closeout.
 
 ## 7. Open Decisions
-- Which evidence weaknesses should fail hard in the first `QLT-02` implementation packet, and which should remain warning-level or reviewer-only?
-- What minimum lightweight agent trace shape is enough to support semantic evidence review without high governance cost?
-- Which exact CI/PR candidate gates should be recorded now so later execution wiring can stay narrow?
-- Should `OPS-05` open immediately for the current reusable baseline, or stay as a draft/hold packet until the first external/security-sensitive release boundary is nearer?
+- None inside the closed `PLN-10` scope.
+- If unattended or multi-operator evidence automation becomes the next immediate reusable gap, open a later narrow lane for actual CI/PR execution wiring.
+- If a concrete deployment or security boundary requires more than the current `OPS-05` local-first pre-review baseline, open a later narrow release-specific hardening lane.
 
 ## 8. Human Sync / Approval Boundary
 | Decision Item | Needed | Owner | Status | Notes |
 |---|---|---|---|---|
-| Next planning lane selection | yes | user/planner | pending | recommend `PLN-10` as the next planning lane after DEV-11 closeout |
+| Next planning lane selection | yes | user/planner | closed | `PLN-10` was selected after DEV-11 closeout and is now closed |
 | First follow-up packet after PLN-10 | yes | user/planner | closed | `OPS-04` was approved, implemented, verified, reviewed, and closed |
 | Next packet after OPS-04 | yes | user/planner | approved | user directed Planner to proceed with `QLT-02`; narrowed phase-1 scope is approved and `Ready For Code` remains pending inside the packet |
 | Next packet after QLT-02 | yes | user/planner | approved | user approved `PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md` as the next narrow packet before `OPS-05`; `Ready For Code` remains separate |
-| Next packet after OPS-06 | yes | user/planner | pending | recommend `PKT-01_OPS-05_RELEASE_ASSURANCE_AND_SECURITY_AUTOMATION_HARDENING.md` as the next planning packet draft; implementation approval remains separate |
-| Release/security follow-up sequence | yes | user/planner | pending | user clarified that likely internal IT/security review before deployment is a real near-term constraint; decide whether `OPS-05` therefore opens immediately for the current baseline or stays draft/hold |
+| Next packet after OPS-06 | yes | user/planner | closed | `OPS-05` was approved, implemented, verified, reviewed, and closed |
+| Release/security follow-up sequence | yes | user/planner | closed | `OPS-05` closed the remaining reusable local-first pre-review release/security gap selected under `PLN-10` |
 | Eval/CI split strategy | yes | user/planner | approved | define CI/PR candidate gates in `QLT-02`, but defer actual CI/PR execution wiring to a later narrow packet |
 
 ## 9. Recommended Next Action
-- Planner should keep `OPS-06` recorded as closed, review `PKT-01_OPS-05_RELEASE_ASSURANCE_AND_SECURITY_AUTOMATION_HARDENING.md` as the next planning packet draft, and hold implementation until the user explicitly approves its detailed boundary and `Ready For Code`.
-- Recommended sequence is now `OPS-05` as the next follow-up candidate under `PLN-10`, with implementation still blocked behind a fresh user approval boundary.
+- Planner should treat `PLN-10` as closed sequencing evidence for the delivered `OPS-04` / `QLT-02` / `OPS-06` / `OPS-05` split.
+- Keep the reusable baseline on planning hold until a new approved lane is selected.

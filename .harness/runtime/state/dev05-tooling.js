@@ -24,7 +24,13 @@ import {
 import { looksLikeStarterPlaceholder } from "./init-project.js";
 import { createOperatingStateStore, DEFAULT_DB_PATH } from "./operating-state-store.js";
 import { RELEASE_BASELINE, isInstallableReleaseMaintainerRepo } from "./release-baseline.js";
-import { isClosedStatus, resolveHandoffExecution, selectActiveWorkItem } from "./workflow-routing.js";
+import {
+  isCanonicallyClosedWorkItem,
+  isClosedStatus,
+  readCanonicalTaskLifecycleHints,
+  resolveHandoffExecution,
+  selectActiveWorkItem
+} from "./workflow-routing.js";
 
 const AGENT_TRACE_SCHEMA_VERSION = "standard-harness-agent-trace/v1";
 const PHASE1_HARD_FAIL_CODES = [
@@ -74,6 +80,95 @@ const PHASE1_CANDIDATE_GATES = [
     description: "Validation report and ACTIVE_CONTEXT expose the same validation summary."
   }
 ];
+const SECURITY_REVIEW_SCOPE_PATHS = [
+  "package.json",
+  "standard-template/package.json",
+  "installer/install-harness.js",
+  "installer/INSTALL_HARNESS.cmd",
+  "packaging/build-release-package.js",
+  "packaging/build-windows-exe-installers.js",
+  "reference/manuals/HARNESS_MANUAL.md",
+  "standard-template/AGENTS.md",
+  "standard-template/README.md",
+  "standard-template/START_HERE.md",
+  "standard-template/HARNESS_MANUAL.md",
+  "standard-template/INIT_STANDARD_HARNESS.cmd"
+];
+const SECURITY_REVIEW_RELEASE_SCRIPTS = ["package:release", "package:windows-exe"];
+const SECURITY_REVIEW_SECRET_RULES = [
+  {
+    code: "secret_scan_private_key_detected",
+    severity: "error",
+    pattern: /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
+    message: "Private key material was detected in a release-facing file.",
+    recovery: "Remove the private key material from the release-facing file before internal review."
+  },
+  {
+    code: "secret_scan_aws_access_key_detected",
+    severity: "error",
+    pattern: /\bAKIA[0-9A-Z]{16}\b/,
+    message: "An AWS access-key-like token was detected in a release-facing file.",
+    recovery: "Remove the AWS access-key-like token from the release-facing file before internal review."
+  },
+  {
+    code: "secret_scan_github_token_detected",
+    severity: "error",
+    pattern: /\bgh[pousr]_[A-Za-z0-9]{20,}\b/,
+    message: "A GitHub token-like string was detected in a release-facing file.",
+    recovery: "Remove the GitHub token-like string from the release-facing file before internal review."
+  },
+  {
+    code: "secret_scan_slack_token_detected",
+    severity: "error",
+    pattern: /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/,
+    message: "A Slack token-like string was detected in a release-facing file.",
+    recovery: "Remove the Slack token-like string from the release-facing file before internal review."
+  }
+];
+const SECURITY_REVIEW_ARTIFACT_AUDIT_RULES = [
+  {
+    code: "release_artifact_stale_pmw_reference",
+    severity: "warning",
+    pattern: /\bPMW\b|\bProject Monitor Web\b/i,
+    message: "A release-facing artifact still contains stale PMW-era wording.",
+    recovery: "Remove stale PMW-era wording from shipped release-facing artifacts before internal review."
+  },
+  {
+    code: "release_artifact_security_approval_claim",
+    severity: "warning",
+    pattern: /\bsecurity approval(?: granted| complete| completed| passed)?\b/i,
+    message: "A release-facing artifact appears to overstate local automation as security approval.",
+    recovery: "Reword the release-facing artifact so it does not imply that local automation equals final security approval."
+  }
+];
+const SECURITY_REVIEW_REQUIRED_CATEGORIES = [
+  {
+    id: "secret/credential",
+    label: "Secret / credential exposure risk",
+    reviewNote: "Local scanning helps, but final sensitivity and rotation judgment remains human-reviewed."
+  },
+  {
+    id: "third-party dependency",
+    label: "Third-party dependency risk visibility",
+    reviewNote: "Dependency visibility is prepared locally, but final risk acceptance remains human-reviewed."
+  },
+  {
+    id: "shipped artifact/manual/starter payload",
+    label: "Shipped artifact / manual / starter payload review",
+    reviewNote: "Release-facing artifact review still needs a human check before deployment."
+  },
+  {
+    id: "deployment/cutover evidence",
+    label: "Deployment / cutover evidence completeness",
+    reviewNote: "Local evidence can be checked for presence, but final operational acceptance remains human-reviewed."
+  },
+  {
+    id: "organization-specific policy/network/environment review",
+    label: "Organization-specific policy or network / environment review",
+    reviewNote: "Reusable local automation does not close organization-specific policy or environment review."
+  }
+];
+const PLANNER_HOLD_NEXT_ACTION = "Keep the reusable baseline on planning hold until a new approved lane is selected.";
 
 export const STANDARD_PATH_MIGRATIONS = {
   "REQUIREMENTS.md": ARTIFACT_PATHS.requirements,
@@ -337,8 +432,26 @@ export function writeValidationReport({ repoRoot = process.cwd(), outputDir = re
     findings: finalizedValidation.findings,
     gateDecision: finalizedValidation.ok ? "pass" : "hold"
   };
+  const securityReview = withStore({ dbPath, repoRoot }, (store) =>
+    buildSecurityReviewSummary({
+      store,
+      repoRoot,
+      findings: finalizedReport.findings
+    })
+  );
+  if (securityReview) {
+    finalizedReport.securityReview = securityReview.summary;
+    finalizedReport.findings = [...finalizedReport.findings, ...securityReview.additionalFindings];
+    const hasBlockingSecurityFinding = finalizedReport.findings.some((finding) => finding?.severity === "error");
+    finalizedReport.ok = !hasBlockingSecurityFinding;
+    finalizedReport.cutoverReady = !hasBlockingSecurityFinding;
+    finalizedReport.gateDecision = hasBlockingSecurityFinding ? "hold" : "pass";
+  }
   finalizedReport.nextAction = withStore({ dbPath, repoRoot }, (store) =>
-    recommendNextActionFromState(store, finalizedValidation, repoRoot)
+    recommendSecurityReviewNextAction({
+      findings: finalizedReport.findings,
+      fallback: recommendNextActionFromState(store, finalizedValidation, repoRoot)
+    })
   );
   const finalizedTraceArtifact = withStore({ dbPath, repoRoot }, (store) =>
     writeAgentTraceArtifact({
@@ -548,6 +661,19 @@ function buildTransitionPlan({ store, repoRoot, options }) {
       `planner-to-developer requires closing Ready For Code decision ${openReadyForCodeDecision.decisionId} with --close-decision before Developer handoff.`
     );
   }
+  let plannerHoldReconciliation = null;
+  if (transition === "planner-closeout-hold") {
+    plannerHoldReconciliation = evaluatePlannerHoldCloseout({
+      store,
+      repoRoot,
+      workItemId
+    });
+    for (const blockingItem of plannerHoldReconciliation.blockingWorkItems) {
+      errors.push(
+        `planner-closeout-hold requires no other open work items; ${blockingItem.workItemId} (${blockingItem.owner ?? "unassigned"} / ${blockingItem.status}) must be closed or explicitly routed first.`
+      );
+    }
+  }
 
   const ok = errors.length === 0;
   return {
@@ -571,6 +697,7 @@ function buildTransitionPlan({ store, repoRoot, options }) {
     currentStage,
     currentFocus,
     releaseGateState: options.releaseGate ?? options.releaseGateState ?? releaseState?.releaseGateState ?? null,
+    plannerHoldReconcileIds: plannerHoldReconciliation?.reconcileableWorkItems.map((item) => item.workItemId) ?? [],
     plannedUpdates: [
       ".agents/artifacts/TASK_LIST.md",
       ".agents/artifacts/CURRENT_STATE.md",
@@ -639,6 +766,16 @@ function transitionDefaultsFor(transition = "custom") {
       currentFocusTemplate: "{workItemId} closeout is approved; Planner is choosing the next approved lane.",
       summary: "Packet exit approved; Planner should choose or refine the next lane.",
       nextAction: "Plan the next approved lane or close remaining planning decisions."
+    },
+    "planner-closeout-hold": {
+      transition: "planner-closeout-hold",
+      from: "planner",
+      to: "planner",
+      status: "closed",
+      currentStage: "planning",
+      currentFocusTemplate: "{workItemId} is closed; the reusable baseline is on planner hold with no active lane.",
+      summary: "Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.",
+      nextAction: PLANNER_HOLD_NEXT_ACTION
     }
   };
   return transitions[transition] ?? { transition: transition ?? "custom" };
@@ -686,6 +823,15 @@ function preserveReleaseBaselineFocus({ focus, releaseState }) {
 
 function applyTransitionPlan({ store, repoRoot, outputDir, plan, options }) {
   const timestamp = new Date().toISOString();
+  if (plan.transition === "planner-closeout-hold") {
+    reconcilePlannerHoldCloseout({
+      store,
+      repoRoot,
+      workItemId: plan.workItemId,
+      reconcileIds: plan.plannerHoldReconcileIds,
+      timestamp
+    });
+  }
   const metadata = {
     ...(store.getWorkItem(plan.workItemId)?.metadata ?? {}),
     gateProfile: plan.gateProfile,
@@ -784,6 +930,63 @@ function resolveTransitionGateProfile({ options, workItem, repoRoot }) {
   }
   const packetProfile = resolveGateProfile(readPacketGateProfile(repoRoot, workItem?.sourceRef));
   return packetProfile ?? resolveGateProfile(DEFAULT_GATE_PROFILE_ID);
+}
+
+function evaluatePlannerHoldCloseout({ store, repoRoot, workItemId }) {
+  const lifecycleHints = readCanonicalTaskLifecycleHints({ repoRoot });
+  const reconcileableWorkItems = [];
+  const blockingWorkItems = [];
+
+  for (const candidate of store.listWorkItems()) {
+    if (!candidate || candidate.workItemId === workItemId || isClosedStatus(candidate.status)) {
+      continue;
+    }
+    if (candidate.owner === "planner" && isCanonicallyClosedWorkItem(candidate, lifecycleHints)) {
+      reconcileableWorkItems.push(candidate);
+      continue;
+    }
+    blockingWorkItems.push(candidate);
+  }
+
+  return {
+    reconcileableWorkItems,
+    blockingWorkItems
+  };
+}
+
+function reconcilePlannerHoldCloseout({ store, repoRoot, reconcileIds = [], timestamp }) {
+  if (!Array.isArray(reconcileIds) || reconcileIds.length === 0) {
+    return;
+  }
+  const lifecycleHints = readCanonicalTaskLifecycleHints({ repoRoot });
+  for (const reconcileId of reconcileIds) {
+    const candidate = store.getWorkItem(reconcileId);
+    if (!candidate || isClosedStatus(candidate.status)) {
+      continue;
+    }
+    if (candidate.owner !== "planner" || !isCanonicallyClosedWorkItem(candidate, lifecycleHints)) {
+      continue;
+    }
+    store.transitionWorkItem({
+      workItemId: candidate.workItemId,
+      owner: candidate.owner,
+      status: "closed",
+      nextAction: candidate.nextAction,
+      sourceRef: candidate.sourceRef,
+      metadata: {
+        ...(candidate.metadata ?? {}),
+        reconciledByPlannerCloseoutHold: true,
+        closedAt: timestamp,
+        closedBy: "planner",
+        lastTransition: {
+          transition: "planner-closeout-hold-reconcile",
+          fromOwner: candidate.owner,
+          toOwner: candidate.owner,
+          appliedAt: timestamp
+        }
+      }
+    });
+  }
 }
 
 function readPacketGateProfile(repoRoot, sourceRef) {
@@ -1695,6 +1898,218 @@ function readActiveProfileSummary(repoRoot) {
   };
 }
 
+function buildSecurityReviewSummary({ store, repoRoot, findings = [] }) {
+  const activeWorkItem = selectActiveWorkItem(store.listWorkItems(), { repoRoot });
+  if (activeWorkItem?.workItemId !== "OPS-05") {
+    return null;
+  }
+
+  const dependencyInventory = buildDependencyInventory(repoRoot);
+  const releaseArtifactAudit = buildReleaseArtifactAudit(repoRoot);
+  const secretScan = buildLocalSecretScan({
+    repoRoot,
+    scanPaths: [
+      ...dependencyInventory.scanPaths,
+      ...releaseArtifactAudit.checkedArtifacts.map((artifact) => artifact.path)
+    ]
+  });
+  const additionalFindings = [...secretScan.findings, ...releaseArtifactAudit.findings];
+  const combinedFindings = [...findings, ...additionalFindings];
+  const blockingErrors = combinedFindings.filter((finding) => finding?.severity === "error");
+  const warnings = combinedFindings.filter((finding) => finding?.severity === "warning");
+
+  return {
+    additionalFindings,
+    summary: {
+      summaryStatus: blockingErrors.length > 0 ? "blocking findings present" : warnings.length > 0 ? "attention needed" : "pre-review baseline checked",
+      checkedScope: [
+        "dependency inventory",
+        "local secret-scan baseline",
+        "release artifact audit"
+      ],
+      blockingErrorFindings: blockingErrors.map((finding) => summarizeSecurityFinding(finding)),
+      warningFindings: warnings.map((finding) => summarizeSecurityFinding(finding)),
+      reviewRequiredCategories: SECURITY_REVIEW_REQUIRED_CATEGORIES,
+      operatorNextActions: buildSecurityReviewNextActions({ blockingErrors, warnings }),
+      humanReviewStillRequired: [
+        "Internal IT/security review is still required for the listed review-required capability categories.",
+        "Local automation prepares reusable evidence only. It does not grant formal security approval."
+      ],
+      outOfScopeNote:
+        "This summary is for internal IT/security review preparation only. It does not replace hosted CI, organization-specific approval forms, project-specific runbooks, or formal security approval.",
+      dependencyInventory: dependencyInventory.summary,
+      localSecretScan: secretScan.summary,
+      releaseArtifactAudit: releaseArtifactAudit.summary
+    }
+  };
+}
+
+function buildDependencyInventory(repoRoot) {
+  const packages = [
+    readPackageInventory(repoRoot, "package.json", "root"),
+    readPackageInventory(repoRoot, "standard-template/package.json", "standard-template")
+  ].filter(Boolean);
+
+  return {
+    scanPaths: packages.map((pkg) => pkg.path),
+    summary: {
+      packages,
+      releaseScripts: packages.flatMap((pkg) =>
+        pkg.releaseScripts.map((script) => ({
+          packageLabel: pkg.packageLabel,
+          script
+        }))
+      )
+    }
+  };
+}
+
+function readPackageInventory(repoRoot, relativePath, packageLabel) {
+  const absolutePath = path.resolve(repoRoot, relativePath);
+  if (!fs.existsSync(absolutePath)) {
+    return null;
+  }
+
+  const packageJson = JSON.parse(fs.readFileSync(absolutePath, "utf8"));
+  return {
+    path: relativePath,
+    packageLabel,
+    packageName: packageJson.name ?? "(unnamed package)",
+    nodeEngine: packageJson.engines?.node ?? "not declared",
+    directDependencies: Object.keys(packageJson.dependencies ?? {}),
+    directDevDependencies: Object.keys(packageJson.devDependencies ?? {}),
+    releaseScripts: SECURITY_REVIEW_RELEASE_SCRIPTS.filter((script) => packageJson.scripts?.[script])
+  };
+}
+
+function buildReleaseArtifactAudit(repoRoot) {
+  const checkedArtifacts = SECURITY_REVIEW_SCOPE_PATHS.filter((relativePath) =>
+    fs.existsSync(path.resolve(repoRoot, relativePath))
+  ).map((relativePath) => {
+    const absolutePath = path.resolve(repoRoot, relativePath);
+    return {
+      path: relativePath,
+      exists: true,
+      byteLength: fs.readFileSync(absolutePath).byteLength
+    };
+  });
+  const findings = [];
+
+  for (const artifact of checkedArtifacts) {
+    const absolutePath = path.resolve(repoRoot, artifact.path);
+    const content = readTextArtifact(absolutePath);
+    if (content == null) {
+      continue;
+    }
+
+    for (const rule of SECURITY_REVIEW_ARTIFACT_AUDIT_RULES) {
+      if (!rule.pattern.test(content)) {
+        continue;
+      }
+      findings.push({
+        code: rule.code,
+        severity: rule.severity,
+        path: artifact.path,
+        message: `${rule.message} (${artifact.path})`,
+        recovery: rule.recovery
+      });
+    }
+  }
+
+  return {
+    checkedArtifacts,
+    findings,
+    summary: {
+      checkedArtifacts,
+      findingCount: findings.length
+    }
+  };
+}
+
+function buildLocalSecretScan({ repoRoot, scanPaths }) {
+  const findings = [];
+  const uniquePaths = uniqueStringList(scanPaths);
+
+  for (const relativePath of uniquePaths) {
+    const absolutePath = path.resolve(repoRoot, relativePath);
+    const content = readTextArtifact(absolutePath);
+    if (content == null) {
+      continue;
+    }
+
+    for (const rule of SECURITY_REVIEW_SECRET_RULES) {
+      if (!rule.pattern.test(content)) {
+        continue;
+      }
+      findings.push({
+        code: rule.code,
+        severity: rule.severity,
+        path: relativePath,
+        message: `${rule.message} (${relativePath})`,
+        recovery: rule.recovery
+      });
+    }
+  }
+
+  return {
+    findings,
+    summary: {
+      scannedPaths: uniquePaths,
+      findingCount: findings.length,
+      scanRuleCount: SECURITY_REVIEW_SECRET_RULES.length
+    }
+  };
+}
+
+function readTextArtifact(absolutePath) {
+  if (!fs.existsSync(absolutePath)) {
+    return null;
+  }
+
+  try {
+    return fs.readFileSync(absolutePath, "utf8");
+  } catch {
+    return null;
+  }
+}
+
+function summarizeSecurityFinding(finding) {
+  return {
+    code: finding.code,
+    message: finding.message,
+    path: finding.path ?? null
+  };
+}
+
+function buildSecurityReviewNextActions({ blockingErrors, warnings }) {
+  const actions = [];
+
+  if (blockingErrors.length > 0) {
+    actions.push("Resolve every blocking error finding before internal review submission.");
+  } else {
+    actions.push("Attach the dependency inventory, secret-scan result, and release-artifact audit to the internal review package.");
+  }
+
+  if (warnings.length > 0) {
+    actions.push("Review the warning findings and clean up risky wording or stale release-facing content before submission.");
+  }
+
+  actions.push("Ask the internal IT/security reviewer to assess the review-required capability categories.");
+  return actions;
+}
+
+function recommendSecurityReviewNextAction({ findings, fallback }) {
+  const firstError = findings.find((finding) => finding?.severity === "error");
+  if (firstError) {
+    return firstError.recovery ?? firstError.message ?? fallback;
+  }
+  const firstWarning = findings.find((finding) => finding?.severity === "warning");
+  if (firstWarning) {
+    return firstWarning.recovery ?? firstWarning.message ?? fallback;
+  }
+  return fallback;
+}
+
 function buildValidationReportMarkdown(report) {
   const lines = [
     "# Validation Report",
@@ -1726,6 +2141,71 @@ function buildValidationReportMarkdown(report) {
     for (const finding of report.findings) {
       lines.push(`- [${finding.severity}] ${finding.code}: ${finding.message}`);
     }
+  }
+
+  if (report.securityReview) {
+    lines.push("", "## Security Review Summary");
+    lines.push(`- Summary status: ${report.securityReview.summaryStatus}`);
+    lines.push(`- Checked scope: ${report.securityReview.checkedScope.join(", ")}`);
+    lines.push(
+      `- Blocking error findings: ${report.securityReview.blockingErrorFindings.length === 0 ? "none" : report.securityReview.blockingErrorFindings.length}`
+    );
+    if (report.securityReview.blockingErrorFindings.length > 0) {
+      for (const finding of report.securityReview.blockingErrorFindings) {
+        lines.push(`  - ${finding.code}: ${finding.message}`);
+      }
+    }
+    lines.push(
+      `- Warning findings: ${report.securityReview.warningFindings.length === 0 ? "none" : report.securityReview.warningFindings.length}`
+    );
+    if (report.securityReview.warningFindings.length > 0) {
+      for (const finding of report.securityReview.warningFindings) {
+        lines.push(`  - ${finding.code}: ${finding.message}`);
+      }
+    }
+    lines.push("- Review-required categories:");
+    for (const category of report.securityReview.reviewRequiredCategories) {
+      lines.push(`  - ${category.label}: ${category.reviewNote}`);
+    }
+    lines.push("- Operator next actions:");
+    for (const action of report.securityReview.operatorNextActions) {
+      lines.push(`  - ${action}`);
+    }
+    lines.push("- Human review still required:");
+    for (const note of report.securityReview.humanReviewStillRequired) {
+      lines.push(`  - ${note}`);
+    }
+    lines.push(`- Out of scope note: ${report.securityReview.outOfScopeNote}`);
+
+    lines.push("", "## Dependency Inventory");
+    for (const pkg of report.securityReview.dependencyInventory.packages) {
+      lines.push(`- ${pkg.packageLabel}: ${pkg.packageName} / node ${pkg.nodeEngine}`);
+      lines.push(
+        `  - direct dependencies: ${pkg.directDependencies.length === 0 ? "none" : pkg.directDependencies.join(", ")}`
+      );
+      lines.push(
+        `  - direct devDependencies: ${pkg.directDevDependencies.length === 0 ? "none" : pkg.directDevDependencies.join(", ")}`
+      );
+      lines.push(`  - release scripts: ${pkg.releaseScripts.length === 0 ? "none" : pkg.releaseScripts.join(", ")}`);
+    }
+
+    lines.push("", "## Local Secret Scan");
+    lines.push(`- Scanned paths: ${report.securityReview.localSecretScan.scannedPaths.length}`);
+    lines.push(`- Scan rules: ${report.securityReview.localSecretScan.scanRuleCount}`);
+    lines.push(
+      `- Findings: ${report.securityReview.localSecretScan.findingCount === 0 ? "none" : report.securityReview.localSecretScan.findingCount}`
+    );
+
+    lines.push("", "## Release Artifact Audit");
+    lines.push(
+      `- Checked artifacts: ${report.securityReview.releaseArtifactAudit.checkedArtifacts.length === 0 ? "none" : report.securityReview.releaseArtifactAudit.checkedArtifacts.length}`
+    );
+    for (const artifact of report.securityReview.releaseArtifactAudit.checkedArtifacts) {
+      lines.push(`  - ${artifact.path}`);
+    }
+    lines.push(
+      `- Audit findings: ${report.securityReview.releaseArtifactAudit.findingCount === 0 ? "none" : report.securityReview.releaseArtifactAudit.findingCount}`
+    );
   }
 
   lines.push("", "## Semantic Trace");
@@ -1868,6 +2348,10 @@ function allRefsResolve(repoRoot, refs) {
 
 function uniquePathList(paths) {
   return [...new Set((paths ?? []).filter((item) => typeof item === "string" && item.length > 0))];
+}
+
+function uniqueStringList(values) {
+  return [...new Set((values ?? []).filter((value) => typeof value === "string" && value.length > 0))];
 }
 
 function resolveDbPath(repoRoot, dbPath) {
