@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "engine": "sqlite",
+  "defaultDbPath": ".harness/operating_state.sqlite",
+  "tables": [
+    {"name": "release_state", "kind": "mutable"},
+    {"name": "work_item_registry", "kind": "mutable"},
+    {"name": "decision_registry", "kind": "mutable"},
+    {"name": "gate_risk_registry", "kind": "mutable"},
+    {"name": "handoff_log", "kind": "append_only"},
+    {"name": "artifact_index", "kind": "mutable"},
+    {"name": "generation_state", "kind": "mutable"}
+  ],
+  "commandSurface": [
+    "setReleaseState",
+    "upsertWorkItem",
+    "transitionWorkItem",
+    "recordDecision",
+    "recordGateRisk",
+    "appendHandoff",
+    "upsertArtifact",
+    "refreshProjection"
+  ]
+}

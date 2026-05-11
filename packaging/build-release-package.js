@@ -68,7 +68,7 @@ function writeHarnessInstaller(target) {
       "  popd >nul",
       "  exit /b 1",
       ")",
-      "node \".package\\installer\\install-harness.js\" %*",
+      "node \".package\\installer\\install-harness.js\" --authority-source local %*",
       "set \"EXIT_CODE=%ERRORLEVEL%\"",
       "popd >nul",
       "exit /b %EXIT_CODE%",
