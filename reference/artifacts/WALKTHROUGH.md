@@ -2,6 +2,128 @@
 
 Use this artifact to record verification evidence and manual test results.
 
+## 2026-05-11 OPS-09 Tester Verification
+
+- Scope: independent tester verification for `OPS-09` structured packet-exit metadata and closeout parser hardening after the approved `developer -> tester` handoff.
+- Environment: local maintainer workspace on Windows PowerShell.
+- Tested scope:
+  - packet acceptance against the approved structured packet-exit metadata and closeout parser hardening contract
+  - root full harness regression suite after the OPS-09 implementation
+  - `standard-template` full harness regression suite after reusable root/starter synchronization
+  - root `harness:validate`, `harness:validation-report`, and `harness:context`
+  - structured packet-exit metadata priority over fragile prose-only parsing
+  - legacy closeout fallback retention for packets without the new metadata surface
+  - explicit mismatch diagnostic when structured metadata and human-readable closeout values disagree
+  - root/starter parity for the reusable validator, packet-template, and regression-fixture files
+- Evidence:
+  - root `node --test .harness/test/*.test.js`: 64/64 pass, including the new OPS-09 regressions:
+    - `accepts structured packet-exit metadata without requiring duplicated legacy closeout fields`
+    - `detects conflicting structured and human-readable packet-exit values`
+    - `accepts indented continuation lines for legacy packet-exit evidence fields`
+  - `standard-template` `node --test .harness/test/*.test.js`: 64/64 pass with the same reusable OPS-09 coverage.
+  - root `node .harness/runtime/state/dev05-cli.js validate`: `ok: true`, `cutoverReady: true`, findings `[]`.
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`: pass, gate decision `pass`, findings `[]`, next action `Verify the implementation against the packet acceptance criteria.`
+  - root `node .harness/runtime/state/dev05-cli.js context`: pass and reports `OPS-09`, workflow `.agents/workflows/test.md`, tester ownership, and validation parity with the latest validation report.
+  - structured packet-exit metadata is now represented in the packet/template by:
+    - `Packet exit metadata version`
+    - `Packet exit metadata gate reference`
+    - `Packet exit metadata exit recommendation`
+    - `Packet exit metadata source parity result`
+    - `Packet exit metadata validation / security / cleanup evidence`
+  - legacy human-readable `## 15. Packet Exit Quality Gate` bullets remain present and accepted, including indented continuation lines for closeout evidence text.
+  - explicit mismatch behavior is covered by regression and fails with `task_packet_status_contract_mismatch` when structured metadata and the human-readable closeout field disagree.
+  - root/starter parity check by file hash confirmed identical content for:
+    - `.harness/runtime/state/drift-validator.js`
+    - `.harness/test/generated-state-docs.test.js`
+    - `.harness/test/profile-aware-validator-fixtures.js`
+    - `reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md`
+    and their `standard-template` counterparts.
+- Untested scope:
+  - No lane-typed packet minimum redesign, broad packet-template UX rewrite, or generic workflow-authoring framework behavior was tested because those areas remain explicitly out of scope for `OPS-09`.
+  - No hosted CI, PR checks, or remote orchestration was tested because this packet is limited to local packet/validator closeout hardening.
+- Result: tester verification passed. No tester-discovered OPS-09 remediation item remains for the approved narrow parser/metadata scope.
+- Handoff:
+  - Reviewer should inspect OPS-09 closeout readiness against the approved structured metadata contract, legacy fallback retention, explicit mismatch diagnostics, and root/starter synchronization evidence.
+
+## 2026-05-11 QLT-03 Tester Verification
+
+- Scope: independent tester verification for `QLT-03` semantic trace and evidence gate generalization after the approved `developer -> tester` handoff.
+- Environment: local maintainer workspace on Windows PowerShell.
+- Tested scope:
+  - packet acceptance against the approved reusable semantic-trace activation and opted-in enforcement contract
+  - root full harness regression suite after the QLT-03 implementation
+  - `standard-template` full harness regression suite after reusable root/starter synchronization
+  - root `harness:validate`, `harness:validation-report`, and `harness:context`
+  - explicit activation metadata opt-in behavior without literal `QLT-02` lane-name dependency
+  - non-requested packet false-failure prevention for semantic trace enforcement
+  - `QLT-02` regression compatibility and root/starter parity for the reusable runtime/test files
+- Evidence:
+  - root `node --test .harness/test/*.test.js`: 61/61 pass, including the new QLT-03 regressions `QLT-03 validator enforces reusable semantic trace contract from packet metadata` and `validator does not require semantic trace when reusable trace contract is not requested`.
+  - `standard-template` `node --test .harness/test/*.test.js`: 61/61 pass with the same reusable QLT-03 coverage.
+  - root `node .harness/runtime/state/dev05-cli.js validate`: `ok: true`, `cutoverReady: true`, findings `[]`.
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`: pass, gate decision `pass`, findings `[]`, next action `Verify the implementation against the packet acceptance criteria.`, and trace summary:
+    - `path: .agents/runtime/agent-traces/QLT-03.json`
+    - `workItemId: QLT-03`
+    - `semanticTraceStatus: pass`
+    - `candidateGateCount: 6`
+  - root `validation-report` candidate-gate summary preserves the approved reusable local evidence surface:
+    - `required-evidence-present`
+    - `source-references-resolve`
+    - `semantic-trace-present`
+    - `evidence-non-contradictory`
+    - `evidence-freshness`
+    - `validation-context-parity`
+  - root `node .harness/runtime/state/dev05-cli.js context`: pass and reports `QLT-03`, workflow `.agents/workflows/test.md`, tester ownership, and validation parity with the latest validation report.
+  - explicit activation metadata is proven by the active packet field `- Semantic trace evidence status: requested`, which allows the reusable contract to activate without depending on literal lane-id matching.
+  - non-requested packet behavior is fixed by regression in both root and `standard-template`; packets that do not request the reusable trace contract do not fail the old lane-specific semantic-trace gate.
+  - `QLT-02` regression compatibility is preserved by the generated-docs regression `detects missing required semantic trace for the active work item`, now driven by explicit opt-in contract evidence.
+  - root/starter parity check by file hash confirmed identical content for:
+    - `.harness/runtime/state/drift-validator.js`
+    - `.harness/runtime/state/dev05-tooling.js`
+    - `.harness/test/dev05-tooling.test.js`
+    - `.harness/test/generated-state-docs.test.js`
+    and their `standard-template` counterparts.
+- Untested scope:
+  - No hosted CI, PR checks, or remote eval orchestration was tested because the packet explicitly limits QLT-03 to reusable local semantic-trace/evidence gating.
+  - No packet-template redesign or broader validator cleanup outside the semantic-trace contract was tested because those areas remain out of scope for `QLT-03`.
+- Result: tester verification passed. No tester-discovered QLT-03 remediation item remains for the approved narrow generalization scope.
+- Handoff:
+  - Reviewer should inspect QLT-03 closeout readiness against the approved explicit activation contract, opted-in trace/evidence enforcement, non-requested false-failure prevention, `QLT-02` regression compatibility, and root/starter synchronization evidence.
+
+## 2026-05-11 OPS-08 Tester Verification
+
+- Scope: independent tester verification for `OPS-08` reusable security review evidence generalization after the approved `developer -> tester` handoff.
+- Environment: local maintainer workspace on Windows PowerShell.
+- Tested scope:
+  - packet acceptance against the approved reusable activation, declared scope, explicit `not-applicable`, and `OPS-05` regression-compatibility contract
+  - root full harness regression suite after the OPS-08 implementation
+  - `standard-template` full harness regression suite after reusable root/starter synchronization
+  - root `harness:validate`, `harness:validation-report`, and `harness:context`
+  - explicit reusable activation from packet metadata without lane-id dependency
+  - declared release/security scope rendering and explicit `not-applicable` reporting coverage
+  - root/starter parity for the reusable OPS-08 runtime and regression test files
+- Evidence:
+  - root `node --test .harness/test/*.test.js`: 59/59 pass, including the new OPS-08 regressions `OPS-08 validation report activates reusable security review from packet metadata` and `validation report keeps an explicit not-applicable security review section when not requested`.
+  - `standard-template` `node --test .harness/test/*.test.js`: 59/59 pass with the same reusable OPS-08 coverage.
+  - root `node .harness/runtime/state/dev05-cli.js validate`: `ok: true`, `cutoverReady: true`, findings `[]`.
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`: pass, gate decision `pass`, findings `[]`, next action `Verify the implementation against the packet acceptance criteria.`, and a reusable `Security Review Summary` contract with:
+    - `contractStatus: requested`
+    - `activationSource: packet metadata`
+    - checked scope `package manifests`, `release-facing artifacts`, `declared security/release paths`
+    - declared paths `reference/manuals/HARNESS_MANUAL.md` and `standard-template/HARNESS_MANUAL.md`
+    - explicit severity separation with empty blocking/warning findings and five `review-required` capability categories
+    - explicit wording that local automation prepares evidence only and does not grant formal security approval
+  - root `node .harness/runtime/state/dev05-cli.js context`: pass and reports `OPS-08`, workflow `.agents/workflows/test.md`, tester ownership, and validation parity with the latest validation report.
+  - explicit `not-applicable` contract coverage is fixed by regression in both root and `standard-template`; when reusable security review evidence is not requested, the validation report keeps the section instead of silently omitting it.
+  - root/starter parity check by file hash confirmed identical content for `.harness/runtime/state/dev05-tooling.js` and `.harness/test/dev05-tooling.test.js` in root and `standard-template`.
+  - `OPS-05` regression compatibility remained intact because the existing OPS-05 security-review regressions still pass in both root and `standard-template`.
+- Untested scope:
+  - No hosted CI, organization-specific approval workflow, or external security platform integration was tested because the packet explicitly limits scope to reusable local evidence preparation.
+  - No broader security-program redesign or packet-template redesign behavior was tested because those areas remain out of scope for `OPS-08`.
+- Result: tester verification passed. No tester-discovered OPS-08 remediation item remains for the approved narrow generalization scope.
+- Handoff:
+  - Reviewer should inspect OPS-08 closeout readiness against the approved reusable activation contract, declared scope rendering, explicit `not-applicable` handling, `OPS-05` regression compatibility, and root/starter synchronization evidence.
+
 ## 2026-05-10 OPS-07 Tester Verification
 
 - Scope: independent tester verification for `OPS-07` planner hold closeout automation after the approved `developer -> tester` handoff.
@@ -455,6 +577,37 @@ Use this artifact to record verification evidence and manual test results.
 - Result: tester verification passed; no Tester-discovered remediation item remains.
 - Handoff:
   - Reviewer should inspect DEV-09 packet exit closeout readiness, source parity, residual debt disposition, PMW command boundary, root/starter sync, and validation evidence.
+
+## 2026-05-11 OPS-10 Lane-Typed Packet Minimum Rules And Conditional Approval Surface Tester Verification
+
+- Scope: tester verification for `OPS-10` lane-typed packet minimum contract, undeclared full-baseline fallback, advisory-first validator behavior, root / `standard-template` synchronization, and generated validation/context evidence.
+- Environment: local maintainer workspace on Windows PowerShell.
+- Tested scope:
+  - supported lane-type declaration acceptance with explicit universal minimum metadata
+  - undeclared packet fallback to the legacy full packet baseline
+  - unsupported lane-type declaration rejection
+  - declared lane-type universal minimum contract enforcement
+  - advisory-only handling for incomplete lane-type section matrices
+  - root / `standard-template` synchronization for validator, fixture, test, and packet template surfaces
+  - root and `standard-template` full test suites
+  - root validator, validation report, and active-context evidence
+- Evidence:
+  - root `node --test .harness/test/*.test.js`: `69/69 pass`
+  - `standard-template` `node --test .harness/test/*.test.js`: `69/69 pass`
+  - root `node .harness/runtime/state/dev05-cli.js validate`: `ok: true`, findings `[]`
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`: `gateDecision: pass`, `nextAction: Verify the implementation against the packet acceptance criteria.`
+  - root `node .harness/runtime/state/dev05-cli.js context`: active task `OPS-10`, owner `tester`, workflow `.agents/workflows/test.md`
+  - root/starter hash parity:
+    - `.harness/runtime/state/drift-validator.js`: `662AB9BF8FF1655549613B072BC10B81C8C6E982F8CE40BF20D44E888D4B65C6`
+    - `.harness/test/generated-state-docs.test.js`: `0CC63EEE2DA0630FEE914CD8EF6D3A8A31893DE4B0D881DBDDD628B77362E788`
+    - `.harness/test/profile-aware-validator-fixtures.js`: `6DE63CFB21CA4A33C0D3434F0925A151BC6ADFDD83F94AEF0D4DBB2ACB4264D8`
+    - `reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md`: `60D91DDB532B29C869AFF2061EED58809CD157988463CEFDAEE2444ED60E4F1A`
+- Untested scope:
+  - no browser/UI verification was performed because `OPS-10` changes packet/template/validator contract behavior rather than an application surface
+  - no destructive workflow transition beyond the approved harness handoff path was tested
+- Result: tester verification passed; no tester-discovered remediation item remains.
+- Handoff:
+  - Reviewer should check closeout readiness, scope containment, residual debt disposition, and packet exit quality gate evidence for `OPS-10`.
 
 ## 2026-05-02 DEV-08 PMW Action Board NextTask Tester Re-Verification
 

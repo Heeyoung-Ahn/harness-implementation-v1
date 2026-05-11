@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "standard-harness-agent-trace/v1",
+  "workItemId": "OPS-08",
+  "packetId": "PKT-01_OPS-08_REUSABLE_SECURITY_REVIEW_EVIDENCE_GENERALIZATION",
+  "role": "planner",
+  "workflow": ".agents/workflows/plan.md",
+  "turnClosedAt": "2026-05-10T23:39:19.340Z",
+  "requiredSsot": [
+    ".agents/artifacts/CURRENT_STATE.md",
+    ".agents/artifacts/TASK_LIST.md",
+    ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+    "reference/packets/PKT-01_OPS-08_REUSABLE_SECURITY_REVIEW_EVIDENCE_GENERALIZATION.md"
+  ],
+  "declaredReadEvidence": [
+    ".agents/artifacts/REQUIREMENTS.md",
+    ".agents/artifacts/ARCHITECTURE_GUIDE.md",
+    ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+    ".agents/artifacts/PREVENTIVE_MEMORY.md",
+    "reference/packets/PKT-01_OPS-08_REUSABLE_SECURITY_REVIEW_EVIDENCE_GENERALIZATION.md",
+    ".agents/artifacts/VALIDATION_REPORT.json"
+  ],
+  "approvedDesignRefs": [
+    ".agents/artifacts/REQUIREMENTS.md",
+    ".agents/artifacts/ARCHITECTURE_GUIDE.md",
+    ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+    "reference/packets/PKT-01_OPS-08_REUSABLE_SECURITY_REVIEW_EVIDENCE_GENERALIZATION.md"
+  ],
+  "implementationRefs": [],
+  "verificationRefs": [
+    ".agents/artifacts/VALIDATION_REPORT.json",
+    ".agents/artifacts/VALIDATION_REPORT.md"
+  ],
+  "semanticTrace": {
+    "hardFailCodes": [
+      "missing_required_evidence",
+      "broken_source_reference",
+      "contradictory_evidence",
+      "stale_evidence",
+      "required_semantic_trace_missing",
+      "validation_report_context_parity_break",
+      "active_context_validation_executed_at_mismatch"
+    ],
+    "warningCodes": [
+      "evidence_linkage_thin",
+      "reviewer_rationale_thin"
+    ],
+    "reviewerOnlyCodes": [
+      "design_intent_fulfillment",
+      "work_fit_assessment",
+      "domain_specific_business_rule_judgment"
+    ],
+    "candidateGateIds": [
+      "required-evidence-present",
+      "source-references-resolve",
+      "semantic-trace-present",
+      "evidence-non-contradictory",
+      "evidence-freshness",
+      "validation-context-parity"
+    ],
+    "sourceRefsResolved": true,
+    "validatorGateDecision": "pass",
+    "readyForCode": "approved"
+  },
+  "selfCheck": {
+    "findingCount": 0,
+    "blockingFindingCount": 0,
+    "warningCount": 0
+  },
+  "handoff": {
+    "createdAt": "2026-05-10T23:39:13.142Z",
+    "fromRole": "reviewer",
+    "toRole": "planner",
+    "sourceRef": "reference/packets/PKT-01_OPS-08_REUSABLE_SECURITY_REVIEW_EVIDENCE_GENERALIZATION.md",
+    "summary": "[reviewer -> planner] Packet exit approved; Planner should choose or refine the next lane."
+  }
+}

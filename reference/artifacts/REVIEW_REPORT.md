@@ -2,6 +2,175 @@
 
 Use this artifact when the project enters a formal review gate.
 
+## 2026-05-11 OPS-10 Closeout Approval
+
+- Scope: final closeout review for `OPS-10` lane-typed packet minimum rules and conditional approval surface after tester verification passed and the active handoff moved to `reviewer`.
+- Entry condition:
+  - `OPS-10` is in canonical reviewer state through the `tester -> reviewer` transition.
+  - Tester evidence covers lane-type declaration acceptance, undeclared fallback, universal minimum enforcement, advisory-first validator behavior, root/starter synchronization, root/starter full suites, and validation/context evidence.
+- Evidence reviewed:
+  - `reference/packets/PKT-01_OPS-10_LANE_TYPED_PACKET_MINIMUM_RULES_AND_CONDITIONAL_APPROVAL_SURFACE.md`
+  - `reference/planning/PLN-12_LANE_TYPED_PACKET_MINIMUMS_AND_APPROVAL_SURFACE_REDUCTION_DRAFT.md`
+  - `reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md`
+  - `reference/artifacts/WALKTHROUGH.md`
+  - `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`
+  - `reference/artifacts/REVIEW_REPORT.md`
+  - `.agents/artifacts/CURRENT_STATE.md`
+  - `.agents/artifacts/TASK_LIST.md`
+  - `.agents/artifacts/VALIDATION_REPORT.md`
+  - `.agents/artifacts/VALIDATION_REPORT.json`
+- Findings:
+  - no open reviewer finding remains
+- Review result:
+  - the first lane-type set remains limited to `planning`, `narrow-runtime`, `validation-review`, and `release-security`
+  - undeclared packets keep the full baseline instead of silently inheriting a reduced minimum
+  - universal minimum visibility still includes source impact and residual debt disposition
+  - advisory-first validator behavior stays narrow and does not expand into broad template redesign or workflow redesign
+  - root and `standard-template` remain synchronized for validator logic, packet template guidance, and regression fixtures
+- Validation:
+  - root `node --test .harness/test/*.test.js`
+  - `standard-template` `node --test .harness/test/*.test.js`
+  - root `node .harness/runtime/state/dev05-cli.js validate`
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`
+  - root `node .harness/runtime/state/dev05-cli.js context`
+- Result:
+  - `OPS-10` is approved as closed
+  - no reviewer-driven remediation lane is required
+  - the next workflow returns to `Planner`
+- Status: done
+
+## 2026-05-11 OPS-09 Closeout Approval
+
+- Scope: final closeout review for `OPS-09` structured packet-exit metadata and closeout parser hardening after tester verification passed and the active handoff moved to `reviewer`.
+- Entry condition:
+  - `OPS-09` is in canonical reviewer state through the `tester -> reviewer` transition.
+  - Tester evidence covers root/starter full suites, validator/report/context, structured metadata priority, legacy fallback retention, explicit mismatch diagnostics, and reusable root/starter synchronization.
+- Evidence reviewed:
+  - `reference/packets/PKT-01_OPS-09_STRUCTURED_PACKET_EXIT_METADATA_AND_CLOSEOUT_PARSER_HARDENING.md`
+  - `reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md`
+  - `reference/artifacts/WALKTHROUGH.md`
+  - `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`
+  - `reference/artifacts/REVIEW_REPORT.md`
+  - `.agents/artifacts/CURRENT_STATE.md`
+  - `.agents/artifacts/TASK_LIST.md`
+  - `.agents/artifacts/VALIDATION_REPORT.md`
+  - `.agents/artifacts/VALIDATION_REPORT.json`
+  - `.agents/runtime/ACTIVE_CONTEXT.json`
+  - `.agents/runtime/agent-traces/OPS-09.json`
+  - `.harness/runtime/state/drift-validator.js`
+  - `standard-template/.harness/runtime/state/drift-validator.js`
+  - `.harness/test/generated-state-docs.test.js`
+  - `standard-template/.harness/test/generated-state-docs.test.js`
+  - `.harness/test/profile-aware-validator-fixtures.js`
+  - `standard-template/.harness/test/profile-aware-validator-fixtures.js`
+- Findings:
+  - no open review finding remains.
+- Review result:
+  - The approved narrow OPS-09 scope is present in the reusable validator surface: packet-exit closeout meaning can now come from structured metadata instead of fragile prose formatting alone.
+  - Reviewed evidence shows the compatibility boundary stayed intact. Legacy human-readable closeout fields still work, indented continuation lines remain accepted for closeout evidence, and conflicting structured vs. human-readable values fail with an explicit diagnostic instead of ambiguous drift.
+  - Root and `standard-template` remain synchronized across the reviewed validator, packet-template, and regression-fixture changes.
+  - Residual debt disposition: no blocking implementation defect remains in the reviewed OPS-09 scope. Lane-typed packet minimum redesign, broader packet-template UX reduction, and generic workflow-authoring changes remain intentionally out of scope and parked behind `PLN-12`.
+- Validation:
+  - root `node --test .harness/test/*.test.js`: 64/64 pass.
+  - `standard-template` `node --test .harness/test/*.test.js`: 64/64 pass.
+  - root `node .harness/runtime/state/dev05-cli.js validate`: findings `[]`.
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`: gate decision `pass`, reviewer next action aligned, and no closeout finding remained.
+  - root `node .harness/runtime/state/dev05-cli.js context`: reviewer-state `ACTIVE_CONTEXT` contract present.
+- Packet exit decision:
+  - approved
+- Next handoff:
+  - Planner should record OPS-09 closeout and continue with the next planned phase-2 process-friction follow-up lane unless planning priorities are intentionally reordered.
+- Status: done
+
+## 2026-05-11 QLT-03 Closeout Approval
+
+- Scope: final closeout review for `QLT-03` semantic trace and evidence gate generalization after tester verification passed and the active handoff moved to `reviewer`.
+- Entry condition:
+  - `QLT-03` is in canonical reviewer state through the `tester -> reviewer` transition.
+  - Tester evidence covers root/starter full suites, validator/report/context, explicit activation metadata opt-in, non-requested false-failure prevention, `QLT-02` regression compatibility, and reusable root/starter synchronization.
+- Evidence reviewed:
+  - `reference/packets/PKT-01_QLT-03_SEMANTIC_TRACE_AND_EVIDENCE_GATE_GENERALIZATION.md`
+  - `reference/packets/PKT-01_QLT-02_EVIDENCE_VALIDATION_SEMANTIC_TRACE_AND_AGENT_EVAL_CI_GATING.md`
+  - `reference/artifacts/WALKTHROUGH.md`
+  - `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`
+  - `reference/artifacts/REVIEW_REPORT.md`
+  - `.agents/artifacts/CURRENT_STATE.md`
+  - `.agents/artifacts/TASK_LIST.md`
+  - `.agents/artifacts/VALIDATION_REPORT.md`
+  - `.agents/artifacts/VALIDATION_REPORT.json`
+  - `.agents/runtime/ACTIVE_CONTEXT.json`
+  - `.agents/runtime/agent-traces/QLT-03.json`
+  - `.harness/runtime/state/drift-validator.js`
+  - `standard-template/.harness/runtime/state/drift-validator.js`
+  - `.harness/runtime/state/dev05-tooling.js`
+  - `standard-template/.harness/runtime/state/dev05-tooling.js`
+  - `.harness/test/dev05-tooling.test.js`
+  - `standard-template/.harness/test/dev05-tooling.test.js`
+  - `.harness/test/generated-state-docs.test.js`
+  - `standard-template/.harness/test/generated-state-docs.test.js`
+- Findings:
+  - no open review finding remains.
+- Review result:
+  - The approved narrow QLT-03 scope is present in the reusable validator/runtime surface: semantic trace enforcement now activates through explicit packet/runtime metadata instead of literal `QLT-02` lane-name matching.
+  - The reviewed evidence shows the opt-in boundary stayed intact. Requested packets receive semantic trace presence, evidence non-contradiction, freshness, and validation/context parity enforcement, while non-requested packets do not false-fail the old lane-specific contract.
+  - `QLT-02` regression compatibility remains intact: the semantic trace summary, candidate-gate summary, and generated-docs evidence contract remain present while the literal lane dependency is removed.
+  - Root and `standard-template` remain synchronized across the reviewed runtime and regression-test changes.
+  - Residual debt disposition: no blocking implementation defect remains in the reviewed QLT-03 scope. Hosted CI, PR checks, remote eval orchestration, packet-template redesign, and broad validator cleanup remain intentionally out of scope rather than closeout defects.
+- Validation:
+  - root `node --test .harness/test/*.test.js`: 61/61 pass.
+  - `standard-template` `node --test .harness/test/*.test.js`: 61/61 pass.
+  - root `node .harness/runtime/state/dev05-cli.js validate`: findings `[]`.
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`: gate decision `pass`, reviewer next action aligned, trace summary present, and candidate-gate count `6`.
+  - root `node .harness/runtime/state/dev05-cli.js context`: reviewer-state `ACTIVE_CONTEXT` contract present.
+- Packet exit decision:
+  - approved
+- Next handoff:
+  - Planner should record QLT-03 closeout, reconcile completed-task state, and continue with the next planned process-friction follow-up lane unless planning priorities are intentionally reordered.
+- Status: done
+
+## 2026-05-11 OPS-08 Closeout Approval
+
+- Scope: final closeout review for `OPS-08` reusable security review evidence generalization after tester verification passed and the active handoff moved to `reviewer`.
+- Entry condition:
+  - `OPS-08` is in canonical reviewer state through the `tester -> reviewer` transition.
+  - Tester evidence covers root/starter full suites, validator/report/context, reusable activation, declared scope rendering, explicit `not-applicable` handling, `OPS-05` regression compatibility, and reusable root/starter synchronization.
+- Evidence reviewed:
+  - `reference/packets/PKT-01_OPS-08_REUSABLE_SECURITY_REVIEW_EVIDENCE_GENERALIZATION.md`
+  - `reference/packets/PKT-01_OPS-05_RELEASE_ASSURANCE_AND_SECURITY_AUTOMATION_HARDENING.md`
+  - `reference/artifacts/WALKTHROUGH.md`
+  - `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`
+  - `reference/artifacts/REVIEW_REPORT.md`
+  - `.agents/artifacts/CURRENT_STATE.md`
+  - `.agents/artifacts/TASK_LIST.md`
+  - `.agents/artifacts/VALIDATION_REPORT.md`
+  - `.agents/artifacts/VALIDATION_REPORT.json`
+  - `.agents/runtime/ACTIVE_CONTEXT.json`
+  - `.agents/runtime/agent-traces/OPS-08.json`
+  - `.harness/runtime/state/dev05-tooling.js`
+  - `standard-template/.harness/runtime/state/dev05-tooling.js`
+  - `.harness/test/dev05-tooling.test.js`
+  - `standard-template/.harness/test/dev05-tooling.test.js`
+- Findings:
+  - no open review finding remains.
+- Review result:
+  - The approved narrow OPS-08 scope is present in the reusable runtime/report surface: `Security Review Summary` activation comes from explicit packet/runtime metadata instead of a literal lane-id dependency.
+  - The reviewed evidence shows the declared release/security-facing scope is preserved as approved. The report surfaces `package manifests`, `release-facing artifacts`, and `declared security/release paths`, and the declared-path rendering stays explicit rather than implicit.
+  - The reviewed evidence also shows the reusable contract handles the non-requested path correctly. Explicit `not-applicable` reporting is preserved by dedicated regression coverage instead of silently omitting the section.
+  - `OPS-05` regression compatibility remains intact: the original severity semantics, operator-readable wording, and human-review boundary remain unchanged while the literal `OPS-05` dependency is removed.
+  - Root and `standard-template` remain synchronized across the reviewed runtime and regression-test changes.
+  - Residual debt disposition: no blocking implementation defect remains in the reviewed OPS-08 scope. Hosted CI, organization-specific approval workflow, enterprise security program, and packet-template redesign remain intentionally out of scope rather than closeout defects.
+- Validation:
+  - root `node --test .harness/test/*.test.js`: 59/59 pass.
+  - `standard-template` `node --test .harness/test/*.test.js`: 59/59 pass.
+  - root `node .harness/runtime/state/dev05-cli.js validate`: findings `[]`.
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`: gate decision `pass`, reviewer next action aligned, `contractStatus: requested`, `activationSource: packet metadata`, and the approved declared scope present.
+  - root `node .harness/runtime/state/dev05-cli.js context`: reviewer-state `ACTIVE_CONTEXT` contract present.
+- Packet exit decision:
+  - approved
+- Next handoff:
+  - Planner should record OPS-08 closeout and then continue with the next planned phase-1 follow-up lane, `QLT-03`, unless planning priorities are intentionally reordered.
+- Status: done
+
 ## 2026-05-10 OPS-07 Closeout Approval
 
 - Scope: final closeout review for `OPS-07` planner hold closeout automation after tester verification passed and the active handoff moved to `reviewer`.

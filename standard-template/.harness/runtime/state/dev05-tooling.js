@@ -80,9 +80,11 @@ const PHASE1_CANDIDATE_GATES = [
     description: "Validation report and ACTIVE_CONTEXT expose the same validation summary."
   }
 ];
-const SECURITY_REVIEW_SCOPE_PATHS = [
+const SECURITY_REVIEW_PACKAGE_MANIFEST_PATHS = [
   "package.json",
-  "standard-template/package.json",
+  "standard-template/package.json"
+];
+const SECURITY_REVIEW_RELEASE_ARTIFACT_PATHS = [
   "installer/install-harness.js",
   "installer/INSTALL_HARNESS.cmd",
   "packaging/build-release-package.js",
@@ -441,18 +443,24 @@ export function writeValidationReport({ repoRoot = process.cwd(), outputDir = re
   );
   if (securityReview) {
     finalizedReport.securityReview = securityReview.summary;
-    finalizedReport.findings = [...finalizedReport.findings, ...securityReview.additionalFindings];
-    const hasBlockingSecurityFinding = finalizedReport.findings.some((finding) => finding?.severity === "error");
-    finalizedReport.ok = !hasBlockingSecurityFinding;
-    finalizedReport.cutoverReady = !hasBlockingSecurityFinding;
-    finalizedReport.gateDecision = hasBlockingSecurityFinding ? "hold" : "pass";
+    if (securityReview.summary.contractStatus === "requested") {
+      finalizedReport.findings = [...finalizedReport.findings, ...securityReview.additionalFindings];
+      const hasBlockingSecurityFinding = finalizedReport.findings.some((finding) => finding?.severity === "error");
+      finalizedReport.ok = !hasBlockingSecurityFinding;
+      finalizedReport.cutoverReady = !hasBlockingSecurityFinding;
+      finalizedReport.gateDecision = hasBlockingSecurityFinding ? "hold" : "pass";
+    }
   }
-  finalizedReport.nextAction = withStore({ dbPath, repoRoot }, (store) =>
-    recommendSecurityReviewNextAction({
-      findings: finalizedReport.findings,
-      fallback: recommendNextActionFromState(store, finalizedValidation, repoRoot)
-    })
-  );
+  finalizedReport.nextAction = withStore({ dbPath, repoRoot }, (store) => {
+    const fallback = recommendNextActionFromState(store, finalizedValidation, repoRoot);
+    if (securityReview?.summary?.contractStatus === "requested") {
+      return recommendSecurityReviewNextAction({
+        findings: finalizedReport.findings,
+        fallback
+      });
+    }
+    return fallback;
+  });
   const finalizedTraceArtifact = withStore({ dbPath, repoRoot }, (store) =>
     writeAgentTraceArtifact({
       store,
@@ -998,6 +1006,25 @@ function readPacketReadyForCode(repoRoot, sourceRef) {
   return value === "approved" || value === "approve" ? "approved" : value;
 }
 
+function readPacketBulletFieldValue(repoRoot, sourceRef, label) {
+  if (!sourceRef || !sourceRef.endsWith(".md")) {
+    return null;
+  }
+  const packetPath = path.resolve(repoRoot, sourceRef);
+  if (!fs.existsSync(packetPath)) {
+    return null;
+  }
+  const content = fs.readFileSync(packetPath, "utf8");
+  const matcher = new RegExp(`^-\\s*${escapeRegExp(label.trim())}\\s*:\\s*(.*)$`, "i");
+  for (const rawLine of content.split(/\r?\n/)) {
+    const match = rawLine.trim().match(matcher);
+    if (match) {
+      return match[1].trim();
+    }
+  }
+  return null;
+}
+
 function findOpenReadyForCodeTransitionDecision(store, workItem) {
   return store.listDecisions({ status: "open", decisionNeeded: true }).find((decision) => {
     const sameSource = decision.sourceRef === workItem.sourceRef;
@@ -1033,6 +1060,153 @@ function normalizePacketHeaderValue(value) {
 
 function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function parseDelimitedList(value) {
+  if (Array.isArray(value)) {
+    return value.map((entry) => String(entry).trim()).filter(Boolean);
+  }
+  return String(value ?? "")
+    .split(/[;,]/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function normalizeSecurityReviewScopeEntry(value) {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  if (!normalized) {
+    return null;
+  }
+  if (normalized === "package manifest" || normalized === "package manifests") {
+    return "package manifests";
+  }
+  if (normalized === "release artifact" || normalized === "release artifacts" || normalized === "release-facing artifacts") {
+    return "release-facing artifacts";
+  }
+  if (
+    normalized === "declared path" ||
+    normalized === "declared paths" ||
+    normalized === "declared security/release path" ||
+    normalized === "declared security/release paths"
+  ) {
+    return "declared security/release paths";
+  }
+  return null;
+}
+
+function normalizeSecurityReviewStatus(value) {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  if (!normalized) {
+    return "not-requested";
+  }
+  if (normalized === "requested" || normalized === "request" || normalized === "enabled" || normalized === "on") {
+    return "requested";
+  }
+  return "not-requested";
+}
+
+function normalizeSemanticTraceEvidenceStatus(value) {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  if (!normalized) {
+    return "not-requested";
+  }
+  if (normalized === "requested" || normalized === "request" || normalized === "enabled" || normalized === "on") {
+    return "requested";
+  }
+  return "not-requested";
+}
+
+function readPacketSecurityReviewContract(repoRoot, sourceRef) {
+  return {
+    status: readPacketBulletFieldValue(repoRoot, sourceRef, "Security review evidence status"),
+    scope: parseDelimitedList(readPacketBulletFieldValue(repoRoot, sourceRef, "Security review evidence scope")),
+    declaredPaths: parseDelimitedList(readPacketBulletFieldValue(repoRoot, sourceRef, "Declared security/release paths"))
+  };
+}
+
+function normalizeSecurityReviewRuntimeContract(metadata) {
+  if (!metadata || typeof metadata !== "object") {
+    return {
+      status: null,
+      scope: [],
+      declaredPaths: []
+    };
+  }
+  return {
+    status: metadata.status ?? null,
+    scope: parseDelimitedList(metadata.scope),
+    declaredPaths: parseDelimitedList(metadata.declaredPaths)
+  };
+}
+
+function resolveSecurityReviewContract({ activeWorkItem, repoRoot }) {
+  if (!activeWorkItem) {
+    return null;
+  }
+
+  const runtimeContract = normalizeSecurityReviewRuntimeContract(activeWorkItem.metadata?.securityReviewEvidence);
+  const packetContract = readPacketSecurityReviewContract(repoRoot, activeWorkItem.sourceRef);
+  const requested = normalizeSecurityReviewStatus(runtimeContract.status ?? packetContract.status) === "requested";
+  const activationSource = runtimeContract.status ? "runtime metadata" : packetContract.status ? "packet metadata" : "not declared";
+  const checkedScope = uniqueStringList(
+    [...runtimeContract.scope, ...packetContract.scope]
+      .map((entry) => normalizeSecurityReviewScopeEntry(entry))
+      .filter(Boolean)
+  );
+  const declaredPaths = uniqueStringList([...runtimeContract.declaredPaths, ...packetContract.declaredPaths]);
+  const includeDeclaredPaths = checkedScope.includes("declared security/release paths");
+  const resolvedDeclaredPaths = includeDeclaredPaths
+    ? declaredPaths.filter((relativePath) => fs.existsSync(path.resolve(repoRoot, relativePath)))
+    : [];
+  const unresolvedDeclaredPaths = includeDeclaredPaths
+    ? declaredPaths.filter((relativePath) => !fs.existsSync(path.resolve(repoRoot, relativePath)))
+    : [];
+
+  return {
+    requested,
+    contractStatus: requested ? "requested" : "not-applicable",
+    activationSource,
+    checkedScope,
+    declaredPaths,
+    resolvedDeclaredPaths,
+    unresolvedDeclaredPaths,
+    includeDeclaredPaths,
+    packageManifestPaths: checkedScope.includes("package manifests") ? SECURITY_REVIEW_PACKAGE_MANIFEST_PATHS : [],
+    releaseArtifactPaths: checkedScope.includes("release-facing artifacts") ? SECURITY_REVIEW_RELEASE_ARTIFACT_PATHS : []
+  };
+}
+
+function readPacketSemanticTraceContract(repoRoot, sourceRef) {
+  return {
+    status: readPacketBulletFieldValue(repoRoot, sourceRef, "Semantic trace evidence status")
+  };
+}
+
+function normalizeSemanticTraceRuntimeContract(metadata) {
+  if (!metadata || typeof metadata !== "object") {
+    return {
+      status: null
+    };
+  }
+  return {
+    status: metadata.status ?? null
+  };
+}
+
+function resolveSemanticTraceContract({ activeWorkItem, repoRoot }) {
+  if (!activeWorkItem) {
+    return null;
+  }
+
+  const runtimeContract = normalizeSemanticTraceRuntimeContract(activeWorkItem.metadata?.semanticTraceEvidence);
+  const packetContract = readPacketSemanticTraceContract(repoRoot, activeWorkItem.sourceRef);
+  const requested = normalizeSemanticTraceEvidenceStatus(runtimeContract.status ?? packetContract.status) === "requested";
+
+  return {
+    requested,
+    contractStatus: requested ? "requested" : "not-requested",
+    activationSource: runtimeContract.status ? "runtime metadata" : packetContract.status ? "packet metadata" : "not declared"
+  };
 }
 
 function buildTransitionHandoffId(plan, timestamp) {
@@ -1900,12 +2074,56 @@ function readActiveProfileSummary(repoRoot) {
 
 function buildSecurityReviewSummary({ store, repoRoot, findings = [] }) {
   const activeWorkItem = selectActiveWorkItem(store.listWorkItems(), { repoRoot });
-  if (activeWorkItem?.workItemId !== "OPS-05") {
+  const contract = resolveSecurityReviewContract({ activeWorkItem, repoRoot });
+  if (!contract) {
     return null;
   }
 
-  const dependencyInventory = buildDependencyInventory(repoRoot);
-  const releaseArtifactAudit = buildReleaseArtifactAudit(repoRoot);
+  if (!contract.requested) {
+    return {
+      additionalFindings: [],
+      summary: {
+        contractStatus: "not-applicable",
+        activationSource: contract.activationSource,
+        notApplicableReason: "Reusable security-review evidence is not requested by current packet/runtime metadata."
+      }
+    };
+  }
+
+  const contractFindings = [];
+  if (contract.checkedScope.length === 0) {
+    contractFindings.push({
+      code: "security_review_scope_missing",
+      severity: "error",
+      message: "Reusable security-review evidence was requested, but no declared security-review scope was provided.",
+      recovery: "Declare package manifests, release-facing artifacts, and any explicit security/release paths before rerunning validation."
+    });
+  }
+  if (contract.includeDeclaredPaths && contract.declaredPaths.length === 0) {
+    contractFindings.push({
+      code: "security_review_declared_paths_missing",
+      severity: "error",
+      message:
+        "Reusable security-review evidence requested declared security/release paths, but no explicit declared paths were provided.",
+      recovery: "Add explicit declared security/release paths to the packet/runtime metadata before rerunning validation."
+    });
+  }
+  for (const relativePath of contract.unresolvedDeclaredPaths) {
+    contractFindings.push({
+      code: "security_review_declared_path_missing",
+      severity: "error",
+      path: relativePath,
+      message: `Declared security/release evidence path does not resolve locally. (${relativePath})`,
+      recovery: "Fix or remove the unresolved declared security/release path before rerunning validation."
+    });
+  }
+
+  const dependencyInventory = buildDependencyInventory(repoRoot, {
+    packageManifestPaths: contract.packageManifestPaths
+  });
+  const releaseArtifactAudit = buildReleaseArtifactAudit(repoRoot, {
+    checkedPaths: [...contract.releaseArtifactPaths, ...contract.resolvedDeclaredPaths]
+  });
   const secretScan = buildLocalSecretScan({
     repoRoot,
     scanPaths: [
@@ -1913,7 +2131,7 @@ function buildSecurityReviewSummary({ store, repoRoot, findings = [] }) {
       ...releaseArtifactAudit.checkedArtifacts.map((artifact) => artifact.path)
     ]
   });
-  const additionalFindings = [...secretScan.findings, ...releaseArtifactAudit.findings];
+  const additionalFindings = [...contractFindings, ...secretScan.findings, ...releaseArtifactAudit.findings];
   const combinedFindings = [...findings, ...additionalFindings];
   const blockingErrors = combinedFindings.filter((finding) => finding?.severity === "error");
   const warnings = combinedFindings.filter((finding) => finding?.severity === "warning");
@@ -1921,12 +2139,11 @@ function buildSecurityReviewSummary({ store, repoRoot, findings = [] }) {
   return {
     additionalFindings,
     summary: {
+      contractStatus: "requested",
+      activationSource: contract.activationSource,
       summaryStatus: blockingErrors.length > 0 ? "blocking findings present" : warnings.length > 0 ? "attention needed" : "pre-review baseline checked",
-      checkedScope: [
-        "dependency inventory",
-        "local secret-scan baseline",
-        "release artifact audit"
-      ],
+      checkedScope: contract.checkedScope,
+      declaredPaths: contract.declaredPaths,
       blockingErrorFindings: blockingErrors.map((finding) => summarizeSecurityFinding(finding)),
       warningFindings: warnings.map((finding) => summarizeSecurityFinding(finding)),
       reviewRequiredCategories: SECURITY_REVIEW_REQUIRED_CATEGORIES,
@@ -1944,11 +2161,10 @@ function buildSecurityReviewSummary({ store, repoRoot, findings = [] }) {
   };
 }
 
-function buildDependencyInventory(repoRoot) {
-  const packages = [
-    readPackageInventory(repoRoot, "package.json", "root"),
-    readPackageInventory(repoRoot, "standard-template/package.json", "standard-template")
-  ].filter(Boolean);
+function buildDependencyInventory(repoRoot, { packageManifestPaths = SECURITY_REVIEW_PACKAGE_MANIFEST_PATHS } = {}) {
+  const packages = packageManifestPaths
+    .map((relativePath) => readPackageInventory(repoRoot, relativePath, inferPackageLabel(relativePath)))
+    .filter(Boolean);
 
   return {
     scanPaths: packages.map((pkg) => pkg.path),
@@ -1962,6 +2178,16 @@ function buildDependencyInventory(repoRoot) {
       )
     }
   };
+}
+
+function inferPackageLabel(relativePath) {
+  if (relativePath === "package.json") {
+    return "root";
+  }
+  if (relativePath === "standard-template/package.json") {
+    return "standard-template";
+  }
+  return relativePath;
 }
 
 function readPackageInventory(repoRoot, relativePath, packageLabel) {
@@ -1982,8 +2208,8 @@ function readPackageInventory(repoRoot, relativePath, packageLabel) {
   };
 }
 
-function buildReleaseArtifactAudit(repoRoot) {
-  const checkedArtifacts = SECURITY_REVIEW_SCOPE_PATHS.filter((relativePath) =>
+function buildReleaseArtifactAudit(repoRoot, { checkedPaths = SECURITY_REVIEW_RELEASE_ARTIFACT_PATHS } = {}) {
+  const checkedArtifacts = uniqueStringList(checkedPaths).filter((relativePath) =>
     fs.existsSync(path.resolve(repoRoot, relativePath))
   ).map((relativePath) => {
     const absolutePath = path.resolve(repoRoot, relativePath);
@@ -2145,67 +2371,79 @@ function buildValidationReportMarkdown(report) {
 
   if (report.securityReview) {
     lines.push("", "## Security Review Summary");
-    lines.push(`- Summary status: ${report.securityReview.summaryStatus}`);
-    lines.push(`- Checked scope: ${report.securityReview.checkedScope.join(", ")}`);
-    lines.push(
-      `- Blocking error findings: ${report.securityReview.blockingErrorFindings.length === 0 ? "none" : report.securityReview.blockingErrorFindings.length}`
-    );
-    if (report.securityReview.blockingErrorFindings.length > 0) {
-      for (const finding of report.securityReview.blockingErrorFindings) {
-        lines.push(`  - ${finding.code}: ${finding.message}`);
-      }
-    }
-    lines.push(
-      `- Warning findings: ${report.securityReview.warningFindings.length === 0 ? "none" : report.securityReview.warningFindings.length}`
-    );
-    if (report.securityReview.warningFindings.length > 0) {
-      for (const finding of report.securityReview.warningFindings) {
-        lines.push(`  - ${finding.code}: ${finding.message}`);
-      }
-    }
-    lines.push("- Review-required categories:");
-    for (const category of report.securityReview.reviewRequiredCategories) {
-      lines.push(`  - ${category.label}: ${category.reviewNote}`);
-    }
-    lines.push("- Operator next actions:");
-    for (const action of report.securityReview.operatorNextActions) {
-      lines.push(`  - ${action}`);
-    }
-    lines.push("- Human review still required:");
-    for (const note of report.securityReview.humanReviewStillRequired) {
-      lines.push(`  - ${note}`);
-    }
-    lines.push(`- Out of scope note: ${report.securityReview.outOfScopeNote}`);
-
-    lines.push("", "## Dependency Inventory");
-    for (const pkg of report.securityReview.dependencyInventory.packages) {
-      lines.push(`- ${pkg.packageLabel}: ${pkg.packageName} / node ${pkg.nodeEngine}`);
+    if (report.securityReview.contractStatus === "not-applicable") {
+      lines.push("- Status: not-applicable");
+      lines.push(`- Activation source: ${report.securityReview.activationSource}`);
+      lines.push(`- Reason: ${report.securityReview.notApplicableReason}`);
+    } else {
+      lines.push(`- Activation source: ${report.securityReview.activationSource}`);
+      lines.push(`- Summary status: ${report.securityReview.summaryStatus}`);
+      lines.push(`- Checked scope: ${report.securityReview.checkedScope.join(", ")}`);
       lines.push(
-        `  - direct dependencies: ${pkg.directDependencies.length === 0 ? "none" : pkg.directDependencies.join(", ")}`
+        `- Declared security/release paths: ${
+          report.securityReview.declaredPaths.length === 0 ? "none" : report.securityReview.declaredPaths.join(", ")
+        }`
       );
       lines.push(
-        `  - direct devDependencies: ${pkg.directDevDependencies.length === 0 ? "none" : pkg.directDevDependencies.join(", ")}`
+        `- Blocking error findings: ${report.securityReview.blockingErrorFindings.length === 0 ? "none" : report.securityReview.blockingErrorFindings.length}`
       );
-      lines.push(`  - release scripts: ${pkg.releaseScripts.length === 0 ? "none" : pkg.releaseScripts.join(", ")}`);
-    }
+      if (report.securityReview.blockingErrorFindings.length > 0) {
+        for (const finding of report.securityReview.blockingErrorFindings) {
+          lines.push(`  - ${finding.code}: ${finding.message}`);
+        }
+      }
+      lines.push(
+        `- Warning findings: ${report.securityReview.warningFindings.length === 0 ? "none" : report.securityReview.warningFindings.length}`
+      );
+      if (report.securityReview.warningFindings.length > 0) {
+        for (const finding of report.securityReview.warningFindings) {
+          lines.push(`  - ${finding.code}: ${finding.message}`);
+        }
+      }
+      lines.push("- Review-required categories:");
+      for (const category of report.securityReview.reviewRequiredCategories) {
+        lines.push(`  - ${category.label}: ${category.reviewNote}`);
+      }
+      lines.push("- Operator next actions:");
+      for (const action of report.securityReview.operatorNextActions) {
+        lines.push(`  - ${action}`);
+      }
+      lines.push("- Human review still required:");
+      for (const note of report.securityReview.humanReviewStillRequired) {
+        lines.push(`  - ${note}`);
+      }
+      lines.push(`- Out of scope note: ${report.securityReview.outOfScopeNote}`);
 
-    lines.push("", "## Local Secret Scan");
-    lines.push(`- Scanned paths: ${report.securityReview.localSecretScan.scannedPaths.length}`);
-    lines.push(`- Scan rules: ${report.securityReview.localSecretScan.scanRuleCount}`);
-    lines.push(
-      `- Findings: ${report.securityReview.localSecretScan.findingCount === 0 ? "none" : report.securityReview.localSecretScan.findingCount}`
-    );
+      lines.push("", "## Dependency Inventory");
+      for (const pkg of report.securityReview.dependencyInventory.packages) {
+        lines.push(`- ${pkg.packageLabel}: ${pkg.packageName} / node ${pkg.nodeEngine}`);
+        lines.push(
+          `  - direct dependencies: ${pkg.directDependencies.length === 0 ? "none" : pkg.directDependencies.join(", ")}`
+        );
+        lines.push(
+          `  - direct devDependencies: ${pkg.directDevDependencies.length === 0 ? "none" : pkg.directDevDependencies.join(", ")}`
+        );
+        lines.push(`  - release scripts: ${pkg.releaseScripts.length === 0 ? "none" : pkg.releaseScripts.join(", ")}`);
+      }
 
-    lines.push("", "## Release Artifact Audit");
-    lines.push(
-      `- Checked artifacts: ${report.securityReview.releaseArtifactAudit.checkedArtifacts.length === 0 ? "none" : report.securityReview.releaseArtifactAudit.checkedArtifacts.length}`
-    );
-    for (const artifact of report.securityReview.releaseArtifactAudit.checkedArtifacts) {
-      lines.push(`  - ${artifact.path}`);
+      lines.push("", "## Local Secret Scan");
+      lines.push(`- Scanned paths: ${report.securityReview.localSecretScan.scannedPaths.length}`);
+      lines.push(`- Scan rules: ${report.securityReview.localSecretScan.scanRuleCount}`);
+      lines.push(
+        `- Findings: ${report.securityReview.localSecretScan.findingCount === 0 ? "none" : report.securityReview.localSecretScan.findingCount}`
+      );
+
+      lines.push("", "## Release Artifact Audit");
+      lines.push(
+        `- Checked artifacts: ${report.securityReview.releaseArtifactAudit.checkedArtifacts.length === 0 ? "none" : report.securityReview.releaseArtifactAudit.checkedArtifacts.length}`
+      );
+      for (const artifact of report.securityReview.releaseArtifactAudit.checkedArtifacts) {
+        lines.push(`  - ${artifact.path}`);
+      }
+      lines.push(
+        `- Audit findings: ${report.securityReview.releaseArtifactAudit.findingCount === 0 ? "none" : report.securityReview.releaseArtifactAudit.findingCount}`
+      );
     }
-    lines.push(
-      `- Audit findings: ${report.securityReview.releaseArtifactAudit.findingCount === 0 ? "none" : report.securityReview.releaseArtifactAudit.findingCount}`
-    );
   }
 
   lines.push("", "## Semantic Trace");
@@ -2272,6 +2510,7 @@ function writeAgentTraceArtifact({ store, repoRoot, outputDir, executedAt, repor
     declaredReadEvidence,
     approvedDesignRefs
   }).length;
+  const semanticTraceContract = resolveSemanticTraceContract({ activeWorkItem: activeTask, repoRoot });
   const trace = {
     schemaVersion: AGENT_TRACE_SCHEMA_VERSION,
     workItemId: activeTask.workItemId,
@@ -2298,7 +2537,9 @@ function writeAgentTraceArtifact({ store, repoRoot, outputDir, executedAt, repor
         ...verificationRefs
       ]),
       validatorGateDecision: report.gateDecision,
-      readyForCode: activeTask.metadata?.readyForCode ?? null
+      readyForCode: activeTask.metadata?.readyForCode ?? null,
+      contractStatus: semanticTraceContract?.contractStatus ?? "not-requested",
+      activationSource: semanticTraceContract?.activationSource ?? "not declared"
     },
     selfCheck: {
       findingCount: report.findings.length,

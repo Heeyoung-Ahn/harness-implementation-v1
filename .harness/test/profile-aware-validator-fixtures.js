@@ -13,6 +13,11 @@ const PACKET_TEMPLATE_FIXTURE = `# Work Item Packet Template
 - Profile composition rationale:
 - Active profile dependencies:
 - Profile-specific evidence status:
+- Lane-type declaration:
+- Lane-type universal minimum sections:
+- Lane-type required sections:
+- Lane-type conditional sections:
+- Lane-type not-needed sections:
 - UX archetype reference:
 - Environment topology reference:
 - Domain foundation reference:
@@ -467,6 +472,11 @@ const DEFAULT_CONCRETE_TASK_PACKET = {
     "Profile composition rationale": "The work item combines admin-grid workflow and authoritative spreadsheet ingestion.",
     "Active profile dependencies": "PRF-01 + PRF-02",
     "Profile-specific evidence status": "approved",
+    "Lane-type declaration": "",
+    "Lane-type universal minimum sections": "",
+    "Lane-type required sections": "",
+    "Lane-type conditional sections": "",
+    "Lane-type not-needed sections": "",
     "Primary admin entity / surface": "budget line item grid",
     "Grid interaction model": "dense grid with inline detail drawer",
     "Search / filter / sort / pagination behavior": "server-backed search, filter, sort, and pagination",
@@ -563,6 +573,11 @@ const DEFAULT_CONCRETE_TASK_PACKET = {
     "Environment variable policy": "documented env file with no secrets committed",
     "API / backend boundary": "HTTPS API boundary",
     "Static asset / routing policy": "SPA fallback routing",
+    "Packet exit metadata version": "v1",
+    "Packet exit metadata gate reference": "reference/artifacts/PACKET_EXIT_QUALITY_GATE.md",
+    "Packet exit metadata exit recommendation": "approve",
+    "Packet exit metadata source parity result": "aligned",
+    "Packet exit metadata validation / security / cleanup evidence": "validator clean and docs updated",
     "Packet exit quality gate reference": "reference/artifacts/PACKET_EXIT_QUALITY_GATE.md",
     "Exit recommendation": "approve",
     "Source parity result": "aligned",
@@ -673,6 +688,11 @@ function buildConcreteTaskPacketFixture(header, fields) {
 - Layer classification: ${fields["Layer classification"]}
 - Required reading before code: ${fields["Required reading before code"]}
 - Active profile dependencies: ${fields["Active profile dependencies"]}
+- Lane-type declaration: ${fields["Lane-type declaration"]}
+- Lane-type universal minimum sections: ${fields["Lane-type universal minimum sections"]}
+- Lane-type required sections: ${fields["Lane-type required sections"]}
+- Lane-type conditional sections: ${fields["Lane-type conditional sections"]}
+- Lane-type not-needed sections: ${fields["Lane-type not-needed sections"]}
 - Environment topology reference: ${fields["Environment topology reference"]}
 - Source environment: ${fields["Source environment"]}
 - Target environment: ${fields["Target environment"]}
@@ -755,6 +775,11 @@ function buildConcreteTaskPacketFixture(header, fields) {
 - Static asset / routing policy: ${fields["Static asset / routing policy"]}
 
 ## 15. Packet Exit Quality Gate
+- Packet exit metadata version: ${fields["Packet exit metadata version"]}
+- Packet exit metadata gate reference: ${fields["Packet exit metadata gate reference"]}
+- Packet exit metadata exit recommendation: ${fields["Packet exit metadata exit recommendation"]}
+- Packet exit metadata source parity result: ${fields["Packet exit metadata source parity result"]}
+- Packet exit metadata validation / security / cleanup evidence: ${fields["Packet exit metadata validation / security / cleanup evidence"]}
 - Packet exit quality gate reference: ${fields["Packet exit quality gate reference"]}
 - Exit recommendation: ${fields["Exit recommendation"]}
 - Source parity result: ${fields["Source parity result"]}

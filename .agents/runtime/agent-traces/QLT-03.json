@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "standard-harness-agent-trace/v1",
+  "workItemId": "QLT-03",
+  "packetId": "PKT-01_QLT-03_SEMANTIC_TRACE_AND_EVIDENCE_GATE_GENERALIZATION",
+  "role": "planner",
+  "workflow": ".agents/workflows/plan.md",
+  "turnClosedAt": "2026-05-11T01:51:05.038Z",
+  "requiredSsot": [
+    ".agents/artifacts/CURRENT_STATE.md",
+    ".agents/artifacts/TASK_LIST.md",
+    ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+    "reference/packets/PKT-01_QLT-03_SEMANTIC_TRACE_AND_EVIDENCE_GATE_GENERALIZATION.md"
+  ],
+  "declaredReadEvidence": [
+    ".agents/artifacts/REQUIREMENTS.md",
+    ".agents/artifacts/ARCHITECTURE_GUIDE.md",
+    ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+    ".agents/artifacts/PREVENTIVE_MEMORY.md",
+    "reference/packets/PKT-01_QLT-03_SEMANTIC_TRACE_AND_EVIDENCE_GATE_GENERALIZATION.md",
+    ".agents/artifacts/VALIDATION_REPORT.json"
+  ],
+  "approvedDesignRefs": [
+    ".agents/artifacts/REQUIREMENTS.md",
+    ".agents/artifacts/ARCHITECTURE_GUIDE.md",
+    ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+    "reference/packets/PKT-01_QLT-03_SEMANTIC_TRACE_AND_EVIDENCE_GATE_GENERALIZATION.md"
+  ],
+  "implementationRefs": [],
+  "verificationRefs": [
+    ".agents/artifacts/VALIDATION_REPORT.json",
+    ".agents/artifacts/VALIDATION_REPORT.md"
+  ],
+  "semanticTrace": {
+    "hardFailCodes": [
+      "missing_required_evidence",
+      "broken_source_reference",
+      "contradictory_evidence",
+      "stale_evidence",
+      "required_semantic_trace_missing",
+      "validation_report_context_parity_break",
+      "active_context_validation_executed_at_mismatch"
+    ],
+    "warningCodes": [
+      "evidence_linkage_thin",
+      "reviewer_rationale_thin"
+    ],
+    "reviewerOnlyCodes": [
+      "design_intent_fulfillment",
+      "work_fit_assessment",
+      "domain_specific_business_rule_judgment"
+    ],
+    "candidateGateIds": [
+      "required-evidence-present",
+      "source-references-resolve",
+      "semantic-trace-present",
+      "evidence-non-contradictory",
+      "evidence-freshness",
+      "validation-context-parity"
+    ],
+    "sourceRefsResolved": true,
+    "validatorGateDecision": "pass",
+    "readyForCode": "approved",
+    "contractStatus": "requested",
+    "activationSource": "packet metadata"
+  },
+  "selfCheck": {
+    "findingCount": 0,
+    "blockingFindingCount": 0,
+    "warningCount": 0
+  },
+  "handoff": {
+    "createdAt": "2026-05-11T01:50:55.255Z",
+    "fromRole": "reviewer",
+    "toRole": "planner",
+    "sourceRef": "reference/packets/PKT-01_QLT-03_SEMANTIC_TRACE_AND_EVIDENCE_GATE_GENERALIZATION.md",
+    "summary": "[reviewer -> planner] Packet exit approved; Planner should choose or refine the next lane."
+  }
+}

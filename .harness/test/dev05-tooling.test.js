@@ -223,6 +223,164 @@ test("validation report writes a lightweight semantic trace summary for the acti
   assert.equal(trace.turnClosedAt, report.report.executedAt);
 });
 
+test("QLT-03 validator enforces reusable semantic trace contract from packet metadata", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-qlt03-trace-required-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_QLT-03_TEST.md";
+
+  fs.writeFileSync(
+    path.join(repoRoot, packetPath),
+    [
+      "# PKT-01 QLT-03 Test",
+      "",
+      "## Quick Decision Header",
+      "| Item | Proposed | Why | Status |",
+      "|---|---|---|---|",
+      "| Work item | QLT-03 semantic trace and evidence gate generalization | test packet | approved |",
+      "| Ready For Code | approved | test packet | approved |",
+      "| Human sync needed | yes | test packet | approved |",
+      "| Gate profile | contract | test packet | approved |",
+      "| User-facing impact | none | test packet | not-needed |",
+      "| Layer classification | core | test packet | approved |",
+      "| Active profile dependencies | none | test packet | not-needed |",
+      "| Profile evidence status | not-needed | test packet | not-needed |",
+      "| UX archetype status | not-needed | test packet | not-needed |",
+      "| UX deviation status | none | test packet | not-needed |",
+      "| Environment topology status | not-needed | test packet | not-needed |",
+      "| Domain foundation status | not-needed | test packet | not-needed |",
+      "| Authoritative source intake status | approved | test packet | approved |",
+      "| Shared-source wave status | not-needed | test packet | not-needed |",
+      "| Packet exit gate status | pending | test packet | draft |",
+      "| Improvement promotion status | proposed | test packet | draft |",
+      "| Existing system dependency | none | test packet | not-needed |",
+      "| New authoritative source impact | analyzed | test packet | approved |",
+      "| Risk if started now | low | test packet | approved |",
+      "",
+      "## Scope",
+      "- Layer classification: core",
+      "- Required reading before code: `.agents/artifacts/CURRENT_STATE.md`, `.agents/artifacts/TASK_LIST.md`, this packet",
+      "- Authoritative source intake reference: `reference/packets/PKT-01_QLT-02_EVIDENCE_VALIDATION_SEMANTIC_TRACE_AND_AGENT_EVAL_CI_GATING.md`",
+      "- Authoritative source disposition: approved reusable baseline evidence from `QLT-02`",
+      "- Existing plan conflict: old semantic-trace enforcement still depends on literal `QLT-02` naming",
+      "- Current implementation impact: reusable validator/runtime evidence gating",
+      "- Impacted packet set scope: single-packet",
+      "- Semantic trace evidence status: requested"
+    ].join("\n"),
+    "utf8"
+  );
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-11T02:00:00.000Z") });
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "QLT-03 reusable trace contract",
+    releaseGoal: "Enforce reusable semantic trace evidence.",
+    sourceRef: packetPath
+  });
+  store.upsertWorkItem({
+    workItemId: "QLT-03",
+    title: "Semantic trace and evidence gate generalization",
+    status: "in_progress",
+    owner: "developer",
+    nextAction: "Implement the approved packet scope and hand off to Tester.",
+    sourceRef: packetPath,
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  store.upsertArtifact({
+    artifactId: "task_packet:PKT-01_QLT-03_TEST",
+    path: packetPath,
+    category: "task_packet",
+    title: "QLT-03 test packet",
+    sourceRef: packetPath
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const validator = runValidator({ repoRoot, dbPath, outputDir: repoRoot });
+
+  assert.equal(validator.ok, false);
+  assert.equal(validator.findings.some((finding) => finding.code === "required_semantic_trace_missing"), true);
+});
+
+test("validator does not require semantic trace when reusable trace contract is not requested", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-qlt03-trace-not-requested-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_QLT-03_TEST.md";
+
+  fs.writeFileSync(
+    path.join(repoRoot, packetPath),
+    [
+      "# PKT-01 QLT-03 Test",
+      "",
+      "## Quick Decision Header",
+      "| Item | Proposed | Why | Status |",
+      "|---|---|---|---|",
+      "| Work item | QLT-03 semantic trace and evidence gate generalization | test packet | approved |",
+      "| Ready For Code | approved | test packet | approved |",
+      "| Human sync needed | yes | test packet | approved |",
+      "| Gate profile | contract | test packet | approved |",
+      "| User-facing impact | none | test packet | not-needed |",
+      "| Layer classification | core | test packet | approved |",
+      "| Active profile dependencies | none | test packet | not-needed |",
+      "| Profile evidence status | not-needed | test packet | not-needed |",
+      "| UX archetype status | not-needed | test packet | not-needed |",
+      "| UX deviation status | none | test packet | not-needed |",
+      "| Environment topology status | not-needed | test packet | not-needed |",
+      "| Domain foundation status | not-needed | test packet | not-needed |",
+      "| Authoritative source intake status | approved | test packet | approved |",
+      "| Shared-source wave status | not-needed | test packet | not-needed |",
+      "| Packet exit gate status | pending | test packet | draft |",
+      "| Improvement promotion status | proposed | test packet | draft |",
+      "| Existing system dependency | none | test packet | not-needed |",
+      "| New authoritative source impact | analyzed | test packet | approved |",
+      "| Risk if started now | low | test packet | approved |",
+      "",
+      "## Scope",
+      "- Layer classification: core",
+      "- Required reading before code: `.agents/artifacts/CURRENT_STATE.md`, `.agents/artifacts/TASK_LIST.md`, this packet",
+      "- Authoritative source intake reference: `reference/packets/PKT-01_QLT-02_EVIDENCE_VALIDATION_SEMANTIC_TRACE_AND_AGENT_EVAL_CI_GATING.md`",
+      "- Authoritative source disposition: approved reusable baseline evidence from `QLT-02`",
+      "- Existing plan conflict: old semantic-trace enforcement still depends on literal `QLT-02` naming",
+      "- Current implementation impact: reusable validator/runtime evidence gating",
+      "- Impacted packet set scope: single-packet"
+    ].join("\n"),
+    "utf8"
+  );
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-11T02:10:00.000Z") });
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "QLT-03 generic validator behavior",
+    releaseGoal: "Do not false-fail when trace contract is not requested.",
+    sourceRef: packetPath
+  });
+  store.upsertWorkItem({
+    workItemId: "QLT-03",
+    title: "Semantic trace and evidence gate generalization",
+    status: "in_progress",
+    owner: "developer",
+    nextAction: "Implement the approved packet scope and hand off to Tester.",
+    sourceRef: packetPath,
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  store.upsertArtifact({
+    artifactId: "task_packet:PKT-01_QLT-03_TEST",
+    path: packetPath,
+    category: "task_packet",
+    title: "QLT-03 test packet",
+    sourceRef: packetPath
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const validator = runValidator({ repoRoot, dbPath, outputDir: repoRoot });
+
+  assert.equal(validator.findings.some((finding) => finding.code === "required_semantic_trace_missing"), false);
+});
+
 test("OPS-05 validation report includes the Security Review Summary contract", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-ops05-security-review-"));
   seedStandardRepo(repoRoot);
@@ -308,7 +466,15 @@ test("OPS-05 validation report includes the Security Review Summary contract", (
     owner: "developer",
     nextAction: "Implement the approved packet scope and hand off to Tester.",
     sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md",
-    metadata: { gateProfile: "contract", readyForCode: "approved" }
+    metadata: {
+      gateProfile: "contract",
+      readyForCode: "approved",
+      securityReviewEvidence: {
+        status: "requested",
+        scope: ["package manifests", "release-facing artifacts", "declared security/release paths"],
+        declaredPaths: ["reference/manuals/HARNESS_MANUAL.md", "standard-template/HARNESS_MANUAL.md"]
+      }
+    }
   });
   writeStateSurfaces({ store, repoRoot });
   store.close();
@@ -365,7 +531,15 @@ test("OPS-05 validation report blocks private key findings and preserves warning
     owner: "developer",
     nextAction: "Implement the approved packet scope and hand off to Tester.",
     sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md",
-    metadata: { gateProfile: "contract", readyForCode: "approved" }
+    metadata: {
+      gateProfile: "contract",
+      readyForCode: "approved",
+      securityReviewEvidence: {
+        status: "requested",
+        scope: ["package manifests", "release-facing artifacts", "declared security/release paths"],
+        declaredPaths: ["reference/manuals/HARNESS_MANUAL.md"]
+      }
+    }
   });
   writeStateSurfaces({ store, repoRoot });
   store.close();
@@ -377,6 +551,146 @@ test("OPS-05 validation report blocks private key findings and preserves warning
   assert.equal(report.report.gateDecision, "hold");
   assert.equal(findingCodes.has("error:secret_scan_private_key_detected"), true);
   assert.equal(findingCodes.has("warning:release_artifact_stale_pmw_reference"), true);
+});
+
+test("OPS-08 validation report activates reusable security review from packet metadata", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-ops08-security-review-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_OPS-08_TEST.md";
+
+  fs.writeFileSync(
+    path.join(repoRoot, packetPath),
+    [
+      "# PKT-01 OPS-08 Test",
+      "",
+      "## Quick Decision Header",
+      "| Item | Proposed | Why | Status |",
+      "|---|---|---|---|",
+      "| Work item | OPS-08 reusable security review evidence generalization | test packet | approved |",
+      "| Ready For Code | approve | test packet | approved |",
+      "| Human sync needed | yes | test packet | approved |",
+      "| Gate profile | contract | test packet | approved |",
+      "| User-facing impact | none | test packet | not-needed |",
+      "| Layer classification | core | test packet | approved |",
+      "| Active profile dependencies | none | test packet | not-needed |",
+      "| Profile evidence status | not-needed | test packet | not-needed |",
+      "| UX archetype status | not-needed | test packet | not-needed |",
+      "| UX deviation status | none | test packet | not-needed |",
+      "| Environment topology status | not-needed | test packet | not-needed |",
+      "| Domain foundation status | not-needed | test packet | not-needed |",
+      "| Authoritative source intake status | approved | test packet | approved |",
+      "| Shared-source wave status | not-needed | test packet | not-needed |",
+      "| Packet exit gate status | pending | test packet | draft |",
+      "| Improvement promotion status | proposed | test packet | draft |",
+      "| Existing system dependency | none | test packet | not-needed |",
+      "| New authoritative source impact | analyzed | test packet | approved |",
+      "| Risk if started now | low | test packet | approved |",
+      "",
+      "## Scope",
+      "- Layer classification: core",
+      "- Required reading before code: `.agents/artifacts/CURRENT_STATE.md`, `.agents/artifacts/TASK_LIST.md`, this packet",
+      "- Security review evidence status: requested",
+      "- Security review evidence scope: package manifests; release-facing artifacts; declared security/release paths",
+      "- Declared security/release paths: reference/manuals/HARNESS_MANUAL.md; standard-template/HARNESS_MANUAL.md"
+    ].join("\n"),
+    "utf8"
+  );
+  fs.writeFileSync(
+    path.join(repoRoot, "package.json"),
+    JSON.stringify({ name: "ops-08-root", private: true, type: "module", engines: { node: ">=24.0.0" } }, null, 2),
+    "utf8"
+  );
+  fs.mkdirSync(path.join(repoRoot, "standard-template"), { recursive: true });
+  fs.writeFileSync(
+    path.join(repoRoot, "standard-template", "package.json"),
+    JSON.stringify({ name: "ops-08-starter", private: true, type: "module", engines: { node: ">=24.0.0" } }, null, 2),
+    "utf8"
+  );
+  fs.mkdirSync(path.join(repoRoot, "installer"), { recursive: true });
+  fs.mkdirSync(path.join(repoRoot, "packaging"), { recursive: true });
+  fs.mkdirSync(path.join(repoRoot, "reference", "manuals"), { recursive: true });
+  fs.writeFileSync(path.join(repoRoot, "installer", "install-harness.js"), "// installer\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, "installer", "INSTALL_HARNESS.cmd"), "@echo off\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, "packaging", "build-release-package.js"), "// package release\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, "packaging", "build-windows-exe-installers.js"), "// package windows\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, "reference", "manuals", "HARNESS_MANUAL.md"), "# Harness Manual\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, "standard-template", "README.md"), "# Starter\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, "standard-template", "START_HERE.md"), "# Start\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, "standard-template", "AGENTS.md"), "# Agents\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, "standard-template", "HARNESS_MANUAL.md"), "# Starter Manual\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, "standard-template", "INIT_STANDARD_HARNESS.cmd"), "@echo off\n", "utf8");
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-11T01:00:00.000Z") });
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "OPS-08 implementation is in progress.",
+    releaseGoal: "Generalize reusable security-review evidence.",
+    sourceRef: packetPath
+  });
+  store.upsertWorkItem({
+    workItemId: "OPS-08",
+    title: "Reusable security review evidence generalization",
+    status: "in_progress",
+    owner: "developer",
+    nextAction: "Implement the approved packet scope and hand off to Tester.",
+    sourceRef: packetPath,
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  store.upsertArtifact({
+    artifactId: "task_packet:PKT-01_OPS-08_TEST",
+    path: packetPath,
+    category: "task_packet",
+    title: "OPS-08 test packet",
+    sourceRef: packetPath
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const report = writeValidationReport({ repoRoot, dbPath, outputDir: repoRoot });
+  const markdown = fs.readFileSync(report.markdownPath, "utf8");
+
+  assert.equal(report.report.securityReview?.contractStatus, "requested");
+  assert.equal(report.report.securityReview?.activationSource, "packet metadata");
+  assert.match(markdown, /## Security Review Summary/);
+  assert.match(markdown, /Activation source: packet metadata/);
+  assert.match(markdown, /Declared security\/release paths: reference\/manuals\/HARNESS_MANUAL\.md, standard-template\/HARNESS_MANUAL\.md/);
+});
+
+test("validation report keeps an explicit not-applicable security review section when not requested", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-security-review-not-applicable-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-11T01:10:00.000Z") });
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "DEV-05 tooling is in progress.",
+    releaseGoal: "Keep validation surfaces explicit.",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+  store.upsertWorkItem({
+    workItemId: "DEV-05",
+    title: "validator / migration / cutover tooling",
+    status: "in_progress",
+    owner: "developer",
+    nextAction: "Write validation evidence.",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const report = writeValidationReport({ repoRoot, dbPath, outputDir: repoRoot });
+  const markdown = fs.readFileSync(report.markdownPath, "utf8");
+
+  assert.equal(report.ok, true);
+  assert.equal(report.report.securityReview?.contractStatus, "not-applicable");
+  assert.match(markdown, /## Security Review Summary/);
+  assert.match(markdown, /Status: not-applicable/);
+  assert.match(markdown, /not requested by current packet\/runtime metadata/);
 });
 
 test("cutover report writes markdown and json evidence files", () => {

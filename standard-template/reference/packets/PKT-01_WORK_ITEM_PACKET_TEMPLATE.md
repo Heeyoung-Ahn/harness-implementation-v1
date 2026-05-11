@@ -48,6 +48,18 @@
 | New authoritative source impact | none / pending / analyzed | [새 기획 문서 영향 여부] | draft |
 | Risk if started now | low / medium / high | [남아 있는 모호성] | draft |
 
+## Lane-Typed Minimum Contract
+- Lane-type declaration:
+  [optional: declare exactly one of `planning`, `narrow-runtime`, `validation-review`, `release-security`; leave undeclared to keep the current full packet baseline]
+- Lane-type universal minimum sections:
+  [Goal; Non-Goal; In Scope; Out Of Scope; Data / Source Impact; Verification Plan; Refactor / residual debt disposition; Packet Exit Quality Gate; Reopen Trigger]
+- Lane-type required sections:
+  [lane-type별로 반드시 닫아야 하는 section 또는 evidence surface]
+- Lane-type conditional sections:
+  [조건이 맞을 때만 닫는 section 또는 evidence surface]
+- Lane-type not-needed sections:
+  [이번 lane type에서 명시적으로 `not-needed` 처리하는 section 또는 evidence surface]
+
 ## 1. Goal
 - [이 작업이 해결해야 하는 핵심 목표]
 
@@ -254,6 +266,11 @@
 - [어떻게 검증할지]
 
 ## 15. Packet Exit Quality Gate
+- Packet exit metadata version: v1
+- Packet exit metadata gate reference:
+- Packet exit metadata exit recommendation:
+- Packet exit metadata source parity result:
+- Packet exit metadata validation / security / cleanup evidence:
 - Packet exit quality gate reference:
 - Exit recommendation:
 - Implementation delta summary:

@@ -21,6 +21,8 @@
 
 2026-05-10 `PLN-11` opened next as the post-OPS07 planning lane. Its purpose is to sequence the next reusable follow-up work as runtime-generalization phase 1 (`OPS-08`, `QLT-03`) and parked process-friction phase 2 (`OPS-09`, `PLN-12`) instead of reopening one broad mixed lane.
 
+2026-05-11 `PLN-11` is closed after user approval of the `2 + 2` split. `OPS-08` opened first and closed after reviewer approval and planner closeout reflection. `QLT-03` then closed after reviewer approval and planner closeout reflection. `OPS-09` then closed after reviewer approval and planner closeout reflection. `PLN-12` then closed as planning evidence after approving the first lane-type set, universal minimum contract, and the rule that burden reduction must use lane-typed `not-needed` / `conditional` treatment. `OPS-10` is now open as the active concrete contract packet draft for that approved planning result.
+
 ## Follow-Up Phase Plan
 1. approved release-ready baseline을 보존하면서 follow-up planning lane을 연다.
 2. `PLN-03`으로 core / optional profile / project packet activation contract를 정의한다.
@@ -76,6 +78,7 @@
 - OPS-06 Derived-state refresh parity after closeout
 - OPS-05 Release-assurance and security-automation hardening
 - PLN-10 Post-DEV11 hardening and release assurance sequencing
+- PLN-11 Post-OPS07 runtime generalization and process friction reduction
 
 ## PLN-11 Post-OPS07 Runtime Generalization And Process Friction Reduction
 
@@ -84,7 +87,8 @@ Open the next planning lane after `OPS-07` without repeating the previous mixed-
 
 ### Status
 - Opened on 2026-05-10 as the active planner-owned lane after `OPS-07` closeout.
-- No implementation packet is open yet under `PLN-11`.
+- Closed on 2026-05-11 after user approval of the `2 + 2` split.
+- `OPS-08` is now the active implementation packet.
 
 ### Input
 - `reference/planning/PLN-11_POST_OPS07_RUNTIME_GENERALIZATION_AND_PROCESS_FRICTION_REDUCTION_DRAFT.md`
@@ -112,7 +116,76 @@ Open the next planning lane after `OPS-07` without repeating the previous mixed-
 - Phase 2: parked `OPS-09` structured packet-exit metadata and closeout parser hardening, then parked `PLN-12` lane-typed packet minimums and approval-surface reduction
 
 ### Operator Next Action
-- Review `PLN-11` and decide whether to approve, adjust, or hold the proposed `2 + 2` sequence before any implementation packet opens.
+- `OPS-10` is closed; latest closeout handoff is `planner -> planner`.
+- Keep the reusable baseline on planning hold until a new approved lane is selected.
+- Source packet: `reference/packets/PKT-01_OPS-10_LANE_TYPED_PACKET_MINIMUM_RULES_AND_CONDITIONAL_APPROVAL_SURFACE.md`.
+- Preserve packet-before-code, active-context derived authority, generated-doc immutability, root/starter sync, Tester/Reviewer separation, and human approval gates.
+
+## OPS-08 Reusable Security Review Evidence Generalization
+
+### Goal
+Generalize the useful `OPS-05` local-first pre-review security/release evidence baseline into a reusable runtime/report contract that is not tied to the literal `OPS-05` lane id and can work for downstream internal business-app repos.
+
+### Status
+- Opened on 2026-05-11 as the active phase-1 packet after `PLN-11` approval.
+- Closed on 2026-05-11 after developer implementation, tester verification, reviewer approval, and planner closeout reflection.
+
+### Input
+- `reference/packets/PKT-01_OPS-08_REUSABLE_SECURITY_REVIEW_EVIDENCE_GENERALIZATION.md`
+- `reference/packets/PKT-01_OPS-05_RELEASE_ASSURANCE_AND_SECURITY_AUTOMATION_HARDENING.md`
+- `.harness/runtime/state/dev05-tooling.js`
+- `.harness/runtime/state/drift-validator.js`
+- `.agents/artifacts/REQUIREMENTS.md`
+- `.agents/artifacts/ARCHITECTURE_GUIDE.md`
+
+### Required Output
+- reusable activation rule for security-review evidence
+- declared evidence-scope support beyond literal maintainer-only lane context
+- preserved `error / warning / review-required` wording contract
+- root / `standard-template` sync plan
+
+### Exit Criteria
+- `Security Review Summary` no longer depends on literal `OPS-05` work-item naming
+- scope declaration works for downstream repo/release-facing surfaces without broadening into org-specific security workflow
+- local-first wording remains clearly non-approval
+- implementation stays within the approved reusable generalization boundary until Developer hands off to Tester
+
+### Operator Next Action
+- Treat `OPS-08` as closed reusable phase-1 evidence and open `QLT-03` as the next narrow packet before any broader phase-2 process-friction work.
+
+## QLT-03 Semantic Trace And Evidence Gate Generalization
+
+### Goal
+Generalize the useful `QLT-02` semantic trace and evidence gate into a reusable validator/runtime contract that later packets can opt into without depending on the literal `QLT-02` lane name.
+
+### Status
+- Opened on 2026-05-11 as the active phase-1 packet after `OPS-08` closeout.
+- Detailed agreement and `Ready For Code` are both approved; current handoff is `planner -> developer`.
+
+### Input
+- `reference/packets/PKT-01_QLT-03_SEMANTIC_TRACE_AND_EVIDENCE_GATE_GENERALIZATION.md`
+- `reference/packets/PKT-01_QLT-02_EVIDENCE_VALIDATION_SEMANTIC_TRACE_AND_AGENT_EVAL_CI_GATING.md`
+- `reference/planning/PLN-11_POST_OPS07_RUNTIME_GENERALIZATION_AND_PROCESS_FRICTION_REDUCTION_DRAFT.md`
+- `.harness/runtime/state/drift-validator.js`
+- `.harness/runtime/state/dev05-tooling.js`
+- `.agents/artifacts/REQUIREMENTS.md`
+- `.agents/artifacts/ARCHITECTURE_GUIDE.md`
+
+### Required Output
+- reusable activation rule for semantic trace/evidence gating
+- opted-in validator enforcement beyond literal `QLT-02`
+- preserved validation-report trace summary and `ACTIVE_CONTEXT.validation` parity
+- preserved `QLT-02` regression compatibility
+- root / `standard-template` sync plan
+
+### Exit Criteria
+- semantic trace/evidence gating no longer depends on literal `QLT-02` work-item naming
+- opted-in later packets can trigger the same local evidence discipline without broadening into CI/program work
+- non-requested packets do not fail because of the old lane-specific rule
+- implementation stays within the approved reusable generalization boundary until Developer hands off to Tester
+
+### Operator Next Action
+- Implement `QLT-03` within the approved reusable generalization boundary, preserve root / `standard-template` sync, and hand off to Tester with validation evidence.
 
 ## DEV-06 Execution
 ### Goal

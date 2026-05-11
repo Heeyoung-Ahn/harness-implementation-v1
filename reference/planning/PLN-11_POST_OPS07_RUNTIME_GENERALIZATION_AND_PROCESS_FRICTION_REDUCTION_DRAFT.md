@@ -3,8 +3,9 @@
 ## Status
 - Draft opened on 2026-05-10 after `OPS-07` closeout approval and no-active-lane planner hold stabilization.
 - Planning owner: `Planner`
-- This draft is the selected next planning lane after `OPS-07`.
-- No implementation packet is opened yet under this draft.
+- This draft was the selected next planning lane after `OPS-07`.
+- Approved on 2026-05-11 as the sequencing decision for the next `2 + 2` follow-up split.
+- `OPS-08` is now opened next as the immediate concrete phase-1 packet draft.
 
 ## Purpose
 This draft sequences the next reusable follow-up work as `2 + 2` instead of one broad lane, so runtime-contract generalization closes before planning/process-friction reduction opens.
@@ -12,15 +13,15 @@ This draft sequences the next reusable follow-up work as `2 + 2` instead of one 
 ## Quick Decision Header
 | Item | Proposed | Why | Status |
 |---|---|---|---|
-| Work item | PLN-11 post-OPS07 runtime generalization and process friction reduction | Recent planner review found four real reusable gaps, but opening them together would mix runtime, validator, packet-template, and planning-UX changes into one overly broad lane | draft |
+| Work item | PLN-11 post-OPS07 runtime generalization and process friction reduction | Recent planner review found four real reusable gaps, but opening them together would mix runtime, validator, packet-template, and planning-UX changes into one overly broad lane | approved-closeout |
 | Ready For Code | not-needed | this lane only chooses and sequences follow-up packets; implementation remains blocked until a concrete packet is approved | not-needed |
-| Human sync needed | yes | the user should approve whether the proposed `2 + 2` split is the right next baseline sequence | pending |
-| Gate profile | contract | this lane defines packet boundaries, order, and approval gates before implementation starts | draft |
-| User-facing impact | medium | the immediate effect is on harness maintainability and real-project usability rather than downstream app features | draft |
-| Layer classification | core | the candidate follow-ups change reusable runtime, validator, planning, and packet contracts | draft |
+| Human sync needed | yes | the user should approve whether the proposed `2 + 2` split is the right next baseline sequence | closed |
+| Gate profile | contract | this lane defines packet boundaries, order, and approval gates before implementation starts | approved-closeout |
+| User-facing impact | medium | the immediate effect is on harness maintainability and real-project usability rather than downstream app features | approved-closeout |
+| Layer classification | core | the candidate follow-ups change reusable runtime, validator, planning, and packet contracts | approved-closeout |
 | Active profile dependencies | none | this is core baseline planning | not-needed |
 | Profile evidence status | not-needed | no optional profile is active | not-needed |
-| Packet exit gate status | pending | planning closeout depends on user agreement about the sequence and immediate next packet | pending |
+| Packet exit gate status | approved | planning closeout depends on user agreement about the sequence and immediate next packet | approved |
 
 ## 1. Goal
 - Preserve the stable PMW-free V1.3 reusable baseline while opening the next follow-up work in a narrow order.
@@ -72,19 +73,21 @@ This draft sequences the next reusable follow-up work as `2 + 2` instead of one 
 - Confirmed: the default packet burden remains heavy for a non-specialist operator even though the harness is explicitly intended to help that operator finish large internal business-app projects with AI assistance.
 
 ## 8. Open Decisions
-- Should `OPS-08` open first, with `QLT-03` immediately after it, as the approved phase-1 sequence?
-- Or should the user adjust the order between `OPS-08` and `QLT-03` before any concrete packet opens?
-- Phase 2 is intentionally parked. It should not open until phase 1 closes or a stronger urgency appears.
+- None inside the closed `PLN-11` sequencing scope.
+- `OPS-08` is the approved immediate next packet.
+- `QLT-03` remains the approved next-following phase-1 candidate after `OPS-08`.
+- Phase 2 remains intentionally parked until phase 1 closes or a stronger urgency appears.
 
 ## 9. Human Sync / Approval Boundary
 | Decision Item | Needed | Owner | Status | Notes |
 |---|---|---|---|---|
-| `2 + 2` split agreement | yes | user/planner | pending | approve or adjust the proposed sequencing |
-| Immediate phase-1 next packet | yes | user/planner | pending | recommended default is `OPS-08` first |
-| Phase-1 packet ordering | yes | user/planner | pending | default is `OPS-08 -> QLT-03` |
-| Phase-2 parking decision | yes | user/planner | pending | keep `OPS-09` and `PLN-12` parked until phase 1 closes |
+| `2 + 2` split agreement | yes | user/planner | closed | approved on 2026-05-11 |
+| Immediate phase-1 next packet | yes | user/planner | closed | `OPS-08` opens first |
+| Phase-1 packet ordering | yes | user/planner | closed | approved as `OPS-08 -> QLT-03` |
+| Phase-2 parking decision | yes | user/planner | approved | `OPS-09` and `PLN-12` remain parked |
 
 ## 10. Recommended Next Action
-- If the user approves this draft, open `OPS-08` as the immediate next narrow packet.
+- Treat `PLN-11` as closed sequencing evidence.
+- Review `PKT-01_OPS-08_REUSABLE_SECURITY_REVIEW_EVIDENCE_GENERALIZATION.md` and decide whether to approve, adjust, or hold the detailed agreement before implementation opens.
 - Keep `QLT-03` as the approved next-following candidate, but do not open implementation for it yet.
 - Leave `OPS-09` and `PLN-12` as parked phase-2 follow-ups until phase 1 closes.

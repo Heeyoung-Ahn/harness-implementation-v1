@@ -1,10 +1,10 @@
 # TASK_LIST
 
 ## Technical Facts
-- Open work items: 41
+- Open work items: 46
 - Open blocked or at-risk items: 0
 - Recent handoffs captured: 10
-- Generated at: 2026-05-10T14:49:37.889Z
+- Generated at: 2026-05-11T04:57:36.235Z
 
 ## Blocked / At Risk Summary
 - 0 open blocker or risks require attention.
@@ -18,7 +18,12 @@
 ## Work Item Detail
 | ID | Title | Status | Next Action |
 |---|---|---|---|
-| PLN-11 | Post-OPS07 runtime generalization and process friction reduction | planning | Review the PLN-11 draft and decide whether to approve, adjust, or hold the proposed 2 + 2 sequence before any implementation packet opens. |
+| OPS-10 | Lane-typed packet minimum rules and conditional approval surface | closed | Keep the reusable baseline on planning hold until a new approved lane is selected. |
+| PLN-12 | Lane-typed packet minimums and approval-surface reduction | closed | Closed as planning evidence; review OPS-10 to decide the next concrete contract boundary. |
+| OPS-09 | Structured packet-exit metadata and closeout parser hardening | closed | Closed after reviewer approval and planner closeout reflection; review PLN-12 to decide the next planning boundary. |
+| QLT-03 | Semantic trace and evidence gate generalization | completed | Packet exit approved; planner closeout is reflected and the next lane is OPS-09 planning. |
+| OPS-08 | Reusable security review evidence generalization | closed | Planner recorded OPS-08 closeout after reviewer approval and opened QLT-03 as the next phase-1 packet draft. |
+| PLN-11 | Post-OPS07 runtime generalization and process friction reduction | closed | Treat PLN-11 as closed sequencing evidence and review OPS-08 next. |
 | OPS-07 | Planner hold closeout automation | closed | Keep the reusable baseline on planning hold until a new approved lane is selected. |
 | OPS-06 | Derived-state refresh parity after closeout | closed | Keep the reusable baseline on planning hold until a new approved lane is selected. |
 | OPS-05 | Release-assurance and security-automation hardening | closed | Keep the reusable baseline on planning hold until a new approved lane is selected. |
@@ -61,18 +66,18 @@
 | DEV-04 | PMW read surface | done | Closed after browser verification passed at http://127.0.0.1:4173. |
 
 ## Handoff Log
-- 2026-05-10T14:49:37.885Z: [planner -> planner] Opened PLN-11 draft to split the next reusable follow-up work into runtime-generalization phase 1 and process-friction phase 2.
-- 2026-05-10T14:32:03.263Z: [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.
-- 2026-05-10T14:28:39.475Z: [reviewer -> planner] Packet exit approved; Planner should choose or refine the next lane.
-- 2026-05-10T14:26:19.935Z: [tester -> reviewer] Tester verification completed; Reviewer should assess packet exit readiness.
-- 2026-05-10T14:24:03.235Z: [developer -> tester] Developer implementation completed; Tester should verify the approved scope.
-- 2026-05-10T14:00:38.332Z: [developer -> developer] Developer lane remains active after OPS-07 Ready For Code approval metadata reconciliation.
-- 2026-05-10T13:58:41.583Z: [planner -> developer] Planning approved; implementation can proceed.
-- 2026-05-10T13:54:46.001Z: [planner -> planner] User approved the narrow OPS-07 detailed agreement; planner should now close Ready For Code before implementation opens.
-- 2026-05-10T13:46:34.874Z: [planner -> planner] Opened OPS-07 draft for planner hold closeout automation.
-- 2026-05-10T13:32:57.633Z: [planner -> planner] Planner recorded OPS-05 closeout and placed post-DEV11 follow-up planning on hold pending a new approved lane.
+- 2026-05-11T04:57:36.235Z: [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.
+- 2026-05-11T04:55:48.299Z: [reviewer -> planner] Packet exit approved; Planner should choose or refine the next lane.
+- 2026-05-11T04:52:23.748Z: [tester -> reviewer] Tester verification completed; Reviewer should assess packet exit readiness.
+- 2026-05-11T04:31:22.109Z: [developer -> tester] Developer implementation completed; Tester should verify the approved scope.
+- 2026-05-11T04:08:44.479Z: [planner -> developer] Planning approved; implementation can proceed.
+- 2026-05-11T04:05:44.291Z: [planner -> planner] OPS-10 detailed agreement is approved with stable lane-type declaration and advisory-first validator constraints; close Ready For Code before implementation opens.
+- 2026-05-11T02:59:51.187Z: [planner -> planner] PLN-12 closeout recommendation is approved; OPS-10 draft is now open as the next concrete contract packet.
+- 2026-05-11T02:51:35.808Z: [planner -> planner] PLN-12 detailed agreement is approved with universal-minimum and not-needed/conditional constraints; decide the next concrete follow-up or close planning.
+- 2026-05-11T02:45:51.427Z: [planner -> planner] PLN-12 draft selection is approved; review detailed agreement before any concrete packet opens.
+- 2026-05-11T02:39:48.679Z: [planner -> planner] OPS-09 closeout reflected; PLN-12 draft is now open as the next process-friction planning lane.
 
 ## Generation Metadata
 - Generated docs: CURRENT_STATE.md, TASK_LIST.md
-- Source revision: 2026-05-10T14:49:37.889Z
+- Source revision: 2026-05-11T04:57:36.235Z
 - Sync status: fresh at generation time

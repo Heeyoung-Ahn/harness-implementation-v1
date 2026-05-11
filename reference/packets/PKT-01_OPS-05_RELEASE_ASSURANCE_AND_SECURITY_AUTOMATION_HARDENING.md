@@ -180,6 +180,9 @@ This packet defines:
 - Core / profile / project boundary rationale: this is reusable release/security hardening for the standard harness baseline
 - Active profile dependencies: none
 - Required reading before code: `AGENTS.md`, `.agents/artifacts/CURRENT_STATE.md`, `.agents/artifacts/TASK_LIST.md`, `.agents/artifacts/REQUIREMENTS.md`, `.agents/artifacts/ARCHITECTURE_GUIDE.md`, `.agents/artifacts/IMPLEMENTATION_PLAN.md`, `.agents/artifacts/PREVENTIVE_MEMORY.md`, `reference/planning/PLN-10_POST_DEV11_HARDENING_AND_RELEASE_ASSURANCE_DRAFT.md`, `reference/artifacts/STANDARD_HARNESS_REAL_PROJECT_READINESS_ASSESSMENT.md`, `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`, this packet
+- Security review evidence status: requested
+- Security review evidence scope: package manifests; release-facing artifacts; declared security/release paths
+- Declared security/release paths: reference/manuals/HARNESS_MANUAL.md; standard-template/HARNESS_MANUAL.md
 - Environment topology reference: local maintainer repository only
 - Domain foundation reference: not-needed
 - Authoritative source intake reference: `reference/artifacts/STANDARD_HARNESS_REAL_PROJECT_READINESS_ASSESSMENT.md`

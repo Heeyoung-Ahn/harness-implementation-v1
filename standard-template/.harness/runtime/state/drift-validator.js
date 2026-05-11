@@ -89,6 +89,30 @@ const TASK_PACKET_DISCOVERY_REQUIRED_MARKERS = [
   "| Authoritative source intake status |",
   "- Required reading before code:"
 ];
+const TASK_PACKET_SUPPORTED_LANE_TYPES = new Set([
+  "planning",
+  "narrow-runtime",
+  "validation-review",
+  "release-security"
+]);
+const TASK_PACKET_LANE_TYPE_DECLARATION_LABEL = "Lane-type declaration";
+const TASK_PACKET_LANE_TYPE_UNIVERSAL_MINIMUM_LABEL = "Lane-type universal minimum sections";
+const TASK_PACKET_LANE_TYPE_MATRIX_LABELS = [
+  "Lane-type required sections",
+  "Lane-type conditional sections",
+  "Lane-type not-needed sections"
+];
+const TASK_PACKET_LANE_TYPE_UNIVERSAL_MINIMUM_TOKENS = [
+  "goal",
+  "non-goal",
+  "in scope",
+  "out of scope",
+  "data / source impact",
+  "verification plan",
+  "refactor / residual debt disposition",
+  "packet exit quality gate",
+  "reopen trigger"
+];
 const SOURCE_WAVE_LEDGER_REQUIRED_MARKERS = [
   "## Approval Rule",
   "## 4. Impacted Packet Set",
@@ -118,6 +142,11 @@ const PACKET_TEMPLATE_REQUIRED_MARKERS = [
   "- Profile composition rationale:",
   "- Active profile dependencies:",
   "- Profile-specific evidence status:",
+  "- Lane-type declaration:",
+  "- Lane-type universal minimum sections:",
+  "- Lane-type required sections:",
+  "- Lane-type conditional sections:",
+  "- Lane-type not-needed sections:",
   "- UX archetype reference:",
   "- Environment topology reference:",
   "- Domain foundation reference:",
@@ -1490,7 +1519,7 @@ function validateRegisteredTaskPacket({ artifact, repoRoot, findings }) {
 
   const fields = parseBulletFields(content);
   validateTaskPacketHeader({ artifact, header, findings });
-  validateTaskPacketEvidence({ artifact, header, fields, repoRoot, findings });
+  validateTaskPacketEvidence({ artifact, header, fields, content, repoRoot, findings });
 }
 
 function validateTaskPacketHeader({ artifact, header, findings }) {
@@ -1521,7 +1550,7 @@ function validateTaskPacketHeader({ artifact, header, findings }) {
   }
 }
 
-function validateTaskPacketEvidence({ artifact, header, fields, repoRoot, findings }) {
+function validateTaskPacketEvidence({ artifact, header, fields, content, repoRoot, findings }) {
   const readyForCode = normalizeValue(getHeaderProposed(header, "Ready For Code"));
   const readyForCodeApproved = readyForCode === "approve" || readyForCode === "approved";
   const userFacingImpact = normalizeValue(getHeaderProposed(header, "User-facing impact"));
@@ -1542,6 +1571,31 @@ function validateTaskPacketEvidence({ artifact, header, fields, repoRoot, findin
   const impactedPacketSetScope = normalizeValue(getFieldValue(fields, "Impacted packet set scope"));
   const sourceWaveLedgerReference = getFieldValue(fields, "Authoritative source wave ledger reference");
   const sourceWavePacketDisposition = normalizeValue(getFieldValue(fields, "Source wave packet disposition"));
+  const packetExitFields = parseSectionBulletFields(content, "## 15. Packet Exit Quality Gate");
+  const packetExitMetadataVersion = getFieldValue(packetExitFields, "Packet exit metadata version");
+  const packetExitStructuredContracts = [
+    {
+      label: "Packet exit quality gate reference",
+      metadataLabel: "Packet exit metadata gate reference"
+    },
+    {
+      label: "Exit recommendation",
+      metadataLabel: "Packet exit metadata exit recommendation"
+    },
+    {
+      label: "Source parity result",
+      metadataLabel: "Packet exit metadata source parity result"
+    },
+    {
+      label: "Validation / security / cleanup evidence",
+      metadataLabel: "Packet exit metadata validation / security / cleanup evidence"
+    }
+  ];
+  const hasStructuredPacketExitMetadata =
+    hasConcreteValue(packetExitMetadataVersion, { allowUnknown: false }) ||
+    packetExitStructuredContracts.some((contract) =>
+      hasConcreteValue(getFieldValue(packetExitFields, contract.metadataLabel))
+    );
 
   requireTaskPacketField({
     artifact,
@@ -1558,6 +1612,8 @@ function validateTaskPacketEvidence({ artifact, header, fields, repoRoot, findin
     findings,
     message: "Registered task packets must record Required reading before code."
   });
+
+  validateTaskPacketLaneTypeContract({ artifact, fields, findings });
 
   if (profileDependencies.length > 0) {
     requireTaskPacketField({
@@ -1870,20 +1926,147 @@ function validateTaskPacketEvidence({ artifact, header, fields, repoRoot, findin
   }
 
   if (packetExitGateStatus === "approved") {
-    for (const label of [
-      "Packet exit quality gate reference",
-      "Exit recommendation",
-      "Source parity result",
-      "Validation / security / cleanup evidence"
-    ]) {
+    if (hasStructuredPacketExitMetadata) {
       requireTaskPacketField({
         artifact,
-        fields,
-        label,
+        fields: packetExitFields,
+        label: "Packet exit metadata version",
         findings,
-        message: `${artifact.path} marks Packet exit gate as approved but does not record ${label}.`
+        message: `${artifact.path} uses structured packet-exit metadata but does not record Packet exit metadata version.`,
+        allowUnknown: false
       });
     }
+
+    for (const contract of packetExitStructuredContracts) {
+      if (hasStructuredPacketExitMetadata) {
+        requireTaskPacketField({
+          artifact,
+          fields: packetExitFields,
+          label: contract.metadataLabel,
+          findings,
+          message: `${artifact.path} uses structured packet-exit metadata but does not record ${contract.metadataLabel}.`
+        });
+      }
+
+      requireTaskPacketField({
+        artifact,
+        fields: packetExitFields,
+        label: contract.label,
+        aliases: hasStructuredPacketExitMetadata ? [contract.metadataLabel] : [],
+        findings,
+        message: `${artifact.path} marks Packet exit gate as approved but does not record ${contract.label}.`
+      });
+
+      if (!hasStructuredPacketExitMetadata) {
+        continue;
+      }
+
+      const metadataValue = getFieldValue(packetExitFields, contract.metadataLabel);
+      const legacyValue = getFieldValue(packetExitFields, contract.label);
+      if (!hasConcreteValue(metadataValue) || !hasConcreteValue(legacyValue)) {
+        continue;
+      }
+
+      if (normalizeValue(metadataValue) === normalizeValue(legacyValue)) {
+        continue;
+      }
+
+      findings.push({
+        code: "task_packet_status_contract_mismatch",
+        severity: "error",
+        artifactId: artifact.artifactId,
+        packetPath: artifact.path,
+        field: contract.label,
+        message:
+          `${artifact.path} records conflicting packet-exit values for ${contract.label}: ` +
+          `structured metadata and the human-readable closeout field must match.`
+      });
+    }
+  }
+}
+
+function validateTaskPacketLaneTypeContract({ artifact, fields, findings }) {
+  const laneTypeDeclaration = getFieldValue(fields, TASK_PACKET_LANE_TYPE_DECLARATION_LABEL);
+  const declaration = parseTaskPacketLaneTypeDeclaration(laneTypeDeclaration);
+  if (!declaration.declared) {
+    return;
+  }
+
+  if (declaration.reason === "multiple") {
+    findings.push({
+      code: "task_packet_lane_type_contract_invalid",
+      severity: "error",
+      artifactId: artifact.artifactId,
+      packetPath: artifact.path,
+      field: TASK_PACKET_LANE_TYPE_DECLARATION_LABEL,
+      message:
+        `${artifact.path} must declare exactly one supported lane type when ` +
+        `${TASK_PACKET_LANE_TYPE_DECLARATION_LABEL} is used.`
+    });
+    return;
+  }
+
+  if (declaration.reason === "unsupported") {
+    findings.push({
+      code: "task_packet_lane_type_contract_invalid",
+      severity: "error",
+      artifactId: artifact.artifactId,
+      packetPath: artifact.path,
+      field: TASK_PACKET_LANE_TYPE_DECLARATION_LABEL,
+      message:
+        `${artifact.path} declares unsupported lane type ${declaration.value}. ` +
+        `Supported values are ${[...TASK_PACKET_SUPPORTED_LANE_TYPES].join(", ")}.`
+    });
+    return;
+  }
+
+  requireTaskPacketField({
+    artifact,
+    fields,
+    label: TASK_PACKET_LANE_TYPE_UNIVERSAL_MINIMUM_LABEL,
+    findings,
+    message:
+      `${artifact.path} declares lane type ${declaration.laneType} but does not preserve ` +
+      `${TASK_PACKET_LANE_TYPE_UNIVERSAL_MINIMUM_LABEL}.`
+  });
+
+  const universalMinimumValue = getFieldValue(fields, TASK_PACKET_LANE_TYPE_UNIVERSAL_MINIMUM_LABEL);
+  if (hasConcreteValue(universalMinimumValue)) {
+    const normalizedUniversalMinimum = normalizeValue(universalMinimumValue);
+    for (const token of TASK_PACKET_LANE_TYPE_UNIVERSAL_MINIMUM_TOKENS) {
+      if (normalizedUniversalMinimum.includes(token)) {
+        continue;
+      }
+
+      findings.push({
+        code: "task_packet_lane_type_contract_invalid",
+        severity: "error",
+        artifactId: artifact.artifactId,
+        packetPath: artifact.path,
+        field: TASK_PACKET_LANE_TYPE_UNIVERSAL_MINIMUM_LABEL,
+        message:
+          `${artifact.path} declares lane type ${declaration.laneType} but its universal minimum ` +
+          `contract does not include ${token}.`
+      });
+    }
+  }
+
+  for (const label of TASK_PACKET_LANE_TYPE_MATRIX_LABELS) {
+    const value = getFieldValue(fields, label);
+    if (hasConcreteValue(value)) {
+      continue;
+    }
+
+    findings.push({
+      code: "task_packet_lane_type_contract_advisory",
+      severity: "warning",
+      artifactId: artifact.artifactId,
+      packetPath: artifact.path,
+      field: label,
+      message:
+        `${artifact.path} declares lane type ${declaration.laneType} but does not record ${label}. ` +
+        "The first OPS-10 implementation should keep lane-typed minimums explicit even when enforcement is advisory-first."
+    });
   }
 }
 
@@ -2005,6 +2188,73 @@ function parseBulletFields(content) {
   }
 
   return fields;
+}
+
+function parseSectionBulletFields(content, sectionHeading) {
+  const section = sliceSection(content, sectionHeading);
+  if (!section) {
+    return new Map();
+  }
+
+  const fields = new Map();
+  let currentLabel = null;
+  let currentValue = "";
+
+  function commitCurrentField() {
+    if (!currentLabel) {
+      return;
+    }
+    fields.set(currentLabel, currentValue.trim());
+  }
+
+  for (const rawLine of section.split("\n")) {
+    const match = rawLine.match(/^\s*-\s+([^:]+):(.*)$/);
+    if (match) {
+      commitCurrentField();
+      currentLabel = match[1].trim();
+      currentValue = match[2].trim();
+      continue;
+    }
+
+    if (currentLabel && rawLine.trim() === "") {
+      continue;
+    }
+
+    if (currentLabel && /^\s+/.test(rawLine) && rawLine.trim() && !rawLine.trim().startsWith("-")) {
+      currentValue = `${currentValue} ${rawLine.trim()}`.trim();
+      continue;
+    }
+
+    commitCurrentField();
+    currentLabel = null;
+    currentValue = "";
+  }
+
+  commitCurrentField();
+  return fields;
+}
+
+function parseTaskPacketLaneTypeDeclaration(value) {
+  const rawValue = String(value ?? "").trim();
+  const normalized = normalizeValue(rawValue);
+  if (!normalized || normalized === "none" || normalized === "undeclared" || normalized === "not-declared") {
+    return { declared: false };
+  }
+
+  const tokens = rawValue
+    .split(/[,+/;|]/)
+    .map((token) => normalizeValue(token))
+    .filter(Boolean);
+
+  if (tokens.length !== 1) {
+    return { declared: true, reason: "multiple", value: rawValue };
+  }
+
+  if (!TASK_PACKET_SUPPORTED_LANE_TYPES.has(tokens[0])) {
+    return { declared: true, reason: "unsupported", value: rawValue };
+  }
+
+  return { declared: true, laneType: tokens[0] };
 }
 
 function getHeaderProposed(header, item) {
@@ -2537,13 +2787,58 @@ function validateActiveContextValidationParity({ context, repoRoot, findings }) 
   }
 }
 
+function readPacketBulletFieldValue(repoRoot, sourceRef, label) {
+  if (!sourceRef || !sourceRef.endsWith(".md")) {
+    return null;
+  }
+  const packetPath = path.resolve(repoRoot, sourceRef);
+  if (!fs.existsSync(packetPath)) {
+    return null;
+  }
+  const content = fs.readFileSync(packetPath, "utf8");
+  const matcher = new RegExp(`^-\\s*${escapeRegExp(label.trim())}\\s*:\\s*(.*)$`, "i");
+  for (const rawLine of content.split(/\r?\n/)) {
+    const match = rawLine.trim().match(matcher);
+    if (match) {
+      return match[1].trim();
+    }
+  }
+  return null;
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function normalizeSemanticTraceEvidenceStatus(value) {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  if (!normalized) {
+    return "not-requested";
+  }
+  if (normalized === "requested" || normalized === "request" || normalized === "enabled" || normalized === "on") {
+    return "requested";
+  }
+  return "not-requested";
+}
+
+function resolveSemanticTraceContract({ activeTask, repoRoot }) {
+  if (!activeTask?.workItemId) {
+    return { requested: false };
+  }
+  const runtimeStatus = activeTask.metadata?.semanticTraceEvidence?.status ?? null;
+  const packetStatus = readPacketBulletFieldValue(repoRoot, activeTask.sourceRef, "Semantic trace evidence status");
+  return {
+    requested: normalizeSemanticTraceEvidenceStatus(runtimeStatus ?? packetStatus) === "requested"
+  };
+}
+
 function validateActiveWorkItemSemanticTrace({ context, repoRoot, findings }) {
   const activeTask = context.activeTask;
   if (!activeTask?.workItemId) {
     return;
   }
-  const traceContractActive = /qlt-02/i.test(`${activeTask.workItemId} ${activeTask.sourceRef ?? ""}`);
-  if (!traceContractActive) {
+  const traceContract = resolveSemanticTraceContract({ activeTask, repoRoot });
+  if (!traceContract.requested) {
     return;
   }
 

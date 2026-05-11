@@ -480,6 +480,426 @@ test("detects missing shared-source wave evidence in registered concrete task pa
   store.close();
 });
 
+test("accepts structured packet-exit metadata without requiring duplicated legacy closeout fields", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-generated-docs-closeout-metadata-"));
+  seedRepoFiles(repoRoot);
+
+  const store = createOperatingStateStore({
+    dbPath: path.join(repoRoot, ".harness", "operating_state.sqlite"),
+    now: createClock("2026-04-17T17:00:00.000Z")
+  });
+
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "Structured packet-exit metadata",
+    releaseGoal: "Accept structured closeout metadata without prose coupling",
+    sourceRef: ".agents/artifacts/REQUIREMENTS.md"
+  });
+
+  const packetPath = writeConcreteTaskPacketFixture(repoRoot, {
+    fileName: "PKT-01_STRUCTURED_CLOSEOUT_METADATA_PACKET.md",
+    fields: {
+      "Packet exit quality gate reference": "",
+      "Exit recommendation": "",
+      "Source parity result": "",
+      "Validation / security / cleanup evidence": ""
+    }
+  });
+
+  store.upsertArtifact({
+    artifactId: "structured-closeout-metadata-packet",
+    path: packetPath,
+    category: "task_packet",
+    title: "Structured closeout metadata packet",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeActiveContext({ store, repoRoot, outputDir: repoRoot });
+
+  const result = validateGeneratedStateDocs({
+    store,
+    outputDir: repoRoot,
+    repoRoot
+  });
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.findings, []);
+
+  store.close();
+});
+
+test("accepts supported lane-type declarations when universal minimum metadata is present", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-generated-docs-lane-type-valid-"));
+  seedRepoFiles(repoRoot);
+
+  const store = createOperatingStateStore({
+    dbPath: path.join(repoRoot, ".harness", "operating_state.sqlite"),
+    now: createClock("2026-04-17T17:00:00.000Z")
+  });
+
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "Lane-typed packet minimum contract",
+    releaseGoal: "Accept supported lane-type declarations with explicit minimum metadata",
+    sourceRef: ".agents/artifacts/REQUIREMENTS.md"
+  });
+
+  const packetPath = writeConcreteTaskPacketFixture(repoRoot, {
+    fileName: "PKT-01_LANE_TYPE_VALID_PACKET.md",
+    fields: {
+      "Lane-type declaration": "planning",
+      "Lane-type universal minimum sections":
+        "Goal; Non-Goal; In Scope; Out Of Scope; Data / Source Impact; Verification Plan; Refactor / residual debt disposition; Packet Exit Quality Gate; Reopen Trigger",
+      "Lane-type required sections":
+        "Goal; Non-Goal; In Scope; Out Of Scope; Data / Source Impact; Verification Plan; Packet Exit Quality Gate; Reopen Trigger",
+      "Lane-type conditional sections": "Detailed Behavior; Human Sync / Approval Boundary",
+      "Lane-type not-needed sections": "UI/UX Detailed Design when user-facing impact is none"
+    }
+  });
+
+  store.upsertArtifact({
+    artifactId: "lane-type-valid-packet",
+    path: packetPath,
+    category: "task_packet",
+    title: "Lane-type valid packet",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeActiveContext({ store, repoRoot, outputDir: repoRoot });
+
+  const result = validateGeneratedStateDocs({
+    store,
+    outputDir: repoRoot,
+    repoRoot
+  });
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.findings, []);
+
+  store.close();
+});
+
+test("keeps undeclared packets on the full baseline without lane-type findings", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-generated-docs-lane-type-undeclared-"));
+  seedRepoFiles(repoRoot);
+
+  const store = createOperatingStateStore({
+    dbPath: path.join(repoRoot, ".harness", "operating_state.sqlite"),
+    now: createClock("2026-04-17T17:00:00.000Z")
+  });
+
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "Lane-type undeclared fallback",
+    releaseGoal: "Keep the legacy full packet baseline when no lane type is declared",
+    sourceRef: ".agents/artifacts/REQUIREMENTS.md"
+  });
+
+  const packetPath = writeConcreteTaskPacketFixture(repoRoot, {
+    fileName: "PKT-01_LANE_TYPE_UNDECLARED_PACKET.md"
+  });
+
+  store.upsertArtifact({
+    artifactId: "lane-type-undeclared-packet",
+    path: packetPath,
+    category: "task_packet",
+    title: "Lane-type undeclared packet",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeActiveContext({ store, repoRoot, outputDir: repoRoot });
+
+  const result = validateGeneratedStateDocs({
+    store,
+    outputDir: repoRoot,
+    repoRoot
+  });
+
+  const laneTypeFinding = result.findings.find((finding) => finding.code.startsWith("task_packet_lane_type_"));
+  assert.equal(result.ok, true);
+  assert.equal(laneTypeFinding, undefined);
+
+  store.close();
+});
+
+test("rejects unsupported lane-type declarations in concrete task packets", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-generated-docs-lane-type-invalid-"));
+  seedRepoFiles(repoRoot);
+
+  const store = createOperatingStateStore({
+    dbPath: path.join(repoRoot, ".harness", "operating_state.sqlite"),
+    now: createClock("2026-04-17T17:00:00.000Z")
+  });
+
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "Lane-type contract rejection",
+    releaseGoal: "Fail on unsupported lane-type declarations",
+    sourceRef: ".agents/artifacts/REQUIREMENTS.md"
+  });
+
+  const packetPath = writeConcreteTaskPacketFixture(repoRoot, {
+    fileName: "PKT-01_LANE_TYPE_INVALID_PACKET.md",
+    fields: {
+      "Lane-type declaration": "workflow-redesign"
+    }
+  });
+
+  store.upsertArtifact({
+    artifactId: "lane-type-invalid-packet",
+    path: packetPath,
+    category: "task_packet",
+    title: "Lane-type invalid packet",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+
+  const result = validateGeneratedStateDocs({
+    store,
+    outputDir: repoRoot,
+    repoRoot
+  });
+
+  const finding = result.findings.find((item) => item.code === "task_packet_lane_type_contract_invalid");
+  assert.equal(result.ok, false);
+  assert.ok(finding);
+
+  store.close();
+});
+
+test("requires universal minimum metadata for declared lane-type packets", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-generated-docs-lane-type-universal-"));
+  seedRepoFiles(repoRoot);
+
+  const store = createOperatingStateStore({
+    dbPath: path.join(repoRoot, ".harness", "operating_state.sqlite"),
+    now: createClock("2026-04-17T17:00:00.000Z")
+  });
+
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "Lane-type universal minimum contract",
+    releaseGoal: "Fail when declared lane-type packets omit the universal minimum contract",
+    sourceRef: ".agents/artifacts/REQUIREMENTS.md"
+  });
+
+  const packetPath = writeConcreteTaskPacketFixture(repoRoot, {
+    fileName: "PKT-01_LANE_TYPE_UNIVERSAL_MISSING_PACKET.md",
+    fields: {
+      "Lane-type declaration": "planning",
+      "Lane-type required sections": "Goal; Data / Source Impact",
+      "Lane-type conditional sections": "Detailed Behavior",
+      "Lane-type not-needed sections": "UI/UX Detailed Design when user-facing impact is none"
+    }
+  });
+
+  store.upsertArtifact({
+    artifactId: "lane-type-universal-missing-packet",
+    path: packetPath,
+    category: "task_packet",
+    title: "Lane-type universal missing packet",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+
+  const result = validateGeneratedStateDocs({
+    store,
+    outputDir: repoRoot,
+    repoRoot
+  });
+
+  const missingField = result.findings.find(
+    (finding) =>
+      finding.code === "task_packet_required_evidence_missing" &&
+      finding.field === "Lane-type universal minimum sections"
+  );
+  assert.equal(result.ok, false);
+  assert.ok(missingField);
+
+  store.close();
+});
+
+test("treats incomplete lane-type section matrix as advisory-only", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-generated-docs-lane-type-advisory-"));
+  seedRepoFiles(repoRoot);
+
+  const store = createOperatingStateStore({
+    dbPath: path.join(repoRoot, ".harness", "operating_state.sqlite"),
+    now: createClock("2026-04-17T17:00:00.000Z")
+  });
+
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "Lane-type advisory validation",
+    releaseGoal: "Keep missing matrix sections advisory-first for the first OPS-10 implementation",
+    sourceRef: ".agents/artifacts/REQUIREMENTS.md"
+  });
+
+  const packetPath = writeConcreteTaskPacketFixture(repoRoot, {
+    fileName: "PKT-01_LANE_TYPE_ADVISORY_PACKET.md",
+    fields: {
+      "Lane-type declaration": "planning",
+      "Lane-type universal minimum sections":
+        "Goal; Non-Goal; In Scope; Out Of Scope; Data / Source Impact; Verification Plan; Refactor / residual debt disposition; Packet Exit Quality Gate; Reopen Trigger",
+      "Lane-type required sections": "Goal; Non-Goal; Data / Source Impact; Verification Plan"
+    }
+  });
+
+  store.upsertArtifact({
+    artifactId: "lane-type-advisory-packet",
+    path: packetPath,
+    category: "task_packet",
+    title: "Lane-type advisory packet",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeActiveContext({ store, repoRoot, outputDir: repoRoot });
+
+  const result = validateGeneratedStateDocs({
+    store,
+    outputDir: repoRoot,
+    repoRoot
+  });
+
+  const warningFields = result.findings
+    .filter((finding) => finding.code === "task_packet_lane_type_contract_advisory")
+    .map((finding) => finding.field)
+    .sort();
+  assert.equal(result.ok, true);
+  assert.deepEqual(warningFields, [
+    "Lane-type conditional sections",
+    "Lane-type not-needed sections"
+  ]);
+
+  store.close();
+});
+
+test("detects conflicting structured and human-readable packet-exit values", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-generated-docs-closeout-mismatch-"));
+  seedRepoFiles(repoRoot);
+
+  const store = createOperatingStateStore({
+    dbPath: path.join(repoRoot, ".harness", "operating_state.sqlite"),
+    now: createClock("2026-04-17T17:00:00.000Z")
+  });
+
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "Structured packet-exit metadata mismatch",
+    releaseGoal: "Catch explicit closeout metadata contradictions",
+    sourceRef: ".agents/artifacts/REQUIREMENTS.md"
+  });
+
+  const packetPath = writeConcreteTaskPacketFixture(repoRoot, {
+    fileName: "PKT-01_STRUCTURED_CLOSEOUT_MISMATCH_PACKET.md",
+    fields: {
+      "Packet exit metadata exit recommendation": "hold"
+    }
+  });
+
+  store.upsertArtifact({
+    artifactId: "structured-closeout-mismatch-packet",
+    path: packetPath,
+    category: "task_packet",
+    title: "Structured closeout mismatch packet",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeActiveContext({ store, repoRoot, outputDir: repoRoot });
+
+  const result = validateGeneratedStateDocs({
+    store,
+    outputDir: repoRoot,
+    repoRoot
+  });
+
+  const mismatchFinding = result.findings.find(
+    (finding) =>
+      finding.code === "task_packet_status_contract_mismatch" &&
+      finding.field === "Exit recommendation"
+  );
+  assert.equal(result.ok, false);
+  assert.ok(mismatchFinding);
+
+  store.close();
+});
+
+test("accepts indented continuation lines for legacy packet-exit evidence fields", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-generated-docs-closeout-continuation-"));
+  seedRepoFiles(repoRoot);
+
+  const store = createOperatingStateStore({
+    dbPath: path.join(repoRoot, ".harness", "operating_state.sqlite"),
+    now: createClock("2026-04-17T17:00:00.000Z")
+  });
+
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "Legacy packet-exit continuation parsing",
+    releaseGoal: "Accept multi-line legacy closeout evidence values",
+    sourceRef: ".agents/artifacts/REQUIREMENTS.md"
+  });
+
+  const packetPath = writeConcreteTaskPacketFixture(repoRoot, {
+    fileName: "PKT-01_LEGACY_CLOSEOUT_CONTINUATION_PACKET.md",
+    fields: {
+      "Packet exit metadata version": "",
+      "Packet exit metadata gate reference": "",
+      "Packet exit metadata exit recommendation": "",
+      "Packet exit metadata source parity result": "",
+      "Packet exit metadata validation / security / cleanup evidence": ""
+    }
+  });
+
+  const absolutePacketPath = path.join(repoRoot, packetPath);
+  const content = fs.readFileSync(absolutePacketPath, "utf8");
+  fs.writeFileSync(
+    absolutePacketPath,
+    content.replace(
+      "- Validation / security / cleanup evidence: validator clean and docs updated",
+      "- Validation / security / cleanup evidence:\n  validator clean and docs updated"
+    ),
+    "utf8"
+  );
+
+  store.upsertArtifact({
+    artifactId: "legacy-closeout-continuation-packet",
+    path: packetPath,
+    category: "task_packet",
+    title: "Legacy closeout continuation packet",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeActiveContext({ store, repoRoot, outputDir: repoRoot });
+
+  const result = validateGeneratedStateDocs({
+    store,
+    outputDir: repoRoot,
+    repoRoot
+  });
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.findings, []);
+
+  store.close();
+});
+
 test("detects unregistered concrete task packets in the canonical packet directory", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-generated-docs-unregistered-packet-"));
   seedRepoFiles(repoRoot);
@@ -719,6 +1139,11 @@ test("detects missing required semantic trace for the active work item", () => {
       "Impacted packet set scope": "single-packet"
     }
   });
+  fs.appendFileSync(
+    path.join(repoRoot, packetPath),
+    "\n- Semantic trace evidence status: requested\n",
+    "utf8"
+  );
   store.upsertWorkItem({
     workItemId: "QLT-02",
     title: "Evidence validation",
@@ -726,7 +1151,11 @@ test("detects missing required semantic trace for the active work item", () => {
     owner: "developer",
     nextAction: "Implement semantic evidence contract",
     sourceRef: packetPath,
-    metadata: { gateProfile: "contract", readyForCode: "approved" }
+    metadata: {
+      gateProfile: "contract",
+      readyForCode: "approved",
+      semanticTraceEvidence: { status: "requested" }
+    }
   });
   store.upsertArtifact({
     artifactId: "qlt-02-trace-packet",
