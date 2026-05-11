@@ -70,7 +70,7 @@
     "findingCount": 0,
     "blockingFindingCount": 0,
     "gateDecision": "pass",
-    "executedAt": "2026-05-11T08:57:02.784Z",
+    "executedAt": "2026-05-11T09:17:46.305Z",
     "traceSummary": null,
     "candidateGates": [
       {

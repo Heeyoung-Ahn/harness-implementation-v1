@@ -34,6 +34,7 @@ npm test
 ## Authority Manual
 - 운영 authority manual: `reference/manuals/HARNESS_MANUAL.md`
 - 루트 `README.md`는 maintainer repo entry surface이고, starter first-read surface는 `standard-template/START_HERE.md`다.
+- 설치된 프로젝트 사용자는 `standard-template/README.md` -> `standard-template/START_HERE.md` -> `reference/manuals/HARNESS_MANUAL.md` 순서로 읽는 것을 기준으로 한다.
 
 ## 설치
 기본 bootstrap flow:

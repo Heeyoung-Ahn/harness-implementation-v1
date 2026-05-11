@@ -20,13 +20,13 @@
 
 ## Open Decisions / Blockers
 - `OPS-14` is closed; latest handoff is `planner -> planner`. Keep the reusable baseline on planning hold until a new approved lane is selected.
-- All previously active follow-up packets are closed. `OPS-14` exists specifically because a transient stale parity window still appears immediately after successful transition apply before sequential reruns settle.
+- All previously active follow-up packets are closed. `OPS-14` resolved the transient post-transition stale parity window; no active remediation lane remains.
 - `PLN-13` approved the distribution contract and fixed the sequence: A GitHub-backed npm bootstrapper, then B template payload contract, then C manual consolidation.
-- `OPS-11` and `OPS-12` are closed. Packet C should now define the root authority manual, starter onboarding surface, and duplicate-doc deletion boundary without reopening bootstrap or payload redesign.
+- `OPS-11`, `OPS-12`, and `OPS-13` are closed. The approved `PLN-13` A → B → C sequence is implemented without reopening bootstrap or payload redesign.
 - The approved adjustments are fixed: use one stable lane-type declaration field, keep undeclared packets on the full baseline, and start validator behavior as advisory-first while still hard-failing malformed lane metadata, unsupported lane types, or universal minimum violations.
 - No external blocker is open.
 - Phase 1 reusable runtime/validator generalization is closed for now: `OPS-08` and `QLT-03` are both closed.
-- Phase 2 process-friction follow-up is closed for now: `OPS-09`, `PLN-12`, and `OPS-10` are all closed, and the active shipped-surface follow-up is now `PLN-13` packet C.
+- Phase 2 process-friction follow-up is closed for now: `OPS-09`, `PLN-12`, and `OPS-10` are all closed, and the shipped-surface follow-up sequence under `PLN-13` is also closed.
 - Human-facing SSOT must be Korean-first, easy to read, and operator-oriented; AI-facing SSOT must be compact, deterministic, structured, and source-traced.
 - User clarification on 2026-05-03: the Karpathy-style guide should not be reduced to thin guidance. It should be sufficiently reflected while staying compatible with this harness's SSOT, approval, workflow, Tester, Reviewer, Active Context derived-state, and root/starter sync contracts.
 - User requirement on 2026-05-03: human-and-Planner-approved project design SSOT guides all other agents. Developer implements to it, Tester verifies against it, and Reviewer checks closeout/evidence against it.

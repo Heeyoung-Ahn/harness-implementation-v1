@@ -13,6 +13,14 @@
 - `START_HERE.md`
 - `reference/manuals/HARNESS_MANUAL.md`
 
+읽는 순서는 아래로 고정한다.
+
+1. `START_HERE.md`
+2. `reference/manuals/HARNESS_MANUAL.md`
+
+`START_HERE.md`는 5분 안에 kickoff를 열기 위한 문서다.
+`reference/manuals/HARNESS_MANUAL.md`는 실제 운영 기준과 전체 기능 설명을 담은 primary manual이다.
+
 이 starter에는 maintainer-only 문서를 두지 않는다.
 
 ## 이 starter에 남기는 것
@@ -43,6 +51,8 @@
 3. Node.js 24 이상이 설치되어 있는지 확인한다.
 4. 프로젝트 루트에서 `INIT_STANDARD_HARNESS.cmd` 또는 `npm run harness:init`를 실행한다.
 5. `START_HERE.md`를 따라 kickoff baseline을 만든다.
+
+처음 사용하는 사람의 목표는 위 순서만 읽고 `30분 이내`에 `harness:init`와 첫 상태 점검까지 도달하는 것이다.
 
 초기화가 끝나면 starter placeholder가 프로젝트 전용 내용으로 바뀌고 `.harness/operating_state.sqlite`, generated docs, `ACTIVE_CONTEXT.*`가 새 프로젝트 기준으로 생성된다.
 
