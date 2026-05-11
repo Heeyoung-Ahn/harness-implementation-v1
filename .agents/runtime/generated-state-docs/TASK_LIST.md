@@ -1,10 +1,10 @@
 # TASK_LIST
 
 ## Technical Facts
-- Open work items: 46
+- Open work items: 50
 - Open blocked or at-risk items: 0
 - Recent handoffs captured: 10
-- Generated at: 2026-05-11T04:57:36.235Z
+- Generated at: 2026-05-11T08:51:44.036Z
 
 ## Blocked / At Risk Summary
 - 0 open blocker or risks require attention.
@@ -18,6 +18,10 @@
 ## Work Item Detail
 | ID | Title | Status | Next Action |
 |---|---|---|---|
+| OPS-14 | Post-transition validation/context refresh determinism | closed | Keep the reusable baseline on planning hold until a new approved lane is selected. |
+| OPS-13 | Manual consolidation | closed | Keep the reusable baseline on planning hold until a new approved lane is selected. |
+| OPS-12 | Template payload contract | closed | Plan the next approved lane or close remaining planning decisions. |
+| OPS-11 | GitHub-backed npm bootstrapper | closed | Keep the reusable baseline on planning hold until a new approved lane is selected. |
 | OPS-10 | Lane-typed packet minimum rules and conditional approval surface | closed | Keep the reusable baseline on planning hold until a new approved lane is selected. |
 | PLN-12 | Lane-typed packet minimums and approval-surface reduction | closed | Closed as planning evidence; review OPS-10 to decide the next concrete contract boundary. |
 | OPS-09 | Structured packet-exit metadata and closeout parser hardening | closed | Closed after reviewer approval and planner closeout reflection; review PLN-12 to decide the next planning boundary. |
@@ -66,18 +70,18 @@
 | DEV-04 | PMW read surface | done | Closed after browser verification passed at http://127.0.0.1:4173. |
 
 ## Handoff Log
-- 2026-05-11T04:57:36.235Z: [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.
-- 2026-05-11T04:55:48.299Z: [reviewer -> planner] Packet exit approved; Planner should choose or refine the next lane.
-- 2026-05-11T04:52:23.748Z: [tester -> reviewer] Tester verification completed; Reviewer should assess packet exit readiness.
-- 2026-05-11T04:31:22.109Z: [developer -> tester] Developer implementation completed; Tester should verify the approved scope.
-- 2026-05-11T04:08:44.479Z: [planner -> developer] Planning approved; implementation can proceed.
-- 2026-05-11T04:05:44.291Z: [planner -> planner] OPS-10 detailed agreement is approved with stable lane-type declaration and advisory-first validator constraints; close Ready For Code before implementation opens.
-- 2026-05-11T02:59:51.187Z: [planner -> planner] PLN-12 closeout recommendation is approved; OPS-10 draft is now open as the next concrete contract packet.
-- 2026-05-11T02:51:35.808Z: [planner -> planner] PLN-12 detailed agreement is approved with universal-minimum and not-needed/conditional constraints; decide the next concrete follow-up or close planning.
-- 2026-05-11T02:45:51.427Z: [planner -> planner] PLN-12 draft selection is approved; review detailed agreement before any concrete packet opens.
-- 2026-05-11T02:39:48.679Z: [planner -> planner] OPS-09 closeout reflected; PLN-12 draft is now open as the next process-friction planning lane.
+- 2026-05-11T08:51:44.036Z: [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.
+- 2026-05-11T08:49:21.863Z: [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.
+- 2026-05-11T08:49:14.269Z: [reviewer -> planner] Packet exit approved; Planner should choose or refine the next lane.
+- 2026-05-11T08:49:03.063Z: [tester -> reviewer] Tester verification completed; Reviewer should assess packet exit readiness.
+- 2026-05-11T08:48:48.539Z: [developer -> tester] Developer implementation completed; Tester should verify the approved scope.
+- 2026-05-11T08:44:27.517Z: [planner -> developer] Planning approved; implementation can proceed.
+- 2026-05-11T08:44:20.000Z: [planner -> planner] Opened OPS-14 as the next narrow follow-up packet for post-transition validation/context refresh determinism.
+- 2026-05-11T08:25:38.227Z: [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.
+- 2026-05-11T08:25:17.923Z: [reviewer -> planner] Packet exit approved; Planner should choose or refine the next lane.
+- 2026-05-11T08:23:34.932Z: [tester -> reviewer] Tester verification completed; Reviewer should assess packet exit readiness.
 
 ## Generation Metadata
 - Generated docs: CURRENT_STATE.md, TASK_LIST.md
-- Source revision: 2026-05-11T04:57:36.235Z
+- Source revision: 2026-05-11T08:51:44.036Z
 - Sync status: fresh at generation time

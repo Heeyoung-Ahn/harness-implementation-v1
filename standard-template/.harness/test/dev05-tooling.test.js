@@ -448,7 +448,12 @@ test("OPS-05 validation report includes the Security Review Summary contract", (
   fs.writeFileSync(path.join(repoRoot, "standard-template", "README.md"), "# Starter\n", "utf8");
   fs.writeFileSync(path.join(repoRoot, "standard-template", "START_HERE.md"), "# Start\n", "utf8");
   fs.writeFileSync(path.join(repoRoot, "standard-template", "AGENTS.md"), "# Agents\n", "utf8");
-  fs.writeFileSync(path.join(repoRoot, "standard-template", "HARNESS_MANUAL.md"), "# Starter Manual\n", "utf8");
+  fs.mkdirSync(path.join(repoRoot, "standard-template", "reference", "manuals"), { recursive: true });
+  fs.writeFileSync(
+    path.join(repoRoot, "standard-template", "reference", "manuals", "HARNESS_MANUAL.md"),
+    "# Starter Manual\n",
+    "utf8"
+  );
   fs.writeFileSync(path.join(repoRoot, "standard-template", "INIT_STANDARD_HARNESS.cmd"), "@echo off\n", "utf8");
 
   const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-10T01:00:00.000Z") });
@@ -472,7 +477,10 @@ test("OPS-05 validation report includes the Security Review Summary contract", (
       securityReviewEvidence: {
         status: "requested",
         scope: ["package manifests", "release-facing artifacts", "declared security/release paths"],
-        declaredPaths: ["reference/manuals/HARNESS_MANUAL.md", "standard-template/HARNESS_MANUAL.md"]
+        declaredPaths: [
+          "reference/manuals/HARNESS_MANUAL.md",
+          "standard-template/reference/manuals/HARNESS_MANUAL.md"
+        ]
       }
     }
   });
@@ -592,7 +600,7 @@ test("OPS-08 validation report activates reusable security review from packet me
       "- Required reading before code: `.agents/artifacts/CURRENT_STATE.md`, `.agents/artifacts/TASK_LIST.md`, this packet",
       "- Security review evidence status: requested",
       "- Security review evidence scope: package manifests; release-facing artifacts; declared security/release paths",
-      "- Declared security/release paths: reference/manuals/HARNESS_MANUAL.md; standard-template/HARNESS_MANUAL.md"
+      "- Declared security/release paths: reference/manuals/HARNESS_MANUAL.md; standard-template/reference/manuals/HARNESS_MANUAL.md"
     ].join("\n"),
     "utf8"
   );
@@ -618,7 +626,12 @@ test("OPS-08 validation report activates reusable security review from packet me
   fs.writeFileSync(path.join(repoRoot, "standard-template", "README.md"), "# Starter\n", "utf8");
   fs.writeFileSync(path.join(repoRoot, "standard-template", "START_HERE.md"), "# Start\n", "utf8");
   fs.writeFileSync(path.join(repoRoot, "standard-template", "AGENTS.md"), "# Agents\n", "utf8");
-  fs.writeFileSync(path.join(repoRoot, "standard-template", "HARNESS_MANUAL.md"), "# Starter Manual\n", "utf8");
+  fs.mkdirSync(path.join(repoRoot, "standard-template", "reference", "manuals"), { recursive: true });
+  fs.writeFileSync(
+    path.join(repoRoot, "standard-template", "reference", "manuals", "HARNESS_MANUAL.md"),
+    "# Starter Manual\n",
+    "utf8"
+  );
   fs.writeFileSync(path.join(repoRoot, "standard-template", "INIT_STANDARD_HARNESS.cmd"), "@echo off\n", "utf8");
 
   const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-11T01:00:00.000Z") });
@@ -655,7 +668,10 @@ test("OPS-08 validation report activates reusable security review from packet me
   assert.equal(report.report.securityReview?.activationSource, "packet metadata");
   assert.match(markdown, /## Security Review Summary/);
   assert.match(markdown, /Activation source: packet metadata/);
-  assert.match(markdown, /Declared security\/release paths: reference\/manuals\/HARNESS_MANUAL\.md, standard-template\/HARNESS_MANUAL\.md/);
+  assert.match(
+    markdown,
+    /Declared security\/release paths: reference\/manuals\/HARNESS_MANUAL\.md, standard-template\/reference\/manuals\/HARNESS_MANUAL\.md/
+  );
 });
 
 test("validation report keeps an explicit not-applicable security review section when not requested", () => {
@@ -1224,6 +1240,12 @@ test("transition preview is review-first and apply updates state surfaces", () =
   assert.match(implementationPlan, /`OPS-03` active handoff is `planner -> developer`\./);
   assert.match(implementationPlan, /Implement the approved packet scope and hand off to Tester\./);
   assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.json")), true);
+  const persistedReport = JSON.parse(
+    fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "VALIDATION_REPORT.json"), "utf8")
+  );
+  assert.equal(persistedReport.gateDecision, "pass");
+  const settledValidation = runValidator({ repoRoot, dbPath, outputDir: repoRoot });
+  assert.equal(settledValidation.ok, true);
 
   const afterStore = createOperatingStateStore({ dbPath });
   assert.equal(afterStore.getWorkItem("OPS-03").metadata.readyForCode, "approved");

@@ -61,12 +61,12 @@ This file keeps thin, durable prevention rules for repeated process or quality i
 - Issue Pattern: structured role transition apply가 DB handoff와 generated-doc metadata는 먼저 갱신하지만, 같은 직후에 읽은 `ACTIVE_CONTEXT` 또는 validation artifacts가 이전 owner/workflow snapshot을 잠깐 유지할 수 있다.
 - Why It Matters: tester-to-reviewer 같은 closeout handoff 직후에 operator나 다음 agent가 stale derived state를 먼저 읽으면, 실제 handoff는 성공했는데도 재생성 전 snapshot을 근거로 다음 workflow를 잘못 해석할 수 있다.
 - Proposed Target Layer: core
-- Proposed Target Artifact / Follow-Up Item: `PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md`
+- Proposed Target Artifact / Follow-Up Item: `PKT-01_OPS-14_POST_TRANSITION_VALIDATION_CONTEXT_REFRESH_DETERMINISM.md`
 - Promotion Status: approved
-- Human Review Boundary: the user approved `OPS-06` on 2026-05-04 as the next narrow packet after `QLT-02`; implementation remains blocked until explicit `Ready For Code`.
-- Linked Follow-Up Item: `OPS-06`
-- Needed Refinement: narrow implementation still needs a final Ready For Code decision on whether synchronous transition-time refresh or stronger derived-surface source selection is the minimal fix.
-- Source / Evidence: `reference/artifacts/WALKTHROUGH.md`, `reference/artifacts/REVIEW_REPORT.md`, and the repeated `developer -> tester` / `tester -> reviewer` refresh observations during QLT-02 closeout on 2026-05-04.
+- Human Review Boundary: the user directed Planner on 2026-05-11 to open a separate narrow packet after confirming all other active work is closed; detailed agreement and `Ready For Code` remain separate approvals.
+- Linked Follow-Up Item: `OPS-14`
+- Needed Refinement: decide whether synchronous transition-time refresh ordering or stronger derived-surface source selection is the narrowest deterministic fix.
+- Source / Evidence: `reference/artifacts/WALKTHROUGH.md`, `reference/artifacts/REVIEW_REPORT.md`, repeated post-transition stale parity during 2026-05-11 handoffs, and the persistent need to rerun `validation-report` and `context` sequentially after otherwise successful transitions.
 
 - Candidate ID: OPS-HARNESS-FRICTION-004
 - Issue Pattern: 하네스 core/PMW 작업을 닫을 때마다 `CURRENT_STATE`, `TASK_LIST`, packet, DB hot-state, generated docs, PMW export, validation report, handoff log를 사람이 반복적으로 맞춰야 하며, 중단 후 승인 상태와 정본 상태가 갈라질 수 있다.

@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { RELEASE_BASELINE } from "../.harness/runtime/state/release-baseline.js";
+import { shouldIncludeStarterPayloadPath } from "../installer/starter-payload-contract.js";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const packageRoot = path.join(repoRoot, "dist", RELEASE_BASELINE.releasePackageDirectory);
@@ -32,15 +33,20 @@ process.stdout.write(
 
 function copyDirectory(relativeSource, target) {
   const source = path.join(repoRoot, relativeSource);
+  const isStarterPayload = relativeSource === "standard-template";
   fs.mkdirSync(target, { recursive: true });
   fs.cpSync(source, target, {
     recursive: true,
     filter(sourcePath) {
       const normalized = sourcePath.replaceAll("\\", "/");
-      return !normalized.endsWith("/.harness/operating_state.sqlite") &&
-        !normalized.endsWith("/.harness/operating_state.sqlite-shm") &&
-        !normalized.endsWith("/.harness/operating_state.sqlite-wal") &&
-        !normalized.includes("/.tmp/");
+      if (normalized.includes("/.tmp/")) {
+        return false;
+      }
+      const relativePath = path.relative(source, sourcePath).replaceAll("\\", "/");
+      if (!relativePath || relativePath === ".") {
+        return true;
+      }
+      return isStarterPayload ? shouldIncludeStarterPayloadPath(relativePath) : true;
     }
   });
 }

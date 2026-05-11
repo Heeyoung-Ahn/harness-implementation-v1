@@ -37,7 +37,7 @@
 - PMW는 별도 앱이며 project registry에서 복수 프로젝트를 add/remove/archive/select 한다.
 - 표준 하네스는 `.agents/runtime/project-manifest.json`과 `.agents/runtime/pmw-read-model.json`만 PMW용으로 관리한다.
 - PMW는 `.agents/.harness/task/profile/validation truth`를 직접 수정하지 않는다.
-- canonical manual은 `HARNESS_MANUAL.md`와 `PMW_MANUAL.md`다.
+- canonical manual은 `reference/manuals/HARNESS_MANUAL.md`다.
 
 ## Optional Profile Catalog
 - `PRF-01`: admin grid application

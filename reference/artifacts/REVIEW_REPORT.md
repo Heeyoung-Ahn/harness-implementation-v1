@@ -2,6 +2,94 @@
 
 Use this artifact when the project enters a formal review gate.
 
+## 2026-05-11 OPS-12 Closeout Approval
+
+- Scope: final closeout review for `OPS-12` template payload contract after tester verification passed and the active handoff moved to `reviewer`.
+- Entry condition:
+  - `OPS-12` is in canonical reviewer state through the `tester -> reviewer` transition.
+  - Tester evidence covers payload classification, removable clutter exclusion, copied-project bootstrap safety, existing-repo boundary preservation, root/starter synchronization, root/starter full suites, and validation/context evidence.
+- Evidence reviewed:
+  - `reference/packets/PKT-01_OPS-12_TEMPLATE_PAYLOAD_CONTRACT.md`
+  - `reference/planning/PLN-13_DISTRIBUTION_CHANNELS_MANUAL_CONSOLIDATION_AND_STARTER_PAYLOAD_RATIONALIZATION_DRAFT.md`
+  - `reference/packets/PKT-01_OPS-11_GITHUB_BACKED_NPM_BOOTSTRAPPER.md`
+  - `reference/artifacts/WALKTHROUGH.md`
+  - `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`
+  - `reference/artifacts/REVIEW_REPORT.md`
+  - `.agents/artifacts/CURRENT_STATE.md`
+  - `.agents/artifacts/TASK_LIST.md`
+  - `.agents/artifacts/VALIDATION_REPORT.md`
+  - `.agents/artifacts/VALIDATION_REPORT.json`
+  - `.agents/runtime/ACTIVE_CONTEXT.json`
+  - `.agents/runtime/agent-traces/OPS-12.json`
+  - `installer/starter-payload-contract.js`
+  - `installer/bootstrap-runtime.js`
+  - `packaging/build-release-package.js`
+  - `packaging/build-windows-exe-installers.js`
+- Findings:
+  - no open reviewer finding remains
+- Review result:
+  - the approved narrow `OPS-12` scope is present in the reusable installer and packaging surface: starter payload classification now exists as an explicit shared contract instead of ad hoc exclusion logic
+  - reviewed evidence shows removable clutter stayed inside the approved boundary. Shipped starter payload no longer includes live SQLite state or generated-state-doc placeholders
+  - copied-project bootstrap safety remains intact because init, validator, context, and review-entry baseline behavior stay green after the removable payload is excluded
+  - the `OPS-11` existing-local-repository boundary remains intentionally narrow; packet B does not broaden existing-repo merge/import semantics
+  - root and `standard-template` remain synchronized for reusable bootstrap, packaging, and verification behavior
+  - residual debt disposition: no blocking implementation defect remains in the reviewed `OPS-12` scope. Manual consolidation remains intentionally deferred to packet C
+- Validation:
+  - root `node --test .harness/test/bootstrap-runtime.test.js .harness/test/starter-payload-contract.test.js .harness/test/init-project.test.js`
+  - root `node --test .harness/test/*.test.js`
+  - `standard-template` `node --test .harness/test/*.test.js`
+  - root `node .harness/runtime/state/dev05-cli.js validate`
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`
+  - root `node .harness/runtime/state/dev05-cli.js context`
+- Result:
+  - `OPS-12` is approved as closed
+  - no reviewer-driven remediation lane is required
+  - the next workflow returns to `Planner`
+- Status: done
+
+## 2026-05-11 OPS-11 Closeout Approval
+
+- Scope: final closeout review for `OPS-11` GitHub-backed npm bootstrapper after tester verification passed and the active handoff moved to `reviewer`.
+- Entry condition:
+  - `OPS-11` is in canonical reviewer state through the `tester -> reviewer` transition.
+  - Tester evidence covers target-folder mode detection, GitHub authority selection, bootstrap apply/init behavior, root/starter synchronization, root/starter full suites, and validation/context evidence.
+- Evidence reviewed:
+  - `reference/packets/PKT-01_OPS-11_GITHUB_BACKED_NPM_BOOTSTRAPPER.md`
+  - `reference/planning/PLN-13_DISTRIBUTION_CHANNELS_MANUAL_CONSOLIDATION_AND_STARTER_PAYLOAD_RATIONALIZATION_DRAFT.md`
+  - `reference/artifacts/WALKTHROUGH.md`
+  - `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`
+  - `reference/artifacts/REVIEW_REPORT.md`
+  - `.agents/artifacts/CURRENT_STATE.md`
+  - `.agents/artifacts/TASK_LIST.md`
+  - `.agents/artifacts/VALIDATION_REPORT.md`
+  - `.agents/artifacts/VALIDATION_REPORT.json`
+  - `.agents/runtime/ACTIVE_CONTEXT.json`
+  - `.agents/runtime/agent-traces/OPS-11.json`
+  - `README.md`
+  - `installer/bootstrap-runtime.js`
+  - `installer/install-harness.js`
+  - `standard-template/README.md`
+- Findings:
+  - no open reviewer finding remains
+- Review result:
+  - npm is now represented as the primary harness entrypoint through a GitHub-backed bootstrap flow instead of a source-repo-local-only installer path
+  - GitHub remains the authority for source, `standard-template/` origin, and release-tag selection, and `.exe` remains outside the main install path as the auxiliary Windows offline channel
+  - the bootstrapper stays inside the approved narrow target-folder contract by supporting empty new project folders and narrowly accepted existing local repository roots only
+  - packet A does not absorb packet B payload-contract work or packet C manual-consolidation work
+  - root and `standard-template` stay synchronized for reusable guidance and regression expectations
+- Validation:
+  - root `node --test .harness/test/bootstrap-runtime.test.js`
+  - root `node --test .harness/test/*.test.js`
+  - `standard-template` `node --test .harness/test/*.test.js`
+  - root `node .harness/runtime/state/dev05-cli.js validate`
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`
+  - root `node .harness/runtime/state/dev05-cli.js context`
+- Result:
+  - `OPS-11` is approved as closed
+  - no reviewer-driven remediation lane is required
+  - the next workflow returns to `Planner`
+- Status: done
+
 ## 2026-05-11 OPS-10 Closeout Approval
 
 - Scope: final closeout review for `OPS-10` lane-typed packet minimum rules and conditional approval surface after tester verification passed and the active handoff moved to `reviewer`.
@@ -1071,4 +1159,53 @@ Use this artifact when the project enters a formal review gate.
   - `DEV-06` is approved as closed
   - `standard-template/` is approved as a real-world-ready copied-project starter surface
   - no additional starter-hardening follow-up lane is required right now
+- Status: done
+
+## 2026-05-11 OPS-13 Closeout
+
+- Scope: reviewer closeout for `OPS-13` manual consolidation after tester verification.
+- Findings:
+  - none
+- Review result:
+  - root authority manual remains `reference/manuals/HARNESS_MANUAL.md`
+  - starter first-read flow is clearer because `standard-template/START_HERE.md` now points to the shipped starter manual at `standard-template/reference/manuals/HARNESS_MANUAL.md`
+  - duplicate starter manual `standard-template/HARNESS_MANUAL.md` was removed without breaking copied-project bootstrap, validation, context, or review-readiness
+  - `OPS-11` narrow existing-repo bootstrap boundary remains intact and packet C did not broaden merge/import promises
+  - root and `standard-template` reusable runtime/test surfaces remain synchronized
+- Validation:
+  - targeted regressions: `node --test .harness/test/starter-payload-contract.test.js`, `node --test .harness/test/bootstrap-runtime.test.js`, `node --test .harness/test/dev05-tooling.test.js`
+  - root full suite: `node --test .harness/test/*.test.js`
+  - `standard-template` full suite: `node --test .harness/test/*.test.js`
+  - root `node .harness/runtime/state/dev05-cli.js validate`
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`
+  - root `node .harness/runtime/state/dev05-cli.js context`
+- Residual risk:
+  - live published npm / `npx` install flow was not exercised here
+  - broader manual wording cleanup beyond the approved duplicate/authority boundary remains outside this packet
+- Result:
+  - `OPS-13` is approved as closed
+  - packet C stayed within the approved manual-consolidation-only boundary
+  - handoff may proceed to Planner
+- Status: done
+
+## 2026-05-11 OPS-14 Closeout
+
+- Scope: reviewer closeout for `OPS-14` post-transition validation/context refresh determinism after tester verification.
+- Findings:
+  - none
+- Review result:
+  - the fix stays inside the approved narrow boundary by changing only the derived validation-report settlement path and its paired regressions
+  - post-transition validation/context parity now survives the first sequential refresh cycle without requiring a manual repair pass
+  - root and `standard-template` remain synchronized, and no broader workflow, packet-template, or validator redesign was introduced
+- Validation:
+  - root full suite: `node --test .harness/test/*.test.js`
+  - `standard-template` full suite: `node --test .harness/test/*.test.js`
+  - root `node .harness/runtime/state/dev05-cli.js validate`
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`
+  - root `node .harness/runtime/state/dev05-cli.js context`
+- Residual risk:
+  - no additional residual reusable defect was found inside the approved `OPS-14` boundary
+- Result:
+  - `OPS-14` is approved as closed
+  - handoff may proceed to Planner
 - Status: done

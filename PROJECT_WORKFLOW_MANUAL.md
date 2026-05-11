@@ -5,7 +5,6 @@
 운영자/사용자용 설치 안내는 아래 문서를 기준으로 본다.
 
 - `reference/manuals/HARNESS_MANUAL.md`
-- `reference/manuals/PMW_MANUAL.md`
 
 정밀한 변경 전파 기준은 아래 문서를 기준으로 본다.
 
@@ -29,7 +28,6 @@
 
 - `standard-template/*`
 - `installer/*`
-- `pmw-app/*`
 - `packaging/*`
 - `reference/manuals/*`
 
@@ -75,7 +73,6 @@
 예:
 
 - `installer/*`
-- `pmw-app/*`
 - `packaging/*`
 - release 문구나 install UX
 
@@ -108,9 +105,9 @@
 
 - `README.md`
 - `START_HERE.md`
-- `HARNESS_MANUAL.md`
-- `PMW_MANUAL.md`
 - `AGENTS.md`
+
+starter 운영 매뉴얼은 top-level이 아니라 `reference/manuals/HARNESS_MANUAL.md`에 둔다.
 
 ## 작업 순서
 
@@ -128,16 +125,11 @@ reusable harness 변경 후:
 - `standard-template` harness tests
 - root validate
 
-PMW contract 변경 후:
-
-- root/starter PMW export 확인
-- `pmw-app` tests
-
 release 변경 후:
 
 - `package:release`
 - `package:windows-exe`
-- installer/PMW smoke
+- installer/bootstrap smoke
 
 ## GitHub 공개 기준
 

@@ -21,7 +21,11 @@
 
 2026-05-10 `PLN-11` opened next as the post-OPS07 planning lane. Its purpose is to sequence the next reusable follow-up work as runtime-generalization phase 1 (`OPS-08`, `QLT-03`) and parked process-friction phase 2 (`OPS-09`, `PLN-12`) instead of reopening one broad mixed lane.
 
-2026-05-11 `PLN-11` is closed after user approval of the `2 + 2` split. `OPS-08` opened first and closed after reviewer approval and planner closeout reflection. `QLT-03` then closed after reviewer approval and planner closeout reflection. `OPS-09` then closed after reviewer approval and planner closeout reflection. `PLN-12` then closed as planning evidence after approving the first lane-type set, universal minimum contract, and the rule that burden reduction must use lane-typed `not-needed` / `conditional` treatment. `OPS-10` is now open as the active concrete contract packet draft for that approved planning result.
+2026-05-11 `PLN-11` is closed after user approval of the `2 + 2` split. `OPS-08` opened first and closed after reviewer approval and planner closeout reflection. `QLT-03` then closed after reviewer approval and planner closeout reflection. `OPS-09` then closed after reviewer approval and planner closeout reflection. `PLN-12` then closed as planning evidence after approving the first lane-type set, universal minimum contract, and the rule that burden reduction must use lane-typed `not-needed` / `conditional` treatment. `OPS-10` then closed after reviewer approval and planner hold closeout.
+
+2026-05-11 `PLN-13` is approved as the next shipped-surface planning lane. It fixes the distribution contract as GitHub authority + npm main entrypoint + `.exe` auxiliary channel and sequences the follow-up work as `OPS-11` bootstrapper, then template payload contract, then manual consolidation. `OPS-11`, `OPS-12`, and `OPS-13` are now closed.
+
+2026-05-11 `OPS-14` opens next as a narrow residual-fix packet. Its only purpose is to remove the repeated transient stale parity window where the first immediate `validation-report` or `ACTIVE_CONTEXT` read after transition apply can briefly expose the prior owner/workflow snapshot before sequential reruns settle.
 
 ## Follow-Up Phase Plan
 1. approved release-ready baseline을 보존하면서 follow-up planning lane을 연다.
@@ -116,9 +120,9 @@ Open the next planning lane after `OPS-07` without repeating the previous mixed-
 - Phase 2: parked `OPS-09` structured packet-exit metadata and closeout parser hardening, then parked `PLN-12` lane-typed packet minimums and approval-surface reduction
 
 ### Operator Next Action
-- `OPS-10` is closed; latest closeout handoff is `planner -> planner`.
+- `OPS-14` is closed; latest closeout handoff is `planner -> planner`.
 - Keep the reusable baseline on planning hold until a new approved lane is selected.
-- Source packet: `reference/packets/PKT-01_OPS-10_LANE_TYPED_PACKET_MINIMUM_RULES_AND_CONDITIONAL_APPROVAL_SURFACE.md`.
+- Source packet: `reference/packets/PKT-01_OPS-14_POST_TRANSITION_VALIDATION_CONTEXT_REFRESH_DETERMINISM.md`.
 - Preserve packet-before-code, active-context derived authority, generated-doc immutability, root/starter sync, Tester/Reviewer separation, and human approval gates.
 
 ## OPS-08 Reusable Security Review Evidence Generalization

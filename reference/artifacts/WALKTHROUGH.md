@@ -2,6 +2,86 @@
 
 Use this artifact to record verification evidence and manual test results.
 
+## 2026-05-11 OPS-12 Tester Verification
+
+- Scope: tester verification for `OPS-12` template payload contract after the approved `developer -> tester` handoff.
+- Environment: local maintainer workspace on Windows PowerShell.
+- Tested scope:
+  - packet acceptance against the approved `required / conditional / removable` starter payload contract
+  - removable generated/runtime/history clutter exclusion from the shipped `standard-template` payload
+  - copied-project bootstrap safety, validator/context parity, and review-readiness preservation after payload pruning
+  - preservation of the narrow `OPS-11` existing-local-repository boundary
+  - root / `standard-template` synchronization for reusable bootstrap, packaging, and starter payload behavior
+- Evidence:
+  - root targeted regressions:
+    - `node --test .harness/test/bootstrap-runtime.test.js .harness/test/starter-payload-contract.test.js .harness/test/init-project.test.js`: `11/11 pass`
+    - verifies required / conditional / removable classification, GitHub/local bootstrap apply behavior, generated-doc/SQLite exclusion, copied-starter initialization, and narrow existing-repo acceptance
+  - root full harness suite:
+    - `node --test .harness/test/*.test.js`: `78/78 pass`
+  - `standard-template` full harness suite:
+    - `node --test .harness/test/*.test.js`: `69/69 pass`
+  - root validator/context evidence:
+    - `node .harness/runtime/state/dev05-cli.js validate`: `ok: true`, findings `[]`
+    - `node .harness/runtime/state/dev05-cli.js validation-report`: `gateDecision: pass`, `nextAction: Verify the implementation against the packet acceptance criteria.`
+    - `node .harness/runtime/state/dev05-cli.js context`: active task `OPS-12`, owner `tester`, workflow `.agents/workflows/test.md`
+  - implementation evidence confirms:
+    - starter payload classification is centralized in `installer/starter-payload-contract.js`
+    - bootstrap apply and release/exe packaging now share the same removable-payload rule for starter surfaces
+    - shipped starter no longer includes `standard-template/.harness/operating_state.sqlite`
+    - shipped starter no longer includes `standard-template/.agents/runtime/generated-state-docs/*`
+    - conditional onboarding/review surfaces such as `README.md`, `START_HERE.md`, `HARNESS_MANUAL.md`, `reference/artifacts/WALKTHROUGH.md`, and `reference/artifacts/REVIEW_REPORT.md` remain present
+    - the existing local repository bootstrap path remains intentionally narrow and still rejects arbitrary busy repositories
+- Untested scope:
+  - no manual-consolidation rewrite was tested because packet C still owns final document consolidation
+  - no arbitrary existing-project merge/import behavior was tested because `OPS-12` explicitly preserves the `OPS-11` narrow existing-repo boundary
+- Result: tester verification passed. No tester-discovered remediation item remains for the approved `OPS-12` payload-contract scope.
+- Handoff:
+  - Reviewer should inspect closeout readiness against the approved payload manifest boundary, removable clutter exclusion, copied-project bootstrap safety, existing-repo boundary preservation, and root/starter synchronization evidence.
+
+## 2026-05-11 OPS-11 Tester Verification
+
+- Scope: tester verification for `OPS-11` GitHub-backed npm bootstrapper after the approved `developer -> tester` handoff.
+- Environment: local maintainer workspace on Windows PowerShell.
+- Tested scope:
+  - packet acceptance against the approved GitHub authority, npm main-entry bootstrap, target-folder mode detection, and narrow apply/init boundary
+  - root targeted bootstrapper regressions for:
+    - slug/profile helper behavior
+    - target-folder mode detection
+    - GitHub authority selection
+    - GitHub-backed `standard-template` download/apply/init flow
+    - lightly initialized existing repo target acceptance
+  - root full harness regression suite after the OPS-11 implementation
+  - `standard-template` full harness regression suite after reusable root/starter synchronization
+  - root `harness:validate`, `harness:validation-report`, and `harness:context`
+- Evidence:
+  - root `node --test .harness/test/bootstrap-runtime.test.js`: pass, including:
+    - `resolveBootstrapTarget accepts empty folders and rejects non-repo dirty targets`
+    - `resolveGithubAuthority prefers explicit ref and otherwise uses the latest release tag`
+    - `bootstrapHarnessProject downloads the standard-template tree from GitHub and initializes an empty target`
+    - `bootstrapHarnessProject accepts a lightly initialized existing git repo target`
+  - root `node --test .harness/test/*.test.js`: `75/75 pass`
+  - `standard-template` `node --test .harness/test/*.test.js`: `69/69 pass`
+  - root `node .harness/runtime/state/dev05-cli.js validate`: `ok: true`, `cutoverReady: true`, findings `[]`
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`: pass, gate decision `pass`, findings `[]`, next action `Verify the implementation against the packet acceptance criteria.` in tester state
+  - root `node .harness/runtime/state/dev05-cli.js context`: pass and reports `OPS-11`, workflow `.agents/workflows/test.md`, tester ownership, and validation parity with the latest validation report
+  - implementation evidence confirms:
+    - installer no longer depends on a locally embedded `standard-template` import for bootstrap execution
+    - bootstrap authority selection is explicit through `github repo/ref/release` or maintainer-only `local` authority mode
+    - target mode is explicit as `empty_new_project_folder` or `existing_local_repository_root`
+    - existing repo mode fail-fast stays narrow by allowing only repo markers before bootstrap apply
+    - root package now exposes a bin-ready entrypoint shape via `standard-harness-init`
+  - root/starter sync check:
+    - root installer/runtime/bootstrap logic changed in `installer/*`
+    - starter-facing guidance changed in `README.md` and `standard-template/README.md`
+    - no reusable starter runtime/test drift was introduced; full starter suite remained green
+- Untested scope:
+  - No live GitHub network download was executed against the real remote during tester verification; GitHub authority flow was covered through deterministic mocked fetch responses in regression tests.
+  - No published npm package install or real `npx` distribution path was exercised because `OPS-11` is limited to the bootstrapper implementation contract, not package publication.
+  - No template payload pruning or manual consolidation was tested because those remain in later packets B and C.
+- Result: tester verification passed. No tester-discovered OPS-11 remediation item remains for the approved narrow bootstrapper scope.
+- Handoff:
+  - Reviewer should inspect OPS-11 closeout readiness against the approved GitHub authority boundary, target-folder detection contract, bootstrap apply/init evidence, root/starter synchronization, and residual distribution debt.
+
 ## 2026-05-11 OPS-09 Tester Verification
 
 - Scope: independent tester verification for `OPS-09` structured packet-exit metadata and closeout parser hardening after the approved `developer -> tester` handoff.
@@ -729,3 +809,52 @@ Use this artifact to record verification evidence and manual test results.
   - the project overview band and progress summary still render without browser errors when expanded
 - Conclusion:
   - the final 30-second comprehension gate is closed because the first view now exposes the decision, blocker, current-work, and next-action cards without requiring scroll first
+
+## 2026-05-11 OPS-13 Manual Consolidation Tester Verification
+
+- Scope: tester verification for `OPS-13` root authority manual selection, starter onboarding surface, duplicate manual deletion boundary, copied-project bootstrap safety, and root / `standard-template` synchronization.
+- Environment: local maintainer workspace on Windows PowerShell.
+- Evidence:
+  - targeted regressions:
+    - `node --test .harness/test/starter-payload-contract.test.js`: 3/3 pass
+    - `node --test .harness/test/bootstrap-runtime.test.js`: 6/6 pass
+    - `node --test .harness/test/dev05-tooling.test.js`: 35/35 pass
+  - root full suite: `node --test .harness/test/*.test.js` -> 78/78 pass
+  - `standard-template` full suite: `node --test .harness/test/*.test.js` -> 69/69 pass
+  - root `node .harness/runtime/state/dev05-cli.js validate`: `ok: true`, findings `[]`
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`: pass, gate `pass`
+  - root `node .harness/runtime/state/dev05-cli.js context`: tester route `.agents/workflows/test.md`, next action `Verify the implementation against the packet acceptance criteria.`
+- Passed checks:
+  - root authority manual is preserved at `reference/manuals/HARNESS_MANUAL.md`
+  - starter onboarding keeps `standard-template/START_HERE.md` as the first-read surface and moves the retained shipped manual to `standard-template/reference/manuals/HARNESS_MANUAL.md`
+  - duplicate starter manual `standard-template/HARNESS_MANUAL.md` is removed without breaking copied-project bootstrap, validation, context, or review-readiness
+  - starter payload contract correctly classifies `reference/manuals/HARNESS_MANUAL.md` as conditional and `HARNESS_MANUAL.md` as removable
+  - `OPS-11` narrow existing-repo bootstrap-safe boundary remains unchanged
+  - root and `standard-template` reusable runtime/test surfaces stay synchronized
+- Untested scope:
+  - no live published npm / `npx` install flow was exercised in this tester turn
+  - no broader existing-project merge/import scenario was exercised because it remains outside the approved `OPS-11` boundary
+- Result: tester verification passed.
+- Handoff:
+  - Reviewer should inspect `OPS-13` closeout readiness, packet exit gate evidence, residual duplicate-doc debt disposition, and root/starter manual hierarchy parity.
+
+## 2026-05-11 OPS-14 Post-Transition Validation/Context Refresh Determinism Tester Verification
+
+- Scope: tester verification for `OPS-14` post-transition derived refresh determinism after the narrow runtime/test fix.
+- Environment: local maintainer workspace on Windows PowerShell.
+- Evidence:
+  - root full suite: `node --test .harness/test/*.test.js` -> 78/78 pass
+  - `standard-template` full suite: `node --test .harness/test/*.test.js` -> 69/69 pass
+  - root `node .harness/runtime/state/dev05-cli.js validate`: `ok: true`, findings `[]`
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`: pass, gate `pass`
+  - root `node .harness/runtime/state/dev05-cli.js context`: developer route `.agents/workflows/dev.md`, next action `Implement the approved packet scope and hand off to Tester.`
+- Passed checks:
+  - the final settled validation-report retains reusable security-review findings instead of dropping them after the post-transition refresh pass
+  - transition follow-up refresh stays deterministic: `validate`, `validation-report`, and `context` converge on the first sequential rerun without an additional repair cycle
+  - root and `standard-template` runtime/test surfaces remain synchronized for the narrow determinism fix
+  - no broader workflow redesign or validator redesign was introduced
+- Untested scope:
+  - no attempt was made to redesign packet templates, closeout semantics, or approval boundaries
+- Result: tester verification passed.
+- Handoff:
+  - Reviewer should confirm the lane stayed inside the approved post-transition determinism boundary and that packet exit can close without reopening broader workflow architecture packets.

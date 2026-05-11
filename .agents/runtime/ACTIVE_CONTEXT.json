@@ -1,6 +1,6 @@
 {
   "schemaVersion": "standard-harness-active-context/v2",
-  "generatedAt": "2026-05-11T04:57:36.235Z",
+  "generatedAt": "2026-05-11T08:51:44.036Z",
   "project": {
     "repoRoot": "C:\\Newface\\30 Github\\harness-implementation-v1",
     "name": "harness-implementation-v1"
@@ -8,9 +8,9 @@
   "release": {
     "stage": "planning",
     "gate": "open",
-    "focus": "V1.3 CLI-first PMW-free harness baseline is stable; OPS-10 is closed; the reusable baseline is on planner hold with no active lane.",
+    "focus": "V1.3 CLI-first PMW-free harness baseline is stable; OPS-14 is closed; the reusable baseline is on planner hold with no active lane.",
     "goal": "Preserve the V1.3 installable standard harness baseline while implementing DEV-11 PMW removal and Active Context replacement under the release gate.",
-    "sourceRef": "reference/packets/PKT-01_OPS-10_LANE_TYPED_PACKET_MINIMUM_RULES_AND_CONDITIONAL_APPROVAL_SURFACE.md"
+    "sourceRef": "reference/packets/PKT-01_OPS-14_POST_TRANSITION_VALIDATION_CONTEXT_REFRESH_DETERMINISM.md"
   },
   "selectedLane": null,
   "activeTask": null,
@@ -34,34 +34,34 @@
       ".agents/artifacts/ARCHITECTURE_GUIDE.md",
       ".agents/artifacts/IMPLEMENTATION_PLAN.md",
       ".agents/artifacts/PREVENTIVE_MEMORY.md",
-      "reference/packets/PKT-01_OPS-10_LANE_TYPED_PACKET_MINIMUM_RULES_AND_CONDITIONAL_APPROVAL_SURFACE.md",
-      "reference/planning/PLN-12_LANE_TYPED_PACKET_MINIMUMS_AND_APPROVAL_SURFACE_REDUCTION_DRAFT.md",
-      "reference/planning/PLN-11_POST_OPS07_RUNTIME_GENERALIZATION_AND_PROCESS_FRICTION_REDUCTION_DRAFT.md",
+      "reference/packets/PKT-01_OPS-14_POST_TRANSITION_VALIDATION_CONTEXT_REFRESH_DETERMINISM.md",
+      "reference/packets/PKT-01_OPS-07_PLANNER_HOLD_CLOSEOUT_AUTOMATION.md",
+      "reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md",
       ".agents/artifacts/VALIDATION_REPORT.json"
     ],
     "sourceTrace": [
       ".agents/artifacts/CURRENT_STATE.md",
       ".agents/artifacts/TASK_LIST.md",
       ".agents/artifacts/IMPLEMENTATION_PLAN.md",
-      "reference/packets/PKT-01_OPS-10_LANE_TYPED_PACKET_MINIMUM_RULES_AND_CONDITIONAL_APPROVAL_SURFACE.md",
+      "reference/packets/PKT-01_OPS-14_POST_TRANSITION_VALIDATION_CONTEXT_REFRESH_DETERMINISM.md",
       ".agents/artifacts/VALIDATION_REPORT.json"
     ],
-    "digest": "4d82104ce59b23173e7ba8955ea4af5cf8e2cb5ac64561de66c2fe0e5af62a80"
+    "digest": "e3aa4387e6dac5fc86fb7b767c72c7c91f33b39740384d5544869dd8fb145fe6"
   },
   "blockers": [],
   "decisions": [],
   "latestHandoff": {
-    "createdAt": "2026-05-11T04:57:36.235Z",
+    "createdAt": "2026-05-11T08:51:44.036Z",
     "fromRole": "planner",
     "toRole": "planner",
     "summary": "[planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.",
-    "sourceRef": "reference/packets/PKT-01_OPS-10_LANE_TYPED_PACKET_MINIMUM_RULES_AND_CONDITIONAL_APPROVAL_SURFACE.md",
+    "sourceRef": "reference/packets/PKT-01_OPS-14_POST_TRANSITION_VALIDATION_CONTEXT_REFRESH_DETERMINISM.md",
     "nextFirstAction": "Keep the reusable baseline on planning hold until a new approved lane is selected.",
     "requiredSsot": [
       ".agents/artifacts/CURRENT_STATE.md",
       ".agents/artifacts/TASK_LIST.md",
       ".agents/artifacts/IMPLEMENTATION_PLAN.md",
-      "reference/packets/PKT-01_OPS-10_LANE_TYPED_PACKET_MINIMUM_RULES_AND_CONDITIONAL_APPROVAL_SURFACE.md"
+      "reference/packets/PKT-01_OPS-14_POST_TRANSITION_VALIDATION_CONTEXT_REFRESH_DETERMINISM.md"
     ]
   },
   "validation": {
@@ -70,7 +70,7 @@
     "findingCount": 0,
     "blockingFindingCount": 0,
     "gateDecision": "pass",
-    "executedAt": "2026-05-11T04:57:42.789Z",
+    "executedAt": "2026-05-11T08:57:02.784Z",
     "traceSummary": null,
     "candidateGates": [
       {
@@ -108,15 +108,15 @@
   "generatedDocs": [
     {
       "projectionName": "CURRENT_STATE.md",
-      "generatedAt": "2026-05-11T04:57:36.235Z",
+      "generatedAt": "2026-05-11T08:51:44.036Z",
       "freshnessState": "fresh",
-      "sourceRevision": "2026-05-11T04:57:36.235Z"
+      "sourceRevision": "2026-05-11T08:51:44.036Z"
     },
     {
       "projectionName": "TASK_LIST.md",
-      "generatedAt": "2026-05-11T04:57:36.235Z",
+      "generatedAt": "2026-05-11T08:51:44.036Z",
       "freshnessState": "fresh",
-      "sourceRevision": "2026-05-11T04:57:36.235Z"
+      "sourceRevision": "2026-05-11T08:51:44.036Z"
     }
   ],
   "sources": {
@@ -131,6 +131,6 @@
     "validationReport": ".agents/artifacts/VALIDATION_REPORT.json",
     "validationReportMarkdown": ".agents/artifacts/VALIDATION_REPORT.md",
     "workflowContract": ".agents/workflows/plan.md",
-    "activePacket": "reference/packets/PKT-01_OPS-10_LANE_TYPED_PACKET_MINIMUM_RULES_AND_CONDITIONAL_APPROVAL_SURFACE.md"
+    "activePacket": "reference/packets/PKT-01_OPS-14_POST_TRANSITION_VALIDATION_CONTEXT_REFRESH_DETERMINISM.md"
   }
 }

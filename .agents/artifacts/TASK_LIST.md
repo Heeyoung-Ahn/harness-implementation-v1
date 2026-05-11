@@ -1,7 +1,7 @@
 # Task List
 
 ## Current Release Target
-- Preserve the V1.3 CLI-first PMW-free reusable baseline while reviewing `OPS-10` as the current concrete contract packet draft for lane-typed packet minimum rules and conditional approval surface.
+- Preserve the V1.3 CLI-first PMW-free reusable baseline on planner hold until a new approved lane is selected.
 
 ## Active Locks
 | Task ID | Scope | Owner | Status | Started At | Notes |
@@ -54,9 +54,23 @@
 | QLT-03 | Semantic trace and evidence gate generalization | 2026-05-11 | transition reviewer -> planner; gate contract | Planner recorded QLT-03 closeout after reviewer approval and opened `OPS-09` as the next phase-2 process-friction packet draft. |
 | OPS-09 | Structured packet-exit metadata and closeout parser hardening | 2026-05-11 | transition reviewer -> planner; gate contract | Planner recorded OPS-09 closeout after reviewer approval and opened `PLN-12` as the next process-friction planning lane. |
 | OPS-10 | Lane-typed packet minimum rules and conditional approval surface | 2026-05-11 | transition planner -> planner; gate contract | Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold. Keep the reusable baseline on planning hold until a new approved lane is selected. |
+| PLN-13 | Distribution channels, manual consolidation, and starter payload rationalization | 2026-05-11 | planner detailed-agreement approval; gate contract | Planning evidence approved. GitHub remains the authority, npm is the main entrypoint, `.exe` remains auxiliary, and implementation sequence is fixed as A bootstrapper, B template payload contract, C manual consolidation. |
+| OPS-11 | GitHub-backed npm bootstrapper | 2026-05-11 | transition planner -> planner; gate contract | Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold. Keep the reusable baseline on planning hold until a new approved lane is selected. |
+| OPS-12 | Template payload contract | 2026-05-11 | transition reviewer -> planner; gate contract | Planner recorded OPS-12 closeout after reviewer approval and opened `OPS-13` as the next concrete `PLN-13` follow-up packet for manual consolidation. |
+| OPS-13 | Manual consolidation | 2026-05-11 | transition planner -> planner; gate contract | Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold. Keep the reusable baseline on planning hold until a new approved lane is selected. |
+| OPS-14 | Post-transition validation/context refresh determinism | 2026-05-11 | transition planner -> planner; gate contract | Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold. Keep the reusable baseline on planning hold until a new approved lane is selected. |
+| OPS-14 | Post-transition validation/context refresh determinism | 2026-05-11 | transition planner -> planner; gate contract | Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold. Keep the reusable baseline on planning hold until a new approved lane is selected. |
 
 ## Handoff Log
+- 2026-05-11: [planner -> planner] Opened OPS-14 as the next narrow follow-up packet for post-transition validation/context refresh determinism. | Review the packet draft and decide whether to approve, adjust, or hold the narrow determinism boundary before implementation opens.
+- 2026-05-11: [planner -> planner] Opened OPS-13 as the next concrete PLN-13 follow-up packet for manual consolidation. | Review the manual-consolidation boundary and decide whether to approve, adjust, or hold packet C before implementation opens.
+- 2026-05-11: [planner -> planner] OPS-12 closeout reflected; OPS-13 draft is now open as packet C under the approved PLN-13 sequence. | Review the manual-consolidation boundary and decide whether to approve, adjust, or hold packet C before implementation opens.
+- 2026-05-11: [planner -> planner] OPS-13 detailed agreement is approved; close Ready For Code before implementation opens. | Close Ready For Code for OPS-13 before implementation opens.
+- 2026-05-11: [planner -> planner] OPS-12 detailed agreement is approved; close Ready For Code before implementation opens. | Close Ready For Code for OPS-12 before implementation opens.
+- 2026-05-11: [planner -> planner] Opened OPS-12 as the next concrete PLN-13 follow-up packet for the template payload contract. | Review the template payload contract and decide whether to approve, adjust, or hold the packet B boundary before implementation opens.
 - 2026-05-11: [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold. | Keep the reusable baseline on planning hold until a new approved lane is selected.
+- 2026-05-11: [planner -> planner] OPS-11 detailed agreement is approved; close Ready For Code before implementation opens. | Close Ready For Code for OPS-11 before implementation opens.
+- 2026-05-11: [planner -> planner] PLN-13 detailed agreement is approved; OPS-11 draft is now open as the first concrete distribution packet. | Review the OPS-11 detailed agreement and decide whether to approve, adjust, or hold the concrete bootstrapper boundary before implementation opens.
 - 2026-05-11: [planner -> planner] OPS-10 detailed agreement is approved with stable lane-type declaration and advisory-first validator constraints; close Ready For Code before implementation opens. | Close Ready For Code for OPS-10 before implementation opens.
 - 2026-05-11: [planner -> planner] PLN-12 closeout recommendation is approved; OPS-10 draft is now open as the next concrete contract packet. | Review the OPS-10 packet draft and decide whether to approve, adjust, or hold the detailed agreement before implementation opens.
 - 2026-05-11: [planner -> planner] PLN-12 detailed agreement is approved with universal-minimum and not-needed/conditional constraints; decide the next concrete follow-up or close planning. | Decide whether to open a concrete follow-up packet for lane-typed packet minimum rules or close PLN-12 as planning-only guidance.

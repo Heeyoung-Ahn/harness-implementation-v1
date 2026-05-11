@@ -93,7 +93,7 @@ const SECURITY_REVIEW_RELEASE_ARTIFACT_PATHS = [
   "standard-template/AGENTS.md",
   "standard-template/README.md",
   "standard-template/START_HERE.md",
-  "standard-template/HARNESS_MANUAL.md",
+  "standard-template/reference/manuals/HARNESS_MANUAL.md",
   "standard-template/INIT_STANDARD_HARNESS.cmd"
 ];
 const SECURITY_REVIEW_RELEASE_SCRIPTS = ["package:release", "package:windows-exe"];
@@ -473,6 +473,7 @@ export function writeValidationReport({ repoRoot = process.cwd(), outputDir = re
   finalizedReport.traceSummary = finalizedTraceArtifact?.summary ?? null;
   fs.writeFileSync(markdownPath, buildValidationReportMarkdown(finalizedReport), "utf8");
   fs.writeFileSync(jsonPath, `${JSON.stringify(finalizedReport, null, 2)}\n`, "utf8");
+  withStore({ dbPath, repoRoot }, (store) => writeGeneratedStateDocs({ store, outputDir }));
   withStore({ dbPath, repoRoot }, (store) =>
     writeActiveContext({
       store,
@@ -481,13 +482,51 @@ export function writeValidationReport({ repoRoot = process.cwd(), outputDir = re
       validation: finalizedReport
     })
   );
+  const settledValidation = runValidator({ repoRoot, outputDir, dbPath });
+  const settledReport = {
+    ...finalizedReport,
+    ok: settledValidation.ok,
+    cutoverReady: settledValidation.cutoverReady,
+    findings: settledValidation.findings,
+    gateDecision: settledValidation.ok ? "pass" : "hold"
+  };
+  if (securityReview) {
+    settledReport.securityReview = securityReview.summary;
+    if (securityReview.summary.contractStatus === "requested") {
+      settledReport.findings = [...settledReport.findings, ...securityReview.additionalFindings];
+      const hasBlockingSecurityFinding = settledReport.findings.some((finding) => finding?.severity === "error");
+      settledReport.ok = !hasBlockingSecurityFinding;
+      settledReport.cutoverReady = !hasBlockingSecurityFinding;
+      settledReport.gateDecision = hasBlockingSecurityFinding ? "hold" : "pass";
+    }
+  }
+  settledReport.nextAction = withStore({ dbPath, repoRoot }, (store) => {
+    const fallback = recommendNextActionFromState(store, settledValidation, repoRoot);
+    if (securityReview?.summary?.contractStatus === "requested") {
+      return recommendSecurityReviewNextAction({
+        findings: settledReport.findings,
+        fallback
+      });
+    }
+    return fallback;
+  });
+  fs.writeFileSync(markdownPath, buildValidationReportMarkdown(settledReport), "utf8");
+  fs.writeFileSync(jsonPath, `${JSON.stringify(settledReport, null, 2)}\n`, "utf8");
+  withStore({ dbPath, repoRoot }, (store) =>
+    writeActiveContext({
+      store,
+      repoRoot,
+      outputDir,
+      validation: settledReport
+    })
+  );
 
   return {
-    ok: finalizedValidation.ok,
+    ok: settledValidation.ok,
     command: "validation-report",
     markdownPath,
     jsonPath,
-    report: finalizedReport
+    report: settledReport
   };
 }
 

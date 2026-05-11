@@ -4,6 +4,7 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { RELEASE_BASELINE } from "../.harness/runtime/state/release-baseline.js";
+import { shouldIncludeStarterPayloadPath } from "../installer/starter-payload-contract.js";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const outputRoot = path.resolve(
@@ -63,16 +64,20 @@ function copyManuals() {
 }
 
 function copyDirectory(source, target) {
+  const isStarterPayload = path.basename(source) === "standard-template";
   fs.mkdirSync(target, { recursive: true });
   fs.cpSync(source, target, {
     recursive: true,
     filter(sourcePath) {
       const normalized = sourcePath.replaceAll("\\", "/");
-      return !normalized.endsWith("/.harness/operating_state.sqlite") &&
-        !normalized.endsWith("/.harness/operating_state.sqlite-shm") &&
-        !normalized.endsWith("/.harness/operating_state.sqlite-wal") &&
-        !normalized.includes("/.tmp/") &&
-        !normalized.includes("/dist/");
+      if (normalized.includes("/.tmp/") || normalized.includes("/dist/")) {
+        return false;
+      }
+      const relativePath = path.relative(source, sourcePath).replaceAll("\\", "/");
+      if (!relativePath || relativePath === ".") {
+        return true;
+      }
+      return isStarterPayload ? shouldIncludeStarterPayloadPath(relativePath) : true;
     }
   });
 }

@@ -31,12 +31,25 @@ npm test
 - `.agents/runtime/ACTIVE_CONTEXT.json`: AI용 compact state
 - `.agents/runtime/ACTIVE_CONTEXT.md`: 사람용 한국어 re-entry 요약
 
+## Authority Manual
+- 운영 authority manual: `reference/manuals/HARNESS_MANUAL.md`
+- 루트 `README.md`는 maintainer repo entry surface이고, starter first-read surface는 `standard-template/START_HERE.md`다.
+
 ## 설치
-소스에서 바로 설치:
+기본 bootstrap flow:
 
 ```powershell
 node installer/install-harness.js --project-name "My Project" --target-dir "C:\work\my-project" --profiles PRF-07,PRF-09
 ```
+
+기본 동작은 다음과 같다.
+1. target이 `비어 있는 신규 프로젝트 폴더`인지 `기존 로컬 레포 root`인지 판정한다.
+2. 기본 authority source로 GitHub release/source authority에서 `standard-template/` 내용을 가져온다.
+3. target에 필요한 harness 파일을 적용한다.
+4. starter init을 실행해 Harness usable state까지 초기화한다.
+
+maintainer/local fallback:
+- source checkout에서 payload를 직접 쓰려면 `--authority-source local`을 명시한다.
 
 수동 설치:
 1. `standard-template/` 안의 내용물을 새 프로젝트 루트에 복사한다.

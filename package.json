@@ -2,10 +2,14 @@
   "name": "harness-implementation-v1",
   "private": true,
   "type": "module",
+  "bin": {
+    "standard-harness-init": "./installer/install-harness.js"
+  },
   "engines": {
     "node": ">=24.0.0"
   },
   "scripts": {
+    "harness:bootstrap": "node installer/install-harness.js",
     "test": "node --test .harness/test/*.test.js",
     "test:reference": "node --test reference/repo_harness_template/tools/project-monitor-web/test/*.js",
     "harness:init": "node .agents/scripts/init-project.js",

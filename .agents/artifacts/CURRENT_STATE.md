@@ -2,7 +2,7 @@
 
 ## Snapshot
 - Current Stage: planning
-- Current Focus: V1.3 CLI-first PMW-free harness baseline is stable; OPS-10 is closed; the reusable baseline is on planner hold with no active lane.
+- Current Focus: V1.3 CLI-first PMW-free harness baseline is stable; OPS-14 is closed; the reusable baseline is on planner hold with no active lane.
 - Current Release Goal: Preserve the V1.3 installable standard harness baseline while implementing DEV-11 PMW removal and Active Context replacement under the release gate.
 
 ## Next Recommended Agent
@@ -14,16 +14,19 @@
 - `.agents/artifacts/IMPLEMENTATION_PLAN.md`
 - `.agents/artifacts/TASK_LIST.md`
 - `.agents/artifacts/PREVENTIVE_MEMORY.md`
-- `reference/packets/PKT-01_OPS-10_LANE_TYPED_PACKET_MINIMUM_RULES_AND_CONDITIONAL_APPROVAL_SURFACE.md`
-- `reference/planning/PLN-12_LANE_TYPED_PACKET_MINIMUMS_AND_APPROVAL_SURFACE_REDUCTION_DRAFT.md`
-- `reference/planning/PLN-11_POST_OPS07_RUNTIME_GENERALIZATION_AND_PROCESS_FRICTION_REDUCTION_DRAFT.md`
+- `reference/packets/PKT-01_OPS-14_POST_TRANSITION_VALIDATION_CONTEXT_REFRESH_DETERMINISM.md`
+- `reference/packets/PKT-01_OPS-07_PLANNER_HOLD_CLOSEOUT_AUTOMATION.md`
+- `reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md`
 
 ## Open Decisions / Blockers
-- `OPS-10` is closed; latest handoff is `planner -> planner`. Keep the reusable baseline on planning hold until a new approved lane is selected.
+- `OPS-14` is closed; latest handoff is `planner -> planner`. Keep the reusable baseline on planning hold until a new approved lane is selected.
+- All previously active follow-up packets are closed. `OPS-14` exists specifically because a transient stale parity window still appears immediately after successful transition apply before sequential reruns settle.
+- `PLN-13` approved the distribution contract and fixed the sequence: A GitHub-backed npm bootstrapper, then B template payload contract, then C manual consolidation.
+- `OPS-11` and `OPS-12` are closed. Packet C should now define the root authority manual, starter onboarding surface, and duplicate-doc deletion boundary without reopening bootstrap or payload redesign.
 - The approved adjustments are fixed: use one stable lane-type declaration field, keep undeclared packets on the full baseline, and start validator behavior as advisory-first while still hard-failing malformed lane metadata, unsupported lane types, or universal minimum violations.
 - No external blocker is open.
 - Phase 1 reusable runtime/validator generalization is closed for now: `OPS-08` and `QLT-03` are both closed.
-- Phase 2 should stay limited to planning/process-friction work: `OPS-09` is closed, `PLN-12` is approved as planning evidence, and `OPS-10` is now the active concrete contract packet draft.
+- Phase 2 process-friction follow-up is closed for now: `OPS-09`, `PLN-12`, and `OPS-10` are all closed, and the active shipped-surface follow-up is now `PLN-13` packet C.
 - Human-facing SSOT must be Korean-first, easy to read, and operator-oriented; AI-facing SSOT must be compact, deterministic, structured, and source-traced.
 - User clarification on 2026-05-03: the Karpathy-style guide should not be reduced to thin guidance. It should be sufficiently reflected while staying compatible with this harness's SSOT, approval, workflow, Tester, Reviewer, Active Context derived-state, and root/starter sync contracts.
 - User requirement on 2026-05-03: human-and-Planner-approved project design SSOT guides all other agents. Developer implements to it, Tester verifies against it, and Reviewer checks closeout/evidence against it.
@@ -33,6 +36,10 @@
 - User direction on 2026-05-03: remaining SSOT should split into AI-facing SSOT and human-facing SSOT. Human-facing SSOT uses Korean and easy terms; AI-facing SSOT prioritizes compact deterministic machine use.
 
 ## Current Truth Notes
+- `OPS-14` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
+- `OPS-13` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
+- `PLN-13` is approved as the planning evidence for GitHub-backed distribution sequencing. GitHub remains the source/release authority, npm is the main entrypoint, `.exe` remains auxiliary, and implementation priority stays A → B → C.
+- `OPS-11` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
 - `OPS-10` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
 - `PLN-12` is closed as planning evidence after approving the lane-type set, universal minimum contract, and the rule that burden reduction must use `not-needed` / `conditional` treatment instead of section deletion.
 - `OPS-09` is closed after reviewer approval and planner closeout reflection. Latest handoff is `reviewer -> planner`; stage is `planning`; gate profile is `contract`.
@@ -59,6 +66,15 @@
 
 ## Latest Handoff Summary
 - 2026-05-11: `[planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.`
+- 2026-05-11: `[planner -> planner] Opened OPS-14 as the next narrow follow-up packet for post-transition validation/context refresh determinism.`
+- 2026-05-11: `[planner -> planner] Opened OPS-13 as the next concrete PLN-13 follow-up packet for manual consolidation.`
+- 2026-05-11: `[planner -> planner] OPS-12 closeout reflected; OPS-13 draft is now open as packet C under the approved PLN-13 sequence.`
+- 2026-05-11: `[planner -> planner] OPS-13 detailed agreement is approved; close Ready For Code before implementation opens.`
+- 2026-05-11: `[planner -> planner] OPS-12 detailed agreement is approved; close Ready For Code before implementation opens.`
+- 2026-05-11: `[planner -> planner] Opened OPS-12 as the next concrete PLN-13 follow-up packet for the template payload contract.`
+- 2026-05-11: `[planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.`
+- 2026-05-11: `[planner -> planner] OPS-11 detailed agreement is approved; close Ready For Code before implementation opens.`
+- 2026-05-11: `[planner -> planner] PLN-13 detailed agreement is approved; OPS-11 draft is now open as the first concrete distribution packet.`
 - 2026-05-11: `[planner -> planner] OPS-10 detailed agreement is approved with stable lane-type declaration and advisory-first validator constraints; close Ready For Code before implementation opens.`
 - 2026-05-11: `[planner -> planner] PLN-12 closeout recommendation is approved; OPS-10 draft is now open as the next concrete contract packet.`
 - 2026-05-11: `[planner -> planner] OPS-09 closeout reflected; PLN-12 draft is now open as the next process-friction planning lane.`
@@ -133,3 +149,4 @@
 - 2026-05-03: `[user -> planner] Reopen OPS-03 planning so Reviewer findings include sufficient Karpathy-style behavior-guide adoption, project-design SSOT precedence for all agents, and PMW Artifact Library design access improvements.`
 - 2026-05-03: `[planner -> user] OPS-03 revised agreement finalized; Ready For Code for revised scope is pending user approval.`
 - 2026-05-03: `[reviewer -> developer] OPS-03 closeout readiness review found current-state/history split and agent behavior guidance adoption gaps. This handoff is superseded by the later user-directed Planner rebaseline before further Developer work.`
+- `OPS-12` is closed after tester verification, reviewer approval, and planner closeout reflection. Latest handoff is `reviewer -> planner`; stage is `planning`; gate profile is `contract`.
