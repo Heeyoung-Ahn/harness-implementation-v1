@@ -263,6 +263,13 @@
   - standard: approved packet, targeted tests, validator, handoff evidence
   - contract: Ready For Code, root sync, standard-template sync, targeted tests, root test suite, starter test suite, validator, PMW export when applicable, review closeout
   - release: release-baseline parity, packaging/manual evidence, validator, security/cutover evidence where applicable, review closeout
+- Verification scenario reminder:
+  - normal
+  - error
+  - permission
+  - regression
+  - manual check
+  - evidence location
 - [어떻게 검증할지]
 
 ## 15. Packet Exit Quality Gate

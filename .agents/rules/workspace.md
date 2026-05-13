@@ -46,3 +46,18 @@ This file is the constitutional entry point for Antigravity and any other agent 
 - keep handoff and lock changes explicit
 - do not treat generated docs as editable operational truth
 - do not load `reference/*` unless the current task actually needs it
+
+## Git And Worktree Discipline
+
+- Default-branch direct feature development is a strong-default no. Use a dedicated branch or worktree for new features, risky refactors, and parallel work unless an explicit exception is recorded.
+- Strong-default worktree cases:
+  - new feature implementation
+  - risky refactor
+  - parallel packet work
+  - long-running investigation or remediation
+- Explicit exception gates for staying on the current workspace/default branch:
+  - narrow maintainer-only doc or template sync
+  - very small emergency correction with low merge risk
+  - local-only inspection or planning work that does not open implementation
+- When using an exception, record the reason in the active packet, handoff, or closeout note so later reviewers can see why branch/worktree isolation was skipped.
+- Before merge or handoff, review the diff, rerun the required checks, and make sure unrelated file drift is not riding along with the intended change.

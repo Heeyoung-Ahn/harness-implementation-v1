@@ -168,7 +168,7 @@ This lane defines:
 - validator / cutover 영향:
   validator scope may expand in phase-1 to detect missing or contradictory evidence and parity gaps; CI/PR gating stays definition-only in this packet
 - Authoritative source refs:
-  `reference/artifacts/STANDARD_HARNESS_REAL_PROJECT_READINESS_ASSESSMENT.md`, `reference/artifacts/STANDARD_HARNESS_PROJECT_SIMULATION_PLAYBOOK.md`, `reference/artifacts/STANDARD_HARNESS_WBMS_SIMULATION_REPORT.md`, `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`, `VALIDATION_REPORT.json`, `ACTIVE_CONTEXT.json`, `WALKTHROUGH.md`, `REVIEW_REPORT.md`
+  `reference/artifacts/STANDARD_HARNESS_REAL_PROJECT_READINESS_ASSESSMENT.md`, `reference/artifacts/STANDARD_HARNESS_PROJECT_SIMULATION_PLAYBOOK.md`, `reference/artifacts/STANDARD_HARNESS_PROJECT_SIMULATION_REPORT.md`, `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`, `VALIDATION_REPORT.json`, `ACTIVE_CONTEXT.json`, `WALKTHROUGH.md`, `REVIEW_REPORT.md`
 - Authoritative source intake reference: `reference/planning/PLN-10_POST_DEV11_HARDENING_AND_RELEASE_ASSURANCE_DRAFT.md`, `reference/artifacts/STANDARD_HARNESS_REAL_PROJECT_READINESS_ASSESSMENT.md`
 - Authoritative source disposition: implemented; accept the readiness assessment conclusion that `QLT-02` should open before the first real complex-project kickoff
 - New planning source priority / disposition:

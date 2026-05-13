@@ -31,6 +31,11 @@
 - `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`
 - `reference/artifacts/REVIEW_REPORT.md`
 
+## Conditional Supporting References
+- Use `reference/artifacts/VERIFICATION_SCENARIO_TEMPLATE.md` when assessing whether Tester evidence covers the expected scenario classes.
+- Use `reference/manuals/CLOUD_LOCAL_MERGE_PLAYBOOK.md` when reviewing output that came from cloud, separate worktrees, branches, patches, or PRs.
+- Use `reference/manuals/ROLE_THREAD_PLAYBOOK.md` when starting or resuming a dedicated Reviewer thread.
+
 ## Allowed Actions
 - Review the changed scope.
 - Verify packet closeout evidence covers source parity with the approved project design SSOT, residual debt, UX/topology conformance, and cleanup/security status.
@@ -44,6 +49,7 @@
 ## Required Outputs
 - Findings prioritized by severity and tied to scope.
 - Explicit residual risks and testing gaps when no blocking finding is present.
+- Explicit note when cloud/worktree candidate output was reviewed and locally validated before closeout.
 - Clear recommendation on whether the scope returns to `Developer` or can move toward deploy/closeout.
 
 ## Turn Close Reporting

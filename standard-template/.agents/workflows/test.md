@@ -29,6 +29,10 @@
 - active packet and any approved project design/source artifact cited by the task
 - `reference/artifacts/WALKTHROUGH.md`
 
+## Conditional Supporting References
+- Use `reference/artifacts/VERIFICATION_SCENARIO_TEMPLATE.md` when the packet does not already provide a complete normal/error/permission/regression/manual-check matrix, or when reporting tested versus untested behavior.
+- Use `reference/manuals/ROLE_THREAD_PLAYBOOK.md` when starting or resuming a dedicated Tester thread.
+
 ## Allowed Actions
 - Run targeted validation.
 - Capture evidence honestly.
@@ -44,6 +48,7 @@
 
 ## Required Outputs
 - Explicit tested-scope and untested-scope evidence.
+- Normal, error, permission, regression, and manual-check coverage status when applicable.
 - Failure summaries with reproduction notes or environment notes.
 - A handoff-ready defect report when remediation is needed.
 

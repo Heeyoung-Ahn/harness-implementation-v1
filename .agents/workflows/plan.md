@@ -27,6 +27,13 @@
 - `.agents/artifacts/TASK_LIST.md`
 - `.agents/artifacts/REQUIREMENTS.md`
 
+## Conditional Supporting References
+- Use `reference/artifacts/PROJECT_STARTER_DOC_PACK.md` when starting a new project, reopening kickoff scope, or checking whether project purpose, roles, workflows, scope, screens, data, permissions, tests, deployment, and operations are defined before implementation.
+- Use `reference/artifacts/VERIFICATION_SCENARIO_TEMPLATE.md` when defining packet acceptance or verification expectations.
+- Use `reference/manuals/ROLE_THREAD_PLAYBOOK.md` when splitting work across role-scoped AI threads.
+- Use `reference/manuals/AUTOMATION_CATALOG.md` when planning recurring reminders or repeated operational checks.
+- Use `reference/manuals/CLOUD_LOCAL_MERGE_PLAYBOOK.md` when a packet uses cloud, separate worktrees, branches, patches, or PRs as parallel candidate outputs.
+
 ## Allowed Actions
 - Close planning ambiguity before implementation.
 - Define scope, constraints, validation expectations, and packet boundaries.
@@ -40,6 +47,8 @@
 ## Required Outputs
 - Updated requirements, planning baseline, or packet definitions when the lane changes.
 - Explicit acceptance, non-scope, and approval-boundary statements.
+- Verification scenario expectations when a packet is being prepared for implementation.
+- Thread/worktree/cloud/automation guidance references when those operating modes are part of the packet.
 - A clear next implementing or reviewing target when planning closes.
 
 ## Turn Close Reporting

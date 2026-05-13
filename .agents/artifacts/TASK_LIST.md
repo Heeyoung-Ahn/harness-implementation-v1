@@ -60,8 +60,14 @@
 | OPS-13 | Manual consolidation | 2026-05-11 | transition planner -> planner; gate contract | Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold. Keep the reusable baseline on planning hold until a new approved lane is selected. |
 | OPS-14 | Post-transition validation/context refresh determinism | 2026-05-11 | transition planner -> planner; gate contract | Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold. Keep the reusable baseline on planning hold until a new approved lane is selected. |
 | OPS-14 | Post-transition validation/context refresh determinism | 2026-05-11 | transition planner -> planner; gate contract | Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold. Keep the reusable baseline on planning hold until a new approved lane is selected. |
+| OPS-15 | Reusable operator discipline, guidance, and guidebook expansion | 2026-05-13 | transition planner -> planner; gate contract | Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold. Keep the reusable baseline on planning hold until a new approved lane is selected. |
 
 ## Handoff Log
+- 2026-05-13: [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold. | Keep the reusable baseline on planning hold until a new approved lane is selected.
+- 2026-05-13: [reviewer -> planner] Packet exit approved; Planner should choose or refine the next lane. | Plan the next approved lane or close remaining planning decisions.
+- 2026-05-13: [tester -> reviewer] Tester verification completed; Reviewer should assess packet exit readiness. | Review implementation, evidence, residual debt, and closeout readiness.
+- 2026-05-13: [developer -> tester] Developer implementation completed; Tester should verify the approved scope. | Verify the implementation against the packet acceptance criteria.
+- 2026-05-13: [planner -> developer] Planning approved; implementation can proceed. | Implement the approved packet scope and hand off to Tester.
 - 2026-05-11: [planner -> planner] Opened OPS-14 as the next narrow follow-up packet for post-transition validation/context refresh determinism. | Review the packet draft and decide whether to approve, adjust, or hold the narrow determinism boundary before implementation opens.
 - 2026-05-11: [planner -> planner] Opened OPS-13 as the next concrete PLN-13 follow-up packet for manual consolidation. | Review the manual-consolidation boundary and decide whether to approve, adjust, or hold packet C before implementation opens.
 - 2026-05-11: [planner -> planner] OPS-12 closeout reflected; OPS-13 draft is now open as packet C under the approved PLN-13 sequence. | Review the manual-consolidation boundary and decide whether to approve, adjust, or hold packet C before implementation opens.

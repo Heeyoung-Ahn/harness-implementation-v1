@@ -81,14 +81,14 @@ This file keeps thin, durable prevention rules for repeated process or quality i
 
 - Candidate ID: SIM-MULTI-PROFILE-001
 - Issue Pattern: 하나의 실제 work item이 admin-grid UX, spreadsheet-backed authoritative source, later delivery profile까지 동시에 필요로 하지만, current packet contract와 validator가 사실상 single active profile 중심으로 작동한다.
-- Why It Matters: WBMS류 프로젝트에서 operator가 profile 하나를 누락하거나 work item을 부자연스럽게 쪼개게 되면 required evidence와 hold rule이 부분적으로만 적용된다.
+- Why It Matters: generalized project에서 operator가 profile 하나를 누락하거나 work item을 부자연스럽게 쪼개게 되면 required evidence와 hold rule이 부분적으로만 적용된다.
 - Proposed Target Layer: core
 - Proposed Target Artifact / Follow-Up Item: `PKT-01_WORK_ITEM_PACKET_TEMPLATE.md`, profile activation contract, `src/state/drift-validator.js`의 multi-profile support follow-up lane
 - Promotion Status: promoted
 - Human Review Boundary: closed by the approved `SIM-01` remediation lane on 2026-04-23.
 - Linked Follow-Up Item: `SIM-01` (closed 2026-04-23)
 - Needed Refinement: packet header/data model을 `Active profile dependencies`와 per-profile evidence matrix로 바꿀지, 또는 profile composition artifact를 둘지 판정 필요
-- Source / Evidence: `reference/artifacts/STANDARD_HARNESS_WBMS_SIMULATION_REPORT.md`
+- Source / Evidence: `reference/artifacts/STANDARD_HARNESS_PROJECT_SIMULATION_REPORT.md`
 
 - Candidate ID: SIM-TASK-PACKET-REGISTRATION-002
 - Issue Pattern: concrete packet evidence validator enforcement가 `artifact_index` category `task_packet` 수동 등록에 의존한다.
@@ -99,7 +99,7 @@ This file keeps thin, durable prevention rules for repeated process or quality i
 - Human Review Boundary: closed by the approved `SIM-02` remediation lane on 2026-04-23.
 - Linked Follow-Up Item: `SIM-02` (closed 2026-04-23)
 - Needed Refinement: active packet의 canonical discovery source를 어디로 둘지 결정 필요
-- Source / Evidence: `reference/artifacts/STANDARD_HARNESS_WBMS_SIMULATION_REPORT.md`
+- Source / Evidence: `reference/artifacts/STANDARD_HARNESS_PROJECT_SIMULATION_REPORT.md`
 
 - Candidate ID: SIM-SOURCE-WAVE-LEDGER-003
 - Issue Pattern: 하나의 workbook 또는 새 기획 문서 변경이 여러 open packet에 동시에 영향을 주는 상황에서 impacted packet set을 project-level로 닫는 표준 artifact가 없다.
@@ -110,7 +110,7 @@ This file keeps thin, durable prevention rules for repeated process or quality i
 - Human Review Boundary: closed by the approved `SIM-03` remediation lane on 2026-04-23.
 - Linked Follow-Up Item: `SIM-03` (closed 2026-04-23)
 - Needed Refinement: authoritative source intake와 별도 project-level source-wave ledger의 경계는 reusable contract로 닫혔다.
-- Source / Evidence: `reference/artifacts/STANDARD_HARNESS_WBMS_SIMULATION_REPORT.md`
+- Source / Evidence: `reference/artifacts/STANDARD_HARNESS_PROJECT_SIMULATION_REPORT.md`
 
 ## Entry Format
 

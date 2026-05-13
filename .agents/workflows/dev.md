@@ -30,6 +30,11 @@
 - `.agents/artifacts/IMPLEMENTATION_PLAN.md`
 - active packet and any approved project design/source artifact cited by the task
 
+## Conditional Supporting References
+- Use `reference/artifacts/VERIFICATION_SCENARIO_TEMPLATE.md` for implementation self-check when the packet has scenario-based acceptance or manual verification requirements.
+- Use `reference/manuals/CLOUD_LOCAL_MERGE_PLAYBOOK.md` when consuming cloud, branch, patch, PR, or separate worktree output.
+- Use `reference/manuals/ROLE_THREAD_PLAYBOOK.md` when starting or resuming a dedicated Developer thread.
+
 ## Allowed Actions
 - Implement only the approved lane.
 - Run `harness:validate`, `harness:validation-report`, and regenerate `ACTIVE_CONTEXT` when reusable re-entry state changes.
@@ -44,6 +49,7 @@
 ## Required Outputs
 - Code changes restricted to the approved scope.
 - Validation evidence for the implemented delta, including explicit `harness:validate` and `harness:validation-report` results before forward handoff.
+- Self-check notes against the packet verification scenarios when scenario-based acceptance exists.
 - Updated planning/state/handoff references when implementation changes the live execution picture.
 
 ## Turn Close Reporting

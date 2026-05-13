@@ -2,7 +2,7 @@
 
 ## Snapshot
 - Current Stage: planning
-- Current Focus: V1.3 CLI-first PMW-free harness baseline is stable; OPS-14 is closed; the reusable baseline is on planner hold with no active lane.
+- Current Focus: V1.3 CLI-first PMW-free harness baseline is stable; OPS-15 is closed; the reusable baseline is on planner hold with no active lane.
 - Current Release Goal: Preserve the V1.3 installable standard harness baseline while implementing DEV-11 PMW removal and Active Context replacement under the release gate.
 
 ## Next Recommended Agent
@@ -19,6 +19,7 @@
 - `reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md`
 
 ## Open Decisions / Blockers
+- `OPS-15` is closed; latest handoff is `planner -> planner`. Keep the reusable baseline on planning hold until a new approved lane is selected.
 - `OPS-14` is closed; latest handoff is `planner -> planner`. Keep the reusable baseline on planning hold until a new approved lane is selected.
 - All previously active follow-up packets are closed. `OPS-14` resolved the transient post-transition stale parity window; no active remediation lane remains.
 - `PLN-13` approved the distribution contract and fixed the sequence: A GitHub-backed npm bootstrapper, then B template payload contract, then C manual consolidation.
@@ -36,6 +37,7 @@
 - User direction on 2026-05-03: remaining SSOT should split into AI-facing SSOT and human-facing SSOT. Human-facing SSOT uses Korean and easy terms; AI-facing SSOT prioritizes compact deterministic machine use.
 
 ## Current Truth Notes
+- `OPS-15` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
 - `OPS-14` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
 - `OPS-13` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
 - `PLN-13` is approved as the planning evidence for GitHub-backed distribution sequencing. GitHub remains the source/release authority, npm is the main entrypoint, `.exe` remains auxiliary, and implementation priority stays A → B → C.
@@ -65,6 +67,11 @@
 - PMW remains historical closed-lane evidence only. `PLN-09` now proceeds on complete PMW removal from the active baseline and replacement of PMW read-model/export obligations with CLI-first active context.
 
 ## Latest Handoff Summary
+- 2026-05-13: `[planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.`
+- 2026-05-13: `[reviewer -> planner] Packet exit approved; Planner should choose or refine the next lane.`
+- 2026-05-13: `[tester -> reviewer] Tester verification completed; Reviewer should assess packet exit readiness.`
+- 2026-05-13: `[developer -> tester] Developer implementation completed; Tester should verify the approved scope.`
+- 2026-05-13: `[planner -> developer] Planning approved; implementation can proceed.`
 - 2026-05-11: `[planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.`
 - 2026-05-11: `[planner -> planner] Opened OPS-14 as the next narrow follow-up packet for post-transition validation/context refresh determinism.`
 - 2026-05-11: `[planner -> planner] Opened OPS-13 as the next concrete PLN-13 follow-up packet for manual consolidation.`

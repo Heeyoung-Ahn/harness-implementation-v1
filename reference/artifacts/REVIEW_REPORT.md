@@ -1086,7 +1086,7 @@ Use this artifact when the project enters a formal review gate.
 
 ## 2026-04-23 REV-03 Kickoff
 
-- Scope: simulation-remediation closeout review for `SIM-01`, `SIM-02`, and `SIM-03` before a new WBMS project kickoff.
+- Scope: simulation-remediation closeout review for `SIM-01`, `SIM-02`, and `SIM-03` before a new generalized project kickoff.
 - Entry condition:
   - `SIM-01`, `SIM-02`, and `SIM-03` are closed in the live planning baseline.
   - root and starter validator/test updates are synchronized after the shared-source rebaseline control changes.
@@ -1121,7 +1121,7 @@ Use this artifact when the project enters a formal review gate.
   - `node src/state/dev05-cli.js validate`
 - Result:
   - the simulation remediation lane is approved as closed
-  - no additional reusable remediation lane is required before a new WBMS project kickoff
+  - no additional reusable remediation lane is required before a new generalized project kickoff
   - preserve the current generalized standard harness baseline until a new approved lane opens
 - Status: done
 

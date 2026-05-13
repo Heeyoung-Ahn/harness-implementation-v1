@@ -1,10 +1,10 @@
 # TASK_LIST
 
 ## Technical Facts
-- Open work items: 50
+- Open work items: 51
 - Open blocked or at-risk items: 0
 - Recent handoffs captured: 10
-- Generated at: 2026-05-11T08:51:44.036Z
+- Generated at: 2026-05-13T12:18:41.999Z
 
 ## Blocked / At Risk Summary
 - 0 open blocker or risks require attention.
@@ -18,6 +18,10 @@
 ## Work Item Detail
 | ID | Title | Status | Next Action |
 |---|---|---|---|
+| OPS-15 | Reusable operator discipline, guidance, and guidebook expansion | closed | Keep the reusable baseline on planning hold until a new approved lane is selected. |
+| SIM-03 | Shared-source rebaseline control | done | Keep the closed shared-source rebaseline control, source-wave ledger contract, and ledger parity validator enforcement stable as part of the reusable baseline. |
+| SIM-02 | Task-packet registration enforcement | done | Keep the closed canonical packet discovery and registration fail-fast rule stable while SIM-03 proceeds. |
+| SIM-01 | Multi-profile packet composition contract | done | Keep the closed multi-profile packet contract and validator union-of-profile evidence enforcement stable while SIM-02 proceeds. |
 | OPS-14 | Post-transition validation/context refresh determinism | closed | Keep the reusable baseline on planning hold until a new approved lane is selected. |
 | OPS-13 | Manual consolidation | closed | Keep the reusable baseline on planning hold until a new approved lane is selected. |
 | OPS-12 | Template payload contract | closed | Plan the next approved lane or close remaining planning decisions. |
@@ -46,9 +50,6 @@
 | DEV-06 | Standard-template hardening | done | Preserve the hardened starter surface and reopen only if copied-starter usability drifts. |
 | REV-02 | Standard harness generalization review | done | Closed on 2026-04-23; preserve concrete task_packet validator enforcement and starter contract sync as part of the reusable baseline. |
 | REV-03 | Simulation remediation review | done | Preserve the closed simulation remediation review result and the approved generalized baseline until a new lane opens. |
-| SIM-03 | Shared-source rebaseline control | done | Keep the closed shared-source rebaseline control, source-wave ledger contract, and ledger parity validator enforcement stable as part of the reusable baseline. |
-| SIM-02 | Task-packet registration enforcement | done | Keep the closed canonical packet discovery and registration fail-fast rule stable while SIM-03 proceeds. |
-| SIM-01 | Multi-profile packet composition contract | done | Keep the closed multi-profile packet contract and validator union-of-profile evidence enforcement stable while SIM-02 proceeds. |
 | TST-03 | Profile-aware validator | done | Closed on 2026-04-23; keep the reusable packet-template and optional-profile evidence validation hooks intact. |
 | PRF-03 | Airgapped delivery profile | done | Closed on 2026-04-23; keep the airgapped-delivery optional profile and transfer-governance evidence rule intact. |
 | PRF-02 | Authoritative spreadsheet source profile | done | Closed on 2026-04-23; keep the spreadsheet-source optional profile and traceability evidence rule intact. |
@@ -70,18 +71,18 @@
 | DEV-04 | PMW read surface | done | Closed after browser verification passed at http://127.0.0.1:4173. |
 
 ## Handoff Log
+- 2026-05-13T12:18:41.999Z: [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.
+- 2026-05-13T12:07:31.579Z: [reviewer -> planner] Packet exit approved; Planner should choose or refine the next lane.
+- 2026-05-13T12:05:19.281Z: [tester -> reviewer] Tester verification completed; Reviewer should assess packet exit readiness.
+- 2026-05-13T07:18:57.351Z: [developer -> tester] Developer implementation completed; Tester should verify the approved scope.
+- 2026-05-13T07:10:33.036Z: [planner -> developer] Planning approved; implementation can proceed.
 - 2026-05-11T08:51:44.036Z: [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.
 - 2026-05-11T08:49:21.863Z: [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.
 - 2026-05-11T08:49:14.269Z: [reviewer -> planner] Packet exit approved; Planner should choose or refine the next lane.
 - 2026-05-11T08:49:03.063Z: [tester -> reviewer] Tester verification completed; Reviewer should assess packet exit readiness.
 - 2026-05-11T08:48:48.539Z: [developer -> tester] Developer implementation completed; Tester should verify the approved scope.
-- 2026-05-11T08:44:27.517Z: [planner -> developer] Planning approved; implementation can proceed.
-- 2026-05-11T08:44:20.000Z: [planner -> planner] Opened OPS-14 as the next narrow follow-up packet for post-transition validation/context refresh determinism.
-- 2026-05-11T08:25:38.227Z: [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.
-- 2026-05-11T08:25:17.923Z: [reviewer -> planner] Packet exit approved; Planner should choose or refine the next lane.
-- 2026-05-11T08:23:34.932Z: [tester -> reviewer] Tester verification completed; Reviewer should assess packet exit readiness.
 
 ## Generation Metadata
 - Generated docs: CURRENT_STATE.md, TASK_LIST.md
-- Source revision: 2026-05-11T08:51:44.036Z
+- Source revision: 2026-05-13T12:18:41.999Z
 - Sync status: fresh at generation time

@@ -25,6 +25,11 @@
 - `.agents/artifacts/TASK_LIST.md`
 - `reference/artifacts/DEPLOYMENT_PLAN.md`
 
+## Conditional Supporting References
+- Use `reference/manuals/AUTOMATION_CATALOG.md` when recurring deploy-readiness, stale-validation, or post-release checks are part of the approved operation plan.
+- Use `reference/manuals/CLOUD_LOCAL_MERGE_PLAYBOOK.md` when deployment includes output that originated from cloud, separate worktrees, branches, patches, or PRs.
+- Use `reference/artifacts/VERIFICATION_SCENARIO_TEMPLATE.md` when defining or checking deployment smoke-test scenarios.
+
 ## Allowed Actions
 - Confirm deploy gate readiness.
 - Execute only the explicitly approved release path.
@@ -37,6 +42,7 @@
 
 ## Required Outputs
 - Deployment or cutover evidence aligned with the approved topology.
+- Automation follow-up recommendation when recurring deploy or operations checks are needed.
 - Clear success/failure status and rollback note when applicable.
 
 ## Turn Close Reporting
