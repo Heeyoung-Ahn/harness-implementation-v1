@@ -224,7 +224,7 @@ export function buildActiveContext({
   };
 }
 
-function renderActiveContextMarkdown(context) {
+export function renderActiveContextMarkdown(context) {
   const task = context.selectedLane;
   const handoff = context.latestHandoff;
   const validation = context.validation;
@@ -292,7 +292,7 @@ function renderActiveContextMarkdown(context) {
   return `${lines.join("\n")}\n`;
 }
 
-function resolveValidationSummary({ repoRoot, validation }) {
+export function resolveValidationSummary({ repoRoot, validation }) {
   const inline = summarizeValidation(validation);
   const persisted = readPersistedValidationSummary(repoRoot);
   if (inline && persisted) {

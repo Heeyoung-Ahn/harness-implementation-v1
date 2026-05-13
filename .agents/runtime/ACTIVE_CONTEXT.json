@@ -1,6 +1,6 @@
 {
   "schemaVersion": "standard-harness-active-context/v2",
-  "generatedAt": "2026-05-13T12:18:41.999Z",
+  "generatedAt": "2026-05-13T14:53:35.202Z",
   "project": {
     "repoRoot": "C:\\Newface\\30 Github\\harness-implementation-v1",
     "name": "harness-implementation-v1"
@@ -8,9 +8,9 @@
   "release": {
     "stage": "planning",
     "gate": "open",
-    "focus": "V1.3 CLI-first PMW-free harness baseline is stable; OPS-15 is closed; the reusable baseline is on planner hold with no active lane.",
+    "focus": "V1.3 CLI-first PMW-free harness baseline is stable; OPS-16 is closed; the reusable baseline is on planner hold with no active lane.",
     "goal": "Preserve the V1.3 installable standard harness baseline while implementing DEV-11 PMW removal and Active Context replacement under the release gate.",
-    "sourceRef": "reference/packets/PKT-01_OPS-15_REUSABLE_OPERATOR_DISCIPLINE_GUIDANCE_AND_GUIDEBOOK_EXPANSION.md"
+    "sourceRef": "reference/packets/PKT-01_OPS-16_ACTIVE_CONTEXT_RECOVERY_AND_SAFE_DRIFT_FIX.md"
   },
   "selectedLane": null,
   "activeTask": null,
@@ -37,32 +37,32 @@
       "reference/packets/PKT-01_OPS-14_POST_TRANSITION_VALIDATION_CONTEXT_REFRESH_DETERMINISM.md",
       "reference/packets/PKT-01_OPS-07_PLANNER_HOLD_CLOSEOUT_AUTOMATION.md",
       "reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md",
-      "reference/packets/PKT-01_OPS-15_REUSABLE_OPERATOR_DISCIPLINE_GUIDANCE_AND_GUIDEBOOK_EXPANSION.md",
+      "reference/packets/PKT-01_OPS-16_ACTIVE_CONTEXT_RECOVERY_AND_SAFE_DRIFT_FIX.md",
       ".agents/artifacts/VALIDATION_REPORT.json"
     ],
     "sourceTrace": [
       ".agents/artifacts/CURRENT_STATE.md",
       ".agents/artifacts/TASK_LIST.md",
       ".agents/artifacts/IMPLEMENTATION_PLAN.md",
-      "reference/packets/PKT-01_OPS-15_REUSABLE_OPERATOR_DISCIPLINE_GUIDANCE_AND_GUIDEBOOK_EXPANSION.md",
+      "reference/packets/PKT-01_OPS-16_ACTIVE_CONTEXT_RECOVERY_AND_SAFE_DRIFT_FIX.md",
       ".agents/artifacts/VALIDATION_REPORT.json"
     ],
-    "digest": "3061ffd7653517c1063ac1ec6dd1af94dfea145d033290f8e6852aad8aa20043"
+    "digest": "1a77dbd06900dda2c5b7a578747bb063fbcea7ad84835b299e7038af57fd3154"
   },
   "blockers": [],
   "decisions": [],
   "latestHandoff": {
-    "createdAt": "2026-05-13T12:18:41.999Z",
+    "createdAt": "2026-05-13T14:53:35.202Z",
     "fromRole": "planner",
     "toRole": "planner",
     "summary": "[planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.",
-    "sourceRef": "reference/packets/PKT-01_OPS-15_REUSABLE_OPERATOR_DISCIPLINE_GUIDANCE_AND_GUIDEBOOK_EXPANSION.md",
+    "sourceRef": "reference/packets/PKT-01_OPS-16_ACTIVE_CONTEXT_RECOVERY_AND_SAFE_DRIFT_FIX.md",
     "nextFirstAction": "Keep the reusable baseline on planning hold until a new approved lane is selected.",
     "requiredSsot": [
       ".agents/artifacts/CURRENT_STATE.md",
       ".agents/artifacts/TASK_LIST.md",
       ".agents/artifacts/IMPLEMENTATION_PLAN.md",
-      "reference/packets/PKT-01_OPS-15_REUSABLE_OPERATOR_DISCIPLINE_GUIDANCE_AND_GUIDEBOOK_EXPANSION.md"
+      "reference/packets/PKT-01_OPS-16_ACTIVE_CONTEXT_RECOVERY_AND_SAFE_DRIFT_FIX.md"
     ]
   },
   "validation": {
@@ -71,22 +71,22 @@
     "findingCount": 0,
     "blockingFindingCount": 0,
     "gateDecision": "pass",
-    "executedAt": "2026-05-13T12:18:42.294Z",
+    "executedAt": "2026-05-13T14:53:35.515Z",
     "traceSummary": null,
     "candidateGates": []
   },
   "generatedDocs": [
     {
       "projectionName": "CURRENT_STATE.md",
-      "generatedAt": "2026-05-13T12:18:41.999Z",
+      "generatedAt": "2026-05-13T14:53:35.202Z",
       "freshnessState": "fresh",
-      "sourceRevision": "2026-05-13T12:18:41.999Z"
+      "sourceRevision": "2026-05-13T14:53:35.202Z"
     },
     {
       "projectionName": "TASK_LIST.md",
-      "generatedAt": "2026-05-13T12:18:41.999Z",
+      "generatedAt": "2026-05-13T14:53:35.202Z",
       "freshnessState": "fresh",
-      "sourceRevision": "2026-05-13T12:18:41.999Z"
+      "sourceRevision": "2026-05-13T14:53:35.202Z"
     }
   ],
   "sources": {
@@ -101,6 +101,6 @@
     "validationReport": ".agents/artifacts/VALIDATION_REPORT.json",
     "validationReportMarkdown": ".agents/artifacts/VALIDATION_REPORT.md",
     "workflowContract": ".agents/workflows/plan.md",
-    "activePacket": "reference/packets/PKT-01_OPS-15_REUSABLE_OPERATOR_DISCIPLINE_GUIDANCE_AND_GUIDEBOOK_EXPANSION.md"
+    "activePacket": "reference/packets/PKT-01_OPS-16_ACTIVE_CONTEXT_RECOVERY_AND_SAFE_DRIFT_FIX.md"
   }
 }

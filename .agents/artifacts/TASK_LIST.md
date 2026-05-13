@@ -61,6 +61,7 @@
 | OPS-14 | Post-transition validation/context refresh determinism | 2026-05-11 | transition planner -> planner; gate contract | Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold. Keep the reusable baseline on planning hold until a new approved lane is selected. |
 | OPS-14 | Post-transition validation/context refresh determinism | 2026-05-11 | transition planner -> planner; gate contract | Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold. Keep the reusable baseline on planning hold until a new approved lane is selected. |
 | OPS-15 | Reusable operator discipline, guidance, and guidebook expansion | 2026-05-13 | transition planner -> planner; gate contract | Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold. Keep the reusable baseline on planning hold until a new approved lane is selected. |
+| OPS-16 | Active Context recovery and safe drift fix | 2026-05-13 | transition planner -> planner; gate contract | Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold. Keep the reusable baseline on planning hold until a new approved lane is selected. |
 
 ## Handoff Log
 - 2026-05-13: [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold. | Keep the reusable baseline on planning hold until a new approved lane is selected.

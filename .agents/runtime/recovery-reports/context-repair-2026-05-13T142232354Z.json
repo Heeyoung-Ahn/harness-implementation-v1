@@ -1,0 +1,54 @@
+{
+  "command": "context --repair",
+  "timestamp": "2026-05-13T14:22:32.354Z",
+  "confidence": "Blocked",
+  "sourcePathsInspected": [
+    ".agents/artifacts/REQUIREMENTS.md",
+    ".agents/artifacts/ARCHITECTURE_GUIDE.md",
+    ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+    ".agents/artifacts/CURRENT_STATE.md",
+    ".agents/artifacts/TASK_LIST.md",
+    ".agents/artifacts/VALIDATION_REPORT.json",
+    ".agents/runtime/generated-state-docs/CURRENT_STATE.md",
+    ".agents/runtime/generated-state-docs/TASK_LIST.md",
+    ".agents/runtime/ACTIVE_CONTEXT.json",
+    ".agents/runtime/ACTIVE_CONTEXT.md",
+    ".harness/operating_state.sqlite"
+  ],
+  "staleOrMissingArtifacts": [
+    {
+      "artifact": ".agents/runtime/generated-state-docs/CURRENT_STATE.md",
+      "reason": "freshness_drift_detected"
+    },
+    {
+      "artifact": ".agents/runtime/generated-state-docs/TASK_LIST.md",
+      "reason": "freshness_drift_detected"
+    },
+    {
+      "artifact": ".agents/runtime/ACTIVE_CONTEXT.json",
+      "reason": "freshness_drift_detected"
+    },
+    {
+      "artifact": ".agents/runtime/ACTIVE_CONTEXT.md",
+      "reason": "freshness_drift_detected"
+    }
+  ],
+  "regeneratedArtifacts": [
+    ".agents/runtime/generated-state-docs/CURRENT_STATE.md",
+    ".agents/runtime/generated-state-docs/TASK_LIST.md",
+    ".agents/runtime/ACTIVE_CONTEXT.json",
+    ".agents/runtime/ACTIVE_CONTEXT.md"
+  ],
+  "notModifiedArtifacts": [
+    ".agents/artifacts/REQUIREMENTS.md",
+    ".agents/artifacts/ARCHITECTURE_GUIDE.md",
+    ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+    ".agents/artifacts/CURRENT_STATE.md",
+    ".agents/artifacts/TASK_LIST.md",
+    ".harness/operating_state.sqlite"
+  ],
+  "validationStatus": "failed",
+  "requiredNextAction": "Stop and request human or Planner decision before implementation or closeout continues.",
+  "authorityMutation": false,
+  "dbMutation": "none"
+}

@@ -1,6 +1,7 @@
 import path from "node:path";
 
 import { writeActiveContext } from "./active-context.js";
+import { runContextRepair } from "./context-repair.js";
 import { createOperatingStateStore, DEFAULT_DB_PATH } from "./operating-state-store.js";
 import {
   applyMigration,
@@ -30,7 +31,7 @@ const commands = {
   handoff: () => resolveHandoff({ repoRoot, outputDir, dbPath }),
   explain: () => explainCurrentBlockers({ repoRoot, outputDir, dbPath }),
   "validation-report": () => writeValidationReport({ repoRoot, outputDir, dbPath }),
-  context: () => writeContext({ repoRoot, outputDir, dbPath }),
+  context: () => writeContext({ repoRoot, outputDir, dbPath, args: process.argv.slice(3) }),
   transition: () => runTransition({ repoRoot, outputDir, dbPath, args: process.argv.slice(3) }),
   "migration-preview": () => buildMigrationPreview({ repoRoot, dbPath }),
   "migration-apply": () => applyMigration({ repoRoot, dbPath }),
@@ -50,7 +51,7 @@ process.stdout.write(`${formatResult(result)}\n`);
 process.exit(result.ok === false || result.cutoverReady === false ? 1 : 0);
 
 function formatResult(result) {
-  if (["doctor", "status", "next", "handoff", "explain", "validation-report", "context", "transition"].includes(result.command)) {
+  if (["doctor", "status", "next", "handoff", "explain", "validation-report", "context", "context --repair", "transition"].includes(result.command)) {
     return `${formatHumanSummary(result)}\n\n${JSON.stringify(result, null, 2)}`;
   }
 
@@ -153,6 +154,20 @@ function formatHumanSummary(result) {
     ].join("\n");
   }
 
+  if (result.command === "context --repair") {
+    return [
+      "Harness Context Repair",
+      `- Confidence: ${result.confidence}`,
+      `- Report: ${result.reportPath}`,
+      `- Latest pointer: ${result.latestReportPath}`,
+      `- Validation: ${result.report.validationStatus}`,
+      `- Regenerated: ${result.report.regeneratedArtifacts.length}`,
+      `- Authority mutation: ${result.report.authorityMutation ? "yes" : "no"}`,
+      `- DB mutation: ${result.report.dbMutation}`,
+      `- Next action: ${result.nextAction}`
+    ].join("\n");
+  }
+
   return [
     "Harness Validation Report",
     `- Result: ${result.ok ? "pass" : "fail"}`,
@@ -163,7 +178,11 @@ function formatHumanSummary(result) {
   ].join("\n");
 }
 
-function writeContext({ repoRoot, outputDir, dbPath }) {
+function writeContext({ repoRoot, outputDir, dbPath, args = [] }) {
+  if (args.includes("--repair")) {
+    return runContextRepair({ repoRoot, outputDir, dbPath });
+  }
+
   const resolvedDbPath = path.isAbsolute(dbPath) ? dbPath : path.resolve(repoRoot, dbPath);
   const validation = runValidator({ repoRoot, outputDir, dbPath });
   const store = createOperatingStateStore({ dbPath: resolvedDbPath });

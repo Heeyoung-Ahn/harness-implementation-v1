@@ -5,12 +5,12 @@
 - 사람 확인용 보조 문서: .agents/runtime/ACTIVE_CONTEXT.md
 - 다음 workflow: .agents/workflows/plan.md
 - 선택된 lane: 현재 열린 작업 없음
-- 계약 digest: 3061ffd7653517c1063ac1ec6dd1af94dfea145d033290f8e6852aad8aa20043
+- 계약 digest: 1a77dbd06900dda2c5b7a578747bb063fbcea7ad84835b299e7038af57fd3154
 
 ## 현재 작업
 - 단계: planning
 - 게이트: open
-- 초점: V1.3 CLI-first PMW-free harness baseline is stable; OPS-15 is closed; the reusable baseline is on planner hold with no active lane.
+- 초점: V1.3 CLI-first PMW-free harness baseline is stable; OPS-16 is closed; the reusable baseline is on planner hold with no active lane.
 - 목표: Preserve the V1.3 installable standard harness baseline while implementing DEV-11 PMW removal and Active Context replacement under the release gate.
 - 작업: 현재 열린 작업 없음
 
@@ -31,7 +31,7 @@
 - reference/packets/PKT-01_OPS-14_POST_TRANSITION_VALIDATION_CONTEXT_REFRESH_DETERMINISM.md
 - reference/packets/PKT-01_OPS-07_PLANNER_HOLD_CLOSEOUT_AUTOMATION.md
 - reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md
-- reference/packets/PKT-01_OPS-15_REUSABLE_OPERATOR_DISCIPLINE_GUIDANCE_AND_GUIDEBOOK_EXPANSION.md
+- reference/packets/PKT-01_OPS-16_ACTIVE_CONTEXT_RECOVERY_AND_SAFE_DRIFT_FIX.md
 - .agents/artifacts/VALIDATION_REPORT.json
 
 ## 결정과 막힘
@@ -39,15 +39,15 @@
 - 열린 막힘 없음
 
 ## 최근 인계
-- 2026-05-13T12:18:41.999Z: planner -> planner / [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.
+- 2026-05-13T14:53:35.202Z: planner -> planner / [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.
 - 인계 기준 SSOT: .agents/artifacts/CURRENT_STATE.md
 - 인계 기준 SSOT: .agents/artifacts/TASK_LIST.md
 - 인계 기준 SSOT: .agents/artifacts/IMPLEMENTATION_PLAN.md
-- 인계 기준 SSOT: reference/packets/PKT-01_OPS-15_REUSABLE_OPERATOR_DISCIPLINE_GUIDANCE_AND_GUIDEBOOK_EXPANSION.md
+- 인계 기준 SSOT: reference/packets/PKT-01_OPS-16_ACTIVE_CONTEXT_RECOVERY_AND_SAFE_DRIFT_FIX.md
 
 ## 검증 상태
 - 통과 / gate pass / blocking 0개
-- 마지막 검증 시각: 2026-05-13T12:18:42.294Z
+- 마지막 검증 시각: 2026-05-13T14:53:35.515Z
 
 ## 출처
 - currentState: .agents/artifacts/CURRENT_STATE.md
@@ -61,4 +61,4 @@
 - validationReport: .agents/artifacts/VALIDATION_REPORT.json
 - validationReportMarkdown: .agents/artifacts/VALIDATION_REPORT.md
 - workflowContract: .agents/workflows/plan.md
-- activePacket: reference/packets/PKT-01_OPS-15_REUSABLE_OPERATOR_DISCIPLINE_GUIDANCE_AND_GUIDEBOOK_EXPANSION.md
+- activePacket: reference/packets/PKT-01_OPS-16_ACTIVE_CONTEXT_RECOVERY_AND_SAFE_DRIFT_FIX.md

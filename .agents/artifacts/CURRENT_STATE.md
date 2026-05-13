@@ -2,7 +2,7 @@
 
 ## Snapshot
 - Current Stage: planning
-- Current Focus: V1.3 CLI-first PMW-free harness baseline is stable; OPS-15 is closed; the reusable baseline is on planner hold with no active lane.
+- Current Focus: V1.3 CLI-first PMW-free harness baseline is stable; OPS-16 is closed; the reusable baseline is on planner hold with no active lane.
 - Current Release Goal: Preserve the V1.3 installable standard harness baseline while implementing DEV-11 PMW removal and Active Context replacement under the release gate.
 
 ## Next Recommended Agent
@@ -19,6 +19,7 @@
 - `reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md`
 
 ## Open Decisions / Blockers
+- `OPS-16` is closed; latest handoff is `planner -> planner`. Keep the reusable baseline on planning hold until a new approved lane is selected.
 - `OPS-15` is closed; latest handoff is `planner -> planner`. Keep the reusable baseline on planning hold until a new approved lane is selected.
 - `OPS-14` is closed; latest handoff is `planner -> planner`. Keep the reusable baseline on planning hold until a new approved lane is selected.
 - All previously active follow-up packets are closed. `OPS-14` resolved the transient post-transition stale parity window; no active remediation lane remains.
@@ -37,6 +38,7 @@
 - User direction on 2026-05-03: remaining SSOT should split into AI-facing SSOT and human-facing SSOT. Human-facing SSOT uses Korean and easy terms; AI-facing SSOT prioritizes compact deterministic machine use.
 
 ## Current Truth Notes
+- `OPS-16` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
 - `OPS-15` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
 - `OPS-14` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
 - `OPS-13` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.

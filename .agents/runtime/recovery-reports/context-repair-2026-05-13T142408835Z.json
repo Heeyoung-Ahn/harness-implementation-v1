@@ -1,0 +1,37 @@
+{
+  "command": "context --repair",
+  "timestamp": "2026-05-13T14:24:08.835Z",
+  "confidence": "Low",
+  "sourcePathsInspected": [
+    ".agents/artifacts/REQUIREMENTS.md",
+    ".agents/artifacts/ARCHITECTURE_GUIDE.md",
+    ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+    ".agents/artifacts/CURRENT_STATE.md",
+    ".agents/artifacts/TASK_LIST.md",
+    ".agents/artifacts/VALIDATION_REPORT.json",
+    ".agents/runtime/generated-state-docs/CURRENT_STATE.md",
+    ".agents/runtime/generated-state-docs/TASK_LIST.md",
+    ".agents/runtime/ACTIVE_CONTEXT.json",
+    ".agents/runtime/ACTIVE_CONTEXT.md",
+    ".harness/operating_state.sqlite"
+  ],
+  "staleOrMissingArtifacts": [],
+  "regeneratedArtifacts": [
+    ".agents/runtime/generated-state-docs/CURRENT_STATE.md",
+    ".agents/runtime/generated-state-docs/TASK_LIST.md",
+    ".agents/runtime/ACTIVE_CONTEXT.json",
+    ".agents/runtime/ACTIVE_CONTEXT.md"
+  ],
+  "notModifiedArtifacts": [
+    ".agents/artifacts/REQUIREMENTS.md",
+    ".agents/artifacts/ARCHITECTURE_GUIDE.md",
+    ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+    ".agents/artifacts/CURRENT_STATE.md",
+    ".agents/artifacts/TASK_LIST.md",
+    ".harness/operating_state.sqlite"
+  ],
+  "validationStatus": "failed",
+  "requiredNextAction": "Hold for Planner or maintainer reconciliation before implementation or closeout continues.",
+  "authorityMutation": false,
+  "dbMutation": "none"
+}

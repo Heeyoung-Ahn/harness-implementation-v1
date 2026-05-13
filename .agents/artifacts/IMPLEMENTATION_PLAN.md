@@ -120,9 +120,9 @@ Open the next planning lane after `OPS-07` without repeating the previous mixed-
 - Phase 2: parked `OPS-09` structured packet-exit metadata and closeout parser hardening, then parked `PLN-12` lane-typed packet minimums and approval-surface reduction
 
 ### Operator Next Action
-- `OPS-15` is closed; latest closeout handoff is `planner -> planner`.
+- `OPS-16` is closed; latest closeout handoff is `planner -> planner`.
 - Keep the reusable baseline on planning hold until a new approved lane is selected.
-- Source packet: `reference/packets/PKT-01_OPS-15_REUSABLE_OPERATOR_DISCIPLINE_GUIDANCE_AND_GUIDEBOOK_EXPANSION.md`.
+- Source packet: `reference/packets/PKT-01_OPS-16_ACTIVE_CONTEXT_RECOVERY_AND_SAFE_DRIFT_FIX.md`.
 - Preserve packet-before-code, active-context derived authority, generated-doc immutability, root/starter sync, Tester/Reviewer separation, and human approval gates.
 
 ## OPS-08 Reusable Security Review Evidence Generalization
