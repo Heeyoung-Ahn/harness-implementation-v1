@@ -1,10 +1,10 @@
 # TASK_LIST
 
 ## Technical Facts
-- Open work items: 60
+- Open work items: 61
 - Open blocked or at-risk items: 0
 - Recent handoffs captured: 10
-- Generated at: 2026-05-14T21:39:05.376Z
+- Generated at: 2026-05-14T22:06:22.007Z
 
 ## Blocked / At Risk Summary
 - 0 open blocker or risks require attention.
@@ -18,6 +18,7 @@
 ## Work Item Detail
 | ID | Title | Status | Next Action |
 |---|---|---|---|
+| OPS-25 | HARNESS manual recent-work reconciliation | planning | Review the OPS-25 detailed agreement proposal and decide whether to approve, adjust, or hold Ready For Code before implementation opens. |
 | PLN-19 | Standard-template downstream app readiness rebaseline | done | Planner should choose the next approved lane and reopen planning work only after confirming the next priority with the user; PLN-17 is the current deferred candidate. |
 | PLN-17 | Multi-model ownership and conflict contract | closed | Open PLN-19 as the higher-priority planning lane for standard-template downstream-app readiness before returning to PLN-17. |
 | QLT-04 | Governance test rebalance | closed | Open PLN-17 as the next approved lane in sequence. |
@@ -80,6 +81,7 @@
 | DEV-04 | PMW read surface | done | Closed after browser verification passed at http://127.0.0.1:4173. |
 
 ## Handoff Log
+- 2026-05-14T22:06:22.007Z: [planner -> planner] Opened OPS-25 as the selected Planner packet for review before implementation opens.
 - 2026-05-14T21:39:05.376Z: [planner -> planner] Planner recorded PLN-19 closeout after reviewer-approved packet exit.
 - 2026-05-14T21:37:19.894Z: [reviewer -> planner] Reviewer approved PLN-19 for packet exit after confirming approved-scope adherence, sufficient tester evidence, clean validator state, root/starter parity, and no remaining residual defect inside the bounded remediation wave.
 - 2026-05-14T21:32:49.214Z: [tester -> reviewer] Tester verified QLT-06 against the approved PLN-19 scope: touched reusable test corpus is in root/starter parity, targeted regression passed, and root/starter validator evidence is clean with no flagged maintainer-history residue in the touched files.
@@ -89,9 +91,8 @@
 - 2026-05-14T21:09:42.877Z: [developer -> developer] OPS-23 context artifact starter neutralization passed implementation, testing, and review; continue PLN-19 with OPS-24.
 - 2026-05-14T14:15:33.463Z: [developer -> developer] OPS-22 runtime history decoupling passed implementation, testing, and review; continue PLN-19 with OPS-23.
 - 2026-05-14T13:52:05.197Z: [developer -> developer] PLN-19 continues after OPS-21 slice approval; no reviewer remediation is open.
-- 2026-05-14T13:51:47.630Z: [reviewer -> developer] Reviewer approved the PLN-19 OPS-21 project-facing SSOT scrub slice with no blockers; PLN-19 remains open for the next remediation slice.
 
 ## Generation Metadata
 - Generated docs: CURRENT_STATE.md, TASK_LIST.md
-- Source revision: 2026-05-14T21:39:05.376Z
+- Source revision: 2026-05-14T22:06:22.007Z
 - Sync status: fresh at generation time

@@ -19,6 +19,7 @@
 - `reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md`
 
 ## Open Decisions / Blockers
+- `OPS-25` Ready For Code is approved; active handoff is `planner -> planner`. Review the OPS-25 detailed agreement proposal and decide whether to approve, adjust, or hold Ready For Code before implementation opens.
 - `PLN-19` is closed; latest handoff is `planner -> planner`. Planner should choose the next approved lane and reopen planning work only after confirming the next priority with the user; PLN-17 is the current deferred candidate.
 - `PLN-17` is closed; latest handoff is `planner -> planner`. Open PLN-19 as the higher-priority planning lane for standard-template downstream-app readiness before returning to PLN-17.
 - `QLT-04` is closed; latest handoff is `planner -> planner`. Open PLN-17 as the next approved lane in sequence.
@@ -46,6 +47,7 @@
 - User direction on 2026-05-03: remaining SSOT should split into AI-facing SSOT and human-facing SSOT. Human-facing SSOT uses Korean and easy terms; AI-facing SSOT prioritizes compact deterministic machine use.
 
 ## Current Truth Notes
+- `OPS-25` remains the active work item. Current handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
 - `PLN-19` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
 - `PLN-17` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
 - `QLT-04` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
@@ -85,6 +87,7 @@
 - PMW remains historical closed-lane evidence only. `PLN-09` now proceeds on complete PMW removal from the active baseline and replacement of PMW read-model/export obligations with CLI-first active context.
 
 ## Latest Handoff Summary
+- 2026-05-14: `[planner -> planner] Opened OPS-25 as the selected Planner packet for review before implementation opens.`
 - 2026-05-14: `[planner -> planner] Planner recorded PLN-19 closeout after reviewer-approved packet exit.`
 - 2026-05-14: `[reviewer -> planner] Reviewer approved PLN-19 for packet exit after confirming approved-scope adherence, sufficient tester evidence, clean validator state, root/starter parity, and no remaining residual defect inside the bounded remediation wave.`
 - 2026-05-14: `[tester -> reviewer] Tester verified QLT-06 against the approved PLN-19 scope: touched reusable test corpus is in root/starter parity, targeted regression passed, and root/starter validator evidence is clean with no flagged maintainer-history residue in the touched files.`

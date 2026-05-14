@@ -6,7 +6,8 @@
 이 문서는 설명용 guidebook이다.
 정본 SSOT, workflow authority, 승인 권한을 대체하지 않는다.
 
-- 정본 정책과 승인 기준: `.agents/artifacts/*`
+- 운영 규칙 정본: `.agents/rules/HARNESS_OPERATING_CONTRACT.md`
+- 상태/승인 정본: `.agents/artifacts/*`
 - 작업 단위 합의: `reference/packets/*`
 - 실행 workflow 계약: `.agents/workflows/*`
 - 파생 재진입 surface: `.agents/runtime/ACTIVE_CONTEXT.*`
@@ -290,13 +291,14 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["Governance truth<br/>.agents/artifacts/*.md"] --> B["Hot-state<br/>.harness/operating_state.sqlite"]
-    A --> C["Generated state docs<br/>.agents/runtime/generated-state-docs/*"]
-    B --> C
-    A --> D["Active Context<br/>.agents/runtime/ACTIVE_CONTEXT.json/.md"]
-    B --> D
-    E["Reference manuals/templates<br/>reference/*"] --> A
-    E --> F["Human guidance only"]
+    A["Operating contract<br/>.agents/rules/HARNESS_OPERATING_CONTRACT.md"] --> B["Governance truth<br/>.agents/artifacts/*.md"]
+    B --> C["Hot-state<br/>.harness/operating_state.sqlite"]
+    B --> D["Generated state docs<br/>.agents/runtime/generated-state-docs/*"]
+    C --> D
+    B --> E["Active Context<br/>.agents/runtime/ACTIVE_CONTEXT.json/.md"]
+    C --> E
+    F["Reference docs / packets<br/>reference/*"] --> B
+    F --> G["Support material<br/>task-specific only"]
 ```
 
 ### 4.2 어떤 문서가 무슨 역할을 하나
@@ -306,8 +308,13 @@ flowchart TD
 | `.agents/artifacts/REQUIREMENTS.md` | 무엇을 만들 것인가 | kickoff, 요구사항 변경 시 |
 | `.agents/artifacts/ARCHITECTURE_GUIDE.md` | 어떻게 나눠 설계할 것인가 | requirements 확정 후 |
 | `.agents/artifacts/IMPLEMENTATION_PLAN.md` | 어떤 순서로 닫을 것인가 | lane와 packet 순서 확인 시 |
+| `.agents/rules/HARNESS_OPERATING_CONTRACT.md` | workflow-entry, approval boundary, packet-before-code, baton, role separation | 어떤 문서가 authority인지 헷갈릴 때 |
 | `.agents/artifacts/CURRENT_STATE.md` | 지금 어디까지 왔는가 | 매일 시작할 때 |
 | `.agents/artifacts/TASK_LIST.md` | 현재 작업과 다음 작업 | 매일 시작할 때 |
+| `.agents/artifacts/DOMAIN_CONTEXT.md` | data-impact 기준선과 도메인 맥락 | 데이터/DB 영향 판단 시 |
+| `.agents/artifacts/SYSTEM_CONTEXT.md` | 시스템 경계와 외부 연동 맥락 | system boundary 판단 시 |
+| `.agents/artifacts/PROJECT_HISTORY.md` | 장기 rebaseline과 과거 결정 이력 | 과거 변경이 현재 판단에 영향 줄 때 |
+| `.agents/artifacts/PREVENTIVE_MEMORY.md` | 반복 friction과 follow-up 후보 | 같은 문제가 반복될 때 |
 | `.agents/runtime/ACTIVE_CONTEXT.json` | AI가 빠르게 재진입하는 compact 상태 | AI 재진입 첫 읽기 |
 | `.agents/runtime/ACTIVE_CONTEXT.md` | 사람이 빠르게 재진입하는 한국어 요약 | 사람이 상태 요약 볼 때 |
 | `reference/planning/*` | planning 기준과 decision history | kickoff, planning 시 |
@@ -315,15 +322,20 @@ flowchart TD
 | `reference/profiles/*` | 특정 프로젝트 유형용 선택 규칙 | profile을 켤 때 |
 | `reference/artifacts/PROJECT_STARTER_DOC_PACK.md` | 프로젝트 시작 질문지 | 새 프로젝트 시작 시 |
 | `reference/artifacts/VERIFICATION_SCENARIO_TEMPLATE.md` | 검증 시나리오 틀 | packet 검증 기준 작성 시 |
+| `reference/artifacts/WALKTHROUGH.md` | Tester walkthrough 기준 | walkthrough와 재현 순서를 정리할 때 |
+| `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md` | Reviewer closeout 기준 | reviewer/closeout 준비 시 |
+| `reference/artifacts/REVIEW_REPORT.md` | Reviewer findings와 closeout 기록 | reviewer 결과를 확인할 때 |
 | `reference/manuals/ROLE_THREAD_PLAYBOOK.md` | role/thread 시작 가이드 | 새 AI thread를 열 때 |
 | `reference/manuals/AUTOMATION_CATALOG.md` | 자동화 선택 가이드 | 반복 점검을 예약할 때 |
 | `reference/manuals/CLOUD_LOCAL_MERGE_PLAYBOOK.md` | cloud/local 병렬 작업 가이드 | cloud나 별도 worktree 병렬 작업을 쓸 때 |
 
 정본과 파생물을 헷갈리면 안 된다.
 
-- `.agents/artifacts/*`는 사람이 승인하는 정본이다.
+- `.agents/rules/HARNESS_OPERATING_CONTRACT.md`는 reusable operating-rule authority다.
+- `.agents/artifacts/*`는 사람이 승인하는 상태/계획 정본이다.
 - `.agents/runtime/*`는 재생성 가능한 파생물이다.
-- `reference/*`는 설명, 템플릿, evidence, packet history를 담는다.
+- `reference/*`는 설명, 템플릿, evidence, packet history를 담는 보조 자료다.
+- 다만 active packet이나 approved source는 해당 작업에서 필수 입력이 될 수 있다.
 - generated surface가 이상하면 generated file을 고치지 말고 정본과 상태를 먼저 맞춘다.
 
 ## 5. 프로젝트 시작 절차
@@ -481,6 +493,12 @@ Audit: 변경 기록 필요
 검증 시나리오는 [VERIFICATION_SCENARIO_TEMPLATE.md](../artifacts/VERIFICATION_SCENARIO_TEMPLATE.md)를 사용한다.
 Planner는 packet을 열 때 이 템플릿을 보고 normal, error, permission, regression, manual check가 필요한지 판단한다.
 
+packet을 새로 열 때는 아래 세 가지를 먼저 맞춘다.
+
+- `reference/packets/*.md` 경로에 concrete packet 초안을 둔다.
+- Quick Decision Header에서 gate profile과 approval boundary를 먼저 드러낸다.
+- `contract` gate라면 최소 `Ready For Code`, root/starter sync, targeted check, validator, active context, review closeout 근거가 Verification Manifest에 보여야 opening validation hold를 줄일 수 있다.
+
 처음 사용자 기준으로는 필수 최소 필드를 먼저 닫고, profile이나 migration이 얽힐 때만 확장하는 것이 맞다.
 
 ## 9. 역할별 thread 운영
@@ -510,8 +528,8 @@ Next handoff: Developer
 - Planning thread: 요구사항, scope, approval
 - Design thread: 화면, 데이터, API, 권한 구조
 - Developer thread: 승인된 packet 구현
-- Tester thread: 검증과 evidence
-- Reviewer thread: 회귀, 보안, 누락 테스트, closeout 판단
+- Tester thread: 제품 기능/요구사항/packet acceptance 검증과 tested/untested evidence
+- Reviewer thread: packet acceptance, 회귀, 보안·release risk, closeout 판단
 - Deploy thread: 배포, rollback, 운영 인계
 
 ## 10. Git 과 Worktree 운영
@@ -591,6 +609,12 @@ Next Work:
 
 [VERIFICATION_SCENARIO_TEMPLATE.md](../artifacts/VERIFICATION_SCENARIO_TEMPLATE.md)는 이때 쓰는 공통 틀이다.
 `plan.md`는 packet의 검증 기준을 잡을 때 이 템플릿을 참조하고, `test.md`는 Tester가 검증 evidence를 남길 때 이 템플릿을 참조한다.
+
+Tester는 harness mechanic보다 먼저 제품 기능, 요구사항, packet acceptance, applicable security-sensitive behavior를 본다.
+결함이 보여도 직접 고치지 않고 tested scope와 untested scope를 분리해 Developer나 Reviewer가 이어갈 수 있게 남긴다.
+
+Reviewer는 Tester evidence만 보는 역할이 아니다.
+`reference/artifacts/WALKTHROUGH.md`, `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`, `reference/artifacts/REVIEW_REPORT.md`까지 보고 closeout 가능 여부, residual risk, release risk를 판단한다.
 
 기본 묶음:
 
@@ -956,9 +980,12 @@ CLOUD_LOCAL_MERGE_PLAYBOOK 기준으로 cloud에서 할 범위, 로컬에 남길
 - generated file을 직접 고치지 말고 정본 문서와 packet을 먼저 본다.
 
 ### Q. 어떤 profile을 켜야 할지 모르겠다
+- 현재 shipped baseline에서 바로 쓰는 승인 catalog는 `PRF-04`부터 `PRF-09`까지다.
 - 가벼운 앱이면 `PRF-07` 또는 `PRF-09`부터 생각한다.
-- 표/그리드 중심 운영이면 `PRF-01`을 검토한다.
 - 기존 Excel/VBA/MariaDB 대체면 `PRF-04`를 검토한다.
+- Python/Django backoffice면 `PRF-05`를 검토한다.
+- 승인/권한/감사가 핵심이면 `PRF-06`을 먼저 본다.
+- 표/그리드 중심, spreadsheet authoritative source, airgapped delivery처럼 `PRF-01`~`PRF-03`류가 필요해 보이면 현재 baseline에 실제 승인·활성된 catalog인지 Planner가 먼저 확인한다.
 - 승인/권한/감사가 핵심이면 관련 profile과 packet evidence를 Planner가 먼저 닫는다.
 
 ### Q. packet이 너무 복잡해 보인다

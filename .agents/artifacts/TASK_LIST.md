@@ -21,7 +21,7 @@
 - Treat `reference/planning/PLN-08_PMW_V1_3_PHASE_2_COMMAND_SURFACE_DRAFT.md` and `reference/packets/PKT-01_DEV-10_PMW_PHASE_2_DOCTOR_PROMOTION_AND_USABILITY_REMEDIATION.md` as superseded by `PLN-09` / `DEV-11`; do not implement DEV-10 unless the user explicitly opens a new PMW revival lane.
 - Treat `reference/planning/PLN-09_CLI_FIRST_REBASELINE_AND_PMW_DECOMMISSION_DRAFT.md` and `reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md` as closed baseline evidence for the PMW-free V1.3 direction.
 - Treat `reference/planning/PLN-10_POST_DEV11_HARDENING_AND_RELEASE_ASSURANCE_DRAFT.md` as closed sequencing evidence for `OPS-04`, `QLT-02`, `OPS-06`, and `OPS-05`.
-- Next first action: Planner should choose the next approved lane and reopen planning work only after confirming the next priority with the user; PLN-17 is the current deferred candidate.
+- Next first action: Review the OPS-25 detailed agreement proposal and decide whether to approve, adjust, or hold Ready For Code before implementation opens.
 - Proposed CLI-first command surface is `status`, `next`, `explain`, `doctor`, `handoff`, `transition`, `validate`, `validation-report`, and new `context`.
 - Treat any future release-baseline mismatch between code, manuals, packaging, DB hot-state, or canonical artifacts as a blocking validator failure.
 
@@ -72,6 +72,7 @@
 | PLN-19 | Standard-template downstream app readiness rebaseline | 2026-05-14 | transition planner -> planner; gate contract | Planner recorded PLN-19 closeout after reviewer-approved packet exit. Planner should choose the next approved lane and reopen planning work only after confirming the next priority with the user; PLN-17 is the current deferred candidate. |
 
 ## Handoff Log
+- 2026-05-14: [planner -> planner] Opened OPS-25 as the selected Planner packet for review before implementation opens. | Review the OPS-25 detailed agreement proposal and decide whether to approve, adjust, or hold Ready For Code before implementation opens.
 - 2026-05-14: [planner -> planner] Planner recorded PLN-19 closeout after reviewer-approved packet exit. | Planner should choose the next approved lane and reopen planning work only after confirming the next priority with the user; PLN-17 is the current deferred candidate.
 - 2026-05-14: [reviewer -> planner] Reviewer approved PLN-19 for packet exit after confirming approved-scope adherence, sufficient tester evidence, clean validator state, root/starter parity, and no remaining residual defect inside the bounded remediation wave. | Record PLN-19 closeout, clear the completed downstream-app readiness lane, and reopen the next approved planning lane in sequence, starting with PLN-17 if no higher-priority packet is approved.
 - 2026-05-14: [tester -> reviewer] Tester verified QLT-06 against the approved PLN-19 scope: touched reusable test corpus is in root/starter parity, targeted regression passed, and root/starter validator evidence is clean with no flagged maintainer-history residue in the touched files. | Assess PLN-19 closeout readiness against the approved packet scope, tester evidence, residual debt disposition, and packet exit quality gate before planner closeout.

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "standard-harness-active-context/v2",
-  "generatedAt": "2026-05-14T21:39:05.376Z",
+  "generatedAt": "2026-05-14T22:06:22.007Z",
   "project": {
     "repoRoot": "C:\\Newface\\30 Github\\harness-implementation-v1",
     "name": "harness-implementation-v1"
@@ -10,20 +10,42 @@
     "gate": "open",
     "focus": "V1.3 standard harness starter baseline is stable; PLN-19 closed; Planner is reviewing the next approved lane.",
     "goal": "Preserve the V1.3 installable standard harness baseline while implementing DEV-11 PMW removal and Active Context replacement under the release gate.",
-    "sourceRef": "reference/packets/PKT-01_PLN-19_STANDARD_TEMPLATE_DOWNSTREAM_APP_READINESS_REBASELINE.md"
+    "sourceRef": "reference/packets/PKT-01_OPS-25_HARNESS_MANUAL_RECENT_WORK_RECONCILIATION.md"
   },
-  "selectedLane": null,
-  "activeTask": null,
+  "selectedLane": {
+    "workItemId": "OPS-25",
+    "title": "HARNESS manual recent-work reconciliation",
+    "status": "planning",
+    "owner": "planner",
+    "nextAction": "Review the OPS-25 detailed agreement proposal and decide whether to approve, adjust, or hold Ready For Code before implementation opens.",
+    "sourceRef": "reference/packets/PKT-01_OPS-25_HARNESS_MANUAL_RECENT_WORK_RECONCILIATION.md",
+    "gateProfile": "contract",
+    "readyForCode": "approved",
+    "workflow": ".agents/workflows/plan.md",
+    "workflowRouteStatus": "ready"
+  },
+  "activeTask": {
+    "workItemId": "OPS-25",
+    "title": "HARNESS manual recent-work reconciliation",
+    "status": "planning",
+    "owner": "planner",
+    "nextAction": "Review the OPS-25 detailed agreement proposal and decide whether to approve, adjust, or hold Ready For Code before implementation opens.",
+    "sourceRef": "reference/packets/PKT-01_OPS-25_HARNESS_MANUAL_RECENT_WORK_RECONCILIATION.md",
+    "gateProfile": "contract",
+    "readyForCode": "approved",
+    "workflow": ".agents/workflows/plan.md",
+    "workflowRouteStatus": "ready"
+  },
   "nextWork": {
-    "owner": "Planner",
+    "owner": "planner",
     "workflow": ".agents/workflows/plan.md",
     "workflowRouteStatus": "ready",
-    "resolvedBy": "current_state_next_agent",
+    "resolvedBy": "active_task_owner",
     "requiredSsot": [
       ".agents/artifacts/CURRENT_STATE.md",
       ".agents/artifacts/TASK_LIST.md",
       ".agents/artifacts/IMPLEMENTATION_PLAN.md",
-      "reference/packets/PKT-01_PLN-19_STANDARD_TEMPLATE_DOWNSTREAM_APP_READINESS_REBASELINE.md"
+      "reference/packets/PKT-01_OPS-25_HARNESS_MANUAL_RECENT_WORK_RECONCILIATION.md"
     ],
     "approvalBoundary": "Do not start implementation, testing, or closeout work until the required route and approval are explicit.",
     "doNotCross": [
@@ -31,7 +53,7 @@
       "No testing or reviewer closeout work.",
       "No guessing a workflow when the route is unclear."
     ],
-    "action": "Planner should choose the next approved lane and reopen planning work only after confirming the next priority with the user; PLN-17 is the current deferred candidate."
+    "action": "Review the OPS-25 detailed agreement proposal and decide whether to approve, adjust, or hold Ready For Code before implementation opens."
   },
   "reentryContract": {
     "firstRead": ".agents/runtime/ACTIVE_CONTEXT.json",
@@ -49,32 +71,32 @@
       "reference/packets/PKT-01_OPS-14_POST_TRANSITION_VALIDATION_CONTEXT_REFRESH_DETERMINISM.md",
       "reference/packets/PKT-01_OPS-07_PLANNER_HOLD_CLOSEOUT_AUTOMATION.md",
       "reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md",
-      "reference/packets/PKT-01_PLN-19_STANDARD_TEMPLATE_DOWNSTREAM_APP_READINESS_REBASELINE.md",
+      "reference/packets/PKT-01_OPS-25_HARNESS_MANUAL_RECENT_WORK_RECONCILIATION.md",
       ".agents/artifacts/VALIDATION_REPORT.json"
     ],
     "sourceTrace": [
       ".agents/artifacts/CURRENT_STATE.md",
       ".agents/artifacts/TASK_LIST.md",
       ".agents/artifacts/IMPLEMENTATION_PLAN.md",
-      "reference/packets/PKT-01_PLN-19_STANDARD_TEMPLATE_DOWNSTREAM_APP_READINESS_REBASELINE.md",
+      "reference/packets/PKT-01_OPS-25_HARNESS_MANUAL_RECENT_WORK_RECONCILIATION.md",
       ".agents/artifacts/VALIDATION_REPORT.json"
     ],
-    "digest": "50f3bedada7ed7b9660a7132dfb7e4c14d9c7637e64b82003b61219d0bcda0c5"
+    "digest": "be09da5b8fe320a38f96c04b0f6bf840a96f4bf9f108b6dc5385278695cbaf51"
   },
   "blockers": [],
   "decisions": [],
   "latestHandoff": {
-    "createdAt": "2026-05-14T21:39:05.376Z",
+    "createdAt": "2026-05-14T22:06:22.007Z",
     "fromRole": "planner",
     "toRole": "planner",
-    "summary": "[planner -> planner] Planner recorded PLN-19 closeout after reviewer-approved packet exit.",
-    "sourceRef": "reference/packets/PKT-01_PLN-19_STANDARD_TEMPLATE_DOWNSTREAM_APP_READINESS_REBASELINE.md",
-    "nextFirstAction": "Planner should choose the next approved lane and reopen planning work only after confirming the next priority with the user; PLN-17 is the current deferred candidate.",
+    "summary": "[planner -> planner] Opened OPS-25 as the selected Planner packet for review before implementation opens.",
+    "sourceRef": "reference/packets/PKT-01_OPS-25_HARNESS_MANUAL_RECENT_WORK_RECONCILIATION.md",
+    "nextFirstAction": "Review the OPS-25 detailed agreement proposal and decide whether to approve, adjust, or hold Ready For Code before implementation opens.",
     "requiredSsot": [
       ".agents/artifacts/CURRENT_STATE.md",
       ".agents/artifacts/TASK_LIST.md",
       ".agents/artifacts/IMPLEMENTATION_PLAN.md",
-      "reference/packets/PKT-01_PLN-19_STANDARD_TEMPLATE_DOWNSTREAM_APP_READINESS_REBASELINE.md"
+      "reference/packets/PKT-01_OPS-25_HARNESS_MANUAL_RECENT_WORK_RECONCILIATION.md"
     ],
     "approvalBoundary": "Do not start implementation, testing, or closeout work until the required route and approval are explicit.",
     "doNotCross": [
@@ -89,22 +111,61 @@
     "findingCount": 0,
     "blockingFindingCount": 0,
     "gateDecision": "pass",
-    "executedAt": "2026-05-14T21:39:05.605Z",
-    "traceSummary": null,
-    "candidateGates": []
+    "executedAt": "2026-05-14T22:11:36.930Z",
+    "traceSummary": {
+      "path": ".agents/runtime/agent-traces/OPS-25.json",
+      "workItemId": "OPS-25",
+      "packetId": "PKT-01_OPS-25_HARNESS_MANUAL_RECENT_WORK_RECONCILIATION",
+      "turnClosedAt": "2026-05-14T22:11:36.930Z",
+      "semanticTraceStatus": "pass",
+      "warningCount": 0,
+      "candidateGateCount": 6
+    },
+    "candidateGates": [
+      {
+        "id": "required-evidence-present",
+        "phase": "candidate-only",
+        "description": "Required evidence artifacts exist for the active work item."
+      },
+      {
+        "id": "source-references-resolve",
+        "phase": "candidate-only",
+        "description": "Referenced packet, SSOT, validation, and trace sources resolve locally."
+      },
+      {
+        "id": "semantic-trace-present",
+        "phase": "candidate-only",
+        "description": "A lightweight semantic trace artifact exists for the active work item."
+      },
+      {
+        "id": "evidence-non-contradictory",
+        "phase": "candidate-only",
+        "description": "Trace, packet, and active work metadata do not contradict each other."
+      },
+      {
+        "id": "evidence-freshness",
+        "phase": "candidate-only",
+        "description": "Validation and trace timestamps match the current report turn."
+      },
+      {
+        "id": "validation-context-parity",
+        "phase": "candidate-only",
+        "description": "Validation report and ACTIVE_CONTEXT expose the same validation summary."
+      }
+    ]
   },
   "generatedDocs": [
     {
       "projectionName": "CURRENT_STATE.md",
-      "generatedAt": "2026-05-14T21:39:05.376Z",
+      "generatedAt": "2026-05-14T22:06:22.007Z",
       "freshnessState": "fresh",
-      "sourceRevision": "2026-05-14T21:39:05.376Z"
+      "sourceRevision": "2026-05-14T22:06:22.007Z"
     },
     {
       "projectionName": "TASK_LIST.md",
-      "generatedAt": "2026-05-14T21:39:05.376Z",
+      "generatedAt": "2026-05-14T22:06:22.007Z",
       "freshnessState": "fresh",
-      "sourceRevision": "2026-05-14T21:39:05.376Z"
+      "sourceRevision": "2026-05-14T22:06:22.007Z"
     }
   ],
   "sources": {
@@ -119,6 +180,6 @@
     "validationReport": ".agents/artifacts/VALIDATION_REPORT.json",
     "validationReportMarkdown": ".agents/artifacts/VALIDATION_REPORT.md",
     "workflowContract": ".agents/workflows/plan.md",
-    "activePacket": "reference/packets/PKT-01_PLN-19_STANDARD_TEMPLATE_DOWNSTREAM_APP_READINESS_REBASELINE.md"
+    "activePacket": "reference/packets/PKT-01_OPS-25_HARNESS_MANUAL_RECENT_WORK_RECONCILIATION.md"
   }
 }
