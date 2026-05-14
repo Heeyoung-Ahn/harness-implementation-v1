@@ -82,10 +82,30 @@
 | Domain foundation approved | yes / no | [owner] | pending | [비고] |
 | DB design confirmation | yes / no | [owner] | pending | [테이블/컬럼/운영 방식] |
 
-## 11. Open Questions
+## 11. Good Project-Stage Examples
+- Legacy Excel upload를 웹 입력/승인 흐름으로 바꾸는 프로젝트:
+  고객, 주문, 정산 엔티티와 원본 파일/DB 중 어디가 current source-of-truth인지 기록한다.
+- 기존 MariaDB를 유지한 채 신규 API만 붙이는 프로젝트:
+  additive인지 compatible-change인지 먼저 분류하고, 기존 배치/리포트가 어떤 테이블과 컬럼 이름에 의존하는지 남긴다.
+- 승인 상태가 중요한 운영 시스템:
+  draft / submitted / approved / rejected 같은 lifecycle과 상태별 수정 가능 규칙을 invariant로 기록한다.
+- 외부 ERP 또는 그룹웨어와 연동되는 프로젝트:
+  어떤 키와 시점으로 데이터를 주고받는지, 실패 시 어느 쪽이 복구 authority를 가지는지 남긴다.
+- 개인정보나 정산 데이터가 포함되는 프로젝트:
+  어떤 필드가 민감정보인지, masking / retention / export 제한이 어디에 걸리는지 기록한다.
+
+## 12. What Not To Record Here
+- current active packet or workflow owner
+- one-turn debugging memo
+- UI layout decision
+- generated-doc wording detail
+- temporary migration checklist
+- source code diff summary
+
+## 13. Open Questions
 - [남은 질문]
 
-## 12. Packet Citation Rule
+## 14. Packet Citation Rule
 - data-impact packet은 이 문서 경로 또는 승인된 동등 artifact 경로를 `Domain foundation reference`로 인용한다.
 - packet에는 `Schema impact classification`, `Existing schema source artifact`, `Migration / rollback / cutover compatibility`를 함께 남긴다.
 - 신규 정보로 schema impact가 바뀌면 packet과 이 문서를 같이 다시 연다.

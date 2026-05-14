@@ -13,8 +13,8 @@ export function writeOpsPacket(
     gateProfile,
     includeManifest,
     readyForCode = "approved",
-    packetTitle = "PKT-01 OPS-03 Transition Test",
-    workItemTitle = "OPS-03 Harness operation friction reduction",
+    packetTitle = "PKT-01 FLOW-01 Transition Test",
+    workItemTitle = "FLOW-01 Reusable transition coverage",
     manifestMarkers = null
   }
 ) {
@@ -40,7 +40,7 @@ export function writeOpsPacket(
     ["Authoritative source intake status", "not-needed", "Uses local packet evidence", "not-needed"],
     ["Shared-source wave status", "not-needed", "No source wave", "not-needed"],
     ["Packet exit gate status", "pending", "Implementation pending", "draft"],
-    ["Improvement promotion status", "approved", "OPS-03 promoted from preventive memory", "approved"],
+    ["Improvement promotion status", "approved", "FLOW-01 promoted into reusable regression coverage", "approved"],
     ["Existing system dependency", "none", "No legacy system", "not-needed"],
     ["New authoritative source impact", "none", "No new external source", "not-needed"],
     ["Risk if started now", "low", "Approval boundary closed", "approved"]
@@ -69,7 +69,7 @@ export function writeOpsPacket(
     ...headerRows.map((row) => `| ${row.join(" | ")} |`),
     "",
     "## 1. Goal",
-    "- Test OPS-03 gate profile behavior.",
+    "- Test FLOW-01 gate profile behavior.",
     "",
     "## 3. Proposed Scope",
     "- Layer classification: core",

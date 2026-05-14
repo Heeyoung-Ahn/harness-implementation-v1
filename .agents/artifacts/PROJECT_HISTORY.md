@@ -20,15 +20,15 @@ If it conflicts with `CURRENT_STATE`, `TASK_LIST`, packet status, DB hot-state, 
 - historical rationale that later packets need to understand why a rule exists
 
 ## Good Development-Stage Examples
-- `DEV-11` removed PMW from the active baseline and replaced it with CLI-first Active Context:
-  record this as a durable baseline change because later packets need to know PMW is historical only.
-- `PLN-16` approved tiered governance and deferred final operator wording to `OPS-17`:
-  record this because later operator and workflow packets depend on that sequencing decision.
-- `OPS-19` was opened because opening `OPS-17` took 9 minutes 34 seconds and exposed packet-registration friction:
-  record the incident and the resulting structural fix so later maintainers know why the planner helper exists.
-- `PLN-18` split project architecture from harness operating contract:
-  record this as a durable SSOT boundary change because later document rewrites depend on it.
-- A validator rule was tightened after repeated stale generated-doc drift:
+- The project replaced a manual spreadsheet workflow with an approved web workflow:
+  record this as a durable milestone because later packets need to understand the source-of-truth change.
+- Requirements freeze approved a reduced first release and deferred reporting:
+  record this because later planning packets depend on the sequencing decision.
+- A production incident showed that import rollback was missing:
+  record the incident and the resulting rule change if it affects future packet planning.
+- A project architecture rebaseline moved background jobs out of the web process:
+  record this as durable system history because later implementation packets depend on the boundary.
+- A validation rule was tightened after repeated stale generated-doc drift:
   record the incident and rule change if it changed reusable policy, not just one bugfix.
 
 ## What Not To Record Here

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "standard-harness-active-context/v2",
-  "generatedAt": "2026-05-14T14:12:26.741Z",
+  "generatedAt": "2026-05-14T21:27:01.366Z",
   "project": {
     "repoRoot": "C:\\Newface\\30 Github\\harness-implementation-v1\\standard-template",
     "name": "standard-template"
@@ -56,20 +56,51 @@
     "findingCount": 0,
     "blockingFindingCount": 0,
     "gateDecision": "pass",
-    "executedAt": "2026-05-14T14:12:26.600Z",
+    "executedAt": "2026-05-14T21:27:00.843Z",
     "traceSummary": null,
-    "candidateGates": []
+    "candidateGates": [
+      {
+        "id": "required-evidence-present",
+        "phase": "candidate-only",
+        "description": "Required evidence artifacts exist for the active work item."
+      },
+      {
+        "id": "source-references-resolve",
+        "phase": "candidate-only",
+        "description": "Referenced packet, SSOT, validation, and trace sources resolve locally."
+      },
+      {
+        "id": "semantic-trace-present",
+        "phase": "candidate-only",
+        "description": "A lightweight semantic trace artifact exists for the active work item."
+      },
+      {
+        "id": "evidence-non-contradictory",
+        "phase": "candidate-only",
+        "description": "Trace, packet, and active work metadata do not contradict each other."
+      },
+      {
+        "id": "evidence-freshness",
+        "phase": "candidate-only",
+        "description": "Validation and trace timestamps match the current report turn."
+      },
+      {
+        "id": "validation-context-parity",
+        "phase": "candidate-only",
+        "description": "Validation report and ACTIVE_CONTEXT expose the same validation summary."
+      }
+    ]
   },
   "generatedDocs": [
     {
       "projectionName": "CURRENT_STATE.md",
-      "generatedAt": "2026-05-14T14:12:26.641Z",
+      "generatedAt": "2026-05-14T21:27:01.072Z",
       "freshnessState": "fresh",
       "sourceRevision": "empty-store"
     },
     {
       "projectionName": "TASK_LIST.md",
-      "generatedAt": "2026-05-14T14:12:26.641Z",
+      "generatedAt": "2026-05-14T21:27:01.072Z",
       "freshnessState": "fresh",
       "sourceRevision": "empty-store"
     }

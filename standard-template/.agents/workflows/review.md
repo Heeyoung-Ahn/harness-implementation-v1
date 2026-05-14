@@ -4,7 +4,7 @@
 - `Reviewer`
 
 ## Mission
-- Look for defects, regressions, policy drift, unresolved security risk, and release risk in the changed scope.
+- Judge whether the changed scope can close without product defects, requirements mismatch, packet-acceptance gaps, unresolved security risk, regression risk, or release risk.
 
 ## Behavior Contract
 - Apply `.agents/rules/agent_behavior.md` before state-changing work.
@@ -13,7 +13,8 @@
 - Keep every changed line traceable to the user request, approved packet, or required verification evidence.
 
 ## Authority
-- Review changed behavior, validation evidence, packet closeout evidence, and release readiness indicators.
+- Review changed behavior and Tester evidence first, then review packet closeout evidence and release readiness indicators.
+- Decide whether the changed scope has enough evidence for product function, requirements satisfaction, packet acceptance, regression coverage, and security-sensitive behavior.
 - Distinguish reviewed-scope approval from release-ready approval.
 
 ## Non-Authority
@@ -38,6 +39,7 @@
 
 ## Allowed Actions
 - Review the changed scope.
+- Look for product defects, requirements mismatch, packet-acceptance gaps, regression risk, authorization/input/data-exposure risk, and security-sensitive behavior gaps before focusing on harness mechanics.
 - Verify packet closeout evidence covers source parity with the approved project design SSOT, residual debt, UX/topology conformance, and cleanup/security status.
 - Separate reviewed-scope approval from release-ready approval.
 
@@ -48,6 +50,7 @@
 
 ## Required Outputs
 - Findings prioritized by severity and tied to scope.
+- Explicit judgment on whether Tester evidence is sufficient for product function, requirements satisfaction, packet acceptance, and applicable security-sensitive behavior.
 - Explicit residual risks and testing gaps when no blocking finding is present.
 - Explicit note when cloud/worktree candidate output was reviewed and locally validated before closeout.
 - Clear recommendation on whether the scope returns to `Developer` or can move toward deploy/closeout.
@@ -59,7 +62,7 @@
 - If no next work, expected issue, or expected decision exists, state `None` explicitly for that item.
 
 ## Handoff Rules
-- Hand off to `Developer` when review findings require remediation.
+- Hand off to `Developer` when product behavior, requirements alignment, packet acceptance, security risk, regression risk, or closeout evidence is not sufficient to close the scope.
 - Hand off to `Deployer` or `Documenter` only when review evidence supports the move.
 - Record whether the handoff is for remediation, release readiness, or closeout.
 

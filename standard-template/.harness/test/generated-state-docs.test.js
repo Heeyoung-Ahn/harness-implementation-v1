@@ -1127,8 +1127,8 @@ test("detects missing required semantic trace for the active work item", () => {
       "UX archetype reference": "reference/artifacts/PRODUCT_UX_ARCHETYPE.md",
       "Selected UX archetype": "operator evidence context",
       "Environment topology reference": "reference/artifacts/DEPLOYMENT_PLAN.md",
-      "Source environment": "maintainer repo",
-      "Target environment": "maintainer repo",
+      "Source environment": "root workspace",
+      "Target environment": "root workspace",
       "Execution target": "local machine",
       "Transfer boundary": "root plus standard-template",
       "Rollback boundary": "revert local runtime changes",
@@ -1264,7 +1264,7 @@ test("detects ACTIVE_CONTEXT validation executedAt parity mismatch", () => {
   store.close();
 });
 
-test("detects release baseline drift between maintainer SSOT and installable release surfaces", () => {
+test("detects release baseline drift between project artifacts and installable release surfaces", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-release-baseline-drift-"));
   seedRepoFiles(repoRoot);
   seedMaintainerReleaseFiles(repoRoot, { stale: true });
@@ -1277,13 +1277,13 @@ test("detects release baseline drift between maintainer SSOT and installable rel
   store.setReleaseState({
     currentStage: "closed",
     releaseGateState: "closed",
-    currentFocus: "PLN-06 standalone business-system harness V1.1 is implemented and verified",
-    releaseGoal: "Production-ready standalone standard harness template for Excel/VBA-MariaDB replacement projects is ready for real project kickoff",
+    currentFocus: "BASELINE-01 reusable harness starter baseline V1.0 is implemented and verified",
+    releaseGoal: "Reusable harness starter baseline is ready for downstream project kickoff",
     sourceRef: ".agents/artifacts/CURRENT_STATE.md",
     metadata: {
-      lane: "PLN-06",
+      lane: "BASELINE-01",
       workflowState: "closed",
-      releaseBaseline: "V1.1"
+      releaseBaseline: "V1.0"
     }
   });
 
@@ -1333,12 +1333,12 @@ function seedMaintainerReleaseFiles(repoRoot, { stale = false } = {}) {
   if (stale) {
     fs.writeFileSync(
       path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"),
-      "# Current State\n\n## Snapshot\n- Current Focus: PLN-06 standalone business-system harness V1.1 is implemented and verified\n",
+      "# Current State\n\n## Snapshot\n- Current Focus: BASELINE-01 reusable harness starter baseline V1.0 is implemented and verified\n",
       "utf8"
     );
     fs.writeFileSync(
       path.join(repoRoot, ".agents", "artifacts", "TASK_LIST.md"),
-      "# Task List\n\n## Current Release Target\n- Complete V1.1 as a standalone production-ready standard harness template.\n",
+      "# Task List\n\n## Current Release Target\n- Complete reusable harness starter baseline V1.0 for downstream project kickoff.\n",
       "utf8"
     );
     fs.writeFileSync(
@@ -1348,17 +1348,17 @@ function seedMaintainerReleaseFiles(repoRoot, { stale = false } = {}) {
     );
     fs.writeFileSync(
       path.join(repoRoot, ".agents", "artifacts", "IMPLEMENTATION_PLAN.md"),
-      "# Implementation Plan\n\n## Summary\nPLN-06 V1.1 lane is closed.\n",
+      "# Implementation Plan\n\n## Summary\nBASELINE-01 V1.0 lane is closed.\n",
       "utf8"
     );
     fs.writeFileSync(
       path.join(repoRoot, ".agents", "artifacts", "REQUIREMENTS.md"),
-      "# Requirements\n\n## Summary\nV1.2 upgrade is still only a direction.\n",
+      "# Requirements\n\n## Summary\nThe next reusable baseline upgrade is still only a direction.\n",
       "utf8"
     );
     fs.writeFileSync(
       path.join(repoRoot, "reference", "artifacts", "REVIEW_REPORT.md"),
-      "# Review Report\n\n## 2026-04-26 PLN-06 V1.1 Closeout Review\n",
+      "# Review Report\n\n## 2026-04-26 BASELINE-01 V1.0 Closeout Review\n",
       "utf8"
     );
   }

@@ -21,16 +21,16 @@ If it conflicts with `CURRENT_STATE`, `TASK_LIST`, packet status, DB hot-state, 
 - technical constraints that narrow implementation choices
 
 ## Good Development-Stage Examples
-- A CLI command change now touches `dev05-tooling.js`, `drift-validator.js`, `ACTIVE_CONTEXT` generation, and validation-report output:
-  record that command/runtime/state generation are linked surfaces so later packets do not treat them as isolated edits.
-- A packet changes approval routing and also affects workflow Markdown, handoff resolution, and PM/runtime command hints:
-  record that workflow contracts, handoff logic, and route resolution are one system boundary.
-- A release/manual update also requires `standard-template/`, packaging, installer, and validator text to stay aligned:
-  record that shipped docs, starter payload, packaging, and release validation form one downstream delivery boundary.
+- A web app change also touches API handlers, background jobs, and notification delivery:
+  record that request path, async processing, and outbound notification are one system boundary.
+- A packet changes approval routing and also affects admin screens, permission checks, and audit logging:
+  record that workflow state, authorization, and audit evidence are linked surfaces.
+- A release/manual update also requires deployment config, onboarding docs, and environment checks to stay aligned:
+  record that shipped docs, runtime configuration, and deployment validation form one delivery boundary.
 - A domain packet depends on a legacy DB, an import script, and a reconciliation report:
   record the integration seam between product runtime, migration tooling, and external source-of-truth artifacts.
-- A small change in Active Context formatting breaks validation parity or handoff comprehension:
-  record that generated docs, Active Context, validation summary, and handoff surfaces are coupled read-model outputs.
+- A small change in summary formatting breaks dashboard parity or operator comprehension:
+  record that generated summaries, operator-facing read models, validation output, and handoff surfaces are coupled outputs.
 
 ## What Not To Record Here
 - today's active work item

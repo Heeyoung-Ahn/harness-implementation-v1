@@ -2,9 +2,9 @@
   "schemaVersion": "standard-harness-agent-trace/v1",
   "workItemId": "PLN-19",
   "packetId": "PKT-01_PLN-19_STANDARD_TEMPLATE_DOWNSTREAM_APP_READINESS_REBASELINE",
-  "role": "developer",
-  "workflow": ".agents/workflows/dev.md",
-  "turnClosedAt": "2026-05-14T14:15:33.660Z",
+  "role": "planner",
+  "workflow": ".agents/workflows/plan.md",
+  "turnClosedAt": "2026-05-14T21:37:20.147Z",
   "requiredSsot": [
     ".agents/artifacts/CURRENT_STATE.md",
     ".agents/artifacts/TASK_LIST.md",
@@ -69,10 +69,10 @@
     "warningCount": 0
   },
   "handoff": {
-    "createdAt": "2026-05-14T14:15:33.463Z",
-    "fromRole": "developer",
-    "toRole": "developer",
+    "createdAt": "2026-05-14T21:37:19.894Z",
+    "fromRole": "reviewer",
+    "toRole": "planner",
     "sourceRef": "reference/packets/PKT-01_PLN-19_STANDARD_TEMPLATE_DOWNSTREAM_APP_READINESS_REBASELINE.md",
-    "summary": "[developer -> developer] OPS-22 runtime history decoupling passed implementation, testing, and review; continue PLN-19 with OPS-23."
+    "summary": "[reviewer -> planner] Reviewer approved PLN-19 for packet exit after confirming approved-scope adherence, sufficient tester evidence, clean validator state, root/starter parity, and no remaining residual defect inside the bounded remediation wave."
   }
 }

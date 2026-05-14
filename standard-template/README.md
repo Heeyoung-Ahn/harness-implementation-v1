@@ -21,7 +21,7 @@
 `START_HERE.md`는 5분 안에 kickoff를 열기 위한 문서다.
 `reference/manuals/HARNESS_MANUAL.md`는 실제 운영 기준과 전체 기능 설명을 담은 primary manual이다.
 
-이 starter에는 maintainer-only 문서를 두지 않는다.
+이 starter에는 배포 후 프로젝트 운영에 필요 없는 저장소 전용 문서를 두지 않는다.
 
 ## 이 starter에 남기는 것
 
@@ -38,7 +38,7 @@
 
 ## 이 starter에 두지 않는 것
 
-- maintainer workflow 문서
+- 저장소 전용 workflow 문서
 - root 유지보수 문서
 - legacy manual
 - release 중간산출물

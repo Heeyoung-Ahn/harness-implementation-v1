@@ -122,8 +122,8 @@ Open the next planning lane after `OPS-07` without repeating the previous mixed-
 - Phase 2: parked `OPS-09` structured packet-exit metadata and closeout parser hardening, then parked `PLN-12` lane-typed packet minimums and approval-surface reduction
 
 ### Operator Next Action
-- `PLN-19` active handoff is `developer -> developer`.
-- Continue PLN-19 with OPS-23 context artifact starter neutralization, keeping PMW removal and downstream-app readiness boundaries intact.
+- `PLN-19` is closed; latest closeout handoff is `planner -> planner`.
+- Planner should choose the next approved lane and reopen planning work only after confirming the next priority with the user; PLN-17 is the current deferred candidate.
 - Source packet: `reference/packets/PKT-01_PLN-19_STANDARD_TEMPLATE_DOWNSTREAM_APP_READINESS_REBASELINE.md`.
 - Preserve packet-before-code, active-context derived authority, generated-doc immutability, root/starter sync, Tester/Reviewer separation, and human approval gates.
 

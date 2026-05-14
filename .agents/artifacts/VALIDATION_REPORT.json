@@ -2,7 +2,7 @@
   "ok": true,
   "command": "validation-report",
   "validatorVersion": "v1.3",
-  "executedAt": "2026-05-14T14:15:33.660Z",
+  "executedAt": "2026-05-14T21:39:05.605Z",
   "cutoverReady": true,
   "profileSummary": {
     "path": ".agents/artifacts/ACTIVE_PROFILES.md",
@@ -10,17 +10,9 @@
     "profiles": []
   },
   "findings": [],
-  "nextAction": "Continue PLN-19 with OPS-23 context artifact starter neutralization, keeping PMW removal and downstream-app readiness boundaries intact.",
+  "nextAction": "Planner should choose the next approved lane and reopen planning work only after confirming the next priority with the user; PLN-17 is the current deferred candidate.",
   "gateDecision": "pass",
-  "traceSummary": {
-    "path": ".agents/runtime/agent-traces/PLN-19.json",
-    "workItemId": "PLN-19",
-    "packetId": "PKT-01_PLN-19_STANDARD_TEMPLATE_DOWNSTREAM_APP_READINESS_REBASELINE",
-    "turnClosedAt": "2026-05-14T14:15:33.660Z",
-    "semanticTraceStatus": "pass",
-    "warningCount": 0,
-    "candidateGateCount": 6
-  },
+  "traceSummary": null,
   "candidateGates": [
     {
       "id": "required-evidence-present",
@@ -52,10 +44,5 @@
       "phase": "candidate-only",
       "description": "Validation report and ACTIVE_CONTEXT expose the same validation summary."
     }
-  ],
-  "securityReview": {
-    "contractStatus": "not-applicable",
-    "activationSource": "not declared",
-    "notApplicableReason": "Reusable security-review evidence is not requested by current packet/runtime metadata."
-  }
+  ]
 }

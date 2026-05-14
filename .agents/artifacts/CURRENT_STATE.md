@@ -1,12 +1,12 @@
 # Current State
 
 ## Snapshot
-- Current Stage: implementation
-- Current Focus: V1.3 standard harness starter baseline is stable; PLN-19 downstream-app readiness remediation continues after OPS-22 runtime history decoupling passed; next slice is OPS-23 context artifact starter neutralization.
+- Current Stage: planning
+- Current Focus: V1.3 standard harness starter baseline is stable; PLN-19 closed; Planner is reviewing the next approved lane.
 - Current Release Goal: Preserve the V1.3 installable standard harness baseline while implementing DEV-11 PMW removal and Active Context replacement under the release gate.
 
 ## Next Recommended Agent
-- Developer
+- Planner
 
 ## Must Read Next
 - `.agents/artifacts/REQUIREMENTS.md`
@@ -19,7 +19,7 @@
 - `reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md`
 
 ## Open Decisions / Blockers
-- `PLN-19` Ready For Code is approved; active handoff is `developer -> developer`. Continue PLN-19 with OPS-23 context artifact starter neutralization, keeping PMW removal and downstream-app readiness boundaries intact.
+- `PLN-19` is closed; latest handoff is `planner -> planner`. Planner should choose the next approved lane and reopen planning work only after confirming the next priority with the user; PLN-17 is the current deferred candidate.
 - `PLN-17` is closed; latest handoff is `planner -> planner`. Open PLN-19 as the higher-priority planning lane for standard-template downstream-app readiness before returning to PLN-17.
 - `QLT-04` is closed; latest handoff is `planner -> planner`. Open PLN-17 as the next approved lane in sequence.
 - `OPS-20` is closed; latest handoff is `planner -> planner`. Open QLT-04 as the next approved lane in sequence.
@@ -46,7 +46,7 @@
 - User direction on 2026-05-03: remaining SSOT should split into AI-facing SSOT and human-facing SSOT. Human-facing SSOT uses Korean and easy terms; AI-facing SSOT prioritizes compact deterministic machine use.
 
 ## Current Truth Notes
-- `PLN-19` remains the active work item. Current handoff is `developer -> developer`; stage is `implementation`; gate profile is `contract`.
+- `PLN-19` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
 - `PLN-17` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
 - `QLT-04` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
 - `OPS-20` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
@@ -85,6 +85,13 @@
 - PMW remains historical closed-lane evidence only. `PLN-09` now proceeds on complete PMW removal from the active baseline and replacement of PMW read-model/export obligations with CLI-first active context.
 
 ## Latest Handoff Summary
+- 2026-05-14: `[planner -> planner] Planner recorded PLN-19 closeout after reviewer-approved packet exit.`
+- 2026-05-14: `[reviewer -> planner] Reviewer approved PLN-19 for packet exit after confirming approved-scope adherence, sufficient tester evidence, clean validator state, root/starter parity, and no remaining residual defect inside the bounded remediation wave.`
+- 2026-05-14: `[tester -> reviewer] Tester verified QLT-06 against the approved PLN-19 scope: touched reusable test corpus is in root/starter parity, targeted regression passed, and root/starter validator evidence is clean with no flagged maintainer-history residue in the touched files.`
+- 2026-05-14: `[developer -> tester] Developer completed QLT-06 reusable harness test generalization with clean parity, test, and validation evidence.`
+- 2026-05-14: `[developer -> developer] QLT-05 workflow rebalance passed implementation, testing, and review; continue PLN-19 with QLT-06.`
+- 2026-05-14: `[developer -> developer] OPS-24 starter artifact purge passed implementation, testing, and review; continue PLN-19 with QLT-05.`
+- 2026-05-14: `[developer -> developer] OPS-23 context artifact starter neutralization passed implementation, testing, and review; continue PLN-19 with OPS-24.`
 - 2026-05-14: `[developer -> developer] OPS-22 runtime history decoupling passed implementation, testing, and review; continue PLN-19 with OPS-23.`
 - 2026-05-14: `[developer -> developer] PLN-19 continues after OPS-21 slice approval; no reviewer remediation is open.`
 - 2026-05-14: `[reviewer -> developer] Reviewer approved the PLN-19 OPS-21 project-facing SSOT scrub slice with no blockers; PLN-19 remains open for the next remediation slice.`

@@ -1,11 +1,11 @@
 # Validation Report
 
 ## Summary
-- Executed at: 2026-05-14T14:15:33.660Z
+- Executed at: 2026-05-14T21:39:05.605Z
 - Validator version: v1.3
 - Cutover ready: yes
 - Gate decision: pass
-- Next action: Continue PLN-19 with OPS-23 context artifact starter neutralization, keeping PMW removal and downstream-app readiness boundaries intact.
+- Next action: Planner should choose the next approved lane and reopen planning work only after confirming the next priority with the user; PLN-17 is the current deferred candidate.
 
 ## Active Profiles
 - Source: .agents/artifacts/ACTIVE_PROFILES.md
@@ -15,18 +15,8 @@
 ## Findings
 - none
 
-## Security Review Summary
-- Status: not-applicable
-- Activation source: not declared
-- Reason: Reusable security-review evidence is not requested by current packet/runtime metadata.
-
 ## Semantic Trace
-- Path: .agents/runtime/agent-traces/PLN-19.json
-- Work item: PLN-19
-- Packet: PKT-01_PLN-19_STANDARD_TEMPLATE_DOWNSTREAM_APP_READINESS_REBASELINE
-- Turn closed at: 2026-05-14T14:15:33.660Z
-- Status: pass
-- Warning count: 0
+- none
 
 ## Candidate Gates
 - required-evidence-present: candidate-only / Required evidence artifacts exist for the active work item.

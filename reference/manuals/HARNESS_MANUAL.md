@@ -528,7 +528,7 @@ branch 또는 worktree를 써야 하는 경우:
 
 예외는 가능하지만 기록해야 한다.
 
-- 좁은 maintainer-only 문서 동기화
+- 좁은 starter/manual 문서 동기화
 - 매우 작은 긴급 수정
 - 구현을 열지 않는 planning-only 작업
 
