@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "standard-harness-agent-trace/v1",
+  "workItemId": "PLN-18",
+  "packetId": "PLN-18_PROJECT_SSOT_AND_WORKFLOW_ENTRY_REBASELINE_DRAFT",
+  "role": "planner",
+  "workflow": ".agents/workflows/plan.md",
+  "turnClosedAt": "2026-05-14T08:50:42.140Z",
+  "requiredSsot": [
+    ".agents/artifacts/CURRENT_STATE.md",
+    ".agents/artifacts/TASK_LIST.md",
+    ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+    "reference/planning/PLN-18_PROJECT_SSOT_AND_WORKFLOW_ENTRY_REBASELINE_DRAFT.md"
+  ],
+  "declaredReadEvidence": [
+    ".agents/artifacts/REQUIREMENTS.md",
+    ".agents/artifacts/ARCHITECTURE_GUIDE.md",
+    ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+    ".agents/artifacts/PREVENTIVE_MEMORY.md",
+    "reference/planning/PLN-18_PROJECT_SSOT_AND_WORKFLOW_ENTRY_REBASELINE_DRAFT.md",
+    ".agents/artifacts/VALIDATION_REPORT.json"
+  ],
+  "approvedDesignRefs": [
+    ".agents/artifacts/REQUIREMENTS.md",
+    ".agents/artifacts/ARCHITECTURE_GUIDE.md",
+    ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+    "reference/planning/PLN-18_PROJECT_SSOT_AND_WORKFLOW_ENTRY_REBASELINE_DRAFT.md"
+  ],
+  "implementationRefs": [],
+  "verificationRefs": [
+    ".agents/artifacts/VALIDATION_REPORT.json",
+    ".agents/artifacts/VALIDATION_REPORT.md"
+  ],
+  "semanticTrace": {
+    "hardFailCodes": [
+      "missing_required_evidence",
+      "broken_source_reference",
+      "contradictory_evidence",
+      "stale_evidence",
+      "required_semantic_trace_missing",
+      "validation_report_context_parity_break",
+      "active_context_validation_executed_at_mismatch"
+    ],
+    "warningCodes": [
+      "evidence_linkage_thin",
+      "reviewer_rationale_thin"
+    ],
+    "reviewerOnlyCodes": [
+      "design_intent_fulfillment",
+      "work_fit_assessment",
+      "domain_specific_business_rule_judgment"
+    ],
+    "candidateGateIds": [
+      "required-evidence-present",
+      "source-references-resolve",
+      "semantic-trace-present",
+      "evidence-non-contradictory",
+      "evidence-freshness",
+      "validation-context-parity"
+    ],
+    "sourceRefsResolved": true,
+    "validatorGateDecision": "hold",
+    "readyForCode": "not-needed",
+    "contractStatus": "not-requested",
+    "activationSource": "not declared"
+  },
+  "selfCheck": {
+    "findingCount": 2,
+    "blockingFindingCount": 2,
+    "warningCount": 0
+  },
+  "handoff": {
+    "createdAt": "2026-05-14T08:50:41.852Z",
+    "fromRole": "planner",
+    "toRole": "planner",
+    "sourceRef": "reference/planning/PLN-18_PROJECT_SSOT_AND_WORKFLOW_ENTRY_REBASELINE_DRAFT.md",
+    "summary": "[planner -> planner] Planner moved DOMAIN_CONTEXT, SYSTEM_CONTEXT, and PROJECT_HISTORY into the canonical .agents/artifacts layer, replaced old references, and rewrote ARCHITECTURE_GUIDE as a project-architecture-only SSOT template."
+  }
+}

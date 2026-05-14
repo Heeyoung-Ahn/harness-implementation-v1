@@ -31,6 +31,7 @@ const HANDOFF_WORKFLOW_ROUTES = [
   { workflow: ".agents/workflows/handoff.md", aliases: ["handoff", "router", "handover", "인계"] },
   { workflow: ".agents/workflows/plan.md", aliases: ["planner", "maintainer", "planning", "기획", "유지보수"] }
 ];
+const PLANNER_WORKFLOW = ".agents/workflows/plan.md";
 
 export function prioritizeOpenWorkItems(workItems = [], { repoRoot = null } = {}) {
   const lifecycleHints = repoRoot ? readCanonicalTaskLifecycleHints({ repoRoot }) : null;
@@ -84,12 +85,23 @@ export function resolveHandoffExecution({
 } = {}) {
   const currentStateNextAgent = resolveCurrentStateNextAgent({ repoRoot });
   const activeWorkItem = selectActiveWorkItem(workItems, { repoRoot });
+  const resolvedBy = activeWorkItem?.owner
+    ? "active_task_owner"
+    : currentStateNextAgent
+      ? "current_state_next_agent"
+      : latestHandoff?.toRole
+        ? "latest_handoff"
+        : "unassigned";
   const owner = activeWorkItem?.owner ?? currentStateNextAgent ?? latestHandoff?.toRole ?? "unassigned";
+  const nextAction = activeWorkItem?.nextAction ?? latestHandoff?.payload?.nextFirstAction ?? null;
   const workflow = workflowForOwner(owner);
   const workflowDetailsForStatus = readWorkflowDetails({ repoRoot, workflow });
   const workflowDetails = includeWorkflowDetails ? workflowDetailsForStatus : null;
+  const plannerFallback = assessPlannerFallback({ resolvedBy, workflow, nextAction });
   const routeStatus = workflow === "manual_selection_required"
     ? "manual_selection_required"
+    : plannerFallback.blocked
+      ? "planner_fallback_blocked"
     : workflowDetailsForStatus && !workflowDetailsForStatus.exists
       ? "workflow_missing"
       : workflowDetailsForStatus?.missingSections?.length
@@ -98,16 +110,12 @@ export function resolveHandoffExecution({
 
   return {
     routeStatus,
-    resolvedBy: activeWorkItem?.owner
-      ? "active_task_owner"
-      : currentStateNextAgent
-        ? "current_state_next_agent"
-        : latestHandoff?.toRole
-          ? "latest_handoff"
-          : "unassigned",
+    resolvedBy,
     owner,
     workflow,
     currentStateNextAgent,
+    nextAction,
+    plannerFallback,
     task: activeWorkItem
       ? {
           workItemId: activeWorkItem.workItemId,
@@ -131,6 +139,51 @@ export function resolveHandoffExecution({
       portable: "HARNESS.cmd handoff"
     }
   };
+}
+
+function assessPlannerFallback({ resolvedBy, workflow, nextAction }) {
+  const applies = workflow === PLANNER_WORKFLOW && resolvedBy !== "active_task_owner";
+  const actionClass = classifyPlannerFallbackAction(nextAction);
+  const allowed = !applies || actionClass === "planning" || !normalizeOwnerText(nextAction);
+  return {
+    applies,
+    allowed,
+    actionClass,
+    blocked: applies && !allowed,
+    reason:
+      applies && !allowed
+        ? "Planner fallback is limited to non-mutating planning work. Resolve an explicit workflow before implementation, testing, review closeout, or approval-state work."
+        : null
+  };
+}
+
+function classifyPlannerFallbackAction(nextAction) {
+  const normalized = normalizeOwnerText(nextAction);
+  if (!normalized) {
+    return "unknown";
+  }
+
+  if (
+    /\b(plan|planning|requirements?|decompose|decomposition|organize|organise|clarify|triage|review meaning|review scope|review architecture|open the next planning lane|choose the next approved lane)\b/.test(
+      normalized
+    )
+  ) {
+    return "planning";
+  }
+  if (/\b(test|tester|verify|verification|validate|validation|qa)\b/.test(normalized)) {
+    return "verification";
+  }
+  if (/\b(closeout|reviewer|review readiness|packet exit|approve|approval|sign off|signoff)\b/.test(normalized)) {
+    return "approval_or_closeout";
+  }
+  if (
+    /\b(implement|implementation|modify|change|edit|update|write|create|add|remove|delete|rename|refactor|patch|fix|migrate|sync|regenerate|apply)\b/.test(
+      normalized
+    )
+  ) {
+    return "mutation";
+  }
+  return "unknown";
 }
 
 function matchingWorkflowRoutesForOwner(owner) {

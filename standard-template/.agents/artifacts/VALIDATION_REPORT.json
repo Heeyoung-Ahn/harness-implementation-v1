@@ -1,0 +1,48 @@
+{
+  "ok": true,
+  "command": "validation-report",
+  "validatorVersion": "v1.3",
+  "executedAt": "2026-05-14T14:12:26.600Z",
+  "cutoverReady": true,
+  "profileSummary": {
+    "path": ".agents/artifacts/ACTIVE_PROFILES.md",
+    "status": "empty",
+    "profiles": []
+  },
+  "findings": [],
+  "nextAction": "No blocker is recorded. Continue with the current approved packet or open the next planning lane.",
+  "gateDecision": "pass",
+  "traceSummary": null,
+  "candidateGates": [
+    {
+      "id": "required-evidence-present",
+      "phase": "candidate-only",
+      "description": "Required evidence artifacts exist for the active work item."
+    },
+    {
+      "id": "source-references-resolve",
+      "phase": "candidate-only",
+      "description": "Referenced packet, SSOT, validation, and trace sources resolve locally."
+    },
+    {
+      "id": "semantic-trace-present",
+      "phase": "candidate-only",
+      "description": "A lightweight semantic trace artifact exists for the active work item."
+    },
+    {
+      "id": "evidence-non-contradictory",
+      "phase": "candidate-only",
+      "description": "Trace, packet, and active work metadata do not contradict each other."
+    },
+    {
+      "id": "evidence-freshness",
+      "phase": "candidate-only",
+      "description": "Validation and trace timestamps match the current report turn."
+    },
+    {
+      "id": "validation-context-parity",
+      "phase": "candidate-only",
+      "description": "Validation report and ACTIVE_CONTEXT expose the same validation summary."
+    }
+  ]
+}

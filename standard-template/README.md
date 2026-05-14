@@ -60,4 +60,4 @@
 
 ## 유지보수자에게
 
-reusable behavior를 바꿀 때는 `standard-template/`만 고치지 말고 root source of truth와 같이 맞춘다. 변경 전파 기준은 root의 `PROJECT_WORKFLOW_MANUAL.md`와 `reference/artifacts/maintenance/ROOT_STANDARD_HARNESS_MAINTENANCE_MAP.md`를 따른다.
+reusable behavior를 바꿀 때는 이 starter 안의 runtime, test, rules, manuals가 서로 같은 계약을 말하는지 함께 확인한다. 설치된 프로젝트 안에 없는 root 전용 유지보수 문서를 기준으로 삼지 않는다.

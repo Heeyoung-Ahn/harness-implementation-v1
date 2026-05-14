@@ -18,25 +18,25 @@ test("active context writes compact JSON and Korean Markdown re-entry state with
   store.setReleaseState({
     currentStage: "planning",
     releaseGateState: "open",
-    currentFocus: "DEV-11 PMW-free active context",
-    releaseGoal: "Remove PMW and keep re-entry cheap.",
-    sourceRef: "reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md"
+    currentFocus: "Active context re-entry baseline",
+    releaseGoal: "Keep re-entry cheap and deterministic.",
+    sourceRef: "reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md"
   });
   store.upsertWorkItem({
-    workItemId: "DEV-11",
-    title: "CLI-first PMW decommission",
+    workItemId: "CTX-01",
+    title: "Active context baseline",
     status: "in_progress",
     owner: "developer",
     nextAction: "Implement active context.",
-    sourceRef: "reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md",
+    sourceRef: "reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md",
     metadata: { gateProfile: "release", readyForCode: "approved" }
   });
   store.appendHandoff({
-    handoffId: "handoff-dev-11",
-    handoffSummary: "DEV-11 handed to Developer.",
+    handoffId: "handoff-ctx-01",
+    handoffSummary: "CTX-01 handed to Developer.",
     fromRole: "planner",
     toRole: "developer",
-    sourceRef: "reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md",
+    sourceRef: "reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md",
     payload: { nextFirstAction: "Implement active context." }
   });
   writeGeneratedStateDocs({ store, outputDir: repoRoot });
@@ -46,7 +46,7 @@ test("active context writes compact JSON and Korean Markdown re-entry state with
   const reopened = createOperatingStateStore({ dbPath });
 
   assert.equal(result.ok, true);
-  assert.equal(result.context.activeTask.workItemId, "DEV-11");
+  assert.equal(result.context.activeTask.workItemId, "CTX-01");
   assert.equal(result.context.selectedLane.workflow, ".agents/workflows/dev.md");
   assert.equal(result.context.nextWork.workflow, ".agents/workflows/dev.md");
   assert.equal(result.context.reentryContract.firstRead, ".agents/runtime/ACTIVE_CONTEXT.json");
@@ -63,13 +63,13 @@ test("active context writes compact JSON and Korean Markdown re-entry state with
   assert.match(fs.readFileSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.md"), "utf8"), /## 먼저 다시 읽을 항목/);
 });
 
-test("active context exposes no PMW read-model dependency", () => {
-  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "active-context-no-pmw-"));
+test("active context exposes no deprecated external read-model dependency", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "active-context-no-deprecated-read-model-"));
   const store = createOperatingStateStore({ dbPath: path.join(repoRoot, ".harness", "operating_state.sqlite") });
   store.setReleaseState({
     currentStage: "planning",
     releaseGateState: "open",
-    currentFocus: "No PMW",
+    currentFocus: "No external read model",
     releaseGoal: "Use CLI context.",
     sourceRef: ".agents/artifacts/CURRENT_STATE.md"
   });
@@ -77,7 +77,7 @@ test("active context exposes no PMW read-model dependency", () => {
   const context = buildActiveContext({ store, repoRoot });
   store.close();
 
-  assert.equal(JSON.stringify(context).includes("pmw-read-model"), false);
+  assert.equal(JSON.stringify(context).includes("external-read-model"), false);
   assert.equal(JSON.stringify(context).includes("project-manifest"), false);
 });
 

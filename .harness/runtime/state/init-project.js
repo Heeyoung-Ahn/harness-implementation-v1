@@ -5,7 +5,7 @@ import { writeActiveContext } from "./active-context.js";
 import { writeGeneratedStateDocs } from "./generate-state-docs.js";
 import { createOperatingStateStore } from "./operating-state-store.js";
 
-export const STARTER_PACKAGE_NAME = "harness-implementation-v1";
+export const STARTER_PACKAGE_NAME = "standard-harness-starter";
 export const KNOWN_PROFILES = {
   "PRF-01": {
     label: "PRF-01 admin grid application profile",
@@ -340,7 +340,7 @@ export function initializeProjectStarter({
   updateFile(
     resolvedRoot,
     ".agents/artifacts/ARCHITECTURE_GUIDE.md",
-    (text) => updateArchitectureText(text, { activeProfiles: normalizedProfiles })
+    (text) => updateArchitectureText(text)
   );
   updateFile(
     resolvedRoot,
@@ -674,15 +674,9 @@ function updateRequirementsText(text, { projectName, userGoal, opsGoal, approval
   return next;
 }
 
-function updateArchitectureText(text, { activeProfiles }) {
-  return replaceSection(
-    text,
-    "## Active Profiles And Exceptions",
-    [
-      `- Active profiles: ${renderActiveProfilesInline(activeProfiles)}`,
-      "- Approved exceptions: none"
-    ].join("\n")
-  );
+function updateArchitectureText(text) {
+  ensureSectionPresent(text, "## Authoring Flow");
+  return text;
 }
 
 function updateImplementationPlanText(text, { projectName, currentFocus, activeProfiles }) {
@@ -843,6 +837,12 @@ function replaceSection(text, heading, body) {
     throw new Error(`Could not find section: ${heading}`);
   }
   return text.replace(pattern, `$1${body.trim()}\n`);
+}
+
+function ensureSectionPresent(text, heading) {
+  if (!text.includes(heading)) {
+    throw new Error(`Could not find section: ${heading}`);
+  }
 }
 
 function escapeRegExp(value) {

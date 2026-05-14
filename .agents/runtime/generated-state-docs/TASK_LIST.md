@@ -1,10 +1,10 @@
 # TASK_LIST
 
 ## Technical Facts
-- Open work items: 52
+- Open work items: 60
 - Open blocked or at-risk items: 0
 - Recent handoffs captured: 10
-- Generated at: 2026-05-13T14:53:35.202Z
+- Generated at: 2026-05-14T14:15:33.463Z
 
 ## Blocked / At Risk Summary
 - 0 open blocker or risks require attention.
@@ -18,6 +18,14 @@
 ## Work Item Detail
 | ID | Title | Status | Next Action |
 |---|---|---|---|
+| PLN-19 | Standard-template downstream app readiness rebaseline | in_progress | Continue PLN-19 with OPS-23 context artifact starter neutralization, keeping PMW removal and downstream-app readiness boundaries intact. |
+| PLN-17 | Multi-model ownership and conflict contract | closed | Open PLN-19 as the higher-priority planning lane for standard-template downstream-app readiness before returning to PLN-17. |
+| QLT-04 | Governance test rebalance | closed | Open PLN-17 as the next approved lane in sequence. |
+| OPS-20 | Starter bootstrap / ARCHITECTURE_GUIDE initialization alignment | closed | Open QLT-04 as the next approved lane in sequence. |
+| OPS-18 | Workflow gates by starter mode | closed | Open a separate planner lane for starter bootstrap / ARCHITECTURE_GUIDE initialization alignment before other follow-up implementation work. |
+| OPS-17 | Operator glossary, profile reset, and safe-fix guidance | done | Choose the next approved lane; recommend opening OPS-18 before QLT-04 or PLN-17. |
+| PLN-18 | Project SSOT and workflow entry rebaseline | done | Return to OPS-17 planning under the settled document split and review whether its detailed agreement still needs adjustment before Ready For Code. |
+| OPS-19 | Planner packet opening fast path | done | Return to OPS-17 planning and resolve its detailed agreement and Ready For Code boundary before any implementation opens. |
 | OPS-16 | Active Context recovery and safe drift fix | closed | Keep the reusable baseline on planning hold until a new approved lane is selected. |
 | OPS-15 | Reusable operator discipline, guidance, and guidebook expansion | closed | Keep the reusable baseline on planning hold until a new approved lane is selected. |
 | SIM-03 | Shared-source rebaseline control | done | Keep the closed shared-source rebaseline control, source-wave ledger contract, and ledger parity validator enforcement stable as part of the reusable baseline. |
@@ -72,18 +80,18 @@
 | DEV-04 | PMW read surface | done | Closed after browser verification passed at http://127.0.0.1:4173. |
 
 ## Handoff Log
-- 2026-05-13T14:53:35.202Z: [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.
-- 2026-05-13T14:47:54.828Z: [reviewer -> planner] Packet exit approved; Planner should choose or refine the next lane.
-- 2026-05-13T14:43:57.187Z: [tester -> reviewer] Tester verification completed; Reviewer should assess packet exit readiness.
-- 2026-05-13T14:41:31.720Z: [developer -> tester] Developer implementation completed; Tester should verify the approved scope.
-- 2026-05-13T12:18:41.999Z: [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.
-- 2026-05-13T12:07:31.579Z: [reviewer -> planner] Packet exit approved; Planner should choose or refine the next lane.
-- 2026-05-13T12:05:19.281Z: [tester -> reviewer] Tester verification completed; Reviewer should assess packet exit readiness.
-- 2026-05-13T07:18:57.351Z: [developer -> tester] Developer implementation completed; Tester should verify the approved scope.
-- 2026-05-13T07:10:33.036Z: [planner -> developer] Planning approved; implementation can proceed.
-- 2026-05-11T08:51:44.036Z: [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.
+- 2026-05-14T14:15:33.463Z: [developer -> developer] OPS-22 runtime history decoupling passed implementation, testing, and review; continue PLN-19 with OPS-23.
+- 2026-05-14T13:52:05.197Z: [developer -> developer] PLN-19 continues after OPS-21 slice approval; no reviewer remediation is open.
+- 2026-05-14T13:51:47.630Z: [reviewer -> developer] Reviewer approved the PLN-19 OPS-21 project-facing SSOT scrub slice with no blockers; PLN-19 remains open for the next remediation slice.
+- 2026-05-14T13:51:32.544Z: [tester -> reviewer] Tester verified the PLN-19 OPS-21 slice: targeted tests, doc scrub scan, reusable parity, validator, and validation-report passed.
+- 2026-05-14T13:51:18.071Z: [developer -> tester] Developer completed the OPS-21 project-facing SSOT scrub slice for PLN-19.
+- 2026-05-14T13:41:00.262Z: [planner -> developer] PLN-19 Ready For Code approved for the bounded standard-template downstream-app readiness remediation wave.
+- 2026-05-14T13:35:04.228Z: [planner -> planner] Opened PLN-19 as the higher-priority planning lane for standard-template downstream-app readiness after explicitly deferring PLN-17.
+- 2026-05-14T13:33:22.594Z: [planner -> planner] Deferred PLN-17 by explicit user priority so PLN-19 standard-template downstream-app readiness can run first; this is not functional completion of the ownership contract.
+- 2026-05-14T12:53:04.076Z: [planner -> planner] Opened PLN-17 as the next approved lane in sequence after QLT-04 closeout.
+- 2026-05-14T12:50:58.979Z: [planner -> planner] Planner recorded QLT-04 closeout after tester verification and reviewer approval.
 
 ## Generation Metadata
 - Generated docs: CURRENT_STATE.md, TASK_LIST.md
-- Source revision: 2026-05-13T14:53:35.202Z
+- Source revision: 2026-05-14T14:15:33.463Z
 - Sync status: fresh at generation time

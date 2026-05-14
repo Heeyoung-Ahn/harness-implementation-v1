@@ -120,6 +120,6 @@
 
 - `.agents/artifacts/REQUIREMENTS.md`
 - `reference/planning/PLN-01_REQUIREMENTS_FREEZE.md`
-- 필요 시 `reference/artifacts/DOMAIN_CONTEXT.md`
+- 필요 시 `.agents/artifacts/DOMAIN_CONTEXT.md`
 - 필요 시 `reference/artifacts/AUTHORITATIVE_SOURCE_INTAKE.md`
 - 첫 구현 작업을 위한 `reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md`

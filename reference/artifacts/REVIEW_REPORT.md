@@ -1,6 +1,147 @@
 # Review Report
 
+## 2026-05-14 PLN-19 OPS-21 Slice Review
+- Scope reviewed:
+  project-facing SSOT scrub for downstream-app starter readiness.
+- Files reviewed:
+  `standard-template/.agents/artifacts/CURRENT_STATE.md`, `TASK_LIST.md`, `PROJECT_PROGRESS.md`, `REQUIREMENTS.md`, `IMPLEMENTATION_PLAN.md`, `PROJECT_HISTORY.md`, `standard-template/README.md`, `standard-template/reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md`, `standard-template/reference/artifacts/REPOSITORY_LAYOUT_OWNERSHIP.md`, `PACKET_EXIT_QUALITY_GATE.md`, `AUTHORITATIVE_SOURCE_WAVE_LEDGER.md`, and the mirrored reusable root references.
+- Findings:
+  none blocking.
+- Evidence:
+  root targeted tests passed, `standard-template` targeted tests passed, reusable reference parity matched, project-facing starter doc scan found no PMW or maintainer-history hits except generated validator version metadata, and validator / validation-report passed.
+- Decision:
+  OPS-21 slice is review-approved. Continue PLN-19 with the next developer slice; do not close PLN-19 yet.
+
 Use this artifact when the project enters a formal review gate.
+
+## 2026-05-14 QLT-04 Closeout
+
+- Scope: reviewer closeout for `QLT-04` governance-test rebalance after tester verification.
+- Findings:
+  - none inside the approved `QLT-04` boundary
+- Review result:
+  - the approved narrow `QLT-04` scope is present in the reusable test surface: `OPS-18` workflow-entry, ambiguity-stop, Planner-fallback, and compact-baton checks were extracted into one focused reusable test file instead of staying buried in the larger `dev05-tooling` suite
+  - `OPS-20` bootstrap-alignment checks remain with `init-project.test.js`, so the rebalance did not create a second bootstrap-test surface or reopen starter-bootstrap behavior
+  - the extracted helper module is test-support only. It centralizes shared test seeding/fixture utilities and does not change runtime authority, workflow behavior, approval semantics, or validator policy
+  - root and `standard-template` reusable test surfaces remain synchronized
+- Validation:
+  - root `node --test .harness/test/dev05-tooling.test.js .harness/test/workflow-governance.test.js .harness/test/init-project.test.js`: 42/42 pass
+  - `standard-template` `node --test .harness/test/dev05-tooling.test.js .harness/test/workflow-governance.test.js .harness/test/init-project.test.js`: 42/42 pass
+  - root `node .harness/runtime/state/dev05-cli.js validate`: findings `[]`
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`: gate decision `pass`
+- Residual risk:
+  - no blocking reviewer finding remains inside the approved `QLT-04` scope
+  - `PLN-17` ownership work remains a separate follow-up lane
+- Result:
+  - `QLT-04` is approved for packet exit
+  - no reviewer remediation is required
+  - handoff may proceed to Planner
+- Status: done
+
+## 2026-05-14 OPS-20 Closeout
+
+- Scope: reviewer closeout for `OPS-20` starter bootstrap / `ARCHITECTURE_GUIDE` initialization alignment after tester verification.
+- Findings:
+  - none inside the approved `OPS-20` boundary
+- Review result:
+  - copied-starter initialization no longer depends on the deleted `## Active Profiles And Exceptions` section
+  - the fix stays inside the approved narrow boundary by preserving the current `ARCHITECTURE_GUIDE.md` role and authoring flow instead of reintroducing architecture-owned bootstrap content
+  - bootstrap alignment now uses the narrowest deterministic contract needed here: the starter initialization path verifies the current `## Authoring Flow` section and leaves project-architecture content unchanged
+  - root and `standard-template` reusable runtime and test surfaces remain synchronized
+- Validation:
+  - root `node --test .harness/test/init-project.test.js .harness/test/dev05-tooling.test.js`: 42/42 pass
+  - `standard-template` `node --test .harness/test/init-project.test.js .harness/test/dev05-tooling.test.js`: 42/42 pass
+  - root `node .harness/runtime/state/dev05-cli.js validate`: findings `[]`
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`: gate decision `pass`
+- Residual risk:
+  - no blocking reviewer finding remains inside the approved `OPS-20` scope
+  - `QLT-04` governance-test rebalance and `PLN-17` ownership work remain separate follow-up lanes
+- Result:
+  - `OPS-20` is approved for packet exit
+  - no reviewer remediation is required
+  - handoff may proceed to Planner
+- Status: done
+
+## 2026-05-14 OPS-17 Closeout Approval
+
+- Scope: final closeout review for `OPS-17` operator glossary, profile reset, and safe-fix manual guidance after tester re-verification passed and the active handoff moved to `reviewer`.
+- Entry condition:
+  - `OPS-17` is in canonical reviewer state through the `tester -> reviewer` transition.
+  - Tester evidence covers the root/starter manual parity check, checklist reminders, authority-boundary wording, validation caveat, safe-fix allow/deny guidance, profile reset coverage, and validator/report evidence.
+- Evidence reviewed:
+  - `reference/packets/PKT-01_OPS-17_OPERATOR_GLOSSARY_PROFILE_RESET_AND_SAFE_FIX_GUIDANCE.md`
+  - `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`
+  - `reference/artifacts/REVIEW_REPORT.md`
+  - `.agents/artifacts/CURRENT_STATE.md`
+  - `.agents/artifacts/TASK_LIST.md`
+  - `.agents/artifacts/VALIDATION_REPORT.md`
+  - `.agents/artifacts/VALIDATION_REPORT.json`
+  - `.agents/runtime/ACTIVE_CONTEXT.json`
+  - `.agents/runtime/agent-traces/OPS-17.json`
+  - `reference/manuals/HARNESS_MANUAL.md`
+  - `standard-template/reference/manuals/HARNESS_MANUAL.md`
+- Findings:
+  - no open reviewer finding remains
+- Review result:
+  - the approved narrow `OPS-17` scope is present in the reusable manual surface. The root and `standard-template` manuals now include the operator concept primer, first-check guidance, profile/starter-mode reset playbook, validation caveat, safe-fix allow/deny guidance, solo-operation disclosure, and the checklist reminders required by acceptance
+  - reviewed evidence shows the manual remains explanatory and does not claim workflow, approval, packet, or runtime state authority. The wording stays aligned with `HARNESS_OPERATING_CONTRACT.md`
+  - source parity is clean. The reusable root/manual pair remains synchronized and validator evidence is green after the final checklist remediation
+  - residual debt disposition: no blocking implementation defect remains in the reviewed `OPS-17` scope. `OPS-18`, `QLT-04`, and `PLN-17` remain intentionally deferred follow-up items
+- Validation:
+  - root / `standard-template` HARNESS_MANUAL parity hash check: pass
+  - root `node .harness/runtime/state/dev05-cli.js validate`: findings `[]`
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`: gate decision `pass`
+- Packet exit decision:
+  - approved
+- Next handoff:
+  - Planner should record `OPS-17` closeout and choose the next approved lane.
+- Status: done
+
+## 2026-05-14 OPS-19 Closeout Approval
+
+- Scope: final closeout review for `OPS-19` planner packet opening fast path after tester verification passed and the active handoff moved to `reviewer`.
+- Entry condition:
+  - `OPS-19` is in canonical reviewer state through the `tester -> reviewer` transition.
+  - Tester evidence covers root/starter full suites, packet-opening success/fail preflight coverage, validator/report/context evidence, root/starter synchronization, and safe failure before mutation.
+- Evidence reviewed:
+  - `reference/packets/PKT-01_OPS-19_PLANNER_PACKET_OPENING_FAST_PATH.md`
+  - `reference/artifacts/WALKTHROUGH.md`
+  - `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`
+  - `reference/artifacts/REVIEW_REPORT.md`
+  - `.agents/artifacts/CURRENT_STATE.md`
+  - `.agents/artifacts/TASK_LIST.md`
+  - `.agents/artifacts/VALIDATION_REPORT.md`
+  - `.agents/artifacts/VALIDATION_REPORT.json`
+  - `.agents/runtime/ACTIVE_CONTEXT.json`
+  - `.agents/runtime/agent-traces/OPS-19.json`
+  - `.harness/runtime/state/dev05-tooling.js`
+  - `.harness/runtime/state/open-planner-packet.js`
+  - `standard-template/.harness/runtime/state/dev05-tooling.js`
+  - `standard-template/.harness/runtime/state/open-planner-packet.js`
+  - `.harness/test/dev05-tooling.test.js`
+  - `standard-template/.harness/test/dev05-tooling.test.js`
+- Findings:
+  - no open reviewer finding remains
+- Review result:
+  - the approved narrow `OPS-19` scope is present in the reusable runtime surface: packet opening now has a planner-only helper that preflights required metadata and manifest markers before any state mutation claims a clean handoff
+  - reviewed evidence shows the state boundary stayed intact. The helper only reuses existing store upserts and the existing transition/validation flow; it does not introduce a second mutation path, DB schema change, or Ready For Code bypass
+  - safe failure behavior is present. Missing packet metadata or manifest markers fail before mutation in automated coverage, and the standalone entrypoint also fails safely when invoked without required inputs
+  - root and `standard-template` remain synchronized across the reviewed runtime, entrypoint, and regression-test changes
+  - residual debt disposition: no blocking implementation defect remains in the reviewed `OPS-19` scope. `OPS-17` remains intentionally deferred as the next planning lane and broader workflow hard-gate work remains out of scope
+- Validation:
+  - root `node --test .harness/test/dev05-tooling.test.js`: 37/37 pass
+  - `standard-template` `node --test .harness/test/dev05-tooling.test.js`: 37/37 pass
+  - root `node --test .harness/test/*.test.js`: 82/82 pass
+  - `standard-template` `node --test .harness/test/*.test.js`: 73/73 pass
+  - root `node .harness/runtime/state/dev05-cli.js validate`: findings `[]`
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`: gate decision `pass`
+  - root `node .harness/runtime/state/dev05-cli.js context`: ACTIVE_CONTEXT regeneration verified during tester evidence collection
+  - root `node .harness/runtime/state/open-planner-packet.js`: safe preflight failure confirmed for missing required inputs
+- Packet exit decision:
+  - approved
+- Next handoff:
+  - Planner should record `OPS-19` closeout and return to the open `OPS-17` planning lane.
+- Status: done
 
 ## 2026-05-11 OPS-12 Closeout Approval
 
@@ -1208,4 +1349,28 @@ Use this artifact when the project enters a formal review gate.
 - Result:
   - `OPS-14` is approved as closed
   - handoff may proceed to Planner
+- Status: done
+
+## 2026-05-14 OPS-18 Closeout
+
+- Scope: reviewer closeout for `OPS-18` workflow-entry enforcement after tester verification.
+- Findings:
+  - none inside the approved `OPS-18` boundary
+- Review result:
+  - clear-route enforcement now stops on ambiguous workflow resolution instead of guessing
+  - Planner fallback is now bounded to non-mutating planning work when the route is not explicitly owned by an active task
+  - handoff payloads and `ACTIVE_CONTEXT` now carry a compact baton with `nextWorkflow`, `nextFirstAction`, `requiredSsot`, `approvalBoundary`, and `doNotCross`
+  - root and `standard-template` reusable runtime and test surfaces remain synchronized
+- Validation:
+  - targeted root tests: `node --test .harness/test/active-context.test.js .harness/test/dev05-tooling.test.js`
+  - targeted `standard-template` tests: `node --test .harness/test/active-context.test.js .harness/test/dev05-tooling.test.js`
+  - root `node .harness/runtime/state/dev05-cli.js validate`
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`
+- Residual risk:
+  - copied-starter initialization still has a separate `ARCHITECTURE_GUIDE` follow-up gap: `init-project.js` still expects `## Active Profiles And Exceptions` during starter bootstrap after the architecture document restructure
+  - that starter bootstrap / `ARCHITECTURE_GUIDE` initialization alignment issue is outside `OPS-18` and should open as a separate planner lane
+- Result:
+  - `OPS-18` is approved for packet exit
+  - no reviewer remediation is required for the approved runtime/workflow enforcement scope
+  - handoff may proceed to Planner for closeout and the separate starter-bootstrap follow-up lane
 - Status: done

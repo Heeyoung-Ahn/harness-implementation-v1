@@ -25,18 +25,16 @@
 ## Active Profile Selection
 - [활성화할 optional profile이 있으면 적는다. 없으면 none]
 
-## V1.1 Standalone Harness Baseline
+## Standard Harness Starter Baseline
 - 하네스 runtime은 `.harness/runtime/*`에 있고, 하네스 테스트는 `.harness/test/*`에 있다.
 - 제품 코드는 `src/`, `app/`, `backend/`, `frontend/`, `server/` 등 프로젝트가 선택한 경로를 사용할 수 있다.
 - Node.js 24+는 하네스 runtime 요구사항이며, 제품 앱 runtime 요구사항이 아니다.
 - `reference/artifacts/REPOSITORY_LAYOUT_OWNERSHIP.md`를 layout ownership 기준으로 사용한다.
 - `.agents/artifacts/ACTIVE_PROFILES.md`가 active optional profile 선언의 stable artifact다.
 
-## V1.2 Installable Harness / PMW Baseline
-- installer는 프로젝트명, 대상 폴더, active profile을 받아 새 repo 폴더를 만들고 standard-template 복사, harness init, PMW export, PMW registry registration을 수행한다.
-- PMW는 별도 앱이며 project registry에서 복수 프로젝트를 add/remove/archive/select 한다.
-- 표준 하네스는 `.agents/runtime/project-manifest.json`과 `.agents/runtime/pmw-read-model.json`만 PMW용으로 관리한다.
-- PMW는 `.agents/.harness/task/profile/validation truth`를 직접 수정하지 않는다.
+## Installable Starter Baseline
+- installer는 프로젝트명, 대상 폴더, active profile을 받아 새 repo 폴더를 만들고 standard-template 복사와 harness init을 수행한다.
+- 표준 하네스는 repo-local `.agents/*`와 `.harness/*`를 사용해 프로젝트 상태, workflow, validation evidence를 관리한다.
 - canonical manual은 `reference/manuals/HARNESS_MANUAL.md`다.
 
 ## Optional Profile Catalog
@@ -138,7 +136,7 @@
 - repo-local DB truth for hot-state and operational metadata
 - 사람이 읽고 승인할 수 있는 Markdown canonical docs
 - generated state docs
-- PMW read-only summary/detail/artifact viewer/settings
+- CLI-first active context, status, validation, and handoff read surfaces
 - context restoration flow with explicit load order and source trace
 - drift detection and recovery rule
 - domain foundation gate
@@ -170,7 +168,7 @@
 - active profile과 required evidence를 `artifact_index`의 `task_packet` registration까지 확인하는 profile-aware validator
 
 ## Out Of Scope
-- PMW write enable
+- remote sync or multi-user coordination by default
 - remote sync or multi-user coordination by default
 - 특정 도메인 스키마를 core 기본값으로 고정하는 것
 - 특정 UI 스타일을 core 기본값으로 고정하는 것

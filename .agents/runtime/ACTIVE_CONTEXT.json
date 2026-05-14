@@ -1,68 +1,109 @@
 {
   "schemaVersion": "standard-harness-active-context/v2",
-  "generatedAt": "2026-05-13T14:53:35.202Z",
+  "generatedAt": "2026-05-14T14:15:33.463Z",
   "project": {
     "repoRoot": "C:\\Newface\\30 Github\\harness-implementation-v1",
     "name": "harness-implementation-v1"
   },
   "release": {
-    "stage": "planning",
+    "stage": "implementation",
     "gate": "open",
-    "focus": "V1.3 CLI-first PMW-free harness baseline is stable; OPS-16 is closed; the reusable baseline is on planner hold with no active lane.",
+    "focus": "V1.3 standard harness starter baseline is stable; PLN-19 downstream-app readiness remediation continues after OPS-22 runtime history decoupling passed; next slice is OPS-23 context artifact starter neutralization.",
     "goal": "Preserve the V1.3 installable standard harness baseline while implementing DEV-11 PMW removal and Active Context replacement under the release gate.",
-    "sourceRef": "reference/packets/PKT-01_OPS-16_ACTIVE_CONTEXT_RECOVERY_AND_SAFE_DRIFT_FIX.md"
+    "sourceRef": "reference/packets/PKT-01_PLN-19_STANDARD_TEMPLATE_DOWNSTREAM_APP_READINESS_REBASELINE.md"
   },
-  "selectedLane": null,
-  "activeTask": null,
+  "selectedLane": {
+    "workItemId": "PLN-19",
+    "title": "Standard-template downstream app readiness rebaseline",
+    "status": "in_progress",
+    "owner": "developer",
+    "nextAction": "Continue PLN-19 with OPS-23 context artifact starter neutralization, keeping PMW removal and downstream-app readiness boundaries intact.",
+    "sourceRef": "reference/packets/PKT-01_PLN-19_STANDARD_TEMPLATE_DOWNSTREAM_APP_READINESS_REBASELINE.md",
+    "gateProfile": "contract",
+    "readyForCode": "approved",
+    "workflow": ".agents/workflows/dev.md",
+    "workflowRouteStatus": "ready"
+  },
+  "activeTask": {
+    "workItemId": "PLN-19",
+    "title": "Standard-template downstream app readiness rebaseline",
+    "status": "in_progress",
+    "owner": "developer",
+    "nextAction": "Continue PLN-19 with OPS-23 context artifact starter neutralization, keeping PMW removal and downstream-app readiness boundaries intact.",
+    "sourceRef": "reference/packets/PKT-01_PLN-19_STANDARD_TEMPLATE_DOWNSTREAM_APP_READINESS_REBASELINE.md",
+    "gateProfile": "contract",
+    "readyForCode": "approved",
+    "workflow": ".agents/workflows/dev.md",
+    "workflowRouteStatus": "ready"
+  },
   "nextWork": {
-    "owner": "Planner",
-    "workflow": ".agents/workflows/plan.md",
+    "owner": "developer",
+    "workflow": ".agents/workflows/dev.md",
     "workflowRouteStatus": "ready",
-    "resolvedBy": "current_state_next_agent",
-    "action": "Keep the reusable baseline on planning hold until a new approved lane is selected."
+    "resolvedBy": "active_task_owner",
+    "requiredSsot": [
+      ".agents/artifacts/CURRENT_STATE.md",
+      ".agents/artifacts/TASK_LIST.md",
+      ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+      "reference/packets/PKT-01_PLN-19_STANDARD_TEMPLATE_DOWNSTREAM_APP_READINESS_REBASELINE.md"
+    ],
+    "approvalBoundary": "Implement only the approved packet scope. Do not change approval state, workflow authority, or unrelated governance surfaces.",
+    "doNotCross": [
+      "No approval-state changes.",
+      "No unrelated routing or governance edits.",
+      "No manual edits to generated state docs."
+    ],
+    "action": "Continue PLN-19 with OPS-23 context artifact starter neutralization, keeping PMW removal and downstream-app readiness boundaries intact."
   },
   "reentryContract": {
     "firstRead": ".agents/runtime/ACTIVE_CONTEXT.json",
     "fallbackHumanView": ".agents/runtime/ACTIVE_CONTEXT.md",
-    "nextWorkflow": ".agents/workflows/plan.md",
+    "nextWorkflow": ".agents/workflows/dev.md",
     "workflowRouteStatus": "ready",
     "mustReadNext": [
-      ".agents/workflows/plan.md",
+      ".agents/workflows/dev.md",
       ".agents/artifacts/CURRENT_STATE.md",
       ".agents/artifacts/TASK_LIST.md",
       ".agents/artifacts/REQUIREMENTS.md",
       ".agents/artifacts/ARCHITECTURE_GUIDE.md",
       ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+      "active packet and any approved project design/source artifact cited by the task",
       ".agents/artifacts/PREVENTIVE_MEMORY.md",
       "reference/packets/PKT-01_OPS-14_POST_TRANSITION_VALIDATION_CONTEXT_REFRESH_DETERMINISM.md",
       "reference/packets/PKT-01_OPS-07_PLANNER_HOLD_CLOSEOUT_AUTOMATION.md",
       "reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md",
-      "reference/packets/PKT-01_OPS-16_ACTIVE_CONTEXT_RECOVERY_AND_SAFE_DRIFT_FIX.md",
+      "reference/packets/PKT-01_PLN-19_STANDARD_TEMPLATE_DOWNSTREAM_APP_READINESS_REBASELINE.md",
       ".agents/artifacts/VALIDATION_REPORT.json"
     ],
     "sourceTrace": [
       ".agents/artifacts/CURRENT_STATE.md",
       ".agents/artifacts/TASK_LIST.md",
       ".agents/artifacts/IMPLEMENTATION_PLAN.md",
-      "reference/packets/PKT-01_OPS-16_ACTIVE_CONTEXT_RECOVERY_AND_SAFE_DRIFT_FIX.md",
+      "reference/packets/PKT-01_PLN-19_STANDARD_TEMPLATE_DOWNSTREAM_APP_READINESS_REBASELINE.md",
       ".agents/artifacts/VALIDATION_REPORT.json"
     ],
-    "digest": "1a77dbd06900dda2c5b7a578747bb063fbcea7ad84835b299e7038af57fd3154"
+    "digest": "20b7eb7b98259a95c925b744e7e88c6f68a8fa6733fbf9221de8ef60d1ccbe49"
   },
   "blockers": [],
   "decisions": [],
   "latestHandoff": {
-    "createdAt": "2026-05-13T14:53:35.202Z",
-    "fromRole": "planner",
-    "toRole": "planner",
-    "summary": "[planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.",
-    "sourceRef": "reference/packets/PKT-01_OPS-16_ACTIVE_CONTEXT_RECOVERY_AND_SAFE_DRIFT_FIX.md",
-    "nextFirstAction": "Keep the reusable baseline on planning hold until a new approved lane is selected.",
+    "createdAt": "2026-05-14T14:15:33.463Z",
+    "fromRole": "developer",
+    "toRole": "developer",
+    "summary": "[developer -> developer] OPS-22 runtime history decoupling passed implementation, testing, and review; continue PLN-19 with OPS-23.",
+    "sourceRef": "reference/packets/PKT-01_PLN-19_STANDARD_TEMPLATE_DOWNSTREAM_APP_READINESS_REBASELINE.md",
+    "nextFirstAction": "Continue PLN-19 with OPS-23 context artifact starter neutralization, keeping PMW removal and downstream-app readiness boundaries intact.",
     "requiredSsot": [
       ".agents/artifacts/CURRENT_STATE.md",
       ".agents/artifacts/TASK_LIST.md",
       ".agents/artifacts/IMPLEMENTATION_PLAN.md",
-      "reference/packets/PKT-01_OPS-16_ACTIVE_CONTEXT_RECOVERY_AND_SAFE_DRIFT_FIX.md"
+      "reference/packets/PKT-01_PLN-19_STANDARD_TEMPLATE_DOWNSTREAM_APP_READINESS_REBASELINE.md"
+    ],
+    "approvalBoundary": "Implement only the approved packet scope. Do not change approval state, workflow authority, or unrelated governance surfaces.",
+    "doNotCross": [
+      "No approval-state changes.",
+      "No unrelated routing or governance edits.",
+      "No manual edits to generated state docs."
     ]
   },
   "validation": {
@@ -71,22 +112,30 @@
     "findingCount": 0,
     "blockingFindingCount": 0,
     "gateDecision": "pass",
-    "executedAt": "2026-05-13T14:53:35.515Z",
-    "traceSummary": null,
+    "executedAt": "2026-05-14T14:15:33.660Z",
+    "traceSummary": {
+      "path": ".agents/runtime/agent-traces/PLN-19.json",
+      "workItemId": "PLN-19",
+      "packetId": "PKT-01_PLN-19_STANDARD_TEMPLATE_DOWNSTREAM_APP_READINESS_REBASELINE",
+      "turnClosedAt": "2026-05-14T14:15:33.660Z",
+      "semanticTraceStatus": "pass",
+      "warningCount": 0,
+      "candidateGateCount": 6
+    },
     "candidateGates": []
   },
   "generatedDocs": [
     {
       "projectionName": "CURRENT_STATE.md",
-      "generatedAt": "2026-05-13T14:53:35.202Z",
+      "generatedAt": "2026-05-14T14:15:33.463Z",
       "freshnessState": "fresh",
-      "sourceRevision": "2026-05-13T14:53:35.202Z"
+      "sourceRevision": "2026-05-14T14:15:33.463Z"
     },
     {
       "projectionName": "TASK_LIST.md",
-      "generatedAt": "2026-05-13T14:53:35.202Z",
+      "generatedAt": "2026-05-14T14:15:33.463Z",
       "freshnessState": "fresh",
-      "sourceRevision": "2026-05-13T14:53:35.202Z"
+      "sourceRevision": "2026-05-14T14:15:33.463Z"
     }
   ],
   "sources": {
@@ -100,7 +149,7 @@
     "generatedTaskList": ".agents/runtime/generated-state-docs/TASK_LIST.md",
     "validationReport": ".agents/artifacts/VALIDATION_REPORT.json",
     "validationReportMarkdown": ".agents/artifacts/VALIDATION_REPORT.md",
-    "workflowContract": ".agents/workflows/plan.md",
-    "activePacket": "reference/packets/PKT-01_OPS-16_ACTIVE_CONTEXT_RECOVERY_AND_SAFE_DRIFT_FIX.md"
+    "workflowContract": ".agents/workflows/dev.md",
+    "activePacket": "reference/packets/PKT-01_PLN-19_STANDARD_TEMPLATE_DOWNSTREAM_APP_READINESS_REBASELINE.md"
   }
 }

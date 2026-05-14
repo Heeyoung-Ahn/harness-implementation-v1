@@ -1,7 +1,7 @@
 # Project Progress
 
 ## Summary
-Track the whole project kickoff-to-release board here after bootstrapping from the V1.2 installable standard harness baseline. PMW reads this file directly for the overall progress table.
+Track the whole project kickoff-to-release board here after bootstrapping from the standard harness starter.
 
 ## Progress Board
 | Phase | Task ID | Task | Status | Notes | Source |
@@ -14,7 +14,7 @@ Track the whole project kickoff-to-release board here after bootstrapping from t
 | Build | DEV-01 | First approved implementation packet | todo | Replace this starter row with the first real implementation packet. | reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md |
 | Build | DEV-02 | Implementation and canonical-doc sync | todo | Keep code and live artifacts aligned while building. | .agents/artifacts/IMPLEMENTATION_PLAN.md |
 | Test | DEV-03 | Generated docs / validator verification | todo | Check generated docs and validator parity. | .agents/artifacts/IMPLEMENTATION_PLAN.md |
-| Test | DEV-04 | PMW and operator read-surface check | todo | Verify the operator-facing read surface against the approved baseline. | reference/artifacts/UI_DESIGN.md |
+| Test | DEV-04 | Active context and operator re-entry check | todo | Verify the operator-facing re-entry surface against the approved baseline. | reference/artifacts/UI_DESIGN.md |
 | Release | DEV-05 | Deploy / test / cutover readiness | todo | Close environment topology, rollback, and release-readiness checks. | reference/artifacts/DEPLOYMENT_PLAN.md |
 | Quality | QLT-01 | Packet exit quality gate | todo | Record closeout evidence before moving to the next packet. | reference/artifacts/PACKET_EXIT_QUALITY_GATE.md |
 | Security | SEC-01 | Security and operational risk review | todo | Review code path, scripts, dependencies, and release risks. | .agents/artifacts/IMPLEMENTATION_PLAN.md |

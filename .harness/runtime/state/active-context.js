@@ -96,7 +96,14 @@ export function buildActiveContext({
     latestHandoff,
     includeWorkflowDetails: true
   });
-  const nextWorkflow = handoffExecution.workflow === "manual_selection_required" ? null : handoffExecution.workflow;
+  const nextWorkflow =
+    handoffExecution.routeStatus === "manual_selection_required" ||
+    handoffExecution.routeStatus === "planner_fallback_blocked"
+      ? null
+      : handoffExecution.workflow;
+  const latestHandoffPayload = latestHandoff?.payload ?? {};
+  const nextRequiredSsot = normalizePathList(latestHandoffPayload.requiredSsot ?? []);
+  const nextDoNotCross = normalizeTextList(latestHandoffPayload.doNotCross ?? []);
   const workflowReadFirst = normalizePathList(handoffExecution.workflowDetails?.readFirst ?? []);
   const currentStateMustRead = normalizePathList(
     readSectionBulletList(path.resolve(root, CURRENT_STATE_PATH), "## Must Read Next")
@@ -163,9 +170,12 @@ export function buildActiveContext({
       workflow: nextWorkflow,
       workflowRouteStatus: handoffExecution.routeStatus,
       resolvedBy: handoffExecution.resolvedBy,
+      requiredSsot: nextRequiredSsot,
+      approvalBoundary: normalizeTextValue(latestHandoffPayload.approvalBoundary),
+      doNotCross: nextDoNotCross,
       action:
         activeTask?.nextAction ??
-        latestHandoff?.payload?.nextFirstAction ??
+        latestHandoffPayload.nextFirstAction ??
         "No active task is recorded. Review CURRENT_STATE and TASK_LIST."
     },
     reentryContract,
@@ -189,8 +199,10 @@ export function buildActiveContext({
           toRole: latestHandoff.toRole,
           summary: latestHandoff.handoffSummary,
           sourceRef: latestHandoff.sourceRef ?? null,
-          nextFirstAction: latestHandoff.payload?.nextFirstAction ?? null,
-          requiredSsot: normalizePathList(latestHandoff.payload?.requiredSsot ?? [])
+          nextFirstAction: normalizeTextValue(latestHandoffPayload.nextFirstAction),
+          requiredSsot: nextRequiredSsot,
+          approvalBoundary: normalizeTextValue(latestHandoffPayload.approvalBoundary),
+          doNotCross: nextDoNotCross
         }
       : null,
     validation: validation ?? null,
@@ -254,6 +266,13 @@ export function renderActiveContextMarkdown(context) {
     `- 다음 workflow: ${context.nextWork.workflow ?? "수동 선택 필요"}`,
     `- route 상태: ${context.nextWork.workflowRouteStatus}`,
     `- 다음 행동: ${context.nextWork.action}`,
+    ...(context.nextWork.requiredSsot?.length
+      ? context.nextWork.requiredSsot.map((item) => `- 다음 작업 기준 SSOT: ${item}`)
+      : []),
+    ...(context.nextWork.approvalBoundary ? [`- 승인 경계: ${context.nextWork.approvalBoundary}`] : []),
+    ...(context.nextWork.doNotCross?.length
+      ? context.nextWork.doNotCross.map((item) => `- 넘지 말 것: ${item}`)
+      : []),
     "",
     "## 먼저 다시 읽을 항목",
     ...(context.reentryContract.mustReadNext.length > 0
@@ -273,6 +292,8 @@ export function renderActiveContextMarkdown(context) {
       ? `- ${handoff.createdAt}: ${handoff.fromRole} -> ${handoff.toRole} / ${handoff.summary}`
       : "- 기록 없음",
     ...(handoff?.requiredSsot?.length ? handoff.requiredSsot.map((item) => `- 인계 기준 SSOT: ${item}`) : []),
+    ...(handoff?.approvalBoundary ? [`- 인계 승인 경계: ${handoff.approvalBoundary}`] : []),
+    ...(handoff?.doNotCross?.length ? handoff.doNotCross.map((item) => `- 인계 금지선: ${item}`) : []),
     "",
     "## 검증 상태",
     validation
@@ -403,12 +424,32 @@ function normalizePathList(values) {
   return uniquePathList(values.map(normalizePathValue));
 }
 
+function normalizeTextList(values) {
+  return uniqueTextList((values ?? []).map(normalizeTextValue));
+}
+
 function uniquePathList(values) {
   const seen = new Set();
   const result = [];
 
   for (const value of values) {
     const normalized = normalizePathValue(value);
+    if (!normalized || seen.has(normalized)) {
+      continue;
+    }
+    seen.add(normalized);
+    result.push(normalized);
+  }
+
+  return result;
+}
+
+function uniqueTextList(values) {
+  const seen = new Set();
+  const result = [];
+
+  for (const value of values) {
+    const normalized = normalizeTextValue(value);
     if (!normalized || seen.has(normalized)) {
       continue;
     }
@@ -427,6 +468,11 @@ function normalizePathValue(value) {
 
   const backtickMatch = text.match(/^`([^`]+)`$/);
   return backtickMatch ? backtickMatch[1].trim() : text;
+}
+
+function normalizeTextValue(value) {
+  const text = String(value ?? "").trim();
+  return text || null;
 }
 
 function writeText(targetPath, content) {

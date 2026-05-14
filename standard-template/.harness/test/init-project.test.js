@@ -37,6 +37,10 @@ test("initializes a copied starter repo and seeds active-context-ready state", (
     path.join(repoRoot, ".agents", "artifacts", "IMPLEMENTATION_PLAN.md"),
     "utf8"
   );
+  const architectureGuide = fs.readFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "ARCHITECTURE_GUIDE.md"),
+    "utf8"
+  );
   const generatedState = fs.readFileSync(
     path.join(repoRoot, ".agents", "runtime", "generated-state-docs", "CURRENT_STATE.md"),
     "utf8"
@@ -49,6 +53,8 @@ test("initializes a copied starter repo and seeds active-context-ready state", (
   assert.match(requirements, /PRF-01 admin grid application profile/);
   assert.match(requirements, /PRF-02 authoritative spreadsheet source profile/);
   assert.match(implementationPlan, /Selected profiles at bootstrap:/);
+  assert.match(architectureGuide, /## Authoring Flow/);
+  assert.doesNotMatch(architectureGuide, /## Active Profiles And Exceptions/);
   assert.match(generatedState, /Release stage: kickoff_interview/);
 
   const store = createOperatingStateStore({

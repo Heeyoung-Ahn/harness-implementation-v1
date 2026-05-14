@@ -1,6 +1,18 @@
 # Domain Context
 
+이 문서는 domain/data-impact foundation에 한해 canonical이다.
+
 이 문서는 data-impact 작업의 표준 `domain foundation reference`다. DB 설계, 기존 시스템 연동, schema impact가 있는 작업은 이 문서 또는 동등하게 승인된 artifact 없이 `Ready For Code`로 진행하지 않는다.
+
+중장기 프로젝트에서는 이 문서를 domain meaning, business rule, domain term, data-impact scope를 유지하는 canonical context로 사용한다. 요구사항이 바뀌거나 프로그램 수정이 필요할 때, 전체 코드베이스를 넓게 흔들지 않고 영향을 받는 도메인 개념, 규칙, 데이터 필드, 연동 지점으로 변경 범위를 좁히는 기준으로 사용한다.
+
+이 문서는 다음을 대체하지 않는다:
+- current execution state
+- packet status
+- implementation detail
+- explicit workflow handoff truth
+
+이 문서가 `CURRENT_STATE`, `TASK_LIST`, packet status, DB hot-state, explicit user approval, workflow handoff truth와 충돌하면 후자가 우선한다.
 
 ## Approval Rule
 - 이 문서는 data-impact 작업 착수 전에 작성하거나, 기존 승인 artifact가 있으면 그 경로를 packet에 명시한다.

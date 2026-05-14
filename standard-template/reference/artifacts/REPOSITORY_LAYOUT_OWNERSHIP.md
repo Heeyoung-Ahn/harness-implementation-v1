@@ -25,7 +25,7 @@ This artifact defines which paths are owned by the standalone harness and which 
 If the product also needs root `package.json`, the project packet must record the ownership decision before `Ready For Code`.
 
 Minimum rules:
-1. Preserve all `harness:*`, `harness:pmw-export`, and harness `test` command behavior or provide an explicitly equivalent wrapper.
+1. Preserve all `harness:*` and harness `test` command behavior or provide an explicitly equivalent wrapper.
 2. Product scripts may be added under product-owned script names.
 3. Product Node version and dependency policy must be documented separately from the Node.js 24+ harness runtime requirement.
 4. Harness dependencies and product dependencies must not be silently mixed; if they share one package file, document the shared ownership and risk.
@@ -41,13 +41,13 @@ Minimum rules:
 1. Governance Markdown truth: `.agents/artifacts/*.md`
 2. Hot operational DB state: `.harness/operating_state.sqlite`
 3. Generated operational docs: `.agents/runtime/generated-state-docs/*`
-4. PMW read-only surface
+4. Active context and generated read surfaces
 
 ## Conflict Rule
 - Governance Markdown wins over generated docs.
 - DB hot-state must be reconciled to governance truth before gate close.
 - Generated docs are never edited manually.
-- PMW is never write authority.
+- Active context and generated docs are never write authority.
 
 ## Product Source Root Declaration
 Every project that implements application code must declare its product source root before `Ready For Code`.

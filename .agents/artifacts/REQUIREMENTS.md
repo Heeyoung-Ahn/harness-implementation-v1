@@ -144,7 +144,7 @@
 6. 사용자가 결정을 내려야 하는 packet은 최소한 `권장 결론`, `핵심 근거`, `조정이 필요한 조건`, `defer 시 임시 규칙`을 함께 보여 준다.
 7. 각 구현 작업은 코드 착수 전에 task-level packet으로 다시 구체화한다. 이 packet에는 작업 목표, 범위, 상세 동작, 화면/상태 변화, edge case, acceptance, human check point가 포함되어야 한다.
 8. 특히 사용자가 직접 체감하는 `프로그램 기능과 UI/UX`는 task-level 상세 기획과 상세 디자인에 대해 인간과 협의 또는 승인 없이 코드로 먼저 확정하지 않는다.
-9. data-impact 작업은 `reference/artifacts/DOMAIN_CONTEXT.md` 또는 동등한 approved domain foundation reference, schema impact 판단, migration/rollback 영향 정리 없이 `Ready For Code`로 올리지 않는다.
+9. data-impact 작업은 `.agents/artifacts/DOMAIN_CONTEXT.md` 또는 동등한 approved domain foundation reference, schema impact 판단, migration/rollback 영향 정리 없이 `Ready For Code`로 올리지 않는다.
 10. DB 설계가 포함된 data-impact 작업은 테이블명, 컬럼명, 데이터 운영 방식에 대한 사용자 확인 없이 `Ready For Code`로 올리지 않는다.
 11. 작업이 기존 프로그램과 연동되면 사용자에게 기존 프로그램 DB schema 또는 동등한 authoritative schema artifact를 요청하고, naming / data operation / ownership / migration compatibility 분석을 packet에 남기기 전에는 설계를 닫지 않는다.
 12. deploy/test/cutover 작업은 explicit execution target과 environment topology 없이 `Ready For Code`로 올리지 않는다.
@@ -200,7 +200,7 @@
 - DB truth, generated docs, canonical summaries 간 drift detection and recovery rule
 - standard harness의 `core / optional profile / project packet` 3층 구조
 - data-impact 작업을 위한 domain foundation gate
-- `reference/artifacts/DOMAIN_CONTEXT.md` 기반의 domain foundation artifact template
+- `.agents/artifacts/DOMAIN_CONTEXT.md` 기반의 domain foundation artifact template
 - 기존 프로그램 연동 작업의 DB schema intake, naming/data operation compatibility analysis, user DB design confirmation
 - 외부 기획/정책/연동 입력을 위한 authoritative source contract
 - `reference/artifacts/AUTHORITATIVE_SOURCE_INTAKE.md` 기반의 authoritative source intake artifact template
@@ -257,7 +257,7 @@
 - `Core`는 기본 활성, `Optional Profile`은 explicit-only, `Project Packet`은 project-specific 실행 전 필수라는 activation rule이 문서화된다.
 - required reading rule이 baseline artifact, active profile, active packet, authoritative source 순서를 포함해 정의된다.
 - `Core`에 넣으면 안 되는 project-specific 항목 예시와 분류 규칙이 정리된다.
-- data-impact 작업은 `reference/artifacts/DOMAIN_CONTEXT.md` 또는 승인된 동등 artifact를 포함한 domain foundation reference, schema impact 판단, migration/rollback 영향 정리 없이 시작되지 않는다.
+- data-impact 작업은 `.agents/artifacts/DOMAIN_CONTEXT.md` 또는 승인된 동등 artifact를 포함한 domain foundation reference, schema impact 판단, migration/rollback 영향 정리 없이 시작되지 않는다.
 - data-impact packet에는 domain foundation reference path와 schema impact classification이 남는다.
 - schema impact classification이 `unknown`이면 planning hold가 유지된다.
 - DB 설계가 포함된 data-impact 작업은 테이블명, 컬럼명, 데이터 운영 방식에 대한 user confirmation 없이는 시작되지 않는다.
@@ -370,7 +370,7 @@
 - Domain foundation gate detail: `approve`
   DB 설계는 항상 사용자 confirmation 대상이며, 기존 프로그램과 연동되면 기존 DB schema 또는 동등한 authoritative schema artifact를 받아 naming / data operation / ownership / migration compatibility 분석을 남긴 뒤에만 설계를 닫는다.
 - Domain foundation artifact: `approve`
-  `reference/artifacts/DOMAIN_CONTEXT.md` 또는 승인된 동등 artifact를 data-impact 작업의 표준 domain foundation reference로 사용하고, packet에는 reference path와 schema impact classification을 남긴다.
+  `.agents/artifacts/DOMAIN_CONTEXT.md` 또는 승인된 동등 artifact를 data-impact 작업의 표준 domain foundation reference로 사용하고, packet에는 reference path와 schema impact classification을 남긴다.
 - Authoritative source precedence detail: `approve`
   새 사용자 기획 문서는 requirements / architecture / implementation / active packet에 즉시 영향을 주는 최우선 authoritative source로 취급하고, 기존 기획 및 현재 구현과의 충돌/재작업 범위를 보고하되 기존 안정성 유지보다 신규 기획의 완전 반영을 우선한다.
 - Authoritative source artifact: `approve`

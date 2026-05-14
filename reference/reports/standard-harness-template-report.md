@@ -69,18 +69,18 @@ standard-template/
 │       └── artifacts/
 │           ├── CURRENT_STATE.md
 │           ├── TASK_LIST.md
-│           └── PREVENTIVE_MEMORY.md
+│           ├── PREVENTIVE_MEMORY.md
+│           ├── DOMAIN_CONTEXT.md
+│           ├── SYSTEM_CONTEXT.md
+│           └── PROJECT_HISTORY.md
 └── reference/
     ├── README.md
     ├── artifacts/
     │   ├── UI_DESIGN.md
-    │   ├── SYSTEM_CONTEXT.md
-    │   ├── DOMAIN_CONTEXT.md
     │   ├── DECISION_LOG.md
     │   ├── REVIEW_REPORT.md
     │   ├── DEPLOYMENT_PLAN.md
     │   ├── WALKTHROUGH.md
-    │   ├── PROJECT_HISTORY.md
     │   ├── HANDOFF_ARCHIVE.md
     │   └── daily/
     │       ├── README.md
@@ -136,11 +136,9 @@ These are the default live starter truth and are required from day zero.
 ### Reference artifacts
 
 These are useful, but not all projects need them immediately.
-They are intentionally kept out of `.agents/artifacts/` and placed in `reference/artifacts/`.
+Long-term context SSOT now lives in `.agents/artifacts/`. Optional reference materials stay in `reference/artifacts/`.
 
 - `UI_DESIGN.md`
-- `SYSTEM_CONTEXT.md`
-- `DOMAIN_CONTEXT.md`
 - `DECISION_LOG.md`
 - `REVIEW_REPORT.md`
 - `DEPLOYMENT_PLAN.md`
@@ -188,7 +186,7 @@ Keeping those meanings separate avoids:
 | Current source | Starter reference target |
 |---|---|
 | `UI_DESIGN.md` | `reference/artifacts/UI_DESIGN.md` |
-| `codex/project-context/durable-context.md` | `reference/artifacts/SYSTEM_CONTEXT.md` and `reference/artifacts/DOMAIN_CONTEXT.md` |
+| `codex/project-context/durable-context.md` | `.agents/artifacts/SYSTEM_CONTEXT.md` and `.agents/artifacts/DOMAIN_CONTEXT.md` |
 | `codex/project-context/restart-handoff-2026-04-19.md` | `reference/artifacts/HANDOFF_ARCHIVE.md` |
 | `codex/project-context/daily/*` | `reference/artifacts/daily/*` |
 | optional deployment/release/review skills and patterns | `reference/skills/*` |

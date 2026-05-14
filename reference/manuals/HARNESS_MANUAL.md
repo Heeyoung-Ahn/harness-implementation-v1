@@ -14,6 +14,13 @@
 ## TOC
 - [1. 하네스란 무엇인가](#1-하네스란-무엇인가)
 - [2. 비전공자 운영자가 먼저 알아야 할 개념](#2-비전공자-운영자가-먼저-알아야-할-개념)
+  - [2.1 먼저 구분해야 할 것](#21-먼저-구분해야-할-것)
+  - [2.2 Operator One-Page Checklist](#22-operator-one-page-checklist)
+  - [2.3 Profile 과 Starter Mode 다시 잡기](#23-profile-과-starter-mode-다시-잡기)
+  - [2.4 Profile Reselection / Reset Playbook](#24-profile-reselection--reset-playbook)
+  - [2.5 Validation Caveat](#25-validation-caveat)
+  - [2.6 Safe Fix Guide](#26-safe-fix-guide)
+  - [2.7 혼자 운영할 때와 Minimal Mode를 쓸 때](#27-혼자-운영할-때와-minimal-mode를-쓸-때)
 - [3. 전체 생명주기](#3-전체-생명주기)
 - [4. 아티팩트 맵](#4-아티팩트-맵)
 - [5. 프로젝트 시작 절차](#5-프로젝트-시작-절차)
@@ -88,6 +95,164 @@ AI에게는 어디를 먼저 읽어야 하는지, 어떤 문서를 정본으로 
 - 요구사항, 화면, 데이터, API, 테스트 문서가 서로 연결돼야 한다.
 - 배포 전에는 롤백 방법과 백업 상태를 확인한다.
 - 검증 기준 없이 "일단 만들어 달라"고 요청하지 않는다.
+
+### 2.1 먼저 구분해야 할 것
+
+처음 운영자가 가장 많이 헷갈리는 것은 아래 다섯 가지다.
+
+| 항목 | 이것이 뜻하는 것 | 이것이 아닌 것 |
+|---|---|---|
+| manual | 사람이 읽는 설명서 | workflow authority |
+| SSOT | 승인된 정본 | generated file |
+| packet | 이번 작업의 범위와 승인 기준 | 아무 작업 메모 |
+| profile | 어떤 종류의 일을 하는지 | governance 강도 |
+| starter mode | 얼마나 엄격하게 운영할지 | 작업 주제 자체 |
+
+짧게 기억하면 이렇게 보면 된다.
+
+- `profile`은 작업 성격이다.
+- `starter mode`는 운영 강도다.
+- `packet`은 이번 일의 경계다.
+- `manual`은 설명서다.
+- 실제 현재 상태는 `CURRENT_STATE`, `TASK_LIST`, packet status, handoff, DB hot-state로 본다.
+
+### 2.2 Operator One-Page Checklist
+
+작업 시작 전에 아래 순서만 먼저 본다.
+
+1. `CURRENT_STATE.md`와 `TASK_LIST.md`를 본다.
+2. `ACTIVE_CONTEXT`는 빠른 재진입용 요약으로만 본다.
+3. 지금 작업에 packet이 필요한지 확인한다.
+4. 구현이나 문서 변경이면 `Ready For Code`가 있는지 확인한다.
+5. 지금 역할이 Planner, Developer, Tester, Reviewer 중 무엇인지 확인한다.
+6. next workflow가 명확하지 않으면 멈추고 route를 다시 확인한다.
+7. generated docs가 이상해 보여도 generated file을 직접 고치지 않는다.
+8. `full-governance`는 risk-triggered 또는 explicit choice가 아니면 기본 선택으로 쓰지 않는다.
+9. 혼자 운영 중이면 solo-operation 상황임을 먼저 밝히고, 역할 분리와 approval boundary가 자동 면제되지 않는다고 본다.
+10. 검증 전에 validator를 통과했다고 해서 업무 요구사항까지 다 맞는다고 생각하지 않는다.
+
+아래 중 하나라도 해당되면 바로 멈춘다.
+
+- 어떤 workflow로 들어가야 할지 불명확하다.
+- packet 범위 밖 변경이 필요해 보인다.
+- 승인 상태가 불명확하다.
+- generated state와 정본 문서가 서로 다르다.
+- safe fix처럼 보이지만 authority state를 바꾸게 된다.
+
+### 2.3 Profile 과 Starter Mode 다시 잡기
+
+운영자가 중간에 가장 많이 헷갈리는 부분은 `profile`과 `starter mode`를 같은 것으로 보는 것이다.
+
+- `profile`: 어떤 종류의 프로젝트나 작업 규칙을 추가로 읽어야 하는지
+- `starter mode`: minimal / standard / full-governance 중 어떤 운영 강도로 갈지
+
+쉽게 말하면:
+
+- `profile`은 작업의 종류를 설명한다.
+- `starter mode`는 운영의 엄격함을 설명한다.
+
+기본 판단:
+
+| 상황 | 추천 |
+|---|---|
+| 혼자서 작게 검토만 한다 | `minimal` 검토 가능 |
+| 일반적인 packet 기반 구현/검증 | `standard` 기본 |
+| 승인 경계, 위험 변경, 릴리스/데이터 영향이 크다 | `full-governance` 검토 |
+
+`minimal`은 빠르게 시작하기 위한 선택일 뿐, risk trigger를 무시하는 면허가 아니다.
+
+### 2.4 Profile Reselection / Reset Playbook
+
+#### 아직 승인 전
+
+- 요구사항이나 범위가 흔들리면 Planner로 돌아간다.
+- profile이 잘못 켜졌다면 profile evidence를 억지로 맞추지 말고, 어떤 profile이 필요한지 다시 정한다.
+- packet이 없거나 packet 범위가 틀리면 구현으로 가지 않는다.
+
+#### 상세 합의는 끝났고 구현 전
+
+- `Ready For Code`가 없으면 Developer 작업을 열지 않는다.
+- starter mode가 과하게 무겁거나 가볍다고 느껴지면 route를 다시 확인한다.
+- manual, packet, state 문서가 서로 다른 말을 하면 먼저 정본을 맞춘다.
+
+#### 구현이 이미 시작된 뒤
+
+- active lane owner를 임의로 바꾸지 않는다.
+- packet 범위가 틀렸다면 Developer가 계속 덮지 말고 Planner로 되돌린다.
+- profile reset이 필요해도 generated docs만 고치지 말고 승인된 state operation이나 transition 경로를 쓴다.
+
+다시 잡아야 할 때 운영자가 바로 할 말:
+
+```text
+현재 profile 또는 starter mode 판단이 맞는지 다시 확인해 주세요.
+지금 lane owner와 승인 상태를 유지한 채, 어떤 문서를 정본으로 보고 어디서 멈춰야 하는지 먼저 정리해 주세요.
+```
+
+### 2.5 Validation Caveat
+
+validator가 `pass`라고 해서 아래까지 자동으로 보장되는 것은 아니다.
+
+- 요구사항이 충분히 맞는지
+- 업무 규칙이 올바른지
+- 사람이 기대한 운영 흐름인지
+- 문구가 오해 없이 읽히는지
+- 실제 배포나 cutover가 안전한지
+
+validator는 주로 이런 것을 본다.
+
+- 정본과 파생물의 정합성
+- 필요한 evidence 존재 여부
+- handoff / state / packet 간 모순 여부
+- freshness와 parity
+
+따라서 `pass`는 "이제 끝"이 아니라 "다음 검토로 넘어갈 수 있는 상태"로 읽는 것이 맞다.
+
+### 2.6 Safe Fix Guide
+
+안전한 수정은 좁게 본다. 아래는 보통 safe fix로 볼 수 있다.
+
+- generated docs 재생성
+- `ACTIVE_CONTEXT` 재생성
+- validator / validation-report 재실행
+- 이미 승인된 transition 또는 state operation 재적용
+- root와 `standard-template` 문구 parity 수정
+
+아래는 safe fix로 보면 안 된다.
+
+- `CURRENT_STATE.md`, `TASK_LIST.md`, approval state를 수동으로 사실상 재정의
+- packet status를 handoff 없이 바꾸는 일
+- reviewer evidence를 생략하거나 추정으로 채우는 일
+- cutover / rollback 결정을 문서만 바꿔서 닫는 일
+- DB hot-state를 임의로 고치는 일
+- workflow authority를 manual 문구로 바꾸는 일
+
+애매하면 이렇게 본다.
+
+- derived output만 다시 만드는 일: 대체로 안전
+- authority state를 바꾸는 일: 안전하지 않음
+
+### 2.7 혼자 운영할 때와 Minimal Mode를 쓸 때
+
+혼자 운영할 때도 역할 분리는 사라지지 않는다.
+
+- 혼자 한다고 Planner와 Developer 판단을 한 문장으로 합치지 않는다.
+- 혼자 한다고 Tester와 Reviewer 검증이 자동 면제되지 않는다.
+- 혼자 한다고 approval boundary가 사라지지 않는다.
+
+`minimal`을 먼저 검토해도 되는 경우:
+
+- 요구사항 정리만 하는 초기 검토
+- 구현 없는 문서 정리
+- 위험이 낮은 상황 점검
+- 새 lane을 열기 전 route 확인
+
+`standard` 이상으로 올려야 하는 신호:
+
+- 구현이 열린다
+- 승인 상태가 바뀐다
+- packet이 새로 열린다
+- state drift나 source conflict가 있다
+- 데이터, 배포, migration, cutover 성격이 보인다
 
 ## 3. 전체 생명주기
 

@@ -4,7 +4,7 @@
 - Draft
 
 ## Summary
-새 프로젝트는 `kickoff interview -> requirements freeze -> baseline sync -> first work packet approval -> implementation -> validation / PMW / cutover readiness -> packet exit quality gate -> review` 순서로 진행한다.
+새 프로젝트는 `kickoff interview -> requirements freeze -> baseline sync -> first work packet approval -> implementation -> validation / cutover readiness -> packet exit quality gate -> review` 순서로 진행한다.
 
 ## Phase Plan
 1. kickoff 입력과 deep interview를 정리한다.
@@ -12,7 +12,7 @@
 3. requirements 승인 뒤 architecture / implementation / UI 기준선을 맞춘다.
 4. 첫 work item packet을 열고 구현 전 상세 범위를 닫는다.
 5. packet 기준으로 구현과 canonical doc sync를 진행한다.
-6. generated docs, validator, PMW export, separate PMW read surface를 확인한다.
+6. generated docs, validator, active context, and handoff read surfaces를 확인한다.
 7. deploy/test/cutover가 있으면 topology와 rollback 경계를 닫는다.
 8. packet exit quality gate, security review, release review를 진행한다.
 
@@ -25,7 +25,7 @@
 - DEV-01 first approved implementation packet
 - DEV-02 implementation and canonical-doc sync
 - DEV-03 generated state docs / validator verification
-- DEV-04 PMW and operator read-surface verification
+- DEV-04 active context and operator re-entry verification
 - DEV-05 deploy / test / cutover readiness verification
 - QLT-01 packet exit quality gate
 - SEC-01 security review and remediation
@@ -138,7 +138,6 @@
 ## Validation Commands
 - `npm test`
 - `npm run harness:validate`
-- `npm run harness:pmw-export`
 - `npm run harness:migration-preview`
 - `npm run harness:cutover-preflight`
 - `npm run harness:cutover-report`

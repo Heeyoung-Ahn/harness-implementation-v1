@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import {
   applyMigration,
@@ -11,18 +10,16 @@ import {
   buildHarnessStatus,
   recommendNextAction,
   resolveHandoff,
+  runPlannerPacketOpen,
   runTransition,
   runCutoverPreflight,
   runValidator,
   writeValidationReport,
   writeCutoverReport
 } from "../runtime/state/dev05-tooling.js";
-import { writeActiveContext } from "../runtime/state/active-context.js";
 import { initializeProjectStarter } from "../runtime/state/init-project.js";
 import { createOperatingStateStore } from "../runtime/state/operating-state-store.js";
-import { writeGeneratedStateDocs } from "../runtime/state/generate-state-docs.js";
-import { workflowForOwner } from "../runtime/state/workflow-routing.js";
-import { seedProfileAwareValidatorFixtures } from "./profile-aware-validator-fixtures.js";
+import { createClock, seedStandardRepo, seedStarterRepo, writeOpsPacket, writeStateSurfaces } from "./dev05-test-helpers.js";
 
 test("migration preview detects legacy source refs and apply normalizes them", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-migration-"));
@@ -42,7 +39,7 @@ test("migration preview detects legacy source refs and apply normalizes them", (
     title: "validator / migration / cutover tooling",
     status: "in_progress",
     nextAction: "Normalize legacy source refs",
-    sourceRef: "PKT-01_DEV-04_PMW_READ_SURFACE.md"
+    sourceRef: "PKT-01_LEGACY_READ_SURFACE.md"
   });
   store.recordDecision({
     decisionId: "DEC-05",
@@ -56,7 +53,7 @@ test("migration preview detects legacy source refs and apply normalizes them", (
   const preview = buildMigrationPreview({ repoRoot, dbPath });
   assert.equal(preview.changeCount >= 3, true);
   assert.equal(preview.changes.some((item) => item.to === ".agents/artifacts/CURRENT_STATE.md"), true);
-  assert.equal(preview.changes.some((item) => item.to === "reference/packets/PKT-01_DEV-04_PMW_READ_SURFACE.md"), true);
+  assert.equal(preview.changes.some((item) => item.to === "reference/packets/PKT-01_LEGACY_READ_SURFACE.md"), true);
 
   const applied = applyMigration({ repoRoot, dbPath });
   assert.equal(applied.applied, preview.changeCount);
@@ -520,7 +517,7 @@ test("OPS-05 validation report blocks private key findings and preserves warning
   fs.mkdirSync(path.join(repoRoot, "reference", "manuals"), { recursive: true });
   fs.writeFileSync(
     path.join(repoRoot, "reference", "manuals", "HARNESS_MANUAL.md"),
-    "# Harness Manual\nPMW historical wording\n-----BEGIN PRIVATE KEY-----\nABC\n-----END PRIVATE KEY-----\n",
+    "# Harness Manual\nlegacy operator console historical wording\n-----BEGIN PRIVATE KEY-----\nABC\n-----END PRIVATE KEY-----\n",
     "utf8"
   );
 
@@ -558,7 +555,7 @@ test("OPS-05 validation report blocks private key findings and preserves warning
   assert.equal(report.ok, false);
   assert.equal(report.report.gateDecision, "hold");
   assert.equal(findingCodes.has("error:secret_scan_private_key_detected"), true);
-  assert.equal(findingCodes.has("warning:release_artifact_stale_pmw_reference"), true);
+  assert.equal(findingCodes.has("warning:release_artifact_deprecated_operator_console_reference"), true);
 });
 
 test("OPS-08 validation report activates reusable security review from packet metadata", () => {
@@ -1222,7 +1219,7 @@ test("transition preview is review-first and apply updates state surfaces", () =
     ]
   });
 
-  assert.equal(applied.ok, true);
+  assert.equal(applied.apply, true);
   assert.equal(applied.apply, true);
   assert.equal(applied.validationReport.ok, true);
   assert.match(
@@ -1360,7 +1357,7 @@ test("transition refreshes keyed current-state truth notes on tester-to-reviewer
     ]
   });
 
-  assert.equal(applied.ok, true);
+  assert.equal(applied.apply, true);
   assert.equal(applied.apply, true);
   const currentState = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"), "utf8");
   assert.doesNotMatch(currentState, /Tester verification is pending/);
@@ -1638,7 +1635,7 @@ test("release transition preserves the release-baseline focus prefix", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-transition-release-focus-"));
   seedStandardRepo(repoRoot);
   const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
-  const packetPath = "reference/packets/PKT-01_DEV-11_RELEASE_FOCUS_TEST.md";
+  const packetPath = "reference/packets/PKT-01_RELEASE_FOCUS_TEST.md";
   writeOpsPacket(repoRoot, packetPath, { gateProfile: "release", includeManifest: true });
   fs.writeFileSync(
     path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"),
@@ -1647,20 +1644,20 @@ test("release transition preserves the release-baseline focus prefix", () => {
       "",
       "## Snapshot",
       "- Current Stage: implementation",
-      "- Current Focus: V1.3 CLI-first PMW-free harness baseline is implemented and verified; DEV-11 reviewer finding remediation is in progress.",
-      "- Current Release Goal: Preserve the V1.3 installable standard harness baseline while implementing DEV-11 PMW removal and Active Context replacement under the release gate.",
+      "- Current Focus: V1.3 standard harness starter baseline is implemented and verified; REL-01 reviewer finding remediation is in progress.",
+      "- Current Release Goal: Preserve the V1.3 installable standard harness starter while keeping Active Context as the re-entry surface.",
       "",
       "## Next Recommended Agent",
       "- Developer",
       "",
       "## Open Decisions / Blockers",
-      "- `DEV-11` Ready For Code is approved; active handoff is `reviewer -> developer`. Remediate the reviewer finding, rerun tests and validation, and hand off to Tester.",
-      "- User approved complete PMW removal; Developer is implementing PMW-only procedure removal and the AI-facing / human-facing SSOT split under DEV-11.",
+      "- `REL-01` Ready For Code is approved; active handoff is `reviewer -> developer`. Remediate the reviewer finding, rerun tests and validation, and hand off to Tester.",
+      "- Developer is implementing starter release-readiness remediation while preserving the AI-facing / human-facing SSOT split.",
       "",
       "## Current Truth Notes",
-      "- `DEV-11` remains the active work item. Current handoff is `reviewer -> developer`; stage is `implementation`; gate profile is `release`.",
-      "- `V1.3 CLI-first PMW-free harness baseline is implemented and verified` remains the required release-baseline marker even while DEV-11 remediation is still open.",
-      "- `PKT-01_DEV-11_RELEASE_FOCUS_TEST.md` is Ready For Code approved and in Developer implementation.",
+      "- `REL-01` remains the active work item. Current handoff is `reviewer -> developer`; stage is `implementation`; gate profile is `release`.",
+      "- `V1.3 standard harness starter baseline is implemented and verified` remains the required release-baseline marker even while REL-01 remediation is still open.",
+      "- `PKT-01_RELEASE_FOCUS_TEST.md` is Ready For Code approved and in Developer implementation.",
       "",
       "## Latest Handoff Summary",
       "- none"
@@ -1675,12 +1672,12 @@ test("release transition preserves the release-baseline focus prefix", () => {
       "## Active Locks",
       "| Task ID | Scope | Owner | Status | Started At | Notes |",
       "|---|---|---|---|---|---|",
-      "| DEV-11 | CLI-first PMW decommission and active context implementation | developer | active | 2026-05-03 | custom; gate release; Remediate the reviewer finding, rerun tests and validation, and hand off to Tester. |",
+      "| REL-01 | Starter release focus remediation | developer | active | 2026-05-03 | custom; gate release; Remediate the reviewer finding, rerun tests and validation, and hand off to Tester. |",
       "",
       "## Active Tasks",
       "| Task ID | Title | Scope | Owner | Status | Priority | Depends On | Verification |",
       "|---|---|---|---|---|---|---|---|",
-      "| DEV-11 | CLI-first PMW decommission and active context implementation packet | release baseline focus preservation | developer | in_progress | P0 | PLN-09 | gate release; Remediate the reviewer finding, rerun tests and validation, and hand off to Tester. |",
+      "| REL-01 | Starter release focus remediation packet | release baseline focus preservation | developer | in_progress | P0 | PLN-09 | gate release; Remediate the reviewer finding, rerun tests and validation, and hand off to Tester. |",
       "- Next first action: Remediate the reviewer finding, rerun tests and validation, and hand off to Tester.",
       "",
       "## Blocked Tasks",
@@ -1703,14 +1700,14 @@ test("release transition preserves the release-baseline focus prefix", () => {
   store.setReleaseState({
     currentStage: "implementation",
     releaseGateState: "open",
-    currentFocus: "V1.3 CLI-first PMW-free harness baseline is implemented and verified; DEV-11 reviewer finding remediation is in progress.",
-    releaseGoal: "Preserve the V1.3 installable standard harness baseline while implementing DEV-11 PMW removal and Active Context replacement under the release gate.",
+    currentFocus: "V1.3 standard harness starter baseline is implemented and verified; REL-01 reviewer finding remediation is in progress.",
+    releaseGoal: "Preserve the V1.3 installable standard harness starter while keeping Active Context as the re-entry surface.",
     sourceRef: packetPath,
     metadata: { releaseBaseline: "V1.3" }
   });
   store.upsertWorkItem({
-    workItemId: "DEV-11",
-    title: "CLI-first PMW decommission and active context implementation packet",
+    workItemId: "REL-01",
+    title: "Starter release focus remediation packet",
     status: "in_progress",
     nextAction: "Remediate the reviewer finding, rerun tests and validation, and hand off to Tester.",
     owner: "developer",
@@ -1718,10 +1715,10 @@ test("release transition preserves the release-baseline focus prefix", () => {
     metadata: { gateProfile: "release", readyForCode: "approved" }
   });
   store.upsertArtifact({
-    artifactId: "PKT-01_DEV-11_RELEASE_FOCUS_TEST",
+    artifactId: "PKT-01_RELEASE_FOCUS_TEST",
     path: packetPath,
     category: "task_packet",
-    title: "DEV-11 release focus transition test packet",
+    title: "Starter release focus transition test packet",
     sourceRef: packetPath
   });
   writeStateSurfaces({ store, repoRoot });
@@ -1731,21 +1728,21 @@ test("release transition preserves the release-baseline focus prefix", () => {
     repoRoot,
     dbPath,
     outputDir: repoRoot,
-    args: ["--transition", "developer-to-tester", "--work-item", "DEV-11", "--apply"]
+    args: ["--transition", "developer-to-tester", "--work-item", "REL-01", "--apply"]
   });
 
   const currentState = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"), "utf8");
   assert.match(
     currentState,
-    /Current Focus: V1\.3 CLI-first PMW-free harness baseline is implemented and verified; DEV-11 implementation is ready for Tester verification\./
+    /Current Focus: V1\.3 standard harness starter baseline is implemented and verified; REL-01 implementation is ready for Tester verification\./
   );
   assert.match(
     currentState,
-    /User-approved `DEV-11` scope remains active\. Ready For Code is approved; current handoff is `developer -> tester`\. Verify the implementation against the packet acceptance criteria\./
+    /`REL-01` Ready For Code is approved; active handoff is `developer -> tester`\. Verify the implementation against the packet acceptance criteria\./
   );
   assert.match(
     currentState,
-    /`PKT-01_DEV-11_RELEASE_FOCUS_TEST\.md` is Ready For Code approved and in Tester verification\./
+    /`PKT-01_RELEASE_FOCUS_TEST\.md` is Ready For Code approved and in Tester verification\./
   );
 });
 
@@ -2125,7 +2122,7 @@ test("planner-closeout-hold fails fast when another non-stale open work item rem
       "| Task ID | Title | Scope | Owner | Status | Priority | Depends On | Verification |",
       "|---|---|---|---|---|---|---|---|",
       "| OPS-07 | Planner hold closeout automation | one-step planner hold closeout | planner | planning | P0 | OPS-05 | planner closeout pending |",
-      "| DEV-11 | CLI-first PMW decommission and active context | implementation lane | developer | in_progress | P0 | PLN-09 | implementation active |",
+      "| APP-01 | Active implementation packet | implementation lane | developer | in_progress | P0 | PLN-09 | implementation active |",
       "",
       "## Completed Tasks",
       "| Task ID | Title | Completed At | Verification | Notes |",
@@ -2153,12 +2150,12 @@ test("planner-closeout-hold fails fast when another non-stale open work item rem
     metadata: { gateProfile: "contract", readyForCode: "approved" }
   });
   store.upsertWorkItem({
-    workItemId: "DEV-11",
-    title: "CLI-first PMW decommission and active context",
+    workItemId: "APP-01",
+    title: "Active implementation packet",
     status: "in_progress",
-    nextAction: "Developer is still implementing DEV-11.",
+    nextAction: "Developer is still implementing APP-01.",
     owner: "developer",
-    sourceRef: "reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md",
+    sourceRef: "reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md",
     metadata: { gateProfile: "release", readyForCode: "approved" }
   });
   writeStateSurfaces({ store, repoRoot });
@@ -2172,7 +2169,7 @@ test("planner-closeout-hold fails fast when another non-stale open work item rem
   });
 
   assert.equal(preview.ok, false);
-  assert.match(preview.errors.join("\n"), /planner-closeout-hold requires no other open work items; DEV-11/);
+  assert.match(preview.errors.join("\n"), /planner-closeout-hold requires no other open work items; APP-01/);
 });
 
 test("validator blocks incomplete workflow contracts", () => {
@@ -2418,347 +2415,134 @@ test("status and validation report ignore a DB-open work item that canonical TAS
   );
 });
 
-test("handoff routes designer owners to the design workflow contract", () => {
-  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-handoff-designer-"));
+test("planner packet opening helper registers packet, work item, and planner assignment", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-planner-open-pass-"));
   seedStandardRepo(repoRoot);
   const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_OPS-19_PLANNER_PACKET_OPENING_FAST_PATH.md";
 
-  fs.writeFileSync(
-    path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"),
-    [
-      "# Current State",
-      "",
-      "## Next Recommended Agent",
-      "- Designer resolving the UI evidence contract"
-    ].join("\n"),
-    "utf8"
-  );
+  writeOpsPacket(repoRoot, packetPath, {
+    gateProfile: "contract",
+    includeManifest: true,
+    readyForCode: "pending",
+    packetTitle: "PKT-01 OPS-19 Planner packet opening fast path",
+    workItemTitle: "OPS-19 Planner packet opening fast path"
+  });
 
-  const store = createOperatingStateStore({ dbPath, now: createClock("2026-04-27T02:15:00.000Z") });
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-04-21T02:00:00.000Z") });
   store.setReleaseState({
-    currentStage: "closed",
-    releaseGateState: "approved",
-    currentFocus: "Design handoff routing",
-    releaseGoal: "Route designer work to design.md",
+    currentStage: "planning",
+    releaseGateState: "open",
+    currentFocus: "Open OPS-19 planning packet",
+    releaseGoal: "Reduce planner packet opening latency",
     sourceRef: ".agents/artifacts/CURRENT_STATE.md"
   });
   writeStateSurfaces({ store, repoRoot });
   store.close();
 
-  const handoff = resolveHandoff({ repoRoot, dbPath, outputDir: repoRoot });
-  assert.equal(handoff.ok, true);
-  assert.equal(handoff.workflow, ".agents/workflows/design.md");
-  assert.equal(handoff.workflowDetails?.role, "Designer");
-  assert.deepEqual(handoff.workflowDetails?.missingSections, []);
+  const result = runPlannerPacketOpen({
+    repoRoot,
+    outputDir: repoRoot,
+    dbPath,
+    args: [
+      "--packet-path",
+      packetPath,
+      "--work-item",
+      "OPS-19",
+      "--title",
+      "Planner packet opening fast path"
+    ]
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.command, "planner-open-packet");
+  assert.equal(result.workItemId, "OPS-19");
+  assert.equal(result.gateProfile, "contract");
+  assert.equal(result.transitionResult.ok, true);
+
+  const afterStore = createOperatingStateStore({ dbPath });
+  const artifact = afterStore.getArtifactByPath(packetPath);
+  assert.equal(artifact?.artifactId, "PKT-01_OPS-19_PLANNER_PACKET_OPENING_FAST_PATH");
+  assert.equal(artifact?.category, "task_packet");
+  assert.equal(artifact?.metadata?.workItemId, "OPS-19");
+
+  const workItem = afterStore.getWorkItem("OPS-19");
+  assert.equal(workItem?.owner, "planner");
+  assert.equal(workItem?.status, "planning");
+  assert.equal(workItem?.sourceRef, packetPath);
+  assert.equal(workItem?.metadata?.gateProfile, "contract");
+  assert.equal(workItem?.metadata?.readyForCode, "pending");
+
+  const releaseState = afterStore.getReleaseState("current");
+  assert.equal(releaseState?.currentStage, "planning");
+  assert.equal(releaseState?.currentFocus, "Open OPS-19 planning packet");
+  afterStore.close();
+
+  const activeContext = JSON.parse(
+    fs.readFileSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.json"), "utf8")
+  );
+  assert.equal(activeContext.activeTask?.workItemId, "OPS-19");
+  assert.equal(activeContext.nextWork?.workflow, ".agents/workflows/plan.md");
+
+  const validationReport = JSON.parse(
+    fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "VALIDATION_REPORT.json"), "utf8")
+  );
+  assert.equal(validationReport.gateDecision, "pass");
 });
 
-test("handoff routing rejects ambiguous and substring alias owner values", () => {
-  assert.equal(workflowForOwner("developer/tester"), "manual_selection_required");
-  assert.equal(workflowForOwner("contest owner"), "manual_selection_required");
-  assert.equal(workflowForOwner("npm launcher"), "manual_selection_required");
-  assert.equal(workflowForOwner("Developer"), ".agents/workflows/dev.md");
-  assert.equal(workflowForOwner("Designer resolving the UI evidence contract"), ".agents/workflows/design.md");
-  assert.equal(workflowForOwner("Project Manager coordinating delivery"), ".agents/workflows/pm.md");
-  assert.equal(workflowForOwner("PM"), ".agents/workflows/pm.md");
-  assert.equal(workflowForOwner("QA verification lane"), ".agents/workflows/test.md");
+test("planner packet opening helper fails preflight before mutation when manifest markers are incomplete", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-planner-open-fail-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_OPS-19_PLANNER_PACKET_OPENING_FAST_PATH.md";
+
+  writeOpsPacket(repoRoot, packetPath, {
+    gateProfile: "contract",
+    includeManifest: true,
+    readyForCode: "pending",
+    packetTitle: "PKT-01 OPS-19 Planner packet opening fast path",
+    workItemTitle: "OPS-19 Planner packet opening fast path",
+    manifestMarkers: [
+      "- Ready For Code: pending",
+      "- root: run root targeted and full tests",
+      "- standard-template: run starter targeted and full tests",
+      "- validator: run harness validator",
+      "- active context: regenerate ACTIVE_CONTEXT artifacts"
+    ]
+  });
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-04-21T02:30:00.000Z") });
+  store.setReleaseState({
+    currentStage: "planning",
+    releaseGateState: "open",
+    currentFocus: "Open OPS-19 planning packet",
+    releaseGoal: "Reduce planner packet opening latency",
+    sourceRef: ".agents/artifacts/CURRENT_STATE.md"
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const result = runPlannerPacketOpen({
+    repoRoot,
+    outputDir: repoRoot,
+    dbPath,
+    args: [
+      "--packet-path",
+      packetPath,
+      "--work-item",
+      "OPS-19",
+      "--title",
+      "Planner packet opening fast path"
+    ]
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.errors.some((error) => error.includes("review closeout")), true);
+
+  const afterStore = createOperatingStateStore({ dbPath });
+  assert.equal(afterStore.getArtifactByPath(packetPath), null);
+  assert.equal(afterStore.getWorkItem("OPS-19"), null);
+  afterStore.close();
 });
 
-function writeOpsPacket(repoRoot, packetPath, { gateProfile, includeManifest, readyForCode = "approved" }) {
-  const readyForCodeApproved = readyForCode === "approved";
-  const headerRows = [
-    ["Work item", "OPS-03 Harness operation friction reduction", "Reduce state-sync friction", "draft"],
-    [
-      "Ready For Code",
-      readyForCode,
-      readyForCodeApproved ? "User approved implementation" : "Implementation approval pending",
-      readyForCodeApproved ? "approved" : "draft"
-    ],
-    ["Human sync needed", "yes", "Gate behavior changes operator process", "approved"],
-    ...(gateProfile ? [["Gate profile", gateProfile, "Contract-level harness operation change", "approved"]] : []),
-    ["User-facing impact", "medium", "Operator state and Active Context metadata change", "approved"],
-    ["Layer classification", "core", "Reusable harness contract", "approved"],
-    ["Active profile dependencies", "none", "No optional profile", "not-needed"],
-    ["Profile evidence status", "not-needed", "No optional profile", "not-needed"],
-    ["UX archetype status", "approved", "Operator-facing metadata surface is covered by existing context archetype", "approved"],
-    ["UX deviation status", "none", "No deviation", "approved"],
-    ["Environment topology status", "not-needed", "No deploy/cutover", "not-needed"],
-    ["Domain foundation status", "not-needed", "No product data schema", "not-needed"],
-    ["Authoritative source intake status", "not-needed", "Uses local packet evidence", "not-needed"],
-    ["Shared-source wave status", "not-needed", "No source wave", "not-needed"],
-    ["Packet exit gate status", "pending", "Implementation pending", "draft"],
-    ["Improvement promotion status", "approved", "OPS-03 promoted from preventive memory", "approved"],
-    ["Existing system dependency", "none", "No legacy system", "not-needed"],
-    ["New authoritative source impact", "none", "No new external source", "not-needed"],
-    ["Risk if started now", "low", "Approval boundary closed", "approved"]
-  ];
-  const manifest = includeManifest
-    ? [
-        "## Verification Manifest",
-        `- Ready For Code: ${readyForCode}`,
-        "- root: run root targeted and full tests",
-        "- standard-template: run starter targeted and full tests",
-        "- targeted: gate profile and transition tests",
-        "- validator: run harness validator",
-        "- active context: regenerate ACTIVE_CONTEXT artifacts",
-        "- review closeout: required before packet close"
-      ].join("\n")
-    : "";
-  const content = [
-    "# PKT-01 OPS-03 Transition Test",
-    "",
-    "## Quick Decision Header",
-    "| Item | Proposed | Why | Status |",
-    "|---|---|---|---|",
-    ...headerRows.map((row) => `| ${row.join(" | ")} |`),
-    "",
-    "## 1. Goal",
-    "- Test OPS-03 gate profile behavior.",
-    "",
-    "## 3. Proposed Scope",
-    "- Layer classification: core",
-    "- Required reading before code: `.agents/artifacts/CURRENT_STATE.md`, `.agents/artifacts/TASK_LIST.md`, this packet",
-    "- UX archetype reference: reference/artifacts/PRODUCT_UX_ARCHETYPE.md",
-    "- Selected UX archetype: operator-console-context",
-    `- Gate profile: ${gateProfile ?? "pending"}`,
-    `- Verification manifest: ${includeManifest ? "contract evidence declared" : "pending"}`,
-    "",
-    manifest
-  ].join("\n");
-  fs.writeFileSync(path.join(repoRoot, packetPath), content, "utf8");
-}
-
-function seedStandardRepo(repoRoot) {
-  fs.mkdirSync(path.join(repoRoot, ".agents", "artifacts"), { recursive: true });
-  fs.mkdirSync(path.join(repoRoot, ".agents", "rules"), { recursive: true });
-  fs.mkdirSync(path.join(repoRoot, ".agents", "runtime", "generated-state-docs"), { recursive: true });
-  fs.mkdirSync(path.join(repoRoot, ".agents", "skills", "day_start"), { recursive: true });
-  fs.mkdirSync(path.join(repoRoot, ".agents", "skills", "day_wrap_up"), { recursive: true });
-  fs.mkdirSync(path.join(repoRoot, ".agents", "workflows"), { recursive: true });
-  fs.mkdirSync(path.join(repoRoot, "reference", "artifacts"), { recursive: true });
-  fs.mkdirSync(path.join(repoRoot, "reference", "packets"), { recursive: true });
-  fs.mkdirSync(path.join(repoRoot, "reference", "artifacts", "daily"), { recursive: true });
-
-  fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "REQUIREMENTS.md"), "# Requirements\n", "utf8");
-  fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "ARCHITECTURE_GUIDE.md"), "# Architecture\n", "utf8");
-  fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "IMPLEMENTATION_PLAN.md"), "# Implementation Plan\n\n## Operator Next Action\n- Run DEV-05 tooling.\n", "utf8");
-  fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "PROJECT_PROGRESS.md"), "# Project Progress\n", "utf8");
-  fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"), "# Current State\n", "utf8");
-  fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "PREVENTIVE_MEMORY.md"), "# Preventive Memory\n", "utf8");
-  fs.writeFileSync(path.join(repoRoot, ".agents", "rules", "agent_behavior.md"), agentBehaviorGuideFixture(), "utf8");
-  fs.writeFileSync(path.join(repoRoot, ".agents", "skills", "day_start", "SKILL.md"), skillBehaviorFixture("Day Start"), "utf8");
-  fs.writeFileSync(path.join(repoRoot, ".agents", "skills", "day_wrap_up", "SKILL.md"), skillBehaviorFixture("Day Wrap Up"), "utf8");
-  writeWorkflowContractFixtures(repoRoot);
-  fs.writeFileSync(path.join(repoRoot, "reference", "artifacts", "UI_DESIGN.md"), "# UI Design\n", "utf8");
-  fs.writeFileSync(path.join(repoRoot, "reference", "artifacts", "SYSTEM_CONTEXT.md"), "# System Context\n", "utf8");
-  fs.writeFileSync(path.join(repoRoot, "reference", "artifacts", "HANDOFF_ARCHIVE.md"), "# Handoff Archive\n", "utf8");
-  fs.writeFileSync(path.join(repoRoot, "reference", "artifacts", "daily", "2026-04-19.md"), "# Daily\n", "utf8");
-  fs.writeFileSync(path.join(repoRoot, "reference", "artifacts", "daily", "2026-04-20.md"), "# Daily\n", "utf8");
-  fs.writeFileSync(path.join(repoRoot, "reference", "packets", "PKT-01_DEV-04_PMW_READ_SURFACE.md"), "# Packet\n", "utf8");
-  seedProfileAwareValidatorFixtures(repoRoot);
-}
-
-function writeStateSurfaces({
-  store,
-  repoRoot,
-  validation = { ok: true, cutoverReady: true, findings: [], gateDecision: "pass" }
-}) {
-  writeGeneratedStateDocs({ store, outputDir: repoRoot });
-  writeActiveContext({ store, repoRoot, outputDir: repoRoot, validation });
-}
-
-function writeWorkflowContractFixtures(repoRoot) {
-  const fixtures = [
-    {
-      fileName: "deploy.md",
-      title: "Deploy Workflow",
-      role: "Deployer",
-      mustRead: ["`.agents/artifacts/CURRENT_STATE.md`", "`.agents/artifacts/TASK_LIST.md`"]
-    },
-    {
-      fileName: "design.md",
-      title: "Design Workflow",
-      role: "Designer",
-      mustRead: ["`.agents/artifacts/CURRENT_STATE.md`", "`reference/artifacts/UI_DESIGN.md`"]
-    },
-    {
-      fileName: "dev.md",
-      title: "Developer Workflow",
-      role: "Developer",
-      mustRead: ["`.agents/artifacts/CURRENT_STATE.md`", "`.agents/artifacts/TASK_LIST.md`"]
-    },
-    {
-      fileName: "docu.md",
-      title: "Documentation Workflow",
-      role: "Documenter",
-      mustRead: ["`.agents/artifacts/CURRENT_STATE.md`", "`.agents/artifacts/PROJECT_PROGRESS.md`"]
-    },
-    {
-      fileName: "handoff.md",
-      title: "Handoff Workflow",
-      role: "Handoff Router",
-      mustRead: ["`.agents/artifacts/CURRENT_STATE.md`", "`.agents/artifacts/TASK_LIST.md`"]
-    },
-    {
-      fileName: "pm.md",
-      title: "Project Manager Workflow",
-      role: "Project Manager",
-      mustRead: [
-        "`.agents/artifacts/CURRENT_STATE.md`",
-        "`.agents/artifacts/TASK_LIST.md`",
-        "`.agents/artifacts/PROJECT_PROGRESS.md`"
-      ]
-    },
-    {
-      fileName: "plan.md",
-      title: "Plan Workflow",
-      role: "Planner",
-      mustRead: [
-        "`.agents/artifacts/CURRENT_STATE.md`",
-        "`.agents/artifacts/TASK_LIST.md`",
-        "`.agents/artifacts/REQUIREMENTS.md`"
-      ]
-    },
-    {
-      fileName: "review.md",
-      title: "Review Workflow",
-      role: "Reviewer",
-      mustRead: ["`.agents/artifacts/CURRENT_STATE.md`", "`.agents/artifacts/TASK_LIST.md`"]
-    },
-    {
-      fileName: "test.md",
-      title: "Test Workflow",
-      role: "Tester",
-      mustRead: ["`.agents/artifacts/CURRENT_STATE.md`", "`.agents/artifacts/TASK_LIST.md`"]
-    }
-  ];
-
-  for (const fixture of fixtures) {
-    fs.writeFileSync(
-      path.join(repoRoot, ".agents", "workflows", fixture.fileName),
-      buildWorkflowContract(fixture),
-      "utf8"
-    );
-  }
-}
-
-function buildWorkflowContract({ title, role, mustRead }) {
-  return [
-    `# ${title}`,
-    "",
-    "## Role",
-    `- ${role}`,
-    "",
-    "## Mission",
-    "- Own the lane-specific work and keep governance state explicit.",
-    "",
-    "## Behavior Contract",
-    "- Apply `.agents/rules/agent_behavior.md` before state-changing work.",
-    "- Use `Think Before Coding`, `Simplicity First`, `Surgical Changes`, and `Goal-Driven Execution` as the default execution checks.",
-    "- Treat the human-and-Planner-approved project design SSOT as binding; surface conflicts instead of silently resolving them.",
-    "",
-    "## Authority",
-    "- Update artifacts inside the workflow lane after required approvals are present.",
-    "",
-    "## Non-Authority",
-    "- Do not bypass another workflow's required approval gate.",
-    "",
-    "## Must Read SSOT",
-    ...mustRead.map((item) => `- ${item}`),
-    "",
-    "## Allowed Actions",
-    "- Execute the approved lane scope and record evidence.",
-    "",
-    "## Forbidden Actions",
-    "- Do not edit derived generated-state docs manually.",
-    "",
-    "## Required Outputs",
-    "- Updated canonical artifacts and validation evidence.",
-    "",
-    "## Turn Close Reporting",
-    "- Report what was done in this turn.",
-    "- Report the next recommended agent workflow.",
-    "- Report the next concrete work for that workflow, or `None` if no work remains.",
-    "",
-    "## Handoff Rules",
-    "- Route to the workflow that owns the next unresolved task.",
-    "",
-    "## Stop Conditions",
-    "- Stop when required approval or missing source evidence blocks execution.",
-    "",
-    "## Escalation Rules",
-    "- Ask the user when governance state and requested execution conflict."
-  ].join("\n");
-}
-
-function agentBehaviorGuideFixture() {
-  return [
-    "# Agent Behavior Contract",
-    "",
-    "## Think Before Coding",
-    "- Surface assumptions and ambiguity.",
-    "",
-    "## Simplicity First",
-    "- Keep the approved solution small.",
-    "",
-    "## Surgical Changes",
-    "- Change only lines tied to the approved request.",
-    "",
-    "## Goal-Driven Execution",
-    "- Verify against concrete success criteria.",
-    "",
-    "## Project Design SSOT Precedence",
-    "- Developer implements to the approved design.",
-    "- Tester verifies against the approved design.",
-    "- Reviewer checks evidence and source parity.",
-    "- Active Context derived summaries must not become write authority."
-  ].join("\n");
-}
-
-function skillBehaviorFixture(title) {
-  return [
-    `# ${title}`,
-    "",
-    "## Behavior Checks",
-    "- Apply `.agents/rules/agent_behavior.md` before recommending non-trivial work.",
-    "- Use `Think Before Coding` to surface assumptions.",
-    "- Use `Simplicity First` to keep recommendations small.",
-    "- Use `Surgical Changes` to avoid unrelated cleanup.",
-    "- Use `Goal-Driven Execution` to define concrete checks.",
-    "- Treat the approved project design SSOT as binding."
-  ].join("\n");
-}
-
-function seedStarterRepo(repoRoot) {
-  const starterRoot = detectStarterRoot();
-  fs.cpSync(starterRoot, repoRoot, { recursive: true });
-  resetCopiedStarterToFreshState(repoRoot);
-}
-
-function detectStarterRoot() {
-  const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
-  const nestedStarter = path.join(repoRoot, "standard-template");
-  return fs.existsSync(path.join(nestedStarter, "AGENTS.md")) ? nestedStarter : repoRoot;
-}
-
-function createClock(startIso) {
-  let offset = 0;
-  const base = Date.parse(startIso);
-  return () => new Date(base + offset++ * 1000).toISOString();
-}
-
-function resetCopiedStarterToFreshState(repoRoot) {
-  fs.writeFileSync(
-    path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"),
-    "# Current State\n\n## Snapshot\n- Current Stage: not started\n\n## Open Decisions / Blockers\n- Run `INIT_STANDARD_HARNESS.cmd` or `npm run harness:init` before real work begins.\n",
-    "utf8"
-  );
-  fs.writeFileSync(
-    path.join(repoRoot, ".agents", "artifacts", "TASK_LIST.md"),
-    "# Task List\n\n## Active Tasks\n| Task ID | Title | Scope | Owner | Status | Priority | Depends On | Verification |\n|---|---|---|---|---|---|---|---|\n| BOOT-00 | Initialize copied starter | starter bootstrap | project operator | starter_pending | P0 | `INIT_STANDARD_HARNESS.cmd` or `npm run harness:init` | generated docs and validation guidance |\n- Run `INIT_STANDARD_HARNESS.cmd` or `npm run harness:init` before real work begins.\n",
-    "utf8"
-  );
-  for (const suffix of ["", "-shm", "-wal"]) {
-    fs.rmSync(path.join(repoRoot, ".harness", `operating_state.sqlite${suffix}`), { force: true });
-  }
-}
 

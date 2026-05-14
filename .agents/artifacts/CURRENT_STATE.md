@@ -1,12 +1,12 @@
 # Current State
 
 ## Snapshot
-- Current Stage: planning
-- Current Focus: V1.3 CLI-first PMW-free harness baseline is stable; OPS-16 is closed; the reusable baseline is on planner hold with no active lane.
+- Current Stage: implementation
+- Current Focus: V1.3 standard harness starter baseline is stable; PLN-19 downstream-app readiness remediation continues after OPS-22 runtime history decoupling passed; next slice is OPS-23 context artifact starter neutralization.
 - Current Release Goal: Preserve the V1.3 installable standard harness baseline while implementing DEV-11 PMW removal and Active Context replacement under the release gate.
 
 ## Next Recommended Agent
-- Planner
+- Developer
 
 ## Must Read Next
 - `.agents/artifacts/REQUIREMENTS.md`
@@ -19,6 +19,14 @@
 - `reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md`
 
 ## Open Decisions / Blockers
+- `PLN-19` Ready For Code is approved; active handoff is `developer -> developer`. Continue PLN-19 with OPS-23 context artifact starter neutralization, keeping PMW removal and downstream-app readiness boundaries intact.
+- `PLN-17` is closed; latest handoff is `planner -> planner`. Open PLN-19 as the higher-priority planning lane for standard-template downstream-app readiness before returning to PLN-17.
+- `QLT-04` is closed; latest handoff is `planner -> planner`. Open PLN-17 as the next approved lane in sequence.
+- `OPS-20` is closed; latest handoff is `planner -> planner`. Open QLT-04 as the next approved lane in sequence.
+- `OPS-18` is closed; latest handoff is `planner -> planner`. Open a separate planner lane for starter bootstrap / ARCHITECTURE_GUIDE initialization alignment before other follow-up implementation work.
+- `PLN-18` is closed; latest handoff is `planner -> planner`. Return to OPS-17 planning under the settled document split and review whether its detailed agreement still needs adjustment before Ready For Code.
+- `OPS-19` is closed; latest handoff is `planner -> planner`. Return to OPS-17 planning and resolve its detailed agreement and Ready For Code boundary before any implementation opens.
+- `OPS-17` is closed; latest handoff is `planner -> planner`. Choose the next approved lane; recommend opening OPS-18 before QLT-04 or PLN-17.
 - `OPS-16` is closed; latest handoff is `planner -> planner`. Keep the reusable baseline on planning hold until a new approved lane is selected.
 - `OPS-15` is closed; latest handoff is `planner -> planner`. Keep the reusable baseline on planning hold until a new approved lane is selected.
 - `OPS-14` is closed; latest handoff is `planner -> planner`. Keep the reusable baseline on planning hold until a new approved lane is selected.
@@ -38,6 +46,14 @@
 - User direction on 2026-05-03: remaining SSOT should split into AI-facing SSOT and human-facing SSOT. Human-facing SSOT uses Korean and easy terms; AI-facing SSOT prioritizes compact deterministic machine use.
 
 ## Current Truth Notes
+- `PLN-19` remains the active work item. Current handoff is `developer -> developer`; stage is `implementation`; gate profile is `contract`.
+- `PLN-17` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
+- `QLT-04` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
+- `OPS-20` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
+- `OPS-18` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
+- `PLN-18` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
+- `OPS-19` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
+- `OPS-17` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
 - `OPS-16` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
 - `OPS-15` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
 - `OPS-14` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
@@ -69,6 +85,59 @@
 - PMW remains historical closed-lane evidence only. `PLN-09` now proceeds on complete PMW removal from the active baseline and replacement of PMW read-model/export obligations with CLI-first active context.
 
 ## Latest Handoff Summary
+- 2026-05-14: `[developer -> developer] OPS-22 runtime history decoupling passed implementation, testing, and review; continue PLN-19 with OPS-23.`
+- 2026-05-14: `[developer -> developer] PLN-19 continues after OPS-21 slice approval; no reviewer remediation is open.`
+- 2026-05-14: `[reviewer -> developer] Reviewer approved the PLN-19 OPS-21 project-facing SSOT scrub slice with no blockers; PLN-19 remains open for the next remediation slice.`
+- 2026-05-14: `[tester -> reviewer] Tester verified the PLN-19 OPS-21 slice: targeted tests, doc scrub scan, reusable parity, validator, and validation-report passed.`
+- 2026-05-14: `[developer -> tester] Developer completed the OPS-21 project-facing SSOT scrub slice for PLN-19.`
+- 2026-05-14: `[planner -> developer] PLN-19 Ready For Code approved for the bounded standard-template downstream-app readiness remediation wave.`
+- 2026-05-14: `[planner -> planner] Opened PLN-19 as the higher-priority planning lane for standard-template downstream-app readiness after explicitly deferring PLN-17.`
+- 2026-05-14: `[planner -> planner] Deferred PLN-17 by explicit user priority so PLN-19 standard-template downstream-app readiness can run first; this is not functional completion of the ownership contract.`
+- 2026-05-14: `[planner -> planner] Opened PLN-17 as the next approved lane in sequence after QLT-04 closeout.`
+- 2026-05-14: `[planner -> planner] Planner recorded QLT-04 closeout after tester verification and reviewer approval.`
+- 2026-05-14: `[reviewer -> planner] Reviewer approved QLT-04 packet exit after confirming the focused governance-test rebalance stayed inside test-support scope and root/standard-template parity remained clean.`
+- 2026-05-14: `[tester -> reviewer] Tester verified the focused governance-test split, root and standard-template parity, and clean validator evidence for QLT-04.`
+- 2026-05-14: `[developer -> tester] Developer implemented the approved QLT-04 governance-test rebalance without changing runtime authority.`
+- 2026-05-14: `[planner -> developer] QLT-04 Ready For Code is approved for the narrow governance-test rebalance scope.`
+- 2026-05-14: `[planner -> planner] Opened QLT-04 as the next approved lane in sequence after OPS-20 closeout.`
+- 2026-05-14: `[planner -> planner] Planner recorded OPS-20 closeout after reviewer approval and targeted bootstrap-alignment verification.`
+- 2026-05-14: `[reviewer -> planner] Reviewer approved OPS-20 packet exit after confirming the narrow bootstrap alignment boundary, root/standard-template sync, targeted test evidence, and clean validator outputs.`
+- 2026-05-14: `[tester -> reviewer] Tester verified the OPS-20 bootstrap alignment scope: copied-starter initialization no longer depends on the deleted section, ARCHITECTURE_GUIDE authoring-flow alignment holds, root/standard-template sync is clean, and validator evidence passes.`
+- 2026-05-14: `[developer -> tester] Developer implemented the approved OPS-20 starter bootstrap/runtime/test alignment, removed the stale deleted-section dependency, and preserved the current ARCHITECTURE_GUIDE contract.`
+- 2026-05-14: `[planner -> developer] OPS-20 Ready For Code is approved for the bounded starter bootstrap / ARCHITECTURE_GUIDE initialization-alignment scope.`
+- 2026-05-14: `[planner -> planner] OPS-20 detailed agreement is approved for the narrow starter bootstrap / ARCHITECTURE_GUIDE initialization-alignment boundary.`
+- 2026-05-14: `[planner -> planner] Opened OPS-20 as the separate planner lane for starter bootstrap / ARCHITECTURE_GUIDE initialization alignment after OPS-18 closeout.`
+- 2026-05-14: `[planner -> planner] Planner recorded OPS-18 closeout after tester verification and reviewer approval.`
+- 2026-05-14: `[reviewer -> planner] Packet exit approved; Planner should close OPS-18 and open the separate starter bootstrap / ARCHITECTURE_GUIDE initialization alignment lane.`
+- 2026-05-14: `[planner -> developer] OPS-18 Ready For Code is approved for the bounded runtime/workflow enforcement scope. Developer should implement clear-route enforcement, stop-on-ambiguity behavior, non-mutating-only Planner fallback enforcement, and compact baton/output-shape rules while leaving OPS-17, QLT-04, and PLN-17 out of scope.`
+- 2026-05-14: `[planner -> planner] OPS-18 detailed agreement is approved. Planner fallback is now closed as non-mutating only, and the implementation boundary includes runtime route enforcement plus compact baton/output-shape enforcement while leaving QLT-04 and PLN-17 out of scope.`
+- 2026-05-14: `[planner -> planner] Opened OPS-18 as the next concrete follow-up lane to implement workflow-entry enforcement, stop-on-ambiguity behavior, limited Planner fallback, and compact baton rules after PLN-18 and OPS-17 closeout.`
+- 2026-05-14: `[planner -> planner] Planner recorded OPS-17 closeout after reviewer approval. The reusable manual-only scope is complete, and the baseline returns to planning selection for the next approved lane.`
+- 2026-05-14: `[reviewer -> planner] Reviewer approved OPS-17 packet exit. The manual-only scope is complete, root and standard-template parity is clean, validator evidence passes, and no blocking defect remains in the reviewed scope.`
+- 2026-05-14: `[tester -> reviewer] Tester re-verified OPS-17 after the checklist remediation. The root and standard-template HARNESS_MANUAL surfaces now satisfy the packet acceptance for the full-governance reminder, solo-operation disclosure, authority-boundary wording, validation caveat, safe-fix allow/deny guidance, and root/starter parity.`
+- 2026-05-14: `[developer -> tester] Developer remediated the OPS-17 checklist gaps in both HARNESS_MANUAL files. The Operator One-Page Checklist now explicitly warns against using full-governance unless risk-triggered or explicitly chosen, and it now includes solo-operation disclosure guidance.`
+- 2026-05-14: `[tester -> developer] Tester found OPS-17 acceptance gaps in the manual-only implementation. The Operator One-Page Checklist exists, but it does not yet include the packet-required reminder not to use full-governance unless risk-triggered or explicitly chosen, and it does not include solo-operation disclosure guidance inside the checklist itself.`
+- 2026-05-14: `[developer -> tester] Developer implemented the approved OPS-17 manual-only scope in the root and standard-template HARNESS_MANUAL surfaces. Operator glossary, one-page checklist, profile/starter-mode reset guidance, validation caveat, safe-fix guidance, solo-operation reminders, and minimal-mode guidance were added without changing workflow or runtime authority.`
+- 2026-05-14: `[planner -> developer] OPS-17 Ready For Code is approved for the manual-only scope. Developer should update the root and standard-template HARNESS_MANUAL surfaces with the approved operator glossary, checklist, reset, validation caveat, solo-operation reminder, and safe-fix guidance while keeping HARNESS_OPERATING_CONTRACT authority intact.`
+- 2026-05-14: `[planner -> planner] OPS-17 detailed agreement is approved; the packet now reflects the PLN-18 document split, HARNESS_OPERATING_CONTRACT authority, and the remaining approval boundary is Ready For Code only.`
+- 2026-05-14: `[planner -> planner] OPS-17 detailed agreement was narrowed to the PLN-18 document split; manual wording now follows HARNESS_OPERATING_CONTRACT for operating-rule authority and leaves ARCHITECTURE_GUIDE as project architecture only.`
+- 2026-05-14: `[planner -> planner] PLN-18 is closed; OPS-17 resumes with the document split, long-term context location, and harness operating contract now settled.`
+- 2026-05-14: `[planner -> planner] Planner closed PLN-18 after moving long-term context SSOT into .agents/artifacts, approving the operating-contract split, and rewriting ARCHITECTURE_GUIDE as a project-architecture-only template.`
+- 2026-05-14: `[planner -> planner] Planner moved DOMAIN_CONTEXT, SYSTEM_CONTEXT, and PROJECT_HISTORY into the canonical .agents/artifacts layer, replaced old references, and rewrote ARCHITECTURE_GUIDE as a project-architecture-only SSOT template.`
+- 2026-05-14: `[planner -> planner] User approved PLN-18, HARNESS_OPERATING_CONTRACT.md, and DOMAIN_CONTEXT.md; SYSTEM_CONTEXT.md and PROJECT_HISTORY.md were expanded with concrete development-stage examples for conditional approval follow-through.`
+- 2026-05-14: `[planner -> planner] Planner drafted the ARCHITECTURE_GUIDE keep/remove section set, HARNESS_OPERATING_CONTRACT outline, conditional-canonical context wording, and concrete follow-up mapping under PLN-18.`
+- 2026-05-14: `[planner -> planner] User approved the PLN-18 decision set for architecture-guide restoration, harness-contract separation, long-term context authority, workflow route fallback, and human-facing artifact writing.`
+- 2026-05-14: `[planner -> planner] User approved PLN-18 as the next planning rebaseline lane before the remaining PLN-16 follow-up wave resumes.`
+- 2026-05-14: `[planner -> planner] Planner recorded OPS-19 closeout after tester verification and reviewer approval.`
+- 2026-05-14: `[reviewer -> planner] Packet exit approved; Planner should choose or refine the next lane.`
+- 2026-05-14: `[tester -> reviewer] Tester verification completed; Reviewer should assess packet exit readiness.`
+- 2026-05-14: `[developer -> tester] Developer implementation completed; Tester should verify the approved scope.`
+- 2026-05-14: `[planner -> developer] Planning approved; implement the bounded planner-only helper for packet opening and hand off to Tester after validation evidence.`
+- 2026-05-14: `[planner -> planner] OPS-19 detailed agreement approved; Ready For Code remains pending for the bounded planner-only helper scope.`
+- 2026-05-14: `[planner -> planner] Registered OPS-19 as the immediate next Planner task before continuing OPS-17 implementation.`
+- 2026-05-14: `[planner -> planner] Opened OPS-19 as the immediate next Planner task to fix packet-opening latency and registration/manifest friction.`
+- 2026-05-14: `[planner -> planner] OPS-17 Planner packet opened and registration/evidence metadata reconciled.`
+- 2026-05-14: `[planner -> planner] Opened OPS-17 as the selected Planner packet for operator glossary, profile reset, and safe-fix guidance.`
 - 2026-05-13: `[planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.`
 - 2026-05-13: `[reviewer -> planner] Packet exit approved; Planner should choose or refine the next lane.`
 - 2026-05-13: `[tester -> reviewer] Tester verification completed; Reviewer should assess packet exit readiness.`

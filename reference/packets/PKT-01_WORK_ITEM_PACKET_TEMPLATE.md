@@ -261,7 +261,7 @@
 - Verification manifest:
   - light: canonical artifact update, validator if generated/runtime state is touched, turn-close handoff note
   - standard: approved packet, targeted tests, validator, handoff evidence
-  - contract: Ready For Code, root sync, standard-template sync, targeted tests, root test suite, starter test suite, validator, PMW export when applicable, review closeout
+  - contract: Ready For Code, reusable asset sync, targeted tests, root test suite when applicable, starter test suite when applicable, validator, active context evidence when affected, review closeout
   - release: release-baseline parity, packaging/manual evidence, validator, security/cutover evidence where applicable, review closeout
 - Verification scenario reminder:
   - normal
