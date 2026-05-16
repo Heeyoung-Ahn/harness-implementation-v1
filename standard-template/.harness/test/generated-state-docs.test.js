@@ -51,6 +51,7 @@ test("writes deterministic generated docs and validates them successfully", () =
     workItemId: "DEV-02",
     title: "Generated docs",
     status: "in_progress",
+    owner: "developer",
     nextAction: "Implement writer",
     sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
   });
@@ -1260,6 +1261,134 @@ test("detects ACTIVE_CONTEXT validation executedAt parity mismatch", () => {
   const codes = new Set(result.findings.map((finding) => finding.code));
   assert.equal(result.ok, false);
   assert.equal(codes.has("active_context_validation_executed_at_mismatch"), true);
+
+  store.close();
+});
+
+test("detects CURRENT_STATE conflicts against canonical live operational authority", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-current-state-authority-conflict-"));
+  seedRepoFiles(repoRoot);
+
+  const store = createOperatingStateStore({
+    dbPath: path.join(repoRoot, ".harness", "operating_state.sqlite"),
+    now: createClock("2026-05-16T09:40:00.000Z")
+  });
+
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "Canonical developer execution",
+    releaseGoal: "Detect CURRENT_STATE authority drift",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+  store.upsertWorkItem({
+    workItemId: "PLN-21",
+    title: "Authority simplification",
+    status: "in_progress",
+    owner: "developer",
+    nextAction: "Implement slice 1",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeActiveContext({ store, repoRoot, outputDir: repoRoot });
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"),
+    `# Current State
+
+## Snapshot
+- Current Stage: planning
+- Current Focus: Planner-only wording
+
+## Next Recommended Agent
+- Planner
+`,
+    "utf8"
+  );
+
+  const result = validateGeneratedStateDocs({
+    store,
+    outputDir: repoRoot,
+    repoRoot
+  });
+
+  const authorityFindings = result.findings.filter(
+    (finding) => finding.code === "current_state_operational_authority_conflict"
+  );
+  assert.equal(result.ok, true);
+  assert.equal(authorityFindings.length > 0, true);
+  assert.equal(authorityFindings.every((finding) => finding.severity === "warning"), true);
+
+  store.close();
+});
+
+test("detects TASK_LIST conflicts against canonical active-work-item authority", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-task-list-authority-conflict-"));
+  seedRepoFiles(repoRoot);
+
+  const store = createOperatingStateStore({
+    dbPath: path.join(repoRoot, ".harness", "operating_state.sqlite"),
+    now: createClock("2026-05-16T09:45:00.000Z")
+  });
+
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "Canonical developer execution",
+    releaseGoal: "Detect TASK_LIST authority drift",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+  store.upsertWorkItem({
+    workItemId: "PLN-21",
+    title: "Authority simplification",
+    status: "in_progress",
+    owner: "developer",
+    nextAction: "Implement slice 1",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeActiveContext({ store, repoRoot, outputDir: repoRoot });
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "TASK_LIST.md"),
+    `# Task List
+
+## Active Locks
+| Task ID | Scope | Owner | Status | Started At | Notes |
+|---|---|---|---|---|---|
+| PLN-21 | authority | planner | active | 2026-05-16 | wrong owner |
+
+## Active Tasks
+| Task ID | Title | Scope | Owner | Status | Priority | Depends On | Verification |
+|---|---|---|---|---|---|---|---|
+| PLN-21 | Authority simplification | authority | planner | planning | - | - | gate contract |
+
+## Blocked Tasks
+| Task ID | Blocker | Owner | Status | Unblock Condition | Verification |
+|---|---|---|---|---|---|
+| - | None | - | clear | - | - |
+
+## Completed Tasks
+| Task ID | Title | Completed At | Verification | Notes |
+|---|---|---|---|---|
+| - | None | - | - | - |
+
+## Handoff Log
+- none
+`,
+    "utf8"
+  );
+
+  const result = validateGeneratedStateDocs({
+    store,
+    outputDir: repoRoot,
+    repoRoot
+  });
+
+  const authorityFindings = result.findings.filter(
+    (finding) => finding.code === "task_list_operational_authority_conflict"
+  );
+  assert.equal(result.ok, true);
+  assert.equal(authorityFindings.length > 0, true);
+  assert.equal(authorityFindings.every((finding) => finding.severity === "warning"), true);
 
   store.close();
 });

@@ -105,16 +105,13 @@ export function buildActiveContext({
   const nextRequiredSsot = normalizePathList(latestHandoffPayload.requiredSsot ?? []);
   const nextDoNotCross = normalizeTextList(latestHandoffPayload.doNotCross ?? []);
   const workflowReadFirst = normalizePathList(handoffExecution.workflowDetails?.readFirst ?? []);
-  const currentStateMustRead = normalizePathList(
-    readSectionBulletList(path.resolve(root, CURRENT_STATE_PATH), "## Must Read Next")
-  );
   const activePacket = activeTask?.sourceRef ?? releaseState?.sourceRef ?? null;
   const mustReadNext = uniquePathList([
     nextWorkflow,
     CURRENT_STATE_PATH,
     TASK_LIST_PATH,
+    ...nextRequiredSsot,
     ...workflowReadFirst,
-    ...currentStateMustRead,
     activePacket,
     VALIDATION_REPORT_JSON
   ]);
@@ -388,36 +385,6 @@ function summarizeTraceSummary(traceSummary) {
     candidateGateCount:
       typeof traceSummary.candidateGateCount === "number" ? traceSummary.candidateGateCount : 0
   };
-}
-
-function readSectionBulletList(filePath, heading) {
-  if (!fs.existsSync(filePath)) {
-    return [];
-  }
-  const section = sliceSection(fs.readFileSync(filePath, "utf8"), heading);
-  if (!section) {
-    return [];
-  }
-  return section
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line.startsWith("- "))
-    .map((line) => line.slice(2).trim());
-}
-
-function sliceSection(content, heading) {
-  const start = content.indexOf(heading);
-  if (start === -1) {
-    return null;
-  }
-
-  const afterStart = content.slice(start + heading.length).trimStart();
-  const nextHeadingMatch = afterStart.match(/\n##\s+/);
-  if (!nextHeadingMatch) {
-    return afterStart.trimEnd();
-  }
-
-  return afterStart.slice(0, nextHeadingMatch.index).trimEnd();
 }
 
 function normalizePathList(values) {

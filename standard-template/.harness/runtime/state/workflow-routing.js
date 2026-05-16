@@ -87,12 +87,10 @@ export function resolveHandoffExecution({
   const activeWorkItem = selectActiveWorkItem(workItems, { repoRoot });
   const resolvedBy = activeWorkItem?.owner
     ? "active_task_owner"
-    : currentStateNextAgent
-      ? "current_state_next_agent"
-      : latestHandoff?.toRole
-        ? "latest_handoff"
-        : "unassigned";
-  const owner = activeWorkItem?.owner ?? currentStateNextAgent ?? latestHandoff?.toRole ?? "unassigned";
+    : latestHandoff?.toRole
+      ? "latest_handoff"
+      : "default_planner";
+  const owner = activeWorkItem?.owner ?? latestHandoff?.toRole ?? "planner";
   const nextAction = activeWorkItem?.nextAction ?? latestHandoff?.payload?.nextFirstAction ?? null;
   const workflow = workflowForOwner(owner);
   const workflowDetailsForStatus = readWorkflowDetails({ repoRoot, workflow });

@@ -1,10 +1,10 @@
 # TASK_LIST
 
 ## Technical Facts
-- Open work items: 61
+- Open work items: 65
 - Open blocked or at-risk items: 0
 - Recent handoffs captured: 10
-- Generated at: 2026-05-14T22:06:22.007Z
+- Generated at: 2026-05-16T12:53:17.043Z
 
 ## Blocked / At Risk Summary
 - 0 open blocker or risks require attention.
@@ -18,7 +18,11 @@
 ## Work Item Detail
 | ID | Title | Status | Next Action |
 |---|---|---|---|
-| OPS-25 | HARNESS manual recent-work reconciliation | planning | Review the OPS-25 detailed agreement proposal and decide whether to approve, adjust, or hold Ready For Code before implementation opens. |
+| PLN-21 | PLN-21 Operational single-source authority and governance simplification | closed | Keep the reusable baseline on planning hold until a new approved lane is selected. |
+| PLN-20 | Maintainer / starter boundary and payload separation | closed | Keep the reusable baseline on planning hold until a new approved lane is selected. |
+| OPS-27 | Post-transition validation / Active Context freshness convergence | closed | Clarify the PLN-20 planning boundary for the first starter-shipped ACTIVE_CONTEXT payload-handling slice before any Ready For Code decision. |
+| OPS-26 | OPS-26 Packet-open semantic preflight hardening | closed | Clarify the PLN-20 planning boundary for the first starter-shipped ACTIVE_CONTEXT payload-handling slice before any Ready For Code decision. |
+| OPS-25 | HARNESS manual recent-work reconciliation | closed | Record OPS-25 closeout and open or refine PLN-20 maintainer/starter separation planning after planning re-entry. |
 | PLN-19 | Standard-template downstream app readiness rebaseline | done | Planner should choose the next approved lane and reopen planning work only after confirming the next priority with the user; PLN-17 is the current deferred candidate. |
 | PLN-17 | Multi-model ownership and conflict contract | closed | Open PLN-19 as the higher-priority planning lane for standard-template downstream-app readiness before returning to PLN-17. |
 | QLT-04 | Governance test rebalance | closed | Open PLN-17 as the next approved lane in sequence. |
@@ -81,18 +85,18 @@
 | DEV-04 | PMW read surface | done | Closed after browser verification passed at http://127.0.0.1:4173. |
 
 ## Handoff Log
-- 2026-05-14T22:06:22.007Z: [planner -> planner] Opened OPS-25 as the selected Planner packet for review before implementation opens.
-- 2026-05-14T21:39:05.376Z: [planner -> planner] Planner recorded PLN-19 closeout after reviewer-approved packet exit.
-- 2026-05-14T21:37:19.894Z: [reviewer -> planner] Reviewer approved PLN-19 for packet exit after confirming approved-scope adherence, sufficient tester evidence, clean validator state, root/starter parity, and no remaining residual defect inside the bounded remediation wave.
-- 2026-05-14T21:32:49.214Z: [tester -> reviewer] Tester verified QLT-06 against the approved PLN-19 scope: touched reusable test corpus is in root/starter parity, targeted regression passed, and root/starter validator evidence is clean with no flagged maintainer-history residue in the touched files.
-- 2026-05-14T21:28:55.592Z: [developer -> tester] Developer completed QLT-06 reusable harness test generalization with clean parity, test, and validation evidence.
-- 2026-05-14T21:20:09.174Z: [developer -> developer] QLT-05 workflow rebalance passed implementation, testing, and review; continue PLN-19 with QLT-06.
-- 2026-05-14T21:15:15.500Z: [developer -> developer] OPS-24 starter artifact purge passed implementation, testing, and review; continue PLN-19 with QLT-05.
-- 2026-05-14T21:09:42.877Z: [developer -> developer] OPS-23 context artifact starter neutralization passed implementation, testing, and review; continue PLN-19 with OPS-24.
-- 2026-05-14T14:15:33.463Z: [developer -> developer] OPS-22 runtime history decoupling passed implementation, testing, and review; continue PLN-19 with OPS-23.
-- 2026-05-14T13:52:05.197Z: [developer -> developer] PLN-19 continues after OPS-21 slice approval; no reviewer remediation is open.
+- 2026-05-16T12:53:17.043Z: [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.
+- 2026-05-16T12:53:10.763Z: [reviewer -> planner] Reviewer confirmed PLN-21 slice 3 stayed within validator simplification and risk-tiered closeout scope and approved packet closeout.
+- 2026-05-16T12:53:02.781Z: [tester -> reviewer] Tester verified root/starter targeted and full suites plus validator, validation-report, and status evidence for PLN-21 slice 3.
+- 2026-05-16T12:52:13.722Z: [developer -> tester] Developer completed PLN-21 slice 3 validator simplification and risk-tiered closeout implementation with updated reusable regression coverage.
+- 2026-05-16T12:29:38.922Z: [planner -> developer] Ready For Code is approved for PLN-21 slice 3 only. Developer should implement validator simplification plus risk-tiered closeout while leaving slice-4 parity reduction and other deferred lanes blocked.
+- 2026-05-16T12:27:59.998Z: [planner -> planner] PLN-21 slice 3 detailed agreement is approved. The lane is now limited to validator simplification plus risk-tiered closeout planning, while Ready For Code remains pending.
+- 2026-05-16T12:24:45.177Z: [planner -> planner] Opened PLN-21 as the selected slice-3 Planner lane after slice-2 closeout. Slice 3 now covers validator simplification and risk-tiered closeout planning only; Ready For Code remains pending.
+- 2026-05-16T10:21:56.794Z: [planner -> planner] Planner recorded PLN-21 slice 2 closeout after tester verification and reviewer approval. Return the reusable baseline to planning hold and keep later PLN-21 slices blocked until an explicit follow-up lane reopens them.
+- 2026-05-16T10:20:35.774Z: [reviewer -> planner] Reviewer approved PLN-21 slice 2 closeout after confirming live Ready For Code state now follows work-item metadata, packet truth notes remain approval/scope/audit evidence only, root/standard-template parity is clean, and no slice-3 scope breach is present.
+- 2026-05-16T10:19:35.861Z: [tester -> reviewer] Tester verified PLN-21 slice 2 with targeted root/starter dev05-tooling regression, root npm test 91/91, standard-template npm test 82/82, root/starter validator pass, and regenerated validation-report evidence.
 
 ## Generation Metadata
 - Generated docs: CURRENT_STATE.md, TASK_LIST.md
-- Source revision: 2026-05-14T22:06:22.007Z
+- Source revision: 2026-05-16T12:53:17.043Z
 - Sync status: fresh at generation time

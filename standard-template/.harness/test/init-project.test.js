@@ -190,4 +190,6 @@ function resetCopiedStarterToFreshState(repoRoot) {
   for (const suffix of ["", "-shm", "-wal"]) {
     fs.rmSync(path.join(repoRoot, ".harness", `operating_state.sqlite${suffix}`), { force: true });
   }
+  fs.rmSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.json"), { force: true });
+  fs.rmSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.md"), { force: true });
 }

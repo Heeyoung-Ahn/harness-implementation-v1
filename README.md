@@ -30,6 +30,8 @@ npm test
 ## Active Context
 - `.agents/runtime/ACTIVE_CONTEXT.json`: AI용 compact state
 - `.agents/runtime/ACTIVE_CONTEXT.md`: 사람용 한국어 re-entry 요약
+- installable starter payload에는 generated `ACTIVE_CONTEXT.*`를 싣지 않는다.
+- 새 프로젝트에서는 `npm run harness:init` 또는 `npm run harness:context` 이후 현재 프로젝트 기준으로 다시 생성된다.
 
 ## Authority Manual
 - 운영 authority manual: `reference/manuals/HARNESS_MANUAL.md`
@@ -55,7 +57,8 @@ maintainer/local fallback:
 수동 설치:
 1. `standard-template/` 안의 내용물을 새 프로젝트 루트에 복사한다.
 2. `INIT_STANDARD_HARNESS.cmd` 또는 `npm run harness:init`를 실행한다.
-3. `npm run harness:context`와 `npm run harness:validate`로 상태를 확인한다.
+3. copied starter 직후 `ACTIVE_CONTEXT.*`가 없는 상태는 정상이다.
+4. `npm run harness:context`와 `npm run harness:validate`로 상태를 확인한다.
 
 ## 수정 규칙
 - 새 프로젝트에 복사되어야 하는 변경은 root와 `standard-template/`를 같은 작업 안에서 맞춘다.

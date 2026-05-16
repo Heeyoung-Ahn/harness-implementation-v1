@@ -2,7 +2,7 @@
 
 ## Snapshot
 - Current Stage: planning
-- Current Focus: V1.3 standard harness starter baseline is stable; PLN-19 closed; Planner is reviewing the next approved lane.
+- Current Focus: V1.3 standard harness starter baseline is stable; PLN-21 is closed; the reusable baseline is on planner hold with no active lane.
 - Current Release Goal: Preserve the V1.3 installable standard harness baseline while implementing DEV-11 PMW removal and Active Context replacement under the release gate.
 
 ## Next Recommended Agent
@@ -19,8 +19,11 @@
 - `reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md`
 
 ## Open Decisions / Blockers
-- `OPS-25` Ready For Code is approved; active handoff is `planner -> planner`. Review the OPS-25 detailed agreement proposal and decide whether to approve, adjust, or hold Ready For Code before implementation opens.
-- `PLN-19` is closed; latest handoff is `planner -> planner`. Planner should choose the next approved lane and reopen planning work only after confirming the next priority with the user; PLN-17 is the current deferred candidate.
+- `PLN-21` is closed; latest handoff is `planner -> planner`. Keep the reusable baseline on planning hold until a new approved lane is selected.
+- `PLN-20` is closed; latest handoff is `planner -> planner`. Keep the reusable baseline on planning hold until a new approved lane is selected.
+- `PLN-20` remains deferred, not completed. `OPS-27` now runs first because the residual post-transition freshness-convergence defect reproduced again on 2026-05-15.
+- `OPS-26` is closed; latest handoff is `planner -> planner`. Its semantic packet-open hardening is complete, and the remaining residual stale-window issue is now isolated in `OPS-27`.
+- `OPS-25` is closed; latest handoff is `reviewer -> planner`. Its manual-only reconciliation remains complete; maintainer / starter separation work stays parked under deferred `PLN-20`.
 - `PLN-17` is closed; latest handoff is `planner -> planner`. Open PLN-19 as the higher-priority planning lane for standard-template downstream-app readiness before returning to PLN-17.
 - `QLT-04` is closed; latest handoff is `planner -> planner`. Open PLN-17 as the next approved lane in sequence.
 - `OPS-20` is closed; latest handoff is `planner -> planner`. Open QLT-04 as the next approved lane in sequence.
@@ -31,7 +34,7 @@
 - `OPS-16` is closed; latest handoff is `planner -> planner`. Keep the reusable baseline on planning hold until a new approved lane is selected.
 - `OPS-15` is closed; latest handoff is `planner -> planner`. Keep the reusable baseline on planning hold until a new approved lane is selected.
 - `OPS-14` is closed; latest handoff is `planner -> planner`. Keep the reusable baseline on planning hold until a new approved lane is selected.
-- All previously active follow-up packets are closed. `OPS-14` resolved the transient post-transition stale parity window; no active remediation lane remains.
+- `OPS-14` improved the earlier transition-parity issue, but it did not fully eliminate the residual validation-freshness stale window. That narrower residual defect is now reopened as `OPS-27` after the 2026-05-15 repro.
 - `PLN-13` approved the distribution contract and fixed the sequence: A GitHub-backed npm bootstrapper, then B template payload contract, then C manual consolidation.
 - `OPS-11`, `OPS-12`, and `OPS-13` are closed. The approved `PLN-13` A → B → C sequence is implemented without reopening bootstrap or payload redesign.
 - The approved adjustments are fixed: use one stable lane-type declaration field, keep undeclared packets on the full baseline, and start validator behavior as advisory-first while still hard-failing malformed lane metadata, unsupported lane types, or universal minimum violations.
@@ -47,7 +50,11 @@
 - User direction on 2026-05-03: remaining SSOT should split into AI-facing SSOT and human-facing SSOT. Human-facing SSOT uses Korean and easy terms; AI-facing SSOT prioritizes compact deterministic machine use.
 
 ## Current Truth Notes
-- `OPS-25` remains the active work item. Current handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
+- `PLN-21` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
+- `OPS-27` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
+- `OPS-26` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
+- `PLN-20` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
+- `OPS-25` is closed. Latest handoff is `reviewer -> planner`; stage is `planning`; gate profile is `contract`.
 - `PLN-19` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
 - `PLN-17` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
 - `QLT-04` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.
@@ -87,6 +94,53 @@
 - PMW remains historical closed-lane evidence only. `PLN-09` now proceeds on complete PMW removal from the active baseline and replacement of PMW read-model/export obligations with CLI-first active context.
 
 ## Latest Handoff Summary
+- 2026-05-16: `[reviewer -> planner] Reviewer confirmed PLN-21 slice 3 stayed within validator simplification and risk-tiered closeout scope and approved packet closeout.`
+- 2026-05-16: `[tester -> reviewer] Tester verified root/starter targeted and full suites plus validator, validation-report, and status evidence for PLN-21 slice 3.`
+- 2026-05-16: `[developer -> tester] Developer completed PLN-21 slice 3 validator simplification and risk-tiered closeout implementation with updated reusable regression coverage.`
+- 2026-05-16: `[planner -> developer] Ready For Code is approved for PLN-21 slice 3 only. Developer should implement validator simplification plus risk-tiered closeout while leaving slice-4 parity reduction and other deferred lanes blocked.`
+- 2026-05-16: `[planner -> planner] PLN-21 slice 3 detailed agreement is approved. The lane is now limited to validator simplification plus risk-tiered closeout planning, while Ready For Code remains pending.`
+- 2026-05-16: `[planner -> planner] Opened PLN-21 as the selected slice-3 Planner lane after slice-2 closeout. Slice 3 now covers validator simplification and risk-tiered closeout planning only; Ready For Code remains pending.`
+- 2026-05-16: `[planner -> planner] Planner recorded PLN-21 slice 2 closeout after tester verification and reviewer approval. Return the reusable baseline to planning hold and keep later PLN-21 slices blocked until an explicit follow-up lane reopens them.`
+- 2026-05-16: `[reviewer -> planner] Reviewer approved PLN-21 slice 2 closeout after confirming live Ready For Code state now follows work-item metadata, packet truth notes remain approval/scope/audit evidence only, root/standard-template parity is clean, and no slice-3 scope breach is present.`
+- 2026-05-16: `[tester -> reviewer] Tester verified PLN-21 slice 2 with targeted root/starter dev05-tooling regression, root npm test 91/91, standard-template npm test 82/82, root/starter validator pass, and regenerated validation-report evidence.`
+- 2026-05-16: `[developer -> tester] Developer completed PLN-21 slice 2 by separating packet approval evidence from live Ready For Code state and by reducing packet truth-note wording so packet/header no longer presents itself as canonical live stage or handoff authority.`
+- 2026-05-16: `[planner -> developer] Ready For Code is approved for PLN-21 slice 2 only. Developer should implement packet/header/validator-input authority classification plus packet/approval-surface reduction while leaving slice 3 and later work blocked.`
+- 2026-05-16: `[planner -> planner] PLN-21 slice 2 detailed agreement is conditionally approved. The lane is now limited to packet/header/validator-input authority classification plus packet/approval-surface reduction planning, while Ready For Code remains pending.`
+- 2026-05-16: `[planner -> planner] Opened PLN-21 as the selected slice-2 Planner lane after slice 1 closeout. Slice 2 now covers approval/payload/packet-surface reduction planning only; Ready For Code remains pending.`
+- 2026-05-16: `[planner -> planner] [planner -> planner] Planner recorded PLN-21 slice 1 closeout and returned the reusable baseline to planning hold. Later PLN-21 slices remain blocked follow-up work and must reopen as explicit approved lanes before further implementation begins.`
+- 2026-05-16: `[reviewer -> planner] [reviewer -> planner] Reviewer approved PLN-21 slice 1 closeout after confirming canonical live authority is now sourced from work-item and handoff state, derived-surface conflict checks stay narrow and starter-safe, later PLN-21 slices remain blocked, and root/standard-template parity plus validation evidence are clean.`
+- 2026-05-16: `[tester -> reviewer] [tester -> reviewer] Tester verified PLN-21 slice 1 with targeted root/standard-template authority-routing regression, root npm test 90/90, standard-template npm test 81/81, root/starter validator pass, and regenerated validation-report evidence.`
+- 2026-05-16: `[developer -> tester] [developer -> tester] Developer completed PLN-21 slice 1 by removing CURRENT_STATE-derived live routing and AI must-read authority, converging canonical live owner resolution on work-item/handoff state, and adding derived-surface conflict validation with starter-safe placeholder exemptions.`
+- 2026-05-16: `[planner -> developer] Ready For Code is approved for PLN-21 slice 1 only. Developer should implement canonical live operational authority and derived-surface conflict rules while leaving later packet-surface reduction, validator simplification, risk-tiered closeout, and parity-burden reduction slices blocked.`
+- 2026-05-16: `[planner -> planner] PLN-21 detailed agreement is approved. The lane now proceeds as the foundation planning lane for a staged operational-authority and governance refactor: planning may define the full target architecture, but implementation remains staged and slice 1 is limited to canonical live operational authority plus derived-surface conflict rules.`
+- 2026-05-16: `[planner -> planner] Opened PLN-21 as the next planning lane to reduce multi-surface operational-truth friction. The user-approved direction is to converge live operational state toward one canonical authority while keeping human-friendly PM/operator views and AI-efficient compact views as derived surfaces wherever possible.`
+- 2026-05-16: `[planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.`
+- 2026-05-16: `[reviewer -> planner] Reviewer approved PLN-20 slice 1 closeout after confirming the payload exclusion stayed inside scope, the regeneration contract is explicit, root/standard-template parity is preserved, and validation evidence is clean.`
+- 2026-05-16: `[tester -> reviewer] Tester verified PLN-20 slice 1 with targeted payload/bootstrap/init regression, full root/starter harness suites, and clean root/starter validator evidence.`
+- 2026-05-16: `[developer -> tester] Developer completed PLN-20 slice 1 by excluding generated starter-shipped ACTIVE_CONTEXT.* from payload, preserving the regeneration contract, and updating payload/bootstrap/init regression coverage with clean root/starter validation evidence.`
+- 2026-05-16: `[planner -> developer] [planner -> developer] Ready For Code is approved for PLN-20 slice 1 only. Developer should exclude starter-shipped generated ACTIVE_CONTEXT.* from payload, preserve the regeneration contract, and keep broader runtime or maintainer-boundary work out of scope.`
+- 2026-05-16: `[planner -> planner] PLN-20 resumes as the active planner lane after OPS-27 closeout. Slice 1 payload policy is now fixed to option A: exclude generated starter-shipped ACTIVE_CONTEXT.* from payload and require regeneration. Ready For Code remains pending.`
+- 2026-05-15: `[planner -> planner] [planner -> planner] Planner recorded OPS-27 closeout after tester verification and reviewer approval. Return to PLN-20 planning only after the residual freshness-convergence lane is complete.`
+- 2026-05-15: `[reviewer -> planner] [reviewer -> planner] Reviewer approved OPS-27 packet exit after confirming the residual freshness-convergence fix stayed inside scope, targeted/full regression stayed clean, and reusable validation evidence is aligned.`
+- 2026-05-15: `[tester -> reviewer] [tester -> reviewer] Tester verified OPS-27 against the approved scope: immediate post-transition validation-report/status/validate convergence now holds in root/starter regression and reusable validation evidence remains clean.`
+- 2026-05-15: `[tester -> tester] [tester -> tester] Tester state refreshed after OPS-27 TASK_LIST lock-row remediation; verification scope is unchanged.`
+- 2026-05-15: `[developer -> tester] [developer -> tester] Developer completed OPS-27 residual freshness-convergence hardening with clean root/starter targeted regression, full-suite, and validation evidence.`
+- 2026-05-15: `[planner -> developer] Ready For Code is approved for OPS-27. Developer should implement the narrow residual freshness-convergence fix before any broader redesign or PLN-20 work opens.`
+- 2026-05-15: `[planner -> planner] OPS-27 detailed agreement is approved; Ready For Code remains pending for the residual freshness-convergence lane.`
+- 2026-05-15: `[planner -> planner] Opened OPS-27 as the next narrow residual-fix lane after explicitly deferring PLN-20 again; detailed agreement and Ready For Code remain pending.`
+- 2026-05-15: `[planner -> planner] Planner reaffirmed OPS-26 closeout after tester verification and reviewer approval. Return to PLN-20 planning clarification before the Ready For Code decision.`
+- 2026-05-15: `[planner -> planner] Planner recorded OPS-26 closeout after tester verification and reviewer approval. Return to the pending PLN-20 Ready For Code decision.`
+- 2026-05-15: `[reviewer -> planner] Reviewer approved OPS-26 packet exit after confirming the helper/validator semantic-alignment fix stayed inside scope, pre-mutation failure is covered by root/starter regression, and reusable validation evidence is clean.`
+- 2026-05-15: `[tester -> reviewer] Tester verified OPS-26 against the approved scope: semantic preflight now blocks user-facing, authoritative-source, and lane-type evidence gaps before mutation, and root/starter parity plus validation evidence stayed clean.`
+- 2026-05-15: `[developer -> tester] Developer completed OPS-26 semantic preflight hardening with clean root/starter regression, full-suite, and validation evidence.`
+- 2026-05-15: `[planner -> developer] Ready For Code is approved for OPS-26. Developer should implement the narrow semantic-preflight hardening before mutation and keep broader validator redesign and PLN-20 out of scope.`
+- 2026-05-15: `[planner -> planner] OPS-26 detailed agreement is approved; Ready For Code remains pending for the narrow semantic-preflight hardening lane.`
+- 2026-05-15: `[planner -> planner] Opened OPS-26 as the selected Planner packet after explicitly deferring PLN-20; detailed agreement and Ready For Code remain pending.`
+- 2026-05-15: `[planner -> planner] Deferred PLN-20 by explicit user priority so OPS-26 packet-open semantic preflight hardening can run first; this is not functional completion of the maintainer/starter boundary lane.`
+- 2026-05-15: `[planner -> planner] PLN-20 remains the active Planner packet; detailed agreement is approved and Ready For Code remains pending.`
+- 2026-05-15: `[planner -> planner] Opened PLN-20 as the active Planner packet after OPS-25 closeout; detailed agreement is approved and Ready For Code remains pending.`
+- 2026-05-15: `[reviewer -> planner] Reviewer approved OPS-25 packet exit after confirming manual-only scope adherence, root/standard-template parity, clean validator state, and explicit defer of runtime/payload work to PLN-20.`
+- 2026-05-15: `[planner -> reviewer] Planner requests closeout review for the completed OPS-25 manual-only reconciliation scope.`
 - 2026-05-14: `[planner -> planner] Opened OPS-25 as the selected Planner packet for review before implementation opens.`
 - 2026-05-14: `[planner -> planner] Planner recorded PLN-19 closeout after reviewer-approved packet exit.`
 - 2026-05-14: `[reviewer -> planner] Reviewer approved PLN-19 for packet exit after confirming approved-scope adherence, sufficient tester evidence, clean validator state, root/starter parity, and no remaining residual defect inside the bounded remediation wave.`

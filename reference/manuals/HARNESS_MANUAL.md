@@ -107,7 +107,7 @@ AI에게는 어디를 먼저 읽어야 하는지, 어떤 문서를 정본으로 
 | SSOT | 승인된 정본 | generated file |
 | packet | 이번 작업의 범위와 승인 기준 | 아무 작업 메모 |
 | profile | 어떤 종류의 일을 하는지 | governance 강도 |
-| starter mode | 얼마나 엄격하게 운영할지 | 작업 주제 자체 |
+| starter mode | 사람이 빠르게 고르는 운영 강도 별칭 | 실제 gate profile id 자체 |
 
 짧게 기억하면 이렇게 보면 된다.
 
@@ -123,14 +123,16 @@ AI에게는 어디를 먼저 읽어야 하는지, 어떤 문서를 정본으로 
 
 1. `CURRENT_STATE.md`와 `TASK_LIST.md`를 본다.
 2. `ACTIVE_CONTEXT`는 빠른 재진입용 요약으로만 본다.
-3. 지금 작업에 packet이 필요한지 확인한다.
-4. 구현이나 문서 변경이면 `Ready For Code`가 있는지 확인한다.
-5. 지금 역할이 Planner, Developer, Tester, Reviewer 중 무엇인지 확인한다.
-6. next workflow가 명확하지 않으면 멈추고 route를 다시 확인한다.
-7. generated docs가 이상해 보여도 generated file을 직접 고치지 않는다.
-8. `full-governance`는 risk-triggered 또는 explicit choice가 아니면 기본 선택으로 쓰지 않는다.
-9. 혼자 운영 중이면 solo-operation 상황임을 먼저 밝히고, 역할 분리와 approval boundary가 자동 면제되지 않는다고 본다.
-10. 검증 전에 validator를 통과했다고 해서 업무 요구사항까지 다 맞는다고 생각하지 않는다.
+3. starter를 방금 복사한 직후라면 `ACTIVE_CONTEXT.*`가 아직 없을 수 있으니 `harness:init` 또는 `harness:context` 이후 다시 본다.
+4. 지금 작업에 packet이 필요한지 확인한다.
+5. 구현이나 문서 변경이면 `Ready For Code`가 있는지 확인한다.
+6. 지금 역할이 Planner, Developer, Tester, Reviewer 중 무엇인지 확인한다.
+7. next workflow가 명확하지 않으면 멈추고 route를 다시 확인한다.
+8. generated docs가 이상해 보여도 generated file을 직접 고치지 않는다.
+9. `full-governance`는 risk-triggered 또는 explicit choice가 아니면 기본 선택으로 쓰지 않는다.
+10. packet/validator에서 실제로 보는 정식 값은 `light` / `standard` / `contract` / `release` gate profile임을 기억한다.
+11. 혼자 운영 중이면 solo-operation 상황임을 먼저 밝히고, 역할 분리와 approval boundary가 자동 면제되지 않는다고 본다.
+12. 검증 전에 validator를 통과했다고 해서 업무 요구사항까지 다 맞는다고 생각하지 않는다.
 
 아래 중 하나라도 해당되면 바로 멈춘다.
 
@@ -142,15 +144,26 @@ AI에게는 어디를 먼저 읽어야 하는지, 어떤 문서를 정본으로 
 
 ### 2.3 Profile 과 Starter Mode 다시 잡기
 
-운영자가 중간에 가장 많이 헷갈리는 부분은 `profile`과 `starter mode`를 같은 것으로 보는 것이다.
+운영자가 중간에 가장 많이 헷갈리는 부분은 `profile`, `starter mode`, `gate profile`을 같은 것으로 보는 것이다.
 
 - `profile`: 어떤 종류의 프로젝트나 작업 규칙을 추가로 읽어야 하는지
-- `starter mode`: minimal / standard / full-governance 중 어떤 운영 강도로 갈지
+- `starter mode`: manual에서 빠르게 설명하려고 쓰는 human-facing 운영 강도 별칭
+- `gate profile`: packet, validator, runtime이 실제로 쓰는 정식 값
 
 쉽게 말하면:
 
 - `profile`은 작업의 종류를 설명한다.
-- `starter mode`는 운영의 엄격함을 설명한다.
+- `starter mode`는 운영의 엄격함을 설명하는 쉬운 말이다.
+- 실제 packet과 validator는 `light`, `standard`, `contract`, `release`를 본다.
+
+현재 shipped baseline에서는 아래처럼 대응해서 보면 된다.
+
+| 사람 설명 | 실제 gate profile | 언제 주로 보나 |
+|---|---|---|
+| `minimal` | 보통 `light` | 문서 위주, note 위주, 실행물 변화 없음 |
+| `standard` | `standard` | 일반적인 packet 기반 구현/검증 |
+| `full-governance` | 보통 `contract` | reusable contract, workflow, validator, root/starter sync 영향 |
+| `full-governance` 중 release 성격 | `release` | installer, packaging, release baseline, cutover 영향 |
 
 기본 판단:
 
@@ -161,6 +174,7 @@ AI에게는 어디를 먼저 읽어야 하는지, 어떤 문서를 정본으로 
 | 승인 경계, 위험 변경, 릴리스/데이터 영향이 크다 | `full-governance` 검토 |
 
 `minimal`은 빠르게 시작하기 위한 선택일 뿐, risk trigger를 무시하는 면허가 아니다.
+그리고 manual에서 `full-governance`라고 설명하더라도 packet header, validator finding, transition evidence에서는 실제 gate profile id인 `contract` 또는 `release`를 찾아야 한다.
 
 ### 2.4 Profile Reselection / Reset Playbook
 
@@ -314,7 +328,7 @@ flowchart TD
 | `.agents/artifacts/DOMAIN_CONTEXT.md` | data-impact 기준선과 도메인 맥락 | 데이터/DB 영향 판단 시 |
 | `.agents/artifacts/SYSTEM_CONTEXT.md` | 시스템 경계와 외부 연동 맥락 | system boundary 판단 시 |
 | `.agents/artifacts/PROJECT_HISTORY.md` | 장기 rebaseline과 과거 결정 이력 | 과거 변경이 현재 판단에 영향 줄 때 |
-| `.agents/artifacts/PREVENTIVE_MEMORY.md` | 반복 friction과 follow-up 후보 | 같은 문제가 반복될 때 |
+| `.agents/artifacts/PREVENTIVE_MEMORY.md` | 반복 friction, repeated mistake/trigger, follow-up 후보 | 같은 문제가 반복될 때 |
 | `.agents/runtime/ACTIVE_CONTEXT.json` | AI가 빠르게 재진입하는 compact 상태 | AI 재진입 첫 읽기 |
 | `.agents/runtime/ACTIVE_CONTEXT.md` | 사람이 빠르게 재진입하는 한국어 요약 | 사람이 상태 요약 볼 때 |
 | `reference/planning/*` | planning 기준과 decision history | kickoff, planning 시 |
@@ -337,6 +351,8 @@ flowchart TD
 - `reference/*`는 설명, 템플릿, evidence, packet history를 담는 보조 자료다.
 - 다만 active packet이나 approved source는 해당 작업에서 필수 입력이 될 수 있다.
 - generated surface가 이상하면 generated file을 고치지 말고 정본과 상태를 먼저 맞춘다.
+- maintainer repo 안 starter payload에는 재사용을 위해 shared runtime/test가 함께 들어갈 수 있다.
+- 설치된 프로젝트에서는 `README.md`, `START_HERE.md`, 현재 repo의 validator 결과를 기준으로 보고, 존재하지 않는 `installer/`, `packaging/`, `standard-template/` maintainer 경로까지 운영자가 따라가지는 않는다.
 
 ## 5. 프로젝트 시작 절차
 
@@ -973,6 +989,11 @@ CLOUD_LOCAL_MERGE_PLAYBOOK 기준으로 cloud에서 할 범위, 로컬에 남길
 ### Q. `ACTIVE_CONTEXT`가 오래된 상태처럼 보인다
 - 먼저 `CURRENT_STATE.md`, `TASK_LIST.md`, 최신 handoff가 실제 상태와 맞는지 본다.
 - 그 다음 `npm run harness:context`를 다시 실행한다.
+
+### Q. copied starter에 `ACTIVE_CONTEXT.json`이나 `.md`가 없다
+- installable starter payload는 generated `ACTIVE_CONTEXT.*`를 싣지 않는다.
+- 새 프로젝트 루트로 복사한 뒤 `npm run harness:init` 또는 `npm run harness:context`를 실행하면 현재 프로젝트 기준으로 다시 생성된다.
+- init/context 전에는 `START_HERE.md`, `CURRENT_STATE.md`, `TASK_LIST.md`, 실행 직후 validator 결과를 우선해서 본다.
 
 ### Q. validator에서 FAIL이 나온다
 - 가장 위 finding부터 읽는다.

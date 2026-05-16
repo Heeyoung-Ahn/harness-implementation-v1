@@ -3,6 +3,8 @@ const REMOVABLE_MATCHERS = [
   { kind: "exact", value: ".harness/operating_state.sqlite" },
   { kind: "exact", value: ".harness/operating_state.sqlite-shm" },
   { kind: "exact", value: ".harness/operating_state.sqlite-wal" },
+  { kind: "exact", value: ".agents/runtime/ACTIVE_CONTEXT.json" },
+  { kind: "exact", value: ".agents/runtime/ACTIVE_CONTEXT.md" },
   { kind: "prefix", value: ".agents/runtime/generated-state-docs/" }
 ];
 
@@ -34,7 +36,7 @@ const REQUIRED_MATCHERS = [
 ];
 
 export const STARTER_PAYLOAD_CONTRACT = {
-  version: "ops-13-v1",
+  version: "pln-20-slice-1-v1",
   laneTypes: {
     required: [
       "AGENTS.md",
@@ -66,6 +68,8 @@ export const STARTER_PAYLOAD_CONTRACT = {
       ".harness/operating_state.sqlite",
       ".harness/operating_state.sqlite-shm",
       ".harness/operating_state.sqlite-wal",
+      ".agents/runtime/ACTIVE_CONTEXT.json",
+      ".agents/runtime/ACTIVE_CONTEXT.md",
       ".agents/runtime/generated-state-docs/*"
     ]
   }

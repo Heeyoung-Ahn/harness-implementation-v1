@@ -3,6 +3,7 @@
 ## Purpose
 - Reconcile the shipped reusable `HARNESS_MANUAL.md` surfaces with the approved reusable workflow/contract changes completed on 2026-05-14 and 2026-05-15.
 - Review yesterday/today work detail before editing so the manual reflects real recent changes instead of stale maintainer-era assumptions.
+- Reflect the 2026-05-15 evaluation feedback about starter-mode naming drift, pre-init `ACTIVE_CONTEXT` interpretation, and maintainer-vs-installed starter wording without broadening into runtime cleanup.
 - Keep the scope manual-only while preserving root / `standard-template` parity and the current truth hierarchy.
 
 ## Approval Rule
@@ -29,7 +30,7 @@
 | Domain foundation status | not-needed | no data-impact or schema work is included | not-needed |
 | Authoritative source intake status | approved | the user request and the approved 2026-05-14/2026-05-15 reusable changes define the source set | approved |
 | Shared-source wave status | not-needed | this is a single-packet manual reconciliation lane | not-needed |
-| Packet exit gate status | pending | closeout depends on manual parity, validator evidence, and reviewed consistency repair | pending |
+| Packet exit gate status | approved | manual parity, validator evidence, and reviewer-assessed consistency repair are complete | approved |
 | Improvement promotion status | none | this is direct reconciliation work, not preventive-memory promotion | not-needed |
 | Existing system dependency | none | no external product/system dependency is touched | not-needed |
 | New authoritative source impact | analyzed | recent approved workflow/contract/manual changes and the 2026-05-15 user request must be reflected together | approved |
@@ -63,6 +64,9 @@
 - Add or refine artifact-map guidance for `DOMAIN_CONTEXT.md`, `SYSTEM_CONTEXT.md`, `PROJECT_HISTORY.md`, `PREVENTIVE_MEMORY.md`, `WALKTHROUGH.md`, and `PACKET_EXIT_QUALITY_GATE.md` where useful.
 - Align testing/review wording to the current `test.md` and `review.md` contracts.
 - Reconcile profile guidance with the current approved reusable baseline.
+- Clarify that manual-facing `starter mode` labels are shorthand while packet/runtime/validator use gate profile ids such as `light`, `standard`, `contract`, and `release`.
+- Clarify that starter-shipped `ACTIVE_CONTEXT.*` can be a pre-init placeholder surface and must be regenerated after `harness:init` or `harness:context`.
+- Clarify the operator-facing distinction between maintainer-repo shared runtime/test surfaces and the installed starter's actual first-read/runtime contract.
 
 ## 5. Out Of Scope
 - Runtime implementation.
@@ -71,6 +75,8 @@
 - Packet template redesign.
 - New profile creation or profile approval-state changes.
 - Product-specific starter customization.
+- Formal `PREVENTIVE_MEMORY` trigger/promotion contract changes.
+- Runtime or payload removal of maintainer-aware release/sync logic from shipped starter files.
 
 ## 6. Detailed Behavior
 - Trigger:
@@ -162,10 +168,14 @@
 - Packet-opening guidance reflects the current reusable preflight expectation without redefining helper internals as workflow authority.
 - Testing and review guidance matches the current `test.md` and `review.md` contracts: Tester proves tested vs untested behavior and does not fix defects; Reviewer judges packet-close readiness, requirements/acceptance fit, regression risk, and applicable security-sensitive behavior.
 - Profile guidance no longer suggests a stale default catalog.
+- The manual explains that `minimal` / `standard` / `full-governance` are human-facing shorthand and maps them to the actual gate profile ids used by packet headers and validator output.
+- The manual explains that starter-shipped `ACTIVE_CONTEXT.*` may be placeholder output before init and must be regenerated for project-local truth.
+- The manual explains the maintainer-repo vs installed-starter reading boundary so operators do not over-read absent `installer/`, `packaging/`, or nested `standard-template/` paths inside a copied project.
 - Root and `standard-template` manual surfaces remain synchronized.
 
 ## 11. Open Questions
-- None currently. If the manual needs a broader structural rewrite instead of narrow reconciliation, open a separate planning lane.
+- None for `OPS-25` closeout. User approved the next-lane order on 2026-05-15: maintainer / starter separation first, explicit `PREVENTIVE_MEMORY` promotion/trigger criteria second, onboarding UX cleanup third.
+- The immediate next draft lane is `reference/planning/PLN-20_MAINTAINER_STARTER_BOUNDARY_AND_PAYLOAD_SEPARATION_DRAFT.md`.
 
 ## 12. Human Sync / Approval Boundary
 | Decision Item | Needed | Owner | Status | Notes |
@@ -181,7 +191,7 @@
 | Authoritative source disposition approval | yes | user/planner | approved | reflect approved recent reusable changes and current canonical docs |
 | New source incorporation decision | yes | user/planner | approved | the 2026-05-15 user request explicitly opens this lane |
 | Source wave rebaseline approval | no | planner | not-needed | single-packet reconciliation lane |
-| Packet exit quality gate approval | yes | reviewer | pending | depends on parity and validator evidence |
+| Packet exit quality gate approval | yes | reviewer | approved | parity, validator evidence, and manual consistency repair were reviewed and approved for closeout on 2026-05-15 |
 | Improvement promotion decision | no | planner | not-needed | no preventive-memory promotion requested |
 | Ready For Code sign-off | yes | user | approved | explicit user request to proceed with manual changes inside this packet boundary |
 
@@ -225,37 +235,37 @@
 - Packet exit metadata gate reference:
   `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`
 - Packet exit metadata exit recommendation:
-  pending
+  approved
 - Packet exit metadata source parity result:
-  pending
+  approved
 - Packet exit metadata validation / security / cleanup evidence:
-  pending
+  approved
 - Packet exit quality gate reference:
   `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`
 - Exit recommendation:
-  pending
+  approved
 - Implementation delta summary:
-  pending
+  the root and `standard-template` `HARNESS_MANUAL.md` surfaces now align the human-facing `starter mode` shorthand with the actual gate profile ids, warn that starter-shipped `ACTIVE_CONTEXT.*` can be pre-init placeholder output, and clarify the operator-facing boundary between maintainer-repo shared runtime/test surfaces and installed starter usage
 - Source parity result:
-  pending
+  approved
 - Refactor / residual debt disposition:
-  pending until the manual corrections and validator evidence are complete
+  keep runtime/payload separation, explicit `PREVENTIVE_MEMORY` trigger formalization, and later onboarding UX cleanup in follow-up planning lanes rather than broadening this manual-only packet
 - UX conformance result:
   not-needed; no product UI
 - Topology / schema conformance result:
   not-needed
 - Validation / security / cleanup evidence:
-  pending
+  approved
 - Deferred follow-up item:
-  broader workflow or profile-catalog redesign if needed after reconciliation
+  `PLN-20_MAINTAINER_STARTER_BOUNDARY_AND_PAYLOAD_SEPARATION`, later explicit `PREVENTIVE_MEMORY` trigger formalization lane, and later Lite / Standard onboarding UX cleanup lane
 - Improvement candidate reference:
-  none
+  2026-05-15 evaluation follow-up on maintainer/starter mixing and operator-facing startup ambiguity
 - Proposed target layer:
   core
 - Promotion status / linked follow-up item:
-  not-needed / none
+  approved / `reference/planning/PLN-20_MAINTAINER_STARTER_BOUNDARY_AND_PAYLOAD_SEPARATION_DRAFT.md`
 - Closeout notes:
-  pending
+  reviewer-approved closeout on 2026-05-15 after confirming manual-only scope adherence, root / `standard-template` parity, clean validator state, accurate authority wording, and explicit defer of runtime/payload work to the next planning lane
 
 ## 16. Ready For Code Approval Text
 Ready For Code is approved for `OPS-25` only for updating the root and `standard-template` `HARNESS_MANUAL.md` surfaces so they accurately reflect the approved 2026-05-14 and 2026-05-15 reusable operating/manual changes. Runtime logic, workflow-file authority, validator behavior, DB state logic, packaging, and profile-approval truth are out of scope.

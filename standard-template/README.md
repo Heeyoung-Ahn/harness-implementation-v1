@@ -43,6 +43,7 @@
 - legacy manual
 - release 중간산출물
 - generated clutter
+- generated `ACTIVE_CONTEXT.*`
 
 ## 첫 사용 순서
 
@@ -53,6 +54,8 @@
 5. `START_HERE.md`를 따라 kickoff baseline을 만든다.
 
 처음 사용하는 사람의 목표는 위 순서만 읽고 `30분 이내`에 `harness:init`와 첫 상태 점검까지 도달하는 것이다.
+
+copied starter 직후 generated `ACTIVE_CONTEXT.*`가 없는 상태는 정상이다.
 
 초기화가 끝나면 starter placeholder가 프로젝트 전용 내용으로 바뀌고 `.harness/operating_state.sqlite`, generated docs, `ACTIVE_CONTEXT.*`가 새 프로젝트 기준으로 생성된다.
 

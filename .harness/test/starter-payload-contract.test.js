@@ -22,6 +22,8 @@ test("starter payload contract classifies required, conditional, and removable s
   assert.equal(classifyStarterPayloadPath("HARNESS_MANUAL.md"), "removable");
   assert.equal(classifyStarterPayloadPath(".harness/operating_state.sqlite"), "removable");
   assert.equal(classifyStarterPayloadPath(".harness/operating_state.sqlite-wal"), "removable");
+  assert.equal(classifyStarterPayloadPath(".agents/runtime/ACTIVE_CONTEXT.json"), "removable");
+  assert.equal(classifyStarterPayloadPath(".agents/runtime/ACTIVE_CONTEXT.md"), "removable");
   assert.equal(classifyStarterPayloadPath(".agents/runtime/generated-state-docs/CURRENT_STATE.md"), "removable");
 });
 
@@ -32,11 +34,13 @@ test("starter payload contract includes required and conditional surfaces but ex
   assert.equal(shouldIncludeStarterPayloadPath("reference/artifacts/WALKTHROUGH.md"), true);
   assert.equal(shouldIncludeStarterPayloadPath("HARNESS_MANUAL.md"), false);
   assert.equal(shouldIncludeStarterPayloadPath(".harness/operating_state.sqlite"), false);
+  assert.equal(shouldIncludeStarterPayloadPath(".agents/runtime/ACTIVE_CONTEXT.json"), false);
+  assert.equal(shouldIncludeStarterPayloadPath(".agents/runtime/ACTIVE_CONTEXT.md"), false);
   assert.equal(shouldIncludeStarterPayloadPath(".agents/runtime/generated-state-docs/TASK_LIST.md"), false);
 });
 
-test("starter payload contract documents the OPS-13 manifest categories", () => {
-  assert.equal(STARTER_PAYLOAD_CONTRACT.version, "ops-13-v1");
+test("starter payload contract documents the slice-1 manifest categories", () => {
+  assert.equal(STARTER_PAYLOAD_CONTRACT.version, "pln-20-slice-1-v1");
   assert.deepEqual(Object.keys(STARTER_PAYLOAD_CONTRACT.laneTypes), ["required", "conditional", "removable"]);
   assert.equal(
     STARTER_PAYLOAD_CONTRACT.laneTypes.conditional.includes("reference/manuals/HARNESS_MANUAL.md"),
@@ -44,4 +48,12 @@ test("starter payload contract documents the OPS-13 manifest categories", () => 
   );
   assert.equal(STARTER_PAYLOAD_CONTRACT.laneTypes.removable.includes(".harness/operating_state.sqlite"), true);
   assert.equal(STARTER_PAYLOAD_CONTRACT.laneTypes.removable.includes("HARNESS_MANUAL.md"), true);
+  assert.equal(
+    STARTER_PAYLOAD_CONTRACT.laneTypes.removable.includes(".agents/runtime/ACTIVE_CONTEXT.json"),
+    true
+  );
+  assert.equal(
+    STARTER_PAYLOAD_CONTRACT.laneTypes.removable.includes(".agents/runtime/ACTIVE_CONTEXT.md"),
+    true
+  );
 });

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "standard-harness-active-context/v2",
-  "generatedAt": "2026-05-14T21:27:01.366Z",
+  "generatedAt": "2026-05-16T09:25:51.301Z",
   "project": {
     "repoRoot": "C:\\Newface\\30 Github\\harness-implementation-v1\\standard-template",
     "name": "standard-template"
@@ -15,10 +15,10 @@
   "selectedLane": null,
   "activeTask": null,
   "nextWork": {
-    "owner": "Planner",
+    "owner": "planner",
     "workflow": ".agents/workflows/plan.md",
     "workflowRouteStatus": "ready",
-    "resolvedBy": "current_state_next_agent",
+    "resolvedBy": "default_planner",
     "requiredSsot": [],
     "approvalBoundary": null,
     "doNotCross": [],
@@ -34,9 +34,6 @@
       ".agents/artifacts/CURRENT_STATE.md",
       ".agents/artifacts/TASK_LIST.md",
       ".agents/artifacts/REQUIREMENTS.md",
-      "START_HERE.md",
-      "reference/planning/PLN-00_DEEP_INTERVIEW.md",
-      "reference/planning/PLN-01_REQUIREMENTS_FREEZE.md",
       ".agents/artifacts/VALIDATION_REPORT.json"
     ],
     "sourceTrace": [
@@ -45,7 +42,7 @@
       ".agents/artifacts/IMPLEMENTATION_PLAN.md",
       ".agents/artifacts/VALIDATION_REPORT.json"
     ],
-    "digest": "5a2caa76f6680ef515c8e379f05b7efec3d660f581004ebf37bf75f4bac257a1"
+    "digest": "6fa353316c854f5cdb12b6f404adeebf640d1b3dcb868f8524b03dfb311bcd35"
   },
   "blockers": [],
   "decisions": [],
@@ -56,7 +53,7 @@
     "findingCount": 0,
     "blockingFindingCount": 0,
     "gateDecision": "pass",
-    "executedAt": "2026-05-14T21:27:00.843Z",
+    "executedAt": "2026-05-16T09:25:51.110Z",
     "traceSummary": null,
     "candidateGates": [
       {
@@ -94,13 +91,13 @@
   "generatedDocs": [
     {
       "projectionName": "CURRENT_STATE.md",
-      "generatedAt": "2026-05-14T21:27:01.072Z",
+      "generatedAt": "2026-05-16T09:25:51.170Z",
       "freshnessState": "fresh",
       "sourceRevision": "empty-store"
     },
     {
       "projectionName": "TASK_LIST.md",
-      "generatedAt": "2026-05-14T21:27:01.072Z",
+      "generatedAt": "2026-05-16T09:25:51.170Z",
       "freshnessState": "fresh",
       "sourceRevision": "empty-store"
     }

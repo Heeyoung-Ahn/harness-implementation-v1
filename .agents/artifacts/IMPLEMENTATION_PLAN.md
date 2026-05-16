@@ -29,6 +29,8 @@
 
 2026-05-14 `OPS-19` is closed after planner-only helper implementation, tester verification, reviewer approval, and planner closeout reflection. `PLN-18` is now approved as the next planning rebaseline lane so project-architecture SSOT restoration, long-term context authority, and workflow-entry guardrails can be settled before `OPS-17`, `OPS-18`, `QLT-04`, and `PLN-17` continue.
 
+2026-05-15 `OPS-26` closed after landing the narrow planner packet-open semantic-preflight hardening. The same day, a residual post-transition validation-freshness stale window reproduced again during `OPS-26` closeout, so `OPS-27` opened as the next narrow planning lane and is now closed after implementation, tester verification, reviewer approval, and planner closeout. `PLN-20` remains deferred follow-up, not completed; its slice-1 payload policy is now fixed to option A on 2026-05-16, meaning generated starter-shipped `ACTIVE_CONTEXT.*` is excluded from payload and must be regenerated after starter bootstrap/context entry. The next planning decision is `Ready For Code` for that first payload-handling slice.
+
 ## Follow-Up Phase Plan
 1. approved release-ready baseline을 보존하면서 follow-up planning lane을 연다.
 2. `PLN-03`으로 core / optional profile / project packet activation contract를 정의한다.
@@ -122,9 +124,9 @@ Open the next planning lane after `OPS-07` without repeating the previous mixed-
 - Phase 2: parked `OPS-09` structured packet-exit metadata and closeout parser hardening, then parked `PLN-12` lane-typed packet minimums and approval-surface reduction
 
 ### Operator Next Action
-- `OPS-25` active handoff is `planner -> planner`.
-- Review the OPS-25 detailed agreement proposal and decide whether to approve, adjust, or hold Ready For Code before implementation opens.
-- Source packet: `reference/packets/PKT-01_OPS-25_HARNESS_MANUAL_RECENT_WORK_RECONCILIATION.md`.
+- `PLN-21` is closed; latest closeout handoff is `planner -> planner`.
+- Keep the reusable baseline on planning hold until a new approved lane is selected.
+- Source packet: `reference/packets/PKT-01_PLN-21_OPERATIONAL_SINGLE_SOURCE_AUTHORITY_AND_GOVERNANCE_SIMPLIFICATION.md`.
 - Preserve packet-before-code, active-context derived authority, generated-doc immutability, root/starter sync, Tester/Reviewer separation, and human approval gates.
 
 ## OPS-08 Reusable Security Review Evidence Generalization

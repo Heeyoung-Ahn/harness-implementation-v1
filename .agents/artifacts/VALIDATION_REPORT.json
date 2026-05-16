@@ -2,7 +2,7 @@
   "ok": true,
   "command": "validation-report",
   "validatorVersion": "v1.3",
-  "executedAt": "2026-05-14T22:11:36.930Z",
+  "executedAt": "2026-05-16T12:53:26.226Z",
   "cutoverReady": true,
   "profileSummary": {
     "path": ".agents/artifacts/ACTIVE_PROFILES.md",
@@ -10,17 +10,9 @@
     "profiles": []
   },
   "findings": [],
-  "nextAction": "Review the OPS-25 detailed agreement proposal and decide whether to approve, adjust, or hold Ready For Code before implementation opens.",
+  "nextAction": "Keep the reusable baseline on planning hold until a new approved lane is selected.",
   "gateDecision": "pass",
-  "traceSummary": {
-    "path": ".agents/runtime/agent-traces/OPS-25.json",
-    "workItemId": "OPS-25",
-    "packetId": "PKT-01_OPS-25_HARNESS_MANUAL_RECENT_WORK_RECONCILIATION",
-    "turnClosedAt": "2026-05-14T22:11:36.930Z",
-    "semanticTraceStatus": "pass",
-    "warningCount": 0,
-    "candidateGateCount": 6
-  },
+  "traceSummary": null,
   "candidateGates": [
     {
       "id": "required-evidence-present",
@@ -52,10 +44,5 @@
       "phase": "candidate-only",
       "description": "Validation report and ACTIVE_CONTEXT expose the same validation summary."
     }
-  ],
-  "securityReview": {
-    "contractStatus": "not-applicable",
-    "activationSource": "not declared",
-    "notApplicableReason": "Reusable security-review evidence is not requested by current packet/runtime metadata."
-  }
+  ]
 }

@@ -1,11 +1,11 @@
 # Validation Report
 
 ## Summary
-- Executed at: 2026-05-14T22:11:36.930Z
+- Executed at: 2026-05-16T12:53:26.226Z
 - Validator version: v1.3
 - Cutover ready: yes
 - Gate decision: pass
-- Next action: Review the OPS-25 detailed agreement proposal and decide whether to approve, adjust, or hold Ready For Code before implementation opens.
+- Next action: Keep the reusable baseline on planning hold until a new approved lane is selected.
 
 ## Active Profiles
 - Source: .agents/artifacts/ACTIVE_PROFILES.md
@@ -15,18 +15,8 @@
 ## Findings
 - none
 
-## Security Review Summary
-- Status: not-applicable
-- Activation source: not declared
-- Reason: Reusable security-review evidence is not requested by current packet/runtime metadata.
-
 ## Semantic Trace
-- Path: .agents/runtime/agent-traces/OPS-25.json
-- Work item: OPS-25
-- Packet: PKT-01_OPS-25_HARNESS_MANUAL_RECENT_WORK_RECONCILIATION
-- Turn closed at: 2026-05-14T22:11:36.930Z
-- Status: pass
-- Warning count: 0
+- none
 
 ## Candidate Gates
 - required-evidence-present: candidate-only / Required evidence artifacts exist for the active work item.

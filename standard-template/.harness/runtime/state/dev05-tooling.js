@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { writeActiveContext } from "./active-context.js";
-import { validateGeneratedStateDocs } from "./drift-validator.js";
+import { inspectTaskPacketContract, validateGeneratedStateDocs } from "./drift-validator.js";
 import { CURRENT_STATE_DOC, TASK_LIST_DOC, writeGeneratedStateDocs } from "./generate-state-docs.js";
 import {
   DEFAULT_GATE_PROFILE_ID,
@@ -128,6 +128,7 @@ const SECURITY_REVIEW_SECRET_RULES = [
     recovery: "Remove the Slack token-like string from the release-facing file before internal review."
   }
 ];
+const LOW_RISK_CLOSEOUT_TIERS = new Set(["low-risk", "low-risk-planner-closeout"]);
 const SECURITY_REVIEW_ARTIFACT_AUDIT_RULES = [
   {
     code: "release_artifact_deprecated_operator_console_reference",
@@ -522,12 +523,62 @@ export function writeValidationReport({ repoRoot = process.cwd(), outputDir = re
     })
   );
 
+  // One extra validator pass closes the last report/context lag window after transition-time writes.
+  const convergedValidation = runValidator({ repoRoot, outputDir, dbPath });
+  const convergedReport = {
+    ...settledReport,
+    ok: convergedValidation.ok,
+    cutoverReady: convergedValidation.cutoverReady,
+    findings: convergedValidation.findings,
+    gateDecision: convergedValidation.ok ? "pass" : "hold"
+  };
+  if (securityReview) {
+    convergedReport.securityReview = securityReview.summary;
+    if (securityReview.summary.contractStatus === "requested") {
+      convergedReport.findings = [...convergedReport.findings, ...securityReview.additionalFindings];
+      const hasBlockingSecurityFinding = convergedReport.findings.some((finding) => finding?.severity === "error");
+      convergedReport.ok = !hasBlockingSecurityFinding;
+      convergedReport.cutoverReady = !hasBlockingSecurityFinding;
+      convergedReport.gateDecision = hasBlockingSecurityFinding ? "hold" : "pass";
+    }
+  }
+  convergedReport.nextAction = withStore({ dbPath, repoRoot }, (store) => {
+    const fallback = recommendNextActionFromState(store, convergedValidation, repoRoot);
+    if (securityReview?.summary?.contractStatus === "requested") {
+      return recommendSecurityReviewNextAction({
+        findings: convergedReport.findings,
+        fallback
+      });
+    }
+    return fallback;
+  });
+  const convergedTraceArtifact = withStore({ dbPath, repoRoot }, (store) =>
+    writeAgentTraceArtifact({
+      store,
+      repoRoot: root,
+      outputDir,
+      executedAt: convergedReport.executedAt,
+      report: convergedReport
+    })
+  );
+  convergedReport.traceSummary = convergedTraceArtifact?.summary ?? null;
+  fs.writeFileSync(markdownPath, buildValidationReportMarkdown(convergedReport), "utf8");
+  fs.writeFileSync(jsonPath, `${JSON.stringify(convergedReport, null, 2)}\n`, "utf8");
+  withStore({ dbPath, repoRoot }, (store) =>
+    writeActiveContext({
+      store,
+      repoRoot,
+      outputDir,
+      validation: convergedReport
+    })
+  );
+
   return {
-    ok: settledValidation.ok,
+    ok: convergedValidation.ok,
     command: "validation-report",
     markdownPath,
     jsonPath,
-    report: settledReport
+    report: convergedReport
   };
 }
 
@@ -772,6 +823,7 @@ function buildPlannerPacketOpenPlan({ store, repoRoot, options }) {
     null;
   const readyForCode = readPacketReadyForCode(repoRoot, packetPath) || "pending";
   const laneType = readPacketBulletFieldValue(repoRoot, packetPath, "Lane-type declaration");
+  const artifactId = options.artifactId ?? inferPacketArtifactId(packetPath);
   const requiredHeaderRows = [
     "Work item",
     "Ready For Code",
@@ -819,7 +871,7 @@ function buildPlannerPacketOpenPlan({ store, repoRoot, options }) {
     errors.push("Packet is missing ## Verification Manifest.");
   }
 
-  for (const marker of plannerOpenRequiredManifestMarkers(gateProfile)) {
+  for (const marker of plannerOpenRequiredManifestMarkers(gateProfile, { repoRoot, packetPath })) {
     const ok = Boolean(manifest && manifest.toLowerCase().includes(marker.toLowerCase()));
     checks.push({
       check: `manifest:${marker}`,
@@ -831,7 +883,27 @@ function buildPlannerPacketOpenPlan({ store, repoRoot, options }) {
     }
   }
 
-  const artifactId = options.artifactId ?? inferPacketArtifactId(packetPath);
+  const semanticContract = packetContent
+    ? inspectTaskPacketContract({
+        repoRoot,
+        packetPath,
+        artifactId,
+        content: packetContent
+      })
+    : null;
+  const semanticErrors = semanticContract?.findings?.filter((finding) => finding.severity === "error") ?? [];
+  checks.push({
+    check: "task-packet-semantic-contract",
+    ok: semanticErrors.length === 0,
+    detail: semanticErrors.length === 0 ? "pass" : `${semanticErrors.length} error(s)`
+  });
+  for (const finding of semanticErrors) {
+    const message = `Task packet semantic preflight failed: ${finding.message}`;
+    if (!errors.includes(message)) {
+      errors.push(message);
+    }
+  }
+
   const workItemLabel = workItemId ?? "selected work item";
   const defaultNextAction =
     options.nextAction ??
@@ -883,7 +955,19 @@ function buildTransitionPlan({ store, repoRoot, options }) {
   const sourceRef = options.sourceRef ?? workItem?.sourceRef ?? releaseState?.sourceRef ?? ".agents/artifacts/TASK_LIST.md";
   const packetSourceRef = workItem?.sourceRef ?? sourceRef;
   const gateProfile = resolveTransitionGateProfile({ options, workItem, repoRoot });
-  const packetReadyForCode = readPacketReadyForCode(repoRoot, sourceRef) || workItem?.metadata?.readyForCode || null;
+  const packetReadyForCode = readPacketReadyForCode(repoRoot, packetSourceRef) || null;
+  const metadataReadyForCode = normalizeReadyForCodeState(workItem?.metadata?.readyForCode);
+  const liveReadyForCode =
+    transition === "planner-to-developer"
+      ? packetReadyForCode === "approved"
+        ? "approved"
+        : metadataReadyForCode
+      : metadataReadyForCode ?? packetReadyForCode;
+  const lowRiskPlannerCloseoutApproved = isLowRiskPlannerCloseoutApproved({
+    repoRoot,
+    sourceRef: packetSourceRef,
+    workItem
+  });
   const closeDecisions = parseListOption(options.closeDecision ?? options.closeDecisions);
   const openReadyForCodeDecision = workItem ? findOpenReadyForCodeTransitionDecision(store, workItem) : null;
   const summary =
@@ -918,6 +1002,11 @@ function buildTransitionPlan({ store, repoRoot, options }) {
   }
   if (!toOwner) {
     errors.push("Missing --to or named transition target owner.");
+  }
+  if (transition === "tester-to-planner-low-risk-closeout" && !lowRiskPlannerCloseoutApproved) {
+    errors.push(
+      `${packetSourceRef ?? sourceRef ?? "The active packet"} must declare - Closeout risk tier: low-risk before tester-to-planner-low-risk-closeout can be used.`
+    );
   }
   if (fromOwner && workItem?.owner && normalizeOwner(workItem.owner) !== fromOwner) {
     errors.push(`Transition source owner mismatch: expected ${fromOwner}, current owner is ${workItem.owner}.`);
@@ -970,7 +1059,7 @@ function buildTransitionPlan({ store, repoRoot, options }) {
     toOwner,
     status,
     gateProfile: gateProfile?.id ?? null,
-    readyForCode: packetReadyForCode,
+    readyForCode: liveReadyForCode,
     gateProfileSummary: summarizeGateProfile(gateProfile),
     summary,
     nextAction,
@@ -1029,6 +1118,16 @@ function transitionDefaultsFor(transition = "custom") {
       currentFocusTemplate: "{workItemId} is under reviewer closeout assessment.",
       summary: "Tester verification completed; Reviewer should assess packet exit readiness.",
       nextAction: "Review implementation, evidence, residual debt, and closeout readiness."
+    },
+    "tester-to-planner-low-risk-closeout": {
+      transition: "tester-to-planner-low-risk-closeout",
+      from: "tester",
+      to: "planner",
+      status: "planning",
+      currentStage: "planning",
+      currentFocusTemplate: "{workItemId} low-risk closeout is verification-complete; Planner is recording closeout under the approved low-risk path.",
+      summary: "Tester verified the approved low-risk scope; Planner should record packet closeout under the low-risk closeout path.",
+      nextAction: "Planner should record low-risk closeout and choose the next approved lane."
     },
     "reviewer-to-developer": {
       transition: "reviewer-to-developer",
@@ -1269,6 +1368,11 @@ function readPacketReadyForCode(repoRoot, sourceRef) {
   return value === "approved" || value === "approve" ? "approved" : value;
 }
 
+function normalizeReadyForCodeState(value) {
+  const normalized = normalizePacketHeaderValue(value);
+  return normalized === "approved" || normalized === "approve" ? "approved" : normalized || null;
+}
+
 function readPacketBulletFieldValue(repoRoot, sourceRef, label) {
   if (!sourceRef || !sourceRef.endsWith(".md")) {
     return null;
@@ -1308,14 +1412,25 @@ function readPacketSection(content, sectionHeading) {
   return afterStart.slice(0, nextHeadingMatch.index).trimEnd();
 }
 
-function plannerOpenRequiredManifestMarkers(gateProfile) {
+function plannerOpenRequiredManifestMarkers(gateProfile, options = {}) {
   const markers = {
     light: ["canonical artifact", "handoff"],
     standard: ["approved packet", "targeted test", "validator", "handoff"],
     contract: ["Ready For Code", "root", "standard-template", "targeted", "validator", "active context", "review closeout"],
     release: ["release-baseline", "packaging", "validator", "review closeout"]
   };
-  return markers[gateProfile] ?? [];
+  const resolvedMarkers = [...(markers[gateProfile] ?? [])];
+  if (
+    gateProfile === "contract" &&
+    isLowRiskPlannerCloseoutApproved({
+      repoRoot: options.repoRoot ?? null,
+      packetPath: options.packetPath ?? null,
+      sourceRef: options.sourceRef ?? null
+    })
+  ) {
+    return resolvedMarkers.filter((marker) => marker !== "review closeout");
+  }
+  return resolvedMarkers;
 }
 
 function findOpenReadyForCodeTransitionDecision(store, workItem) {
@@ -1341,6 +1456,44 @@ function readPacketHeaderValue(repoRoot, sourceRef, label) {
     .map((line) => line.trim())
     .find((line) => line.toLowerCase().startsWith(`| ${target} |`) || new RegExp(`^\\|\\s*${escapeRegExp(target)}\\s*\\|`, "i").test(line));
   return row ? row.split("|")[2]?.trim() : null;
+}
+
+function resolvePacketMarkdownPath(repoRoot, packetPath, sourceRef) {
+  const candidate = packetPath ?? sourceRef;
+  if (!repoRoot || !candidate || !String(candidate).endsWith(".md")) {
+    return null;
+  }
+  const resolved = path.isAbsolute(candidate) ? candidate : path.resolve(repoRoot, candidate);
+  return fs.existsSync(resolved) ? resolved : null;
+}
+
+function normalizeCloseoutRiskTier(value) {
+  const normalized = String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[`*_]/g, "")
+    .replace(/\s+/g, "-");
+  return normalized || null;
+}
+
+function readPacketCloseoutRiskTier(repoRoot, packetPath, sourceRef) {
+  const resolvedPacketPath = resolvePacketMarkdownPath(repoRoot, packetPath, sourceRef);
+  if (!resolvedPacketPath) {
+    return null;
+  }
+  const content = fs.readFileSync(resolvedPacketPath, "utf8");
+  const matcher = /^-\s*Closeout risk tier\s*:\s*(.*)$/im;
+  const match = content.match(matcher);
+  return match ? normalizeCloseoutRiskTier(match[1]) : null;
+}
+
+function isLowRiskPlannerCloseoutApproved({ repoRoot, packetPath = null, sourceRef = null, workItem = null }) {
+  const runtimeTier = normalizeCloseoutRiskTier(workItem?.metadata?.closeoutRiskTier);
+  if (runtimeTier && LOW_RISK_CLOSEOUT_TIERS.has(runtimeTier)) {
+    return true;
+  }
+  const packetTier = readPacketCloseoutRiskTier(repoRoot, packetPath, sourceRef);
+  return Boolean(packetTier && LOW_RISK_CLOSEOUT_TIERS.has(packetTier));
 }
 
 function normalizePacketHeaderValue(value) {
@@ -1543,12 +1696,18 @@ function updateCanonicalTaskList({ repoRoot, plan, timestamp }) {
       Notes: `${plan.summary} ${plan.nextAction}`.trim()
     });
   } else {
-    content = updateMarkdownTableRow(content, "## Active Locks", "Task ID", plan.workItemId, {
+    content = upsertMarkdownTableRow(content, "## Active Locks", "Task ID", plan.workItemId, {
+      "Task ID": plan.workItemId,
+      Scope: plan.workItemTitle ?? plan.workItemId,
       Owner: plan.toOwner,
       Status: "active",
+      "Started At": timestamp.slice(0, 10),
       Notes: `${plan.transition}; gate ${plan.gateProfile}; ${plan.nextAction}`
     });
-    content = updateMarkdownTableRow(content, "## Active Tasks", "Task ID", plan.workItemId, {
+    content = upsertMarkdownTableRow(content, "## Active Tasks", "Task ID", plan.workItemId, {
+      "Task ID": plan.workItemId,
+      Title: plan.workItemTitle ?? plan.workItemId,
+      Scope: plan.workItemTitle ?? plan.workItemId,
       Owner: plan.toOwner,
       Status: plan.status,
       Verification: `gate ${plan.gateProfile}; ${plan.nextAction}`
@@ -1665,7 +1824,7 @@ function buildActivePacketStateBullet(plan) {
   if (isClosedStatus(plan.status)) {
     return `- \`${packetName}\` is closed with the latest handoff \`${plan.fromOwner ?? "unknown"} -> ${plan.toOwner}\`.`;
   }
-  return `- \`${packetName}\` is Ready For Code approved and in ${describeStageForPacket(plan.currentStage)}.`;
+  return `- \`${packetName}\` remains the active packet for scope boundary, human approval text, and audit evidence; live handoff is \`${plan.fromOwner ?? "unknown"} -> ${plan.toOwner}\`; live stage is ${describeStageForPacket(plan.currentStage)}.`;
 }
 
 function describeStageForPacket(currentStage) {

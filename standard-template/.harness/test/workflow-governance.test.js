@@ -9,8 +9,8 @@ import { createOperatingStateStore } from "../runtime/state/operating-state-stor
 import { workflowForOwner } from "../runtime/state/workflow-routing.js";
 import { createClock, seedStandardRepo, writeOpsPacket, writeStateSurfaces } from "./dev05-test-helpers.js";
 
-test("handoff routes designer owners to the design workflow contract", () => {
-  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "workflow-governance-handoff-designer-"));
+test("handoff ignores CURRENT_STATE-only route hints when canonical live authority is absent", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "workflow-governance-handoff-current-state-ignored-"));
   seedStandardRepo(repoRoot);
   const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
 
@@ -38,8 +38,10 @@ test("handoff routes designer owners to the design workflow contract", () => {
 
   const handoff = resolveHandoff({ repoRoot, dbPath, outputDir: repoRoot });
   assert.equal(handoff.ok, true);
-  assert.equal(handoff.workflow, ".agents/workflows/design.md");
-  assert.equal(handoff.workflowDetails?.role, "Designer");
+  assert.equal(handoff.resolvedBy, "default_planner");
+  assert.equal(handoff.currentStateNextAgent, "Designer resolving the UI evidence contract");
+  assert.equal(handoff.workflow, ".agents/workflows/plan.md");
+  assert.equal(handoff.workflowDetails?.role, "Planner");
   assert.deepEqual(handoff.workflowDetails?.missingSections, []);
 });
 

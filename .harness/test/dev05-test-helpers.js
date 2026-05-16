@@ -15,7 +15,8 @@ export function writeOpsPacket(
     readyForCode = "approved",
     packetTitle = "PKT-01 FLOW-01 Transition Test",
     workItemTitle = "FLOW-01 Reusable transition coverage",
-    manifestMarkers = null
+    manifestMarkers = null,
+    closeoutRiskTier = null
   }
 ) {
   const readyForCodeApproved = readyForCode === "approved";
@@ -77,6 +78,7 @@ export function writeOpsPacket(
     "- UX archetype reference: reference/artifacts/PRODUCT_UX_ARCHETYPE.md",
     "- Selected UX archetype: operator-console-context",
     `- Gate profile: ${gateProfile ?? "pending"}`,
+    ...(closeoutRiskTier ? [`- Closeout risk tier: ${closeoutRiskTier}`] : []),
     `- Verification manifest: ${includeManifest ? "contract evidence declared" : "pending"}`,
     "",
     manifest

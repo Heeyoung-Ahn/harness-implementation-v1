@@ -91,6 +91,8 @@ test("bootstrapHarnessProject downloads the standard-template tree from GitHub a
               { path: "standard-template/reference/manuals/HARNESS_MANUAL.md", type: "blob" },
               { path: "standard-template/package.json", type: "blob" },
               { path: "standard-template/.agents/scripts/init-project.js", type: "blob" },
+              { path: "standard-template/.agents/runtime/ACTIVE_CONTEXT.json", type: "blob" },
+              { path: "standard-template/.agents/runtime/ACTIVE_CONTEXT.md", type: "blob" },
               { path: "standard-template/.agents/runtime/generated-state-docs/CURRENT_STATE.md", type: "blob" },
               { path: "standard-template/.harness/operating_state.sqlite", type: "blob" }
             ]
@@ -113,6 +115,12 @@ test("bootstrapHarnessProject downloads the standard-template tree from GitHub a
       if (String(url).includes("standard-template/.agents/scripts/init-project.js")) {
         return new Response("console.log('init');\n", { status: 200 });
       }
+      if (String(url).includes("standard-template/.agents/runtime/ACTIVE_CONTEXT.json")) {
+        return new Response("{\"placeholder\":true}\n", { status: 200 });
+      }
+      if (String(url).includes("standard-template/.agents/runtime/ACTIVE_CONTEXT.md")) {
+        return new Response("# Placeholder\n", { status: 200 });
+      }
       throw new Error(`Unexpected fetch URL: ${url}`);
     },
     runInitializer: ({ targetDir, projectName, projectSlug, profiles }) => {
@@ -132,6 +140,8 @@ test("bootstrapHarnessProject downloads the standard-template tree from GitHub a
   assert.equal(result.authoritySelection, "release:v1.0.0");
   assert.equal(result.appliedFileCount, 5);
   assert.equal(fs.existsSync(path.join(repoRoot, ".harness", "operating_state.sqlite")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.json")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.md")), false);
   assert.equal(
     fs.existsSync(path.join(repoRoot, ".agents", "runtime", "generated-state-docs", "CURRENT_STATE.md")),
     false
@@ -151,6 +161,17 @@ test("bootstrapHarnessProject accepts a lightly initialized existing git repo ta
   fs.writeFileSync(path.join(localStarterRoot, "AGENTS.md"), "# Agents\n", "utf8");
   fs.mkdirSync(path.join(localStarterRoot, ".agents", "scripts"), { recursive: true });
   fs.writeFileSync(path.join(localStarterRoot, ".agents", "scripts", "init-project.js"), "console.log('init');\n", "utf8");
+  fs.mkdirSync(path.join(localStarterRoot, ".agents", "runtime"), { recursive: true });
+  fs.writeFileSync(
+    path.join(localStarterRoot, ".agents", "runtime", "ACTIVE_CONTEXT.json"),
+    "{\"placeholder\":true}\n",
+    "utf8"
+  );
+  fs.writeFileSync(
+    path.join(localStarterRoot, ".agents", "runtime", "ACTIVE_CONTEXT.md"),
+    "# Placeholder\n",
+    "utf8"
+  );
   fs.mkdirSync(path.join(localStarterRoot, ".agents", "runtime", "generated-state-docs"), { recursive: true });
   fs.writeFileSync(
     path.join(localStarterRoot, ".agents", "runtime", "generated-state-docs", "CURRENT_STATE.md"),
@@ -179,6 +200,8 @@ test("bootstrapHarnessProject accepts a lightly initialized existing git repo ta
   assert.equal(result.targetMode, "existing_local_repository_root");
   assert.equal(result.authoritySource, "local");
   assert.equal(fs.existsSync(path.join(repoRoot, "AGENTS.md")), true);
+  assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.json")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.md")), false);
   assert.equal(
     fs.existsSync(path.join(repoRoot, ".agents", "runtime", "generated-state-docs", "CURRENT_STATE.md")),
     false

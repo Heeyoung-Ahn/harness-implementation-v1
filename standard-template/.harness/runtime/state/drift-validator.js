@@ -5,6 +5,7 @@ import { ACTIVE_CONTEXT_JSON, ACTIVE_CONTEXT_MARKDOWN } from "./active-context.j
 import { AGENT_TRACES_DIR, VALIDATION_REPORT_JSON, resolveGeneratedDocReadPath } from "./harness-paths.js";
 import { CURRENT_STATE_DOC, TASK_LIST_DOC, calculateChecksum } from "./generate-state-docs.js";
 import { GATE_PROFILE_IDS, resolveGateProfile } from "./gate-profiles.js";
+import { looksLikeStarterPlaceholder } from "./init-project.js";
 import {
   RELEASE_BASELINE,
   ROOT_RELEASE_BASELINE_MARKERS,
@@ -15,7 +16,8 @@ import {
   findMissingWorkflowContractSections,
   prioritizeOpenWorkItems,
   selectActiveWorkItem,
-  resolveHandoffExecution
+  resolveHandoffExecution,
+  workflowForOwner
 } from "./workflow-routing.js";
 
 const REQUIRED_SECTIONS = {
@@ -567,6 +569,7 @@ export function validateGeneratedStateDocs({
   validateFreshness(store, findings);
   validateHarnessOwnedPaths(repoRoot, findings);
   validateStructuredTaskTruth(repoRoot, findings);
+  validateDerivedOperationalSurfaceConflicts({ store, repoRoot, findings });
   validateActiveProfiles(repoRoot, findings);
   validateProfileAwareContracts(repoRoot, findings);
   validateRegisteredTaskPackets(store, repoRoot, findings);
@@ -593,6 +596,65 @@ export function validateGeneratedStateDocs({
   };
 }
 
+export function inspectTaskPacketContract({
+  repoRoot = process.cwd(),
+  packetPath,
+  artifactId = null,
+  content = null
+} = {}) {
+  const findings = [];
+  if (!packetPath) {
+    findings.push({
+      code: "task_packet_missing",
+      severity: "warning",
+      packetPath: packetPath ?? null,
+      message: "Task packet semantic inspection requires packetPath."
+    });
+    return { ok: false, findings, header: null, fields: {} };
+  }
+
+  const resolvedPacketPath = path.resolve(repoRoot, packetPath);
+  const packetContent =
+    content ??
+    readRequiredUtf8File({
+      filePath: resolvedPacketPath,
+      findings,
+      missingCode: "task_packet_missing",
+      missingMessage: `Missing task packet artifact: ${packetPath}.`,
+      pathKey: "packetPath"
+    });
+  if (packetContent == null) {
+    return { ok: false, findings, header: null, fields: {} };
+  }
+
+  const artifact = {
+    artifactId: artifactId ?? path.basename(packetPath, path.extname(packetPath)),
+    path: packetPath
+  };
+  const header = parseQuickDecisionHeader(packetContent);
+  if (!header) {
+    findings.push({
+      code: "task_packet_header_missing",
+      severity: "warning",
+      artifactId: artifact.artifactId,
+      packetPath: artifact.path,
+      message: `${artifact.path} is missing the Quick Decision Header table required for task-packet validation.`
+    });
+    return { ok: false, findings, header: null, fields: {} };
+  }
+
+  const fields = parseBulletFields(packetContent);
+  validateTaskPacketHeader({ artifact, header, findings });
+  validateTaskPacketEvidence({ artifact, header, fields, content: packetContent, repoRoot, findings });
+
+  return {
+    ok: findings.every((finding) => finding.severity !== "error"),
+    findings,
+    header,
+    fields
+  };
+}
+
 function validateHarnessOwnedPaths(repoRoot, findings) {
   const packageJsonPath = path.resolve(repoRoot, "package.json");
   if (!fs.existsSync(packageJsonPath)) {
@@ -615,7 +677,7 @@ function validateHarnessOwnedPaths(repoRoot, findings) {
 
     findings.push({
       code: "harness_owned_path_missing",
-      severity: "error",
+      severity: "warning",
       path: relativePath,
       message: `Missing required harness-owned path ${relativePath}.`
     });
@@ -684,7 +746,7 @@ function validateStructuredTaskTruth(repoRoot, findings) {
     if (!content.includes(section)) {
       findings.push({
         code: "structured_task_table_missing",
-        severity: "error",
+        severity: "warning",
         path: TASK_LIST_PATH,
         section,
         message: `${TASK_LIST_PATH} is missing required section ${section}.`
@@ -726,6 +788,133 @@ function validateStructuredTaskTruth(repoRoot, findings) {
   }
 
   validateStructuredTaskConsistency(parsedTables, findings);
+}
+
+function validateDerivedOperationalSurfaceConflicts({ store, repoRoot, findings }) {
+  if (looksLikeStarterPlaceholder(repoRoot)) {
+    return;
+  }
+  validateCurrentStateOperationalAuthorityConflict({ store, repoRoot, findings });
+  validateTaskListOperationalAuthorityConflict({ store, repoRoot, findings });
+}
+
+function validateCurrentStateOperationalAuthorityConflict({ store, repoRoot, findings }) {
+  const currentStatePath = path.resolve(repoRoot, CURRENT_STATE_PATH);
+  if (!fs.existsSync(currentStatePath)) {
+    return;
+  }
+
+  const releaseState = store.getReleaseState("current");
+  const content = fs.readFileSync(currentStatePath, "utf8");
+  const snapshot = sliceSection(content, "## Snapshot");
+  const currentStage = readLabeledBulletValue(snapshot, "Current Stage");
+  const currentFocus = readLabeledBulletValue(snapshot, "Current Focus");
+  const nextRecommendedAgent = extractFirstValue(sliceSection(content, "## Next Recommended Agent"));
+  const handoffExecution = resolveHandoffExecution({
+    repoRoot,
+    workItems: store.listWorkItems(),
+    latestHandoff: store.listRecentHandoffs(1)[0] ?? null
+  });
+
+  if (
+    hasConcreteValue(currentStage, { allowUnknown: false }) &&
+    normalizeValue(currentStage) !== normalizeValue(releaseState?.currentStage ?? "unknown")
+  ) {
+    findings.push({
+      code: "current_state_operational_authority_conflict",
+      severity: "warning",
+      path: CURRENT_STATE_PATH,
+      field: "Current Stage",
+      message: `${CURRENT_STATE_PATH} Current Stage does not match canonical release state.`
+    });
+  }
+
+  if (
+    hasConcreteValue(currentFocus, { allowUnknown: false }) &&
+    normalizeValue(currentFocus) !== normalizeValue(releaseState?.currentFocus ?? "unknown")
+  ) {
+    findings.push({
+      code: "current_state_operational_authority_conflict",
+      severity: "warning",
+      path: CURRENT_STATE_PATH,
+      field: "Current Focus",
+      message: `${CURRENT_STATE_PATH} Current Focus does not match canonical release state.`
+    });
+  }
+
+  const expectedWorkflow = handoffExecution.workflow === "manual_selection_required" ? null : handoffExecution.workflow;
+  const declaredWorkflow = workflowForOwner(nextRecommendedAgent);
+  if (
+    hasConcreteValue(nextRecommendedAgent, { allowUnknown: false }) &&
+    handoffExecution.resolvedBy !== "default_planner" &&
+    expectedWorkflow &&
+    declaredWorkflow !== expectedWorkflow
+  ) {
+    findings.push({
+      code: "current_state_operational_authority_conflict",
+      severity: "warning",
+      path: CURRENT_STATE_PATH,
+      field: "Next Recommended Agent",
+      message: `${CURRENT_STATE_PATH} Next Recommended Agent does not match canonical live routing.`
+    });
+  }
+}
+
+function validateTaskListOperationalAuthorityConflict({ store, repoRoot, findings }) {
+  const taskListPath = path.resolve(repoRoot, TASK_LIST_PATH);
+  if (!fs.existsSync(taskListPath)) {
+    return;
+  }
+
+  const expectedActiveTask = selectActiveWorkItem(store.listWorkItems(), { repoRoot });
+  const content = fs.readFileSync(taskListPath, "utf8");
+  const activeTasksTable = parseMarkdownTable(sliceSection(content, "## Active Tasks"));
+  const activeTaskRows = taskRows(activeTasksTable?.rows ?? []);
+
+  if (!expectedActiveTask) {
+    if (activeTaskRows.length > 0) {
+      findings.push({
+        code: "task_list_operational_authority_conflict",
+        severity: "warning",
+        path: TASK_LIST_PATH,
+        message: `${TASK_LIST_PATH} records an active task even though canonical live state has no active work item.`
+      });
+    }
+    return;
+  }
+
+  const matchingRow = activeTaskRows.find((row) => normalizeValue(row["Task ID"] ?? "") === normalizeValue(expectedActiveTask.workItemId));
+  if (!matchingRow) {
+    return;
+  }
+
+  if (normalizeTaskStatus(matchingRow.Status) !== normalizeTaskStatus(expectedActiveTask.status)) {
+    findings.push({
+      code: "task_list_operational_authority_conflict",
+      severity: "warning",
+      path: TASK_LIST_PATH,
+      taskId: expectedActiveTask.workItemId,
+      field: "Status",
+      message: `${TASK_LIST_PATH} task ${expectedActiveTask.workItemId} status does not match canonical live state.`
+    });
+  }
+
+  const expectedOwnerWorkflow = workflowForOwner(expectedActiveTask.owner ?? "");
+  const declaredOwnerWorkflow = workflowForOwner(matchingRow.Owner);
+  if (
+    hasConcreteValue(matchingRow.Owner, { allowUnknown: false }) &&
+    expectedOwnerWorkflow !== "manual_selection_required" &&
+    declaredOwnerWorkflow !== expectedOwnerWorkflow
+  ) {
+    findings.push({
+      code: "task_list_operational_authority_conflict",
+      severity: "warning",
+      path: TASK_LIST_PATH,
+      taskId: expectedActiveTask.workItemId,
+      field: "Owner",
+      message: `${TASK_LIST_PATH} task ${expectedActiveTask.workItemId} owner does not match canonical live routing.`
+    });
+  }
 }
 
 function validateStructuredTaskConsistency(parsedTables, findings) {
@@ -826,6 +1015,42 @@ function parseMarkdownTable(sectionContent) {
 
 function parseMarkdownTableRow(line) {
   return line.split("|").slice(1, -1).map((cell) => cell.trim());
+}
+
+function extractFirstValue(sectionContent) {
+  if (!sectionContent) {
+    return null;
+  }
+
+  for (const rawLine of sectionContent.split("\n")) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("## ")) {
+      continue;
+    }
+    if (line.startsWith("- ")) {
+      return line.slice(2).trim();
+    }
+    return line;
+  }
+
+  return null;
+}
+
+function readLabeledBulletValue(sectionContent, label) {
+  if (!sectionContent) {
+    return null;
+  }
+
+  const matcher = new RegExp(`^-\\s*${escapeRegExp(label)}\\s*:\\s*(.*)$`, "i");
+  for (const rawLine of sectionContent.split("\n")) {
+    const line = rawLine.trim();
+    const match = line.match(matcher);
+    if (match) {
+      return match[1].trim();
+    }
+  }
+
+  return null;
 }
 
 function isMarkdownTableSeparator(cells) {
@@ -1459,7 +1684,10 @@ function validateGateProfileEvidence({ workItem, packetPath, content, header, ga
     return;
   }
 
-  const requiredMarkers = gateProfileEvidenceMarkers(gateProfile.id);
+  const requiredMarkers = gateProfileEvidenceMarkers(gateProfile.id, {
+    header,
+    fields: parseBulletFields(content)
+  });
   for (const marker of requiredMarkers) {
     if (manifest.toLowerCase().includes(marker.toLowerCase())) {
       continue;
@@ -1476,14 +1704,29 @@ function validateGateProfileEvidence({ workItem, packetPath, content, header, ga
   }
 }
 
-function gateProfileEvidenceMarkers(profileId) {
+function gateProfileEvidenceMarkers(profileId, options = {}) {
   const markers = {
     light: ["canonical artifact", "handoff"],
     standard: ["approved packet", "targeted test", "validator", "handoff"],
     contract: ["Ready For Code", "root", "standard-template", "targeted", "validator", "active context", "review closeout"],
     release: ["release-baseline", "packaging", "validator", "review closeout"]
   };
-  return markers[profileId] ?? [];
+  const resolvedMarkers = [...(markers[profileId] ?? [])];
+  const closeoutRiskTier = normalizeCloseoutRiskTier(
+    getFieldValue(options.fields ?? {}, "Closeout risk tier")
+  );
+  if (
+    profileId === "contract" &&
+    (closeoutRiskTier === "low-risk" || closeoutRiskTier === "low-risk-planner-closeout")
+  ) {
+    return resolvedMarkers.filter((marker) => marker !== "review closeout");
+  }
+  return resolvedMarkers;
+}
+
+function normalizeCloseoutRiskTier(value) {
+  const normalized = normalizeValue(value);
+  return normalized || null;
 }
 
 function validateRegisteredTaskPacket({ artifact, repoRoot, findings }) {

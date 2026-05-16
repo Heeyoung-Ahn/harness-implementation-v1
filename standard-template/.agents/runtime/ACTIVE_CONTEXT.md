@@ -5,7 +5,7 @@
 - 사람 확인용 보조 문서: .agents/runtime/ACTIVE_CONTEXT.md
 - 다음 workflow: .agents/workflows/plan.md
 - 선택된 lane: 현재 열린 작업 없음
-- 계약 digest: 5a2caa76f6680ef515c8e379f05b7efec3d660f581004ebf37bf75f4bac257a1
+- 계약 digest: 6fa353316c854f5cdb12b6f404adeebf640d1b3dcb868f8524b03dfb311bcd35
 
 ## 현재 작업
 - 단계: unknown
@@ -15,7 +15,7 @@
 - 작업: 현재 열린 작업 없음
 
 ## 다음 작업
-- 다음 담당: Planner
+- 다음 담당: planner
 - 다음 workflow: .agents/workflows/plan.md
 - route 상태: ready
 - 다음 행동: No active task is recorded. Review CURRENT_STATE and TASK_LIST.
@@ -25,9 +25,6 @@
 - .agents/artifacts/CURRENT_STATE.md
 - .agents/artifacts/TASK_LIST.md
 - .agents/artifacts/REQUIREMENTS.md
-- START_HERE.md
-- reference/planning/PLN-00_DEEP_INTERVIEW.md
-- reference/planning/PLN-01_REQUIREMENTS_FREEZE.md
 - .agents/artifacts/VALIDATION_REPORT.json
 
 ## 결정과 막힘
@@ -39,7 +36,7 @@
 
 ## 검증 상태
 - 통과 / gate pass / blocking 0개
-- 마지막 검증 시각: 2026-05-14T21:27:00.843Z
+- 마지막 검증 시각: 2026-05-16T09:25:51.110Z
 
 ## 출처
 - currentState: .agents/artifacts/CURRENT_STATE.md

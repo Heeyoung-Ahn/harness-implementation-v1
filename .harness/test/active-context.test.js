@@ -212,6 +212,67 @@ test("active context ignores a DB-open work item that canonical TASK_LIST alread
   );
 });
 
+test("active context does not import CURRENT_STATE must-read bullets into canonical AI re-entry routing", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "active-context-must-read-authority-"));
+  fs.mkdirSync(path.join(repoRoot, ".agents", "artifacts"), { recursive: true });
+  fs.mkdirSync(path.join(repoRoot, ".agents", "runtime", "generated-state-docs"), { recursive: true });
+  const store = createOperatingStateStore({
+    dbPath: path.join(repoRoot, ".harness", "operating_state.sqlite"),
+    now: clock("2026-05-16T09:30:00.000Z")
+  });
+
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "PLN-21 authority slice",
+    releaseGoal: "Keep AI re-entry sourced from canonical live state.",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+  store.upsertWorkItem({
+    workItemId: "PLN-21",
+    title: "Authority simplification",
+    status: "in_progress",
+    owner: "developer",
+    nextAction: "Implement slice 1.",
+    sourceRef: "reference/packets/PKT-01_PLN-21.md",
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  store.appendHandoff({
+    handoffId: "pln-21-dev",
+    handoffSummary: "Developer should implement slice 1.",
+    fromRole: "planner",
+    toRole: "developer",
+    sourceRef: "reference/packets/PKT-01_PLN-21.md",
+    payload: {
+      nextFirstAction: "Implement slice 1.",
+      requiredSsot: [
+        ".agents/artifacts/CURRENT_STATE.md",
+        ".agents/artifacts/TASK_LIST.md",
+        ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+        "reference/packets/PKT-01_PLN-21.md"
+      ]
+    }
+  });
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"),
+    [
+      "# Current State",
+      "",
+      "## Must Read Next",
+      "- `.agents/artifacts/REQUIREMENTS.md`",
+      "- `reference/manuals/HARNESS_MANUAL.md`"
+    ].join("\n"),
+    "utf8"
+  );
+
+  const context = buildActiveContext({ store, repoRoot });
+  store.close();
+
+  assert.equal(context.reentryContract.mustReadNext.includes("reference/manuals/HARNESS_MANUAL.md"), false);
+  assert.equal(context.reentryContract.mustReadNext.includes(".agents/artifacts/IMPLEMENTATION_PLAN.md"), true);
+});
+
 function clock(startIso) {
   let offset = 0;
   const base = Date.parse(startIso);

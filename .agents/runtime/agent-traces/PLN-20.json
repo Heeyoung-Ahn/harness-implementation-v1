@@ -1,29 +1,29 @@
 {
   "schemaVersion": "standard-harness-agent-trace/v1",
-  "workItemId": "OPS-25",
-  "packetId": "PKT-01_OPS-25_HARNESS_MANUAL_RECENT_WORK_RECONCILIATION",
-  "role": "reviewer",
-  "workflow": ".agents/workflows/review.md",
-  "turnClosedAt": "2026-05-15T09:57:32.318Z",
+  "workItemId": "PLN-20",
+  "packetId": "PKT-01_PLN-20_MAINTAINER_STARTER_BOUNDARY_AND_PAYLOAD_SEPARATION",
+  "role": "planner",
+  "workflow": ".agents/workflows/plan.md",
+  "turnClosedAt": "2026-05-16T08:25:21.525Z",
   "requiredSsot": [
     ".agents/artifacts/CURRENT_STATE.md",
     ".agents/artifacts/TASK_LIST.md",
     ".agents/artifacts/IMPLEMENTATION_PLAN.md",
-    "reference/packets/PKT-01_OPS-25_HARNESS_MANUAL_RECENT_WORK_RECONCILIATION.md"
+    "reference/packets/PKT-01_PLN-20_MAINTAINER_STARTER_BOUNDARY_AND_PAYLOAD_SEPARATION.md"
   ],
   "declaredReadEvidence": [
     ".agents/artifacts/REQUIREMENTS.md",
     ".agents/artifacts/ARCHITECTURE_GUIDE.md",
     ".agents/artifacts/IMPLEMENTATION_PLAN.md",
     ".agents/artifacts/PREVENTIVE_MEMORY.md",
-    "reference/packets/PKT-01_OPS-25_HARNESS_MANUAL_RECENT_WORK_RECONCILIATION.md",
+    "reference/packets/PKT-01_PLN-20_MAINTAINER_STARTER_BOUNDARY_AND_PAYLOAD_SEPARATION.md",
     ".agents/artifacts/VALIDATION_REPORT.json"
   ],
   "approvedDesignRefs": [
     ".agents/artifacts/REQUIREMENTS.md",
     ".agents/artifacts/ARCHITECTURE_GUIDE.md",
     ".agents/artifacts/IMPLEMENTATION_PLAN.md",
-    "reference/packets/PKT-01_OPS-25_HARNESS_MANUAL_RECENT_WORK_RECONCILIATION.md"
+    "reference/packets/PKT-01_PLN-20_MAINTAINER_STARTER_BOUNDARY_AND_PAYLOAD_SEPARATION.md"
   ],
   "implementationRefs": [],
   "verificationRefs": [
@@ -58,21 +58,21 @@
       "validation-context-parity"
     ],
     "sourceRefsResolved": true,
-    "validatorGateDecision": "hold",
+    "validatorGateDecision": "pass",
     "readyForCode": "approved",
     "contractStatus": "not-requested",
     "activationSource": "not declared"
   },
   "selfCheck": {
-    "findingCount": 3,
-    "blockingFindingCount": 3,
+    "findingCount": 0,
+    "blockingFindingCount": 0,
     "warningCount": 0
   },
   "handoff": {
-    "createdAt": "2026-05-15T09:57:32.063Z",
-    "fromRole": "planner",
-    "toRole": "reviewer",
-    "sourceRef": "reference/packets/PKT-01_OPS-25_HARNESS_MANUAL_RECENT_WORK_RECONCILIATION.md",
-    "summary": "[planner -> reviewer] Planner requests closeout review for the completed OPS-25 manual-only reconciliation scope."
+    "createdAt": "2026-05-16T08:25:21.255Z",
+    "fromRole": "reviewer",
+    "toRole": "planner",
+    "sourceRef": "reference/packets/PKT-01_PLN-20_MAINTAINER_STARTER_BOUNDARY_AND_PAYLOAD_SEPARATION.md",
+    "summary": "[reviewer -> planner] Reviewer approved PLN-20 slice 1 closeout after confirming the payload exclusion stayed inside scope, the regeneration contract is explicit, root/standard-template parity is preserved, and validation evidence is clean."
   }
 }
