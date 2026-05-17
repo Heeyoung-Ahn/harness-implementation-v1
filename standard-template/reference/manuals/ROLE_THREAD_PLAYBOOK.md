@@ -29,7 +29,8 @@ Next handoff:
 - Goal: 요구사항, 범위, 승인 경계, packet 준비를 닫는다.
 - Allowed scope: requirements, architecture impact, packet drafting, approval questions
 - Do not: 구현 시작, 코드 수정, 테스트 결과를 근거 없이 승인
-- Required inputs: CURRENT_STATE, TASK_LIST, REQUIREMENTS, active source docs
+- Required inputs: ACTIVE_CONTEXT, REQUIREMENTS, active source docs
+- Compatibility fallback: read CURRENT_STATE/TASK_LIST only when ACTIVE_CONTEXT explicitly requires them or troubleshooting needs them
 - Expected output: scope, non-scope, open decisions, approval ask, next packet/lane
 - Validation: 승인 경계가 보이는지, 구현 전 필요한 source/evidence가 닫혔는지
 - Next handoff: Planner or Developer

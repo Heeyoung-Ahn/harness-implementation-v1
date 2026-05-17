@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import {
   bootstrapHarnessProject,
@@ -11,6 +12,8 @@ import {
   resolveGithubAuthority,
   slugifyProjectName
 } from "../../installer/bootstrap-runtime.js";
+
+const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 
 test("slugifyProjectName normalizes a readable project name", () => {
   assert.equal(slugifyProjectName("WBMS Budget Suite"), "wbms-budget-suite");
@@ -91,13 +94,23 @@ test("bootstrapHarnessProject downloads the standard-template tree from GitHub a
               { path: "standard-template/reference/manuals/HARNESS_MANUAL.md", type: "blob" },
               { path: "standard-template/package.json", type: "blob" },
               { path: "standard-template/.agents/scripts/init-project.js", type: "blob" },
+              { path: "standard-template/.agents/artifacts/VALIDATION_REPORT.json", type: "blob" },
+              { path: "standard-template/.agents/artifacts/VALIDATION_REPORT.md", type: "blob" },
               { path: "standard-template/.agents/runtime/ACTIVE_CONTEXT.json", type: "blob" },
               { path: "standard-template/.agents/runtime/ACTIVE_CONTEXT.md", type: "blob" },
               { path: "standard-template/.agents/runtime/agent-traces/PLN-22.json", type: "blob" },
               { path: "standard-template/.agents/runtime/generated-state-docs/CURRENT_STATE.md", type: "blob" },
               { path: "standard-template/.agents/runtime/recovery-reports/context-repair.json", type: "blob" },
               { path: "standard-template/.agents/runtime/reports/CUTOVER_PREFLIGHT.md", type: "blob" },
-              { path: "standard-template/.harness/operating_state.sqlite", type: "blob" }
+              { path: "standard-template/.harness/operating_state.sqlite", type: "blob" },
+              { path: "standard-template/reference/artifacts/DECISION_LOG.md", type: "blob" },
+              { path: "standard-template/reference/artifacts/HANDOFF_ARCHIVE.md", type: "blob" },
+              { path: "standard-template/reference/artifacts/REVIEW_REPORT.md", type: "blob" },
+              { path: "standard-template/reference/artifacts/WALKTHROUGH.md", type: "blob" },
+              { path: "standard-template/reference/artifacts/daily/TEMPLATE.md", type: "blob" },
+              { path: "standard-template/reference/legacy/README.md", type: "blob" },
+              { path: "standard-template/reference/mockups/README.md", type: "blob" },
+              { path: "standard-template/reference/reports/README.md", type: "blob" }
             ]
           }),
           { status: 200 }
@@ -143,6 +156,8 @@ test("bootstrapHarnessProject downloads the standard-template tree from GitHub a
   assert.equal(result.authoritySelection, "release:v1.0.0");
   assert.equal(result.appliedFileCount, 5);
   assert.equal(fs.existsSync(path.join(repoRoot, ".harness", "operating_state.sqlite")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "artifacts", "VALIDATION_REPORT.json")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "artifacts", "VALIDATION_REPORT.md")), false);
   assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.json")), false);
   assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.md")), false);
   assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "agent-traces", "PLN-22.json")), false);
@@ -155,10 +170,48 @@ test("bootstrapHarnessProject downloads the standard-template tree from GitHub a
     false
   );
   assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "reports", "CUTOVER_PREFLIGHT.md")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, "reference", "artifacts", "DECISION_LOG.md")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, "reference", "artifacts", "HANDOFF_ARCHIVE.md")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, "reference", "artifacts", "REVIEW_REPORT.md")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, "reference", "artifacts", "WALKTHROUGH.md")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, "reference", "artifacts", "daily", "TEMPLATE.md")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, "reference", "legacy", "README.md")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, "reference", "mockups", "README.md")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, "reference", "reports", "README.md")), false);
   assert.equal(fs.existsSync(path.join(repoRoot, "README.md")), true);
   assert.equal(fs.existsSync(path.join(repoRoot, "reference", "manuals", "HARNESS_MANUAL.md")), true);
   assert.deepEqual(writtenWrappers, [repoRoot]);
   assert.equal(fetchLog.some((url) => String(url).includes("raw.githubusercontent.com")), true);
+});
+
+test("bootstrapHarnessProject succeeds against the actual local standard-template source", async () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "bootstrap-actual-local-"));
+  fs.rmSync(repoRoot, { recursive: true, force: true });
+  const localStarterRoot = detectStarterSource();
+
+  const result = await bootstrapHarnessProject({
+    projectName: "Actual Local Starter Bootstrap",
+    targetDir: repoRoot,
+    profiles: [],
+    userGoal: "사용자가 실제 source starter로 새 프로젝트를 연다.",
+    opsGoal: "운영자가 local authority bootstrap 결과를 복원한다.",
+    approvalGoal: "PLN-00과 PLN-01을 닫아 첫 구현 lane을 연다.",
+    authoritySource: "local",
+    localStarterRoot,
+    writeWrappers: () => {}
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.json")), true);
+  assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "artifacts", "VALIDATION_REPORT.json")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, "reference", "artifacts", "DECISION_LOG.md")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, "reference", "artifacts", "HANDOFF_ARCHIVE.md")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, "reference", "artifacts", "REVIEW_REPORT.md")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, "reference", "artifacts", "WALKTHROUGH.md")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, "reference", "artifacts", "daily", "TEMPLATE.md")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, "reference", "legacy", "README.md")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, "reference", "mockups", "README.md")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, "reference", "reports", "README.md")), false);
 });
 
 test("bootstrapHarnessProject accepts a lightly initialized existing git repo target", async () => {
@@ -223,6 +276,8 @@ test("bootstrapHarnessProject accepts a lightly initialized existing git repo ta
   assert.equal(result.targetMode, "existing_local_repository_root");
   assert.equal(result.authoritySource, "local");
   assert.equal(fs.existsSync(path.join(repoRoot, "AGENTS.md")), true);
+  assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "artifacts", "VALIDATION_REPORT.json")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "artifacts", "VALIDATION_REPORT.md")), false);
   assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.json")), false);
   assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.md")), false);
   assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "agent-traces", "PLN-22.json")), false);
@@ -236,4 +291,21 @@ test("bootstrapHarnessProject accepts a lightly initialized existing git repo ta
   );
   assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "reports", "CUTOVER_PREFLIGHT.md")), false);
   assert.equal(fs.existsSync(path.join(repoRoot, ".harness", "operating_state.sqlite")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, "reference", "artifacts", "DECISION_LOG.md")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, "reference", "artifacts", "HANDOFF_ARCHIVE.md")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, "reference", "artifacts", "REVIEW_REPORT.md")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, "reference", "artifacts", "WALKTHROUGH.md")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, "reference", "artifacts", "daily", "TEMPLATE.md")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, "reference", "legacy", "README.md")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, "reference", "mockups", "README.md")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, "reference", "reports", "README.md")), false);
 });
+
+function detectStarterSource() {
+  const repoRoot = path.resolve(TEST_DIR, "..", "..");
+  const nestedStarter = path.join(repoRoot, "standard-template");
+  if (fs.existsSync(path.join(nestedStarter, "AGENTS.md"))) {
+    return nestedStarter;
+  }
+  return repoRoot;
+}

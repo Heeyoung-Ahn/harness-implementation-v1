@@ -123,7 +123,7 @@ AI에게는 어디를 먼저 읽어야 하는지, 어떤 문서를 정본으로 
 
 1. `ACTIVE_CONTEXT`를 먼저 본다.
 2. `CURRENT_STATE.md`와 `TASK_LIST.md`는 `ACTIVE_CONTEXT`가 명시적으로 요구하거나 fallback/troubleshooting이 필요할 때만 본다.
-3. starter를 방금 복사한 직후라면 `ACTIVE_CONTEXT.*`가 아직 없을 수 있으니 `harness:init` 또는 `harness:context` 이후 다시 본다.
+3. starter를 방금 복사한 직후라면 `ACTIVE_CONTEXT.*`와 `VALIDATION_REPORT.*`가 아직 없을 수 있고, `CURRENT_STATE.md`와 `TASK_LIST.md`는 starter placeholder일 수 있으니 `harness:init` 또는 `harness:context` 이후 다시 본다.
 4. 지금 작업에 packet이 필요한지 확인한다.
 5. 구현이나 문서 변경이면 `Ready For Code`가 있는지 확인한다.
 6. 지금 역할이 Planner, Developer, Tester, Reviewer 중 무엇인지 확인한다.
@@ -336,9 +336,9 @@ flowchart TD
 | `reference/profiles/*` | 특정 프로젝트 유형용 선택 규칙 | profile을 켤 때 |
 | `reference/artifacts/PROJECT_STARTER_DOC_PACK.md` | 프로젝트 시작 질문지 | 새 프로젝트 시작 시 |
 | `reference/artifacts/VERIFICATION_SCENARIO_TEMPLATE.md` | 검증 시나리오 틀 | packet 검증 기준 작성 시 |
-| `reference/artifacts/WALKTHROUGH.md` | Tester walkthrough 기준 | walkthrough와 재현 순서를 정리할 때 |
+| `reference/artifacts/WALKTHROUGH.md` | Tester walkthrough 기준 | walkthrough와 재현 순서를 정리할 때. fresh starter에는 없을 수 있으니 첫 test/review 시 생성 |
 | `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md` | Reviewer closeout 기준 | reviewer/closeout 준비 시 |
-| `reference/artifacts/REVIEW_REPORT.md` | Reviewer findings와 closeout 기록 | reviewer 결과를 확인할 때 |
+| `reference/artifacts/REVIEW_REPORT.md` | Reviewer findings와 closeout 기록 | reviewer 결과를 확인할 때. fresh starter에는 없을 수 있으니 첫 review 시 생성 |
 | `reference/manuals/ROLE_THREAD_PLAYBOOK.md` | role/thread 시작 가이드 | 새 AI thread를 열 때 |
 | `reference/manuals/AUTOMATION_CATALOG.md` | 자동화 선택 가이드 | 반복 점검을 예약할 때 |
 | `reference/manuals/CLOUD_LOCAL_MERGE_PLAYBOOK.md` | cloud/local 병렬 작업 가이드 | cloud나 별도 worktree 병렬 작업을 쓸 때 |
@@ -351,7 +351,8 @@ flowchart TD
 - `reference/*`는 설명, 템플릿, evidence, packet history를 담는 보조 자료다.
 - 다만 active packet이나 approved source는 해당 작업에서 필수 입력이 될 수 있다.
 - generated surface가 이상하면 generated file을 고치지 말고 정본과 상태를 먼저 맞춘다.
-- maintainer repo 안 starter payload에는 재사용을 위해 shared runtime/test가 함께 들어갈 수 있다.
+- starter source는 fresh pre-init 상태를 유지해야 한다. copied starter에 필요한 generated output은 init/context/validation 명령으로 다시 만든다.
+- fresh starter는 `DECISION_LOG.md`, `HANDOFF_ARCHIVE.md`, `REVIEW_REPORT.md`, `WALKTHROUGH.md`, `reference/artifacts/daily/*`를 기본 탑재하지 않을 수 있다. 이 문서들은 첫 review, first handoff archive, daily note가 실제로 필요할 때 프로젝트 안에 생성한다.
 - 설치된 프로젝트에서는 `README.md`, `START_HERE.md`, 현재 repo의 validator 결과를 기준으로 보고, 존재하지 않는 `installer/`, `packaging/`, `standard-template/` maintainer 경로까지 운영자가 따라가지는 않는다.
 
 ## 5. 프로젝트 시작 절차
@@ -997,8 +998,9 @@ CLOUD_LOCAL_MERGE_PLAYBOOK 기준으로 cloud에서 할 범위, 로컬에 남길
 ### Q. copied starter에 `ACTIVE_CONTEXT.json`이나 `.md`가 없다
 - installable starter payload는 generated `ACTIVE_CONTEXT.*`를 싣지 않는다.
 - 새 프로젝트 루트로 복사한 뒤 `npm run harness:init` 또는 `npm run harness:context`를 실행하면 현재 프로젝트 기준으로 다시 생성된다.
-- init/context 전에는 `START_HERE.md`와 실행 직후 validator 결과를 우선해서 본다.
-- compatibility placeholder가 남아 있다면 `CURRENT_STATE.md`와 `TASK_LIST.md`는 bootstrap fallback으로만 참고한다.
+- init/context 전에는 `START_HERE.md`와 starter placeholder `CURRENT_STATE.md` / `TASK_LIST.md`를 bootstrap fallback으로만 참고한다.
+- 첫 `VALIDATION_REPORT.*`도 init 뒤 `npm run harness:validation-report`를 실행할 때 생성되는 것이 정상이다.
+- `REVIEW_REPORT.md`, `WALKTHROUGH.md`, `HANDOFF_ARCHIVE.md`, `DECISION_LOG.md`, `reference/artifacts/daily/*`도 first use 시점에 직접 만들면 된다.
 
 ### Q. validator에서 FAIL이 나온다
 - 가장 위 finding부터 읽는다.
@@ -1006,12 +1008,14 @@ CLOUD_LOCAL_MERGE_PLAYBOOK 기준으로 cloud에서 할 범위, 로컬에 남길
 - generated file을 직접 고치지 말고 정본 문서와 packet을 먼저 본다.
 
 ### Q. 어떤 profile을 켜야 할지 모르겠다
-- 현재 shipped baseline에서 바로 쓰는 승인 catalog는 `PRF-04`부터 `PRF-09`까지다.
+- 현재 shipped baseline에서 바로 쓰는 승인 catalog는 `PRF-01`부터 `PRF-09`까지다.
+- 표/그리드 중심이면 `PRF-01`을 검토한다.
+- spreadsheet가 authoritative source라면 `PRF-02`를 검토한다.
+- airgapped delivery라면 `PRF-03`을 검토한다.
 - 가벼운 앱이면 `PRF-07` 또는 `PRF-09`부터 생각한다.
 - 기존 Excel/VBA/MariaDB 대체면 `PRF-04`를 검토한다.
 - Python/Django backoffice면 `PRF-05`를 검토한다.
 - 승인/권한/감사가 핵심이면 `PRF-06`을 먼저 본다.
-- 표/그리드 중심, spreadsheet authoritative source, airgapped delivery처럼 `PRF-01`~`PRF-03`류가 필요해 보이면 현재 baseline에 실제 승인·활성된 catalog인지 Planner가 먼저 확인한다.
 - 승인/권한/감사가 핵심이면 관련 profile과 packet evidence를 Planner가 먼저 닫는다.
 
 ### Q. packet이 너무 복잡해 보인다

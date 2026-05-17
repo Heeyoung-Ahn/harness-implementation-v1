@@ -80,6 +80,24 @@ test("initializes a copied starter repo and seeds active-context-ready state", (
   assert.match(activeContextMarkdown, /# 활성 컨텍스트/);
 });
 
+test("actual standard-template source is already a fresh starter seed", () => {
+  const repoRoot = copyStarterRepo({ reset: false });
+
+  const result = initializeProjectStarter({
+    repoRoot,
+    projectName: "Fresh Source Starter",
+    userGoal: "사용자가 starter source 그대로 kickoff를 시작한다.",
+    opsGoal: "운영자와 AI가 fresh starter 기준으로 재진입한다.",
+    approvalGoal: "PLN-00과 PLN-01을 닫아 첫 구현 lane을 연다.",
+    activeProfiles: [],
+    now: createClock("2026-05-17T04:00:00.000Z")
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.json")), true);
+  assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "artifacts", "VALIDATION_REPORT.json")), false);
+});
+
 test("refuses to reinitialize an already-edited repo without force", () => {
   const repoRoot = copyStarterRepo();
   const currentStatePath = path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md");
@@ -102,11 +120,13 @@ test("refuses to reinitialize an already-edited repo without force", () => {
   );
 });
 
-function copyStarterRepo() {
+function copyStarterRepo({ reset = true } = {}) {
   const sourceRoot = detectStarterSource();
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "standard-harness-init-"));
   fs.cpSync(sourceRoot, repoRoot, { recursive: true });
-  resetCopiedStarterToFreshState(repoRoot);
+  if (reset) {
+    resetCopiedStarterToFreshState(repoRoot);
+  }
   return repoRoot;
 }
 

@@ -22,12 +22,13 @@
 ## 2. 가장 먼저 할 일
 
 1. 가능하면 상위 저장소의 installer로 새 프로젝트를 생성한다.
-2. 수동 설치라면 새 프로젝트 레포 루트에 `standard-template/` 내용물을 복사한다.
+2. 수동 설치라면 새 프로젝트 레포 루트에 starter payload 내용물을 복사한다.
 3. Node.js 24 이상이 설치되어 있는지 확인한다.
 4. 프로젝트 루트에서 [INIT_STANDARD_HARNESS.cmd](INIT_STANDARD_HARNESS.cmd)를 실행한다.
 5. 화면에 나오는 질문에 맞게 `프로젝트 이름`, `사용자 목표`, `운영 목표`, `첫 승인 목표`, `active profile`을 입력한다.
 
-초기화가 끝나면 starter placeholder, repo-local DB, generated docs가 프로젝트 기준으로 바뀐다.
+초기화가 끝나면 starter placeholder, repo-local DB, generated docs가 프로젝트 기준으로 바뀐다. init 전에는 `CURRENT_STATE.md`와 `TASK_LIST.md`가 starter placeholder일 수 있고, `ACTIVE_CONTEXT.*`나 `VALIDATION_REPORT.*`가 아직 없어도 정상이다.
+`DECISION_LOG.md`, `HANDOFF_ARCHIVE.md`, `REVIEW_REPORT.md`, `WALKTHROUGH.md`, `reference/artifacts/daily/*`가 없는 것도 fresh starter에서는 정상이다.
 
 `INIT_STANDARD_HARNESS.cmd`를 쓰기 어렵다면 `npm run harness:init`를 실행해도 된다. 전체 운영 기준과 재진입 기준은 `reference/manuals/HARNESS_MANUAL.md`를 본다.
 
@@ -52,15 +53,35 @@
 
 `ACTIVE_CONTEXT.md`가 아직 없다면 `npm run harness:init` 또는 `npm run harness:context`를 먼저 실행한다.
 
+## 3A. 다운스트림 실제 프로젝트 생성 체크리스트
+
+1. 빈 폴더 또는 비어 있는 git repo 루트를 준비한다.
+2. installer 또는 starter payload로 하네스를 복사한다.
+3. Node.js 24 이상을 확인한다.
+4. `INIT_STANDARD_HARNESS.cmd` 또는 `npm run harness:init`를 실행한다.
+5. `npm run harness:status`로 `PLN-00` kickoff 상태가 열렸는지 확인한다.
+6. `PLN-00_DEEP_INTERVIEW.md` 기준으로 사용자 목표, 운영 목표, 승인 경계, 기존 시스템 여부를 채운다.
+7. `.agents/artifacts/REQUIREMENTS.md`를 프로젝트 내용으로 바꾼다.
+8. `PLN-01_REQUIREMENTS_FREEZE.md`로 requirements freeze 범위를 닫는다.
+9. 필요한 profile만 `ACTIVE_PROFILES.md`와 packet에서 명시적으로 활성화한다.
+10. requirements freeze 전에는 구현 packet을 열지 않는다.
+11. 첫 구현 직전 `reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md`로 실제 packet을 만든다.
+12. reviewer closeout, handoff archive, daily note가 실제로 필요해질 때만 `REVIEW_REPORT.md`, `WALKTHROUGH.md`, `HANDOFF_ARCHIVE.md`, `DECISION_LOG.md`, `reference/artifacts/daily/*`를 만든다.
+
 ## 4. 처음에는 열지 않아도 되는 것
 
 - `.harness/runtime/*`
 - `.harness/test/*`
 - `.agents/runtime/*`
 - `reference/skills/*`
-- `reference/mockups/*`
-- `reference/reports/*`
-- `reference/legacy/*`
+- task가 실제로 요구할 때만 만드는 `reference/artifacts/DECISION_LOG.md`
+- task가 실제로 요구할 때만 만드는 `reference/artifacts/HANDOFF_ARCHIVE.md`
+- task가 실제로 요구할 때만 만드는 `reference/artifacts/REVIEW_REPORT.md`
+- task가 실제로 요구할 때만 만드는 `reference/artifacts/WALKTHROUGH.md`
+- task가 실제로 요구할 때만 만드는 `reference/artifacts/daily/*`
+- task가 요구할 때만 직접 만드는 `reference/mockups/*`
+- task가 요구할 때만 직접 만드는 `reference/reports/*`
+- 과거 자료를 따로 보관할 때만 만드는 `reference/legacy/*`
 
 이 폴더들은 필요할 때만 본다. kickoff 직후에는 대부분 안 봐도 된다.
 

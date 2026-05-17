@@ -1,23 +1,18 @@
 # Task List
 
-> Generated compatibility view. Authoritative live routing stays in the operational DB plus `.agents/runtime/ACTIVE_CONTEXT.json`.
-
 ## Current Release Target
-- No current release target has been recorded.
-- Generated At: 2026-05-17T02:41:33.382Z
-- Active work item count: 0
+- Close the kickoff baseline so the first approved project packet can open safely
 
 ## Active Locks
 | Task ID | Scope | Owner | Status | Started At | Notes |
 |---|---|---|---|---|---|
-| - | None | - | clear | - | - |
+| - | None | - | clear | - | Starter is waiting for initialization. |
 
 ## Active Tasks
 | Task ID | Title | Scope | Owner | Status | Priority | Depends On | Verification |
 |---|---|---|---|---|---|---|---|
-| - | None | - | - | clear | - | - | - |
-- Next first action: Planner should choose the next approved lane and open the next packet only after human agreement.
-- Generated compatibility fallback only; regenerate rather than editing this file manually.
+| BOOT-00 | Initialize copied starter | starter bootstrap | project operator | starter_pending | P0 | `INIT_STANDARD_HARNESS.cmd` or `npm run harness:init` | generated docs and validation guidance |
+- Run `INIT_STANDARD_HARNESS.cmd` or `npm run harness:init` before real work begins.
 
 ## Blocked Tasks
 | Task ID | Blocker | Owner | Status | Unblock Condition | Verification |
@@ -30,4 +25,4 @@
 | - | None | - | - | - |
 
 ## Handoff Log
-- none
+- No handoff has been recorded yet.

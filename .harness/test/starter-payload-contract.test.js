@@ -16,8 +16,7 @@ test("starter payload contract classifies required, conditional, and removable s
   assert.equal(classifyStarterPayloadPath("README.md"), "conditional");
   assert.equal(classifyStarterPayloadPath("START_HERE.md"), "conditional");
   assert.equal(classifyStarterPayloadPath("reference/manuals/HARNESS_MANUAL.md"), "conditional");
-  assert.equal(classifyStarterPayloadPath("reference/artifacts/WALKTHROUGH.md"), "conditional");
-  assert.equal(classifyStarterPayloadPath("reference/artifacts/REVIEW_REPORT.md"), "conditional");
+  assert.equal(classifyStarterPayloadPath("reference/README.md"), "conditional");
 
   assert.equal(classifyStarterPayloadPath("HARNESS_MANUAL.md"), "removable");
   assert.equal(classifyStarterPayloadPath(".harness/operating_state.sqlite"), "removable");
@@ -28,13 +27,18 @@ test("starter payload contract classifies required, conditional, and removable s
   assert.equal(classifyStarterPayloadPath(".agents/runtime/generated-state-docs/CURRENT_STATE.md"), "removable");
   assert.equal(classifyStarterPayloadPath(".agents/runtime/recovery-reports/context-repair.json"), "removable");
   assert.equal(classifyStarterPayloadPath(".agents/runtime/reports/CUTOVER_PREFLIGHT.json"), "removable");
+  assert.equal(classifyStarterPayloadPath("reference/artifacts/WALKTHROUGH.md"), "removable");
+  assert.equal(classifyStarterPayloadPath("reference/artifacts/REVIEW_REPORT.md"), "removable");
+  assert.equal(classifyStarterPayloadPath("reference/artifacts/DECISION_LOG.md"), "removable");
+  assert.equal(classifyStarterPayloadPath("reference/artifacts/HANDOFF_ARCHIVE.md"), "removable");
+  assert.equal(classifyStarterPayloadPath("reference/artifacts/daily/TEMPLATE.md"), "removable");
 });
 
 test("starter payload contract includes required and conditional surfaces but excludes removable clutter", () => {
   assert.equal(shouldIncludeStarterPayloadPath("AGENTS.md"), true);
   assert.equal(shouldIncludeStarterPayloadPath("README.md"), true);
   assert.equal(shouldIncludeStarterPayloadPath("reference/manuals/HARNESS_MANUAL.md"), true);
-  assert.equal(shouldIncludeStarterPayloadPath("reference/artifacts/WALKTHROUGH.md"), true);
+  assert.equal(shouldIncludeStarterPayloadPath("reference/README.md"), true);
   assert.equal(shouldIncludeStarterPayloadPath("HARNESS_MANUAL.md"), false);
   assert.equal(shouldIncludeStarterPayloadPath(".harness/operating_state.sqlite"), false);
   assert.equal(shouldIncludeStarterPayloadPath(".agents/runtime/ACTIVE_CONTEXT.json"), false);
@@ -43,6 +47,9 @@ test("starter payload contract includes required and conditional surfaces but ex
   assert.equal(shouldIncludeStarterPayloadPath(".agents/runtime/generated-state-docs/TASK_LIST.md"), false);
   assert.equal(shouldIncludeStarterPayloadPath(".agents/runtime/recovery-reports/latest-context-repair.json"), false);
   assert.equal(shouldIncludeStarterPayloadPath(".agents/runtime/reports/CUTOVER_PREFLIGHT.md"), false);
+  assert.equal(shouldIncludeStarterPayloadPath("reference/artifacts/WALKTHROUGH.md"), false);
+  assert.equal(shouldIncludeStarterPayloadPath("reference/artifacts/REVIEW_REPORT.md"), false);
+  assert.equal(shouldIncludeStarterPayloadPath("reference/artifacts/daily/TEMPLATE.md"), false);
 });
 
 test("starter payload contract documents the slice-4 manifest categories", () => {
