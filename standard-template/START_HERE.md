@@ -32,6 +32,49 @@
 
 `INIT_STANDARD_HARNESS.cmd`를 쓰기 어렵다면 `npm run harness:init`를 실행해도 된다. 전체 운영 기준과 재진입 기준은 `reference/manuals/HARNESS_MANUAL.md`를 본다.
 
+## 2B. `INIT_STANDARD_HARNESS.cmd`에서 무엇을 물어보나
+
+초기화 질문은 보통 6개다. `[]` 안은 기본값이고, 그대로 쓰려면 `Enter`만 누르면 된다.
+
+1. `Project name [현재 폴더명]`
+2. `Project slug [project-name을 kebab-case로 바꾼 값]`
+3. `User goal [프로젝트 사용자가 지금 판단해야 하는 핵심 문제를 빠르게 해결한다.]`
+4. `Operator goal [프로젝트 운영 상태와 다음 행동을 CLI와 Active Context에서 빠르게 복원한다.]`
+5. `Approval goal [PLN-00과 PLN-01을 닫아 첫 구현 lane을 연다.]`
+6. `Active profiles [none]`
+
+권장 답변 방식은 아래처럼 생각하면 된다.
+
+- `Project name`: 사람이 읽는 실제 프로젝트 이름. 예: `재고 승인 시스템`
+- `Project slug`: 특별한 이유가 없으면 기본값 유지
+- `User goal`: 최종사용자가 얻어야 하는 핵심 효과를 한 줄로 입력
+- `Operator goal`: 운영자가 상태와 다음 행동을 어떻게 복원해야 하는지 한 줄로 입력
+- `Approval goal`: 특별한 사유가 없으면 기본값 유지
+- `Active profiles`: 모르면 `none`, 가벼운 웹앱은 보통 `PRF-07` 또는 `PRF-09`
+
+`Active profiles`에는 `PRF-01`부터 `PRF-09`까지의 id를 쉼표로 넣을 수 있다. 예: `PRF-07,PRF-09`
+
+초기화 시점에 고를 수 있는 profile은 아래와 같다.
+
+- `PRF-01`: 운영자용 표/그리드 화면이 많은 프로젝트
+- `PRF-02`: 엑셀/스프레드시트가 사실상 기준 문서인 프로젝트
+- `PRF-03`: 폐쇄망, 수동 반입, 파일 전달 절차가 있는 프로젝트
+- `PRF-04`: Excel/VBA/MariaDB 기반 기존 업무시스템을 웹앱으로 대체하는 프로젝트
+- `PRF-05`: Python/Django backoffice 구조로 구현하는 프로젝트
+- `PRF-06`: 상태전이, 승인, 권한, 감사가 핵심인 workflow/approval 프로젝트
+- `PRF-07`: 가벼운 웹앱, 단순 내부 도구, 작은 앱처럼 전체 업무시스템 게이트가 과한 프로젝트
+- `PRF-08`: Android native 앱, Gradle/AGP, signing, permissions, device test, release channel이 필요한 프로젝트
+- `PRF-09`: Node.js, frontend, SPA/SSR/static web app처럼 package/build/test/deploy 경계가 필요한 프로젝트
+
+빠르게 고르려면 아래 기준으로 보면 된다.
+
+- 해당 없음 또는 아직 판단 전: `none`
+- 가벼운 내부 웹앱: `PRF-07`
+- React/Vue/Next 같은 웹 프론트엔드: `PRF-09`
+- 결재/승인 흐름이 강함: `PRF-06` 추가
+- 기존 Excel/VBA 업무를 대체: `PRF-04` 추가
+- Android 앱: `PRF-08`
+
 ## 2A. 이 문서로 어디까지 하면 되나
 
 아래 네 가지가 되면 이 문서의 역할은 끝난다.
