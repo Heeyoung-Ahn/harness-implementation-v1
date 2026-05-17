@@ -2,6 +2,40 @@
 
 Use this artifact to record verification evidence and manual test results.
 
+## 2026-05-18 PLN-25 Long-Context Re-entry And Implementation-Plan Rebaseline Tester Verification
+
+- Scope: tester verification for approved `PLN-25` after the `developer -> tester` handoff.
+- Environment: local maintainer workspace on Windows PowerShell.
+- Tested scope:
+  - `IMPLEMENTATION_PLAN.md` rebaseline into a short implementation-only plan surface
+  - durable history migration into `.agents/artifacts/PROJECT_HISTORY.md`
+  - reusable workflow/runtime/test contract narrowing for default AI read paths
+  - maintainer runtime/state architecture map coverage
+  - root / `standard-template` parity for reusable workflow, runtime, test, manual, and route-matrix surfaces
+- Evidence:
+  - root full suite:
+    - `npm.cmd test`: `100/100 pass`
+  - `standard-template` full suite:
+    - `npm.cmd test`: `90/90 pass`
+  - root validation evidence:
+    - `node .harness/runtime/state/dev05-cli.js validate`: `ok: true`, findings `[]`
+    - `node .harness/runtime/state/dev05-cli.js validation-report`: gate decision `pass`, findings `[]`
+    - `node .harness/runtime/state/dev05-cli.js context`: active task `PLN-25`, owner `tester`, workflow `.agents/workflows/test.md`
+    - `node .harness/runtime/state/dev05-cli.js status`: stage `verification`, next owner `tester`
+  - reusable contract evidence:
+    - Developer / Tester / Reviewer workflows in root and `standard-template` now read `ACTIVE_CONTEXT` first, with `IMPLEMENTATION_PLAN.md` reduced to conditional plan-level use.
+    - handoff payloads are now role-specific and no longer force `CURRENT_STATE.md`, `TASK_LIST.md`, or full-plan rereads into every default baton.
+    - compatibility generated docs now expand from workflow `Read First` and handoff-required SSOT instead of appending broad plan/history surfaces by default.
+    - root `IMPLEMENTATION_PLAN.md` is now a concise implementation plan; long dated history moved to `.agents/artifacts/PROJECT_HISTORY.md`.
+    - `reference/manuals/HARNESS_MANUAL.md` and `reference/artifacts/HARNESS_FILE_ROUTE_AUDIT_MATRIX.md` were updated and mirrored into `standard-template`.
+  - maintainer architecture evidence:
+    - `reference/artifacts/maintenance/ROOT_STANDARD_HARNESS_MAINTENANCE_MAP.md` now documents `.harness/runtime/state/*` module ownership and write surfaces.
+- Untested scope:
+  - no release packaging, installer channel, or destructive artifact retirement work was tested because `PLN-25` is a reusable governance/runtime cleanup lane only.
+- Result: tester verification passed for `PLN-25`. No tester-discovered remediation item remains inside the approved scope.
+- Handoff:
+  - Reviewer should assess closeout readiness, evidence sufficiency, reusable parity, and whether the re-entry/read-path behavior now matches the approved packet.
+
 ## 2026-05-17 PLN-23 Cutover Execution Tester Verification
 
 - Scope: tester verification for approved `PLN-23` root cutover execution after Developer handoff.

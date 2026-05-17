@@ -23,15 +23,15 @@
 - Do not close human approval checkpoints on behalf of the user.
 
 ## Must Read SSOT
-- `.agents/artifacts/CURRENT_STATE.md`
-- `.agents/artifacts/TASK_LIST.md`
 - `.agents/artifacts/REQUIREMENTS.md`
+- active packet and approved source artifacts when the planning route depends on them
 
 ## Read First
 - `.agents/runtime/ACTIVE_CONTEXT.json`
 - `.agents/artifacts/REQUIREMENTS.md`
 
 ## Conditional Supporting References
+- Use `.agents/artifacts/CURRENT_STATE.md` and `.agents/artifacts/TASK_LIST.md` only when `ACTIVE_CONTEXT.reentryContract.mustReadNext`, packet evidence, or troubleshooting needs the compatibility view.
 - Use `reference/artifacts/PROJECT_STARTER_DOC_PACK.md` when starting a new project, reopening kickoff scope, or checking whether project purpose, roles, workflows, scope, screens, data, permissions, tests, deployment, and operations are defined before implementation.
 - Use `reference/artifacts/VERIFICATION_SCENARIO_TEMPLATE.md` when defining packet acceptance or verification expectations.
 - Use `reference/manuals/ROLE_THREAD_PLAYBOOK.md` when splitting work across role-scoped AI threads.

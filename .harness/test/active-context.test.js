@@ -52,7 +52,8 @@ test("active context writes compact JSON and Korean Markdown re-entry state with
   assert.equal(result.context.reentryContract.firstRead, ".agents/runtime/ACTIVE_CONTEXT.json");
   assert.equal(result.context.reentryContract.mustReadNext.includes(".agents/artifacts/CURRENT_STATE.md"), false);
   assert.equal(result.context.reentryContract.mustReadNext.includes(".agents/artifacts/TASK_LIST.md"), false);
-  assert.equal(result.context.nextWork.requiredSsot.includes(".agents/artifacts/IMPLEMENTATION_PLAN.md"), true);
+  assert.equal(result.context.nextWork.requiredSsot.includes(".agents/artifacts/IMPLEMENTATION_PLAN.md"), false);
+  assert.equal(result.context.reentryContract.mustReadNext.includes(".agents/artifacts/IMPLEMENTATION_PLAN.md"), false);
   assert.equal(typeof result.context.reentryContract.digest, "string");
   assert.equal(result.context.sources.generatedCurrentState, ".agents/runtime/generated-state-docs/CURRENT_STATE.md");
   assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.json")), true);

@@ -14,6 +14,7 @@ At project kickoff, most people only need:
 ## Other contents
 
 - `artifacts/`: optional artifact templates used when the task needs them
+- `artifacts/HARNESS_FILE_ROUTE_AUDIT_MATRIX.md`: reusable audit map for checking which route reads which files and updates which surfaces
 - `artifacts/daily/`: optional daily-note area that should be created only when an actual daily log is needed
 - `artifacts/DECISION_LOG.md`, `HANDOFF_ARCHIVE.md`, `REVIEW_REPORT.md`, `WALKTHROUGH.md`: optional review/history artifacts created on first use rather than pre-shipped
 - `profiles/`: optional profile packages for explicitly activated project types

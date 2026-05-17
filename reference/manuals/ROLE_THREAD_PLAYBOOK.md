@@ -8,7 +8,7 @@
 - 사용자가 새 Codex 대화창 또는 긴 작업용 thread를 열 때 첫 프롬프트의 뼈대로 쓴다.
 - `.agents/workflows/*`가 실제 역할 권한과 책임의 authority이고, 이 문서는 그 workflow를 사람이 쉽게 적용하도록 돕는다.
 - Planner는 복잡한 작업을 여러 thread로 나누기 전에 이 문서로 role, allowed scope, do not, expected output을 정리한다.
-- Developer, Tester, Reviewer는 자기 역할을 시작할 때 이 문서의 해당 role block을 복사해 thread 시작 프롬프트로 사용할 수 있다.
+- PM, Planner, Developer, Tester, Reviewer, Handoff는 자기 역할을 시작할 때 이 문서의 해당 role block을 복사해 thread 시작 프롬프트로 사용할 수 있다.
 
 ## 공통 템플릿
 
@@ -18,10 +18,23 @@ Goal:
 Allowed scope:
 Do not:
 Required inputs:
+Compatibility fallback:
 Expected output:
 Validation:
 Next handoff:
 ```
+
+## Project Manager Thread
+
+- Role: Project Manager
+- Goal: 오늘의 실제 실행 상태를 복원하고, 다음 workflow와 첫 action을 명확히 한다.
+- Allowed scope: status reconciliation, blocker/risk triage, next workflow recommendation, handoff readiness
+- Do not: 요구사항 승인, 구현 시작, 테스트/리뷰/배포 완료를 대신 선언
+- Required inputs: ACTIVE_CONTEXT, matching workflow, latest handoff, current active packet when one exists
+- Compatibility fallback: read CURRENT_STATE/TASK_LIST only when ACTIVE_CONTEXT explicitly requires them or route troubleshooting needs them
+- Expected output: today summary, top priorities, next workflow, next first action, evidence gaps
+- Validation: next owner와 next first action이 추측이 아니라 canonical evidence로 설명되는지
+- Next handoff: Planner, Developer, Tester, Reviewer, Handoff, or None
 
 ## Planner Thread
 
@@ -67,3 +80,14 @@ Next handoff:
 - Expected output: findings or exit approval, handoff to Planner or Developer
 - Validation: 버그/회귀/보안/누락 테스트를 우선으로 봤는지
 - Next handoff: Planner or Developer
+
+## Handoff Thread
+
+- Role: Handoff
+- Goal: 세션이나 역할 전환 뒤에도 다음 workflow가 바로 첫 action을 시작할 수 있게 baton을 정리한다.
+- Allowed scope: next owner resolution, current-state/task-list baton update, explicit handoff wording, route clarification
+- Do not: planning approval, implementation, testing, review closeout를 대신 수행
+- Required inputs: ACTIVE_CONTEXT, CURRENT_STATE, TASK_LIST, latest relevant packet/handoff evidence
+- Expected output: completed scope, remaining scope, next owner, next first action, required SSOT, blockers/risks
+- Validation: next workflow가 명확한지, 필요한 SSOT가 빠지지 않았는지, unresolved blocker를 숨기지 않았는지
+- Next handoff: the concrete next workflow owner

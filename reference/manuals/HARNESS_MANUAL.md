@@ -37,6 +37,9 @@
 - [15. Cloud 와 Local 병행 작업](#15-cloud-와-local-병행-작업)
 - [16. CLI 명령 레퍼런스](#16-cli-명령-레퍼런스)
 - [17. 하루 운영 시나리오](#17-하루-운영-시나리오)
+  - [17.1 하루 시작과 오늘 플랜 복원](#171-하루-시작과-오늘-플랜-복원)
+  - [17.2 오늘 플랜 안에서 packet을 열고 닫는 흐름](#172-오늘-플랜-안에서-packet을-열고-닫는-흐름)
+  - [17.3 하루 마감과 다음 세션 baton 정리](#173-하루-마감과-다음-세션-baton-정리)
 - [18. 설치 후 정상 동작 확인](#18-설치-후-정상-동작-확인)
 - [19. 기존 프로젝트에 적용하기](#19-기존-프로젝트에-적용하기)
 - [20. 자주 쓰는 프롬프트 예시](#20-자주-쓰는-프롬프트-예시)
@@ -107,7 +110,7 @@ AI에게는 어디를 먼저 읽어야 하는지, 어떤 문서를 정본으로 
 | SSOT | 승인된 정본 | generated file |
 | packet | 이번 작업의 범위와 승인 기준 | 아무 작업 메모 |
 | profile | 어떤 종류의 일을 하는지 | governance 강도 |
-| starter mode | 사람이 빠르게 고르는 운영 강도 별칭 | 실제 gate profile id 자체 |
+| starter mode | 사람이 빠르게 고르는 운영 강도 별칭 | 설치 시 고정하는 전역 옵션 |
 
 짧게 기억하면 이렇게 보면 된다.
 
@@ -155,6 +158,8 @@ AI에게는 어디를 먼저 읽어야 하는지, 어떤 문서를 정본으로 
 - `profile`은 작업의 종류를 설명한다.
 - `starter mode`는 운영의 엄격함을 설명하는 쉬운 말이다.
 - 실제 packet과 validator는 `light`, `standard`, `contract`, `release`를 본다.
+- 현재 shipped baseline에서 설치기와 초기화 과정이 실제로 받는 선택값은 `profile`뿐이다.
+- `starter mode`는 install/init 시점에 저장되는 전역 스위치가 아니라, 각 lane이나 packet을 열 때 어떤 `Gate profile`로 운영할지 설명하는 말이다.
 
 현재 shipped baseline에서는 아래처럼 대응해서 보면 된다.
 
@@ -176,18 +181,27 @@ AI에게는 어디를 먼저 읽어야 하는지, 어떤 문서를 정본으로 
 `minimal`은 빠르게 시작하기 위한 선택일 뿐, risk trigger를 무시하는 면허가 아니다.
 그리고 manual에서 `full-governance`라고 설명하더라도 packet header, validator finding, transition evidence에서는 실제 gate profile id인 `contract` 또는 `release`를 찾아야 한다.
 
+중요한 설계 포인트는 아래다.
+
+- 같은 프로젝트라도 대화나 lane마다 운영 강도는 달라질 수 있다.
+- 가벼운 문서 정리, 범위 검토, note성 작업은 `light`에 가까운 판단으로 다룰 수 있다.
+- 일반 구현/검증은 보통 `standard`를 쓴다.
+- reusable contract, workflow, validator, root/starter sync, release/cutover 영향이 생기면 `contract` 또는 `release`로 올린다.
+- 즉 "이 프로젝트는 항상 minimal" 또는 "이 프로젝트는 항상 full-governance"처럼 프로젝트 전체에 한 번 고정하는 설계가 아니다.
+
 ### 2.4 Profile Reselection / Reset Playbook
 
 #### 아직 승인 전
 
 - 요구사항이나 범위가 흔들리면 Planner로 돌아간다.
 - profile이 잘못 켜졌다면 profile evidence를 억지로 맞추지 말고, 어떤 profile이 필요한지 다시 정한다.
+- starter mode가 애매하다면 전역 설정을 찾지 말고, 이번 lane이 어떤 `Gate profile`이어야 하는지 다시 정한다.
 - packet이 없거나 packet 범위가 틀리면 구현으로 가지 않는다.
 
 #### 상세 합의는 끝났고 구현 전
 
 - `Ready For Code`가 없으면 Developer 작업을 열지 않는다.
-- starter mode가 과하게 무겁거나 가볍다고 느껴지면 route를 다시 확인한다.
+- starter mode가 과하게 무겁거나 가볍다고 느껴지면 route와 active packet의 `Gate profile`을 다시 확인한다.
 - manual, packet, state 문서가 서로 다른 말을 하면 먼저 정본을 맞춘다.
 
 #### 구현이 이미 시작된 뒤
@@ -195,6 +209,8 @@ AI에게는 어디를 먼저 읽어야 하는지, 어떤 문서를 정본으로 
 - active lane owner를 임의로 바꾸지 않는다.
 - packet 범위가 틀렸다면 Developer가 계속 덮지 말고 Planner로 되돌린다.
 - profile reset이 필요해도 generated docs만 고치지 말고 승인된 state operation이나 transition 경로를 쓴다.
+- starter mode를 바꾸고 싶다면 active packet의 `Gate profile` 판단을 Planner가 다시 닫거나, 필요하면 새 packet/lane으로 다시 연다.
+- 설치 시점의 전역 `starter mode` 값을 수정하는 절차는 없다. 현재 baseline은 그 값을 저장하지 않기 때문이다.
 
 다시 잡아야 할 때 운영자가 바로 할 말:
 
@@ -321,7 +337,8 @@ flowchart TD
 |---|---|---|
 | `.agents/artifacts/REQUIREMENTS.md` | 무엇을 만들 것인가 | kickoff, 요구사항 변경 시 |
 | `.agents/artifacts/ARCHITECTURE_GUIDE.md` | 어떻게 나눠 설계할 것인가 | requirements 확정 후 |
-| `.agents/artifacts/IMPLEMENTATION_PLAN.md` | 어떤 순서로 닫을 것인가 | lane와 packet 순서 확인 시 |
+| `.agents/artifacts/IMPLEMENTATION_PLAN.md` | 현재/다음 구현 방향, 순서, blocker를 짧게 정리한 계획 정본 | lane 순서나 현재 구현 방향이 필요할 때 |
+| `reference/artifacts/maintenance/ROOT_STANDARD_HARNESS_MAINTENANCE_MAP.md` | 하네스 runtime/state 유지보수 경계와 write surface | `.harness/runtime/state/*`를 수정할 때 |
 | `.agents/rules/HARNESS_OPERATING_CONTRACT.md` | workflow-entry, approval boundary, packet-before-code, baton, role separation | 어떤 문서가 authority인지 헷갈릴 때 |
 | `.agents/artifacts/CURRENT_STATE.md` | generated/current compatibility view | fallback, evidence 확인, troubleshooting 시 |
 | `.agents/artifacts/TASK_LIST.md` | generated/task compatibility view | fallback, evidence 확인, troubleshooting 시 |
@@ -339,6 +356,7 @@ flowchart TD
 | `reference/artifacts/WALKTHROUGH.md` | Tester walkthrough 기준 | walkthrough와 재현 순서를 정리할 때. fresh starter에는 없을 수 있으니 첫 test/review 시 생성 |
 | `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md` | Reviewer closeout 기준 | reviewer/closeout 준비 시 |
 | `reference/artifacts/REVIEW_REPORT.md` | Reviewer findings와 closeout 기록 | reviewer 결과를 확인할 때. fresh starter에는 없을 수 있으니 첫 review 시 생성 |
+| `reference/artifacts/HARNESS_FILE_ROUTE_AUDIT_MATRIX.md` | 진입점/워크플로별 파일 read-update 기준표 | 하네스 문서를 체계적으로 검토하거나 route confusion을 점검할 때 |
 | `reference/manuals/ROLE_THREAD_PLAYBOOK.md` | role/thread 시작 가이드 | 새 AI thread를 열 때 |
 | `reference/manuals/AUTOMATION_CATALOG.md` | 자동화 선택 가이드 | 반복 점검을 예약할 때 |
 | `reference/manuals/CLOUD_LOCAL_MERGE_PLAYBOOK.md` | cloud/local 병렬 작업 가이드 | cloud나 별도 worktree 병렬 작업을 쓸 때 |
@@ -359,6 +377,13 @@ flowchart TD
 
 새 프로젝트를 시작할 때는 바로 구현하지 않는다.
 먼저 [PROJECT_STARTER_DOC_PACK.md](../artifacts/PROJECT_STARTER_DOC_PACK.md)를 채운다.
+
+설치와 초기화 단계에서 먼저 구분할 점:
+
+- 설치기와 `harness:init`이 직접 받는 선택값은 `Active profiles`다.
+- `starter mode`는 이 시점에 고르는 별도 입력값이 아니다.
+- 실제 운영 강도는 첫 packet을 열 때 `Gate profile`을 `light` / `standard` / `contract` / `release` 중 무엇으로 둘지 결정하면서 정한다.
+- 그래서 설치 후에 "starter mode를 바꾸는 명령"을 찾기보다, 현재 또는 다음 packet의 `Gate profile` 판단이 맞는지 보는 것이 맞다.
 
 처음에 닫아야 할 항목은 아래다.
 
@@ -384,7 +409,7 @@ flowchart TD
 4. starter doc pack rough draft 작성
 5. `REQUIREMENTS.md` 기준 요구사항 정리
 6. `ARCHITECTURE_GUIDE.md` 기준 설계 boundary 정리
-7. `IMPLEMENTATION_PLAN.md` 기준 단계 순서 정리
+7. `IMPLEMENTATION_PLAN.md`에 현재/다음 구현 순서와 blocker를 짧게 정리
 8. 첫 packet drafting
 9. `Ready For Code` 승인
 10. 구현 thread 시작
@@ -515,6 +540,15 @@ packet을 새로 열 때는 아래 세 가지를 먼저 맞춘다.
 - `reference/packets/*.md` 경로에 concrete packet 초안을 둔다.
 - Quick Decision Header에서 gate profile과 approval boundary를 먼저 드러낸다.
 - `contract` gate라면 최소 `Ready For Code`, root/starter sync, targeted check, validator, active context, review closeout 근거가 Verification Manifest에 보여야 opening validation hold를 줄일 수 있다.
+
+packet lifecycle를 가장 짧게 요약하면 아래 순서다.
+
+1. Planner가 requirements, architecture, active source, 그리고 필요하면 targeted implementation plan section을 기준으로 packet 초안을 연다.
+2. packet에 goal, scope, acceptance, approval boundary, verification scenario를 닫는다.
+3. 사용자가 `Ready For Code`를 명시적으로 승인한다.
+4. Developer가 packet 범위 안에서 구현하고 필요한 validation evidence를 남긴다.
+5. Tester가 packet acceptance 기준으로 검증하고 walkthrough evidence를 남긴다.
+6. Reviewer가 packet exit quality gate와 review evidence를 보고 closeout 또는 remediation handoff를 결정한다.
 
 처음 사용자 기준으로는 필수 최소 필드를 먼저 닫고, profile이나 migration이 얽힐 때만 확장하는 것이 맞다.
 
@@ -789,7 +823,7 @@ cloud에서 오래 걸리는 후보 작업을 돌렸을 때 로컬 정본으로 
 - 목적: 다음 역할로 넘길 handoff 내용을 확인하거나 생성 흐름을 돕는다.
 - 언제 쓰나: 구현 완료 후 Tester로 넘길 때, Tester 후 Reviewer로 넘길 때, Planner가 다음 owner를 정리할 때.
 - 기대 출력: 현재 기준으로 추천되는 next owner와 handoff 요약 방향이 나온다.
-- 실패 시 첫 대응: 현재 packet 상태와 최신 `CURRENT_STATE.md`가 실제 상황과 맞는지 먼저 본다.
+- 실패 시 첫 대응: `ACTIVE_CONTEXT.*`, latest handoff, active packet이 실제 상황과 맞는지 먼저 본다. 필요하면 `CURRENT_STATE.md`와 `TASK_LIST.md`를 compatibility view로 대조한다.
 
 ### `npm run harness:explain`
 - 목적: 현재 하네스 상태를 조금 더 풀어서 설명한다.
@@ -829,55 +863,68 @@ cloud에서 오래 걸리는 후보 작업을 돌렸을 때 로컬 정본으로 
 
 ## 17. 하루 운영 시나리오
 
-### 하루 시작
+### 17.1 하루 시작과 오늘 플랜 복원
 
-사람이 하는 일:
+이 하네스에서 `오늘의 플랜`은 별도 정본 문서가 아니다.
+하루 시작 시점의 계획은 `ACTIVE_CONTEXT`, active workflow, active packet, latest handoff에서 복원한다.
 
-- `npm run harness:status`
-- `npm run harness:next`
-- 필요하면 `npm run harness:context`
-- `ACTIVE_CONTEXT.md` 또는 `npm run harness:status` / `npm run harness:next`로 오늘 판단할 항목을 잡는다.
-- 필요하면 `CURRENT_STATE.md`와 `TASK_LIST.md`를 compatibility view로 확인한다.
+1. 사람은 먼저 `npm run harness:status`와 `npm run harness:next`를 본다.
+문서 참조: `.agents/runtime/ACTIVE_CONTEXT.md` 또는 CLI 출력
+2. AI는 `.agents/runtime/ACTIVE_CONTEXT.json`을 먼저 읽고 `selected lane`, `next workflow`, `mustReadNext`, `approval boundary`를 복원한다.
+문서 참조: `.agents/runtime/ACTIVE_CONTEXT.json`, matching `.agents/workflows/*.md`
+3. `mustReadNext`나 troubleshooting이 요구할 때만 `CURRENT_STATE.md`와 `TASK_LIST.md`를 fallback으로 읽는다.
+문서 참조: `.agents/artifacts/CURRENT_STATE.md`, `.agents/artifacts/TASK_LIST.md`
+4. 오늘 첫 action이 packet 생성인지, packet 구현인지, packet 검증인지, packet closeout인지 판정한다.
+문서 참조: active `reference/packets/*.md`, `.agents/artifacts/REQUIREMENTS.md`, 필요하면 `.agents/artifacts/IMPLEMENTATION_PLAN.md`
+5. route가 불명확하면 구현을 시작하지 않고 `Project Manager` 또는 `Handoff` 관점으로 정리한다.
+문서 참조: `.agents/skills/day_start/SKILL.md`, `.agents/workflows/pm.md`, `.agents/workflows/handoff.md`, `reference/manuals/ROLE_THREAD_PLAYBOOK.md`
 
-AI가 하는 일:
+효율 규칙:
+- `CURRENT_STATE`와 `TASK_LIST`를 매일 기본 입력처럼 읽지 않는다.
+- daily note는 선택 사항이다. `reference/artifacts/daily/*`는 recent human delta가 정말 필요할 때만 쓴다.
+- 오늘 플랜은 `Current Work` / `Next Work`와 active packet에서 복원하지, 새 daily-plan 문서를 따로 만들지 않는다.
 
-- `ACTIVE_CONTEXT.json`을 먼저 읽고 현재 lane과 must-read 문서를 복원한다.
-- 최신 handoff와 next workflow를 기준으로 작업 맥락을 이어간다.
+### 17.2 오늘 플랜 안에서 packet을 열고 닫는 흐름
 
-### 작업 중
+1. active packet이 없거나 승인 경계가 바뀌었으면 Planner가 오늘 플랜의 첫 일로 packet을 연다.
+문서 참조: `.agents/workflows/plan.md`, `reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md`, `.agents/artifacts/REQUIREMENTS.md`, `.agents/artifacts/ARCHITECTURE_GUIDE.md`, 필요하면 `.agents/artifacts/IMPLEMENTATION_PLAN.md`
+2. packet에는 최소 goal, scope, acceptance, approval boundary, verification scenario를 먼저 닫는다.
+문서 참조: `reference/artifacts/VERIFICATION_SCENARIO_TEMPLATE.md`
+3. `Ready For Code`가 닫히기 전에는 Developer로 넘어가지 않는다.
+문서 참조: `.agents/rules/HARNESS_OPERATING_CONTRACT.md`, active packet Quick Decision Header / Verification Manifest
+4. 승인 후 Developer가 packet 범위 안에서만 구현하고 필요한 evidence를 남긴다.
+문서 참조: `.agents/workflows/dev.md`, active packet, `.agents/artifacts/VALIDATION_REPORT.*` when required
+5. Tester는 제품 기능, requirements, packet acceptance 기준으로 검증하고 walkthrough가 필요할 때만 생성/갱신한다.
+문서 참조: `.agents/workflows/test.md`, `reference/artifacts/WALKTHROUGH.md`, `reference/artifacts/VERIFICATION_SCENARIO_TEMPLATE.md`
+6. Reviewer는 packet exit quality gate와 review evidence를 보고 closeout 또는 remediation handoff를 결정한다.
+문서 참조: `.agents/workflows/review.md`, `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`, `reference/artifacts/REVIEW_REPORT.md`
+7. route가 바뀌면 Handoff가 baton을 정리하고, packet이 닫히지 않았으면 다음 세션 first action을 packet 기준으로 남긴다.
+문서 참조: `.agents/workflows/handoff.md`, latest handoff, active packet
 
-사람이 하는 일:
+효율 규칙:
+- packet이 하루를 넘겨도 괜찮다. 중요한 것은 packet 상태와 next first action이 명확한 것이다.
+- planning-only day에는 review/test evidence 문서를 억지로 만들지 않는다.
+- 반대로 implementation/verification/review day에는 필요한 validation evidence 없이 handoff하지 않는다.
 
-- 이번 작업의 packet과 승인 상태를 확인한다.
-- 요구사항이나 승인 경계가 바뀌면 먼저 packet과 정본 문서를 다시 닫는다.
-- 새 thread를 열 때는 역할과 do not을 먼저 적는다.
+### 17.3 하루 마감과 다음 세션 baton 정리
 
-AI가 하는 일:
+1. 오늘 실제로 끝난 것과 남은 것을 구분한다.
+문서 참조: active packet, latest handoff, `.agents/runtime/ACTIVE_CONTEXT.json`
+2. 오늘 work type에 따라 필요한 검증만 실행한다.
+- planning-only day: planning baseline과 baton 정합성을 확인한다.
+- implementation/verification/review day: owning workflow가 요구하는 `harness:validate`, `harness:validation-report`, walkthrough, review evidence를 확인한다.
+3. `Current Work`와 `Next Work`를 기록해 다음 workflow와 첫 action을 분명히 남긴다.
+문서 참조: 모든 `.agents/workflows/*.md`의 Turn Close Reporting, `.agents/rules/HARNESS_OPERATING_CONTRACT.md`
+4. next owner, next first action, required SSOT, do-not-cross가 분명할 때만 day wrap을 끝낸다.
+문서 참조: `.agents/workflows/handoff.md`, latest handoff, `.agents/runtime/ACTIVE_CONTEXT.*`
+5. 반복 friction이 명확한 trigger/rule/check method로 재사용 가능할 때만 `PREVENTIVE_MEMORY.md`에 남긴다.
+문서 참조: `.agents/artifacts/PREVENTIVE_MEMORY.md`
+6. human-facing 하루 메모가 진짜 필요할 때만 `reference/artifacts/daily/*`를 만든다.
 
-- 승인된 packet 범위 안에서만 구현 또는 검증을 진행한다.
-- packet 밖으로 벗어나는 새 결정이 생기면 Planner sync가 필요한지 알린다.
-
-### handoff 직전
-
-사람이 하는 일:
-
-- 지금 결과를 다음 역할에 넘길 준비가 되었는지 판단한다.
-- `harness:validate`와 필요하면 `harness:validation-report`를 돌린다.
-
-AI가 하는 일:
-
-- `Current Work`와 `Next Work`를 정리한다.
-- `handoff` 또는 `transition` 기준으로 다음 역할에 필요한 최소 맥락을 남긴다.
-
-### closeout 또는 하루 마감
-
-사람이 하는 일:
-
-- 오늘 작업이 closeout 가능한지, 아니면 다음 턴으로 넘겨야 하는지 결정한다.
-
-AI가 하는 일:
-
-- generated surface를 갱신하고, next owner와 next action이 재진입 가능하도록 정리한다.
+효율 규칙:
+- 하루 마감은 별도 회고 문서를 매일 강제하는 절차가 아니다.
+- 다음 세션이 바로 시작할 수 있게 baton이 명확하면 좋은 closeout이다.
+- `day_wrap_up`은 PM lens의 정리 흐름이고, 다른 workflow의 승인 권한을 가져오지 않는다.
 
 ## 18. 설치 후 정상 동작 확인
 
@@ -953,6 +1000,7 @@ Goal: 승인된 packet 범위 안에서 구현한다.
 Allowed scope: approved packet implementation, required tests, minimal evidence updates
 Do not: packet 밖 기능 추가, 승인 없는 UX/architecture 변경
 Required inputs: ACTIVE_CONTEXT, active packet, REQUIREMENTS, ARCHITECTURE_GUIDE, IMPLEMENTATION_PLAN
+Compatibility note: IMPLEMENTATION_PLAN is targeted/conditional. Read it when sequencing, blocker, or reusable root-starter sync context is actually needed.
 Expected output: 변경 파일, 구현 요약, 테스트 결과, validation-report, Tester handoff
 ```
 
@@ -963,7 +1011,8 @@ Role: Tester
 Goal: 구현 결과를 packet acceptance와 VERIFICATION_SCENARIO_TEMPLATE 기준으로 검증한다.
 Allowed scope: 검증, 재현, evidence capture, defect report
 Do not: 직접 코드 수정
-Required inputs: active packet, Developer handoff, VALIDATION_REPORT, VERIFICATION_SCENARIO_TEMPLATE
+Required inputs: ACTIVE_CONTEXT, active packet, Developer handoff, REQUIREMENTS, ARCHITECTURE_GUIDE, VALIDATION_REPORT, VERIFICATION_SCENARIO_TEMPLATE
+Compatibility note: IMPLEMENTATION_PLAN은 packet acceptance나 reusable sync evidence가 직접 인용할 때만 추가로 읽는다.
 Expected output: tested scope, untested scope, pass/fail evidence, Reviewer 또는 Developer handoff
 ```
 

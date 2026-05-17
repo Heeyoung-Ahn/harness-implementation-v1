@@ -23,21 +23,19 @@
 - Do not bypass required design, planning, review, or human approval gates.
 
 ## Must Read SSOT
-- `.agents/artifacts/CURRENT_STATE.md`
-- `.agents/artifacts/TASK_LIST.md`
 - `.agents/artifacts/REQUIREMENTS.md`
 - `.agents/artifacts/ARCHITECTURE_GUIDE.md`
-- `.agents/artifacts/IMPLEMENTATION_PLAN.md`
 - active packet and any approved project design/source artifact cited by the task
 
 ## Read First
 - `.agents/runtime/ACTIVE_CONTEXT.json`
+- active packet and any approved project design/source artifact cited by the task
 - `.agents/artifacts/REQUIREMENTS.md`
 - `.agents/artifacts/ARCHITECTURE_GUIDE.md`
-- `.agents/artifacts/IMPLEMENTATION_PLAN.md`
-- active packet and any approved project design/source artifact cited by the task
 
 ## Conditional Supporting References
+- Use `.agents/artifacts/IMPLEMENTATION_PLAN.md` only when the packet, latest handoff, or current sequencing/root-starter sync question needs plan-level direction beyond `ACTIVE_CONTEXT` and the active packet.
+- Use `.agents/artifacts/CURRENT_STATE.md` and `.agents/artifacts/TASK_LIST.md` only when `ACTIVE_CONTEXT.reentryContract.mustReadNext`, packet evidence, or troubleshooting needs the compatibility view.
 - Use `reference/artifacts/VERIFICATION_SCENARIO_TEMPLATE.md` for implementation self-check when the packet has scenario-based acceptance or manual verification requirements.
 - Use `reference/manuals/CLOUD_LOCAL_MERGE_PLAYBOOK.md` when consuming cloud, branch, patch, PR, or separate worktree output.
 - Use `reference/manuals/ROLE_THREAD_PLAYBOOK.md` when starting or resuming a dedicated Developer thread.

@@ -2546,15 +2546,30 @@ function buildCompactHandoffPayload(plan) {
     completedScope: plan.summary,
     nextWorkflow: resolveNextWorkflowForRole(plan.toOwner),
     nextFirstAction: plan.nextAction,
-    requiredSsot: [
-      ".agents/artifacts/CURRENT_STATE.md",
-      ".agents/artifacts/TASK_LIST.md",
-      ".agents/artifacts/IMPLEMENTATION_PLAN.md",
-      plan.sourceRef
-    ].filter(Boolean),
+    requiredSsot: buildRequiredSsotForRole(plan),
     approvalBoundary: approvalBoundaryForRole(plan.toOwner),
     doNotCross: doNotCrossForRole(plan.toOwner)
   };
+}
+
+function buildRequiredSsotForRole(plan) {
+  switch (normalizeRoleValue(plan.toOwner)) {
+    case "planner":
+      return uniquePathList([ARTIFACT_PATHS.requirements, ARTIFACT_PATHS.plan, plan.sourceRef]);
+    case "developer":
+      return uniquePathList([plan.sourceRef]);
+    case "tester":
+      return uniquePathList([plan.sourceRef, VALIDATION_REPORT_JSON, VALIDATION_REPORT_MARKDOWN]);
+    case "reviewer":
+      return uniquePathList([
+        plan.sourceRef,
+        "reference/artifacts/PACKET_EXIT_QUALITY_GATE.md",
+        VALIDATION_REPORT_JSON,
+        VALIDATION_REPORT_MARKDOWN
+      ]);
+    default:
+      return uniquePathList([plan.sourceRef]);
+  }
 }
 
 function recoveryForFinding(finding) {

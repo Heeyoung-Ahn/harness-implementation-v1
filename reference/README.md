@@ -4,7 +4,7 @@ This folder contains non-core harness material that sits outside the constitutio
 
 ## Contains
 
-- `artifacts/`: non-core artifact documents
+- `artifacts/`: non-core artifact documents, including optional audit guides such as `artifacts/HARNESS_FILE_ROUTE_AUDIT_MATRIX.md`
 - `profiles/`: optional profile packages for explicitly activated project types
 - `packets/`: task-level approval packets and packet templates
 - `planning/`: deep-interview and planning baselines

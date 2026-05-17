@@ -215,12 +215,7 @@ test("transition apply writes compact baton fields into handoff payload and acti
   afterStore.close();
   assert.equal(handoff?.payload?.nextWorkflow, ".agents/workflows/dev.md");
   assert.equal(typeof handoff?.payload?.approvalBoundary, "string");
-  assert.deepEqual(handoff?.payload?.requiredSsot, [
-    ".agents/artifacts/CURRENT_STATE.md",
-    ".agents/artifacts/TASK_LIST.md",
-    ".agents/artifacts/IMPLEMENTATION_PLAN.md",
-    packetPath
-  ]);
+  assert.deepEqual(handoff?.payload?.requiredSsot, [packetPath]);
   assert.equal(Array.isArray(handoff?.payload?.doNotCross), true);
   assert.equal(handoff?.payload?.doNotCross.includes("No approval-state changes."), true);
 
@@ -229,9 +224,6 @@ test("transition apply writes compact baton fields into handoff payload and acti
   );
   assert.equal(activeContext.nextWork.workflow, ".agents/workflows/dev.md");
   assert.equal(activeContext.nextWork.approvalBoundary, handoff?.payload?.approvalBoundary);
-  assert.deepEqual(activeContext.nextWork.requiredSsot, [
-    ".agents/artifacts/IMPLEMENTATION_PLAN.md",
-    packetPath
-  ]);
+  assert.deepEqual(activeContext.nextWork.requiredSsot, [packetPath]);
   assert.deepEqual(activeContext.nextWork.doNotCross, handoff?.payload?.doNotCross);
 });

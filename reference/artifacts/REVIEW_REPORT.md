@@ -1,5 +1,31 @@
 # Review Report
 
+## 2026-05-18 PLN-25 Long-Context Re-entry And Implementation-Plan Rebaseline Closeout
+
+- Scope: reviewer closeout for approved `PLN-25` after Developer implementation and Tester verification.
+- Findings:
+  - none inside the approved `PLN-25` boundary
+- Review result:
+  - `IMPLEMENTATION_PLAN.md` is now functioning as an actual implementation plan. It no longer carries the long dated chronology, closed packet catalog, or reusable rulebook as primary body content.
+  - durable history is preserved in `.agents/artifacts/PROJECT_HISTORY.md`, so the cleanup did not erase milestone context.
+  - reusable workflow/runtime behavior now matches the approved re-entry direction: Developer, Tester, and Reviewer read `ACTIVE_CONTEXT` first, `IMPLEMENTATION_PLAN.md` is conditional/targeted, and handoff payloads no longer keep broad compatibility-plan rereads alive by default.
+  - root and `standard-template` parity is sufficient for the reusable contract surfaces touched in this lane, including workflows, runtime/state code, tests, manuals, route matrix, and starter implementation-plan baseline.
+  - maintainer runtime-state ownership is now documented in `reference/artifacts/maintenance/ROOT_STANDARD_HARNESS_MAINTENANCE_MAP.md`, which closes the previously missing maintainer architecture map for `.harness/runtime/state/*`.
+- Validation:
+  - root full suite: `npm.cmd test`
+  - `standard-template` full suite: `npm.cmd test`
+  - root validator: `node .harness/runtime/state/dev05-cli.js validate`
+  - root validation report: `node .harness/runtime/state/dev05-cli.js validation-report`
+  - reviewer-lane Active Context: `node .harness/runtime/state/dev05-cli.js context`
+- Residual risk:
+  - no blocking reviewer finding remains inside `PLN-25`
+  - this lane narrows re-entry and plan authority surfaces, but it does not redesign the deeper DB-vs-Markdown authority split; that remains a separate design topic if reopened later
+- Result:
+  - `PLN-25` is approved for reviewer closeout
+  - no reviewer remediation is required
+  - handoff may proceed to Planner for closeout reflection and planner-hold closure if no other lane is open
+- Status: done
+
 ## 2026-05-17 PLN-23 Cutover Execution Closeout
 
 - Scope: reviewer closeout for approved `PLN-23` root cutover execution after Developer execution and Tester verification.

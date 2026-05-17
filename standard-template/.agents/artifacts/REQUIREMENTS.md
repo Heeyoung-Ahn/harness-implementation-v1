@@ -89,7 +89,7 @@
 2. requirements가 확정되기 전에는 architecture / implementation / UI baseline을 새 기준선으로 sync하지 않는다.
 3. requirements 승인 후 architecture / implementation / UI 문서를 같은 기준선으로 맞춘다.
 4. user-facing 작업은 task-level detailed design과 human sync 없이 코드로 먼저 확정하지 않는다.
-5. data-impact 작업은 `reference/artifacts/DOMAIN_CONTEXT.md` 또는 동등한 approved domain foundation reference와 schema impact 판단 없이 `Ready For Code`로 올리지 않는다.
+5. data-impact 작업은 `.agents/artifacts/DOMAIN_CONTEXT.md` 또는 동등한 approved domain foundation reference와 schema impact 판단 없이 `Ready For Code`로 올리지 않는다.
 6. DB 설계가 포함된 data-impact 작업은 테이블명, 컬럼명, 데이터 운영 방식에 대한 사용자 확인 없이 `Ready For Code`로 올리지 않는다.
 7. 작업이 기존 프로그램과 연동되면 사용자에게 기존 프로그램 DB schema 또는 동등한 authoritative schema artifact를 요청하고, naming / data operation / ownership / migration compatibility 분석을 packet에 남기기 전에는 설계를 닫지 않는다.
 8. deploy/test/cutover 작업은 environment topology와 execution target 없이 `Ready For Code`로 올리지 않는다.
@@ -140,7 +140,7 @@
 - context restoration flow with explicit load order and source trace
 - drift detection and recovery rule
 - domain foundation gate
-- `reference/artifacts/DOMAIN_CONTEXT.md` 기반의 domain foundation artifact template
+- `.agents/artifacts/DOMAIN_CONTEXT.md` 기반의 domain foundation artifact template
 - 기존 프로그램 연동 작업의 DB schema intake, naming/data operation compatibility analysis, user DB design confirmation
 - authoritative source contract
 - `reference/artifacts/AUTHORITATIVE_SOURCE_INTAKE.md` 기반의 authoritative source intake artifact template
@@ -180,7 +180,7 @@
 - `Core`는 기본 활성, `Optional Profile`은 explicit-only, `Project Packet`은 project-specific 실행 전 필수라는 activation rule이 문서화된다.
 - required reading rule이 baseline artifact, active profile, active packet, authoritative source 순서를 포함해 정의된다.
 - `Core`에 넣으면 안 되는 project-specific 항목 예시와 분류 규칙이 정리된다.
-- data-impact 작업은 `reference/artifacts/DOMAIN_CONTEXT.md` 또는 승인된 동등 artifact를 포함한 domain foundation reference와 schema impact 판단 없이 시작되지 않는다.
+- data-impact 작업은 `.agents/artifacts/DOMAIN_CONTEXT.md` 또는 승인된 동등 artifact를 포함한 domain foundation reference와 schema impact 판단 없이 시작되지 않는다.
 - data-impact packet에는 domain foundation reference path와 schema impact classification이 남는다.
 - schema impact classification이 `unknown`이면 planning hold가 유지된다.
 - DB 설계가 포함된 data-impact 작업은 테이블명, 컬럼명, 데이터 운영 방식에 대한 user confirmation 없이는 시작되지 않는다.

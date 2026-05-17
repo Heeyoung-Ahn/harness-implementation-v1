@@ -23,28 +23,25 @@
 - Do not close release readiness without the required evidence.
 
 ## Must Read SSOT
-- `.agents/artifacts/CURRENT_STATE.md`
-- `.agents/artifacts/TASK_LIST.md`
 - `.agents/artifacts/REQUIREMENTS.md`
 - `.agents/artifacts/ARCHITECTURE_GUIDE.md`
-- `.agents/artifacts/IMPLEMENTATION_PLAN.md`
 - active packet and any approved project design/source artifact cited by the task
 - `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`
-- `reference/artifacts/REVIEW_REPORT.md`
 
 ## Read First
 - `.agents/runtime/ACTIVE_CONTEXT.json`
-- `.agents/artifacts/REQUIREMENTS.md`
-- `.agents/artifacts/ARCHITECTURE_GUIDE.md`
-- `.agents/artifacts/IMPLEMENTATION_PLAN.md`
 - active packet and any approved project design/source artifact cited by the task
 - `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`
-- `reference/artifacts/REVIEW_REPORT.md`
+- `.agents/artifacts/REQUIREMENTS.md`
+- `.agents/artifacts/ARCHITECTURE_GUIDE.md`
 
 ## Conditional Supporting References
+- Use `.agents/artifacts/IMPLEMENTATION_PLAN.md` only when closeout judgment depends on current sequencing, reusable root/starter sync expectations, or an active packet cites the plan directly.
+- Use `.agents/artifacts/CURRENT_STATE.md` and `.agents/artifacts/TASK_LIST.md` only when `ACTIVE_CONTEXT.reentryContract.mustReadNext`, packet evidence, or troubleshooting needs the compatibility view.
 - Use `reference/artifacts/VERIFICATION_SCENARIO_TEMPLATE.md` when assessing whether Tester evidence covers the expected scenario classes.
 - Use `reference/manuals/CLOUD_LOCAL_MERGE_PLAYBOOK.md` when reviewing output that came from cloud, separate worktrees, branches, patches, or PRs.
 - Use `reference/manuals/ROLE_THREAD_PLAYBOOK.md` when starting or resuming a dedicated Reviewer thread.
+- Use `reference/artifacts/REVIEW_REPORT.md` when extending existing reviewer evidence, or create it as part of this turn when the reviewed scope needs persistent review closeout evidence.
 
 ## Allowed Actions
 - Review the changed scope.
@@ -62,6 +59,7 @@
 - Explicit judgment on whether Tester evidence is sufficient for product function, requirements satisfaction, packet acceptance, and applicable security-sensitive behavior.
 - Explicit residual risks and testing gaps when no blocking finding is present.
 - Explicit note when cloud/worktree candidate output was reviewed and locally validated before closeout.
+- Created or updated `reference/artifacts/REVIEW_REPORT.md` when the reviewed scope requires persistent review evidence.
 - Clear recommendation on whether the scope returns to `Developer` or can move toward deploy/closeout.
 
 ## Turn Close Reporting

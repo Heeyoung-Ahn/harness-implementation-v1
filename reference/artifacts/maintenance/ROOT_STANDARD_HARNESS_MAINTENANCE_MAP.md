@@ -133,6 +133,51 @@ starter top-level 문서는 현재 아래만 유지한다.
 - `standard-template` harness tests
 - root validate
 
+### 하네스 runtime/state 모듈 경계를 바꿀 때
+
+아래 표를 먼저 보고 어떤 파일이 어떤 권한을 갖는지 판정한다.
+
+| Module | Main responsibility | May write | Must not become |
+|---|---|---|---|
+| `.harness/runtime/state/operating-state-store.js` | DB access layer와 canonical operational rows | `.harness/operating_state.sqlite` | governance Markdown author |
+| `.harness/runtime/state/dev05-tooling.js` | CLI orchestration, transitions, validation-report, handoff payload, canonical artifact refresh orchestration | DB state, governance Markdown sections that the runtime owns, validation evidence, generated-context refresh triggers | broad read-contract authority by accident |
+| `.harness/runtime/state/workflow-routing.js` | owner/workflow resolution, lane routing, route heuristics | none directly | state mutation layer |
+| `.harness/runtime/state/generate-state-docs.js` | generated compatibility/current-task projections | generated docs and compatibility views | primary truth surface |
+| `.harness/runtime/state/active-context.js` | compact AI/human re-entry contract generation | `ACTIVE_CONTEXT.json`, `ACTIVE_CONTEXT.md` | primary write authority |
+| `.harness/runtime/state/drift-validator.js` | drift, parity, packet evidence, reusable sync validation | findings only | mutation layer |
+| `.harness/runtime/state/harness-paths.js` | shared path constants and file-target helpers | none directly | business logic owner |
+| `.harness/runtime/state/dev05-cli.js` | CLI entrypoint and command dispatch | none directly beyond delegated runtime calls | duplicated runtime logic |
+| `.harness/test/*` | runtime and reusable contract verification | test fixtures/artifacts only | runtime production source |
+
+### runtime/state write surface 규칙
+
+| Surface | Primary writer | Notes |
+|---|---|---|
+| DB hot-state (`.harness/operating_state.sqlite`) | `operating-state-store.js` via CLI/runtime orchestration | canonical live operational state |
+| Governance Markdown SSOT (`.agents/artifacts/*.md`) | approved maintainer edits, plus runtime-owned canonical sections updated by `dev05-tooling.js` | do not let generated projections redefine these files |
+| Generated compatibility docs (`CURRENT_STATE.md`, `TASK_LIST.md`, generated-state-docs) | `generate-state-docs.js` only | regenerate instead of editing manually |
+| Active Context (`.agents/runtime/ACTIVE_CONTEXT.*`) | `active-context.js` only | first-read contract, never write authority |
+| Validation evidence (`VALIDATION_REPORT.*`, agent traces, cutover reports) | `dev05-tooling.js` and related report builders | persisted gate evidence, not plan authority |
+| Starter payload runtime files | root source plus mirrored `standard-template` copy | reusable changes must sync both copies when starter-shipped |
+
+### root vs standard-template 구분
+
+- root-only:
+  - live maintainer `IMPLEMENTATION_PLAN.md`
+  - root `PROJECT_HISTORY.md`
+  - maintainer evidence and active packet artifacts
+  - root-only maintenance docs under `reference/artifacts/maintenance/*`
+- root + `standard-template` sync:
+  - reusable workflow contracts
+  - starter-shipped runtime/state behavior
+  - harness tests
+  - starter-shipped manuals and route-matrix guidance
+- generated or operational only:
+  - `.harness/operating_state.sqlite`
+  - `.agents/runtime/ACTIVE_CONTEXT.*`
+  - generated compatibility docs
+  - validation/cutover report outputs
+
 ### starter bootstrap/init를 바꿀 때
 
 수정:
@@ -199,11 +244,12 @@ starter top-level 문서는 현재 아래만 유지한다.
 
 1. 이번 변경이 `maintainer-only / reusable harness / release-only` 중 무엇인지 먼저 분류한다.
 2. reusable harness 변경이면 root와 `standard-template/` 반영 범위를 먼저 고정한다.
-3. 사용자 설치 흐름이 바뀌면 `reference/manuals/*`를 같이 갱신한다.
-4. 유지보수 레포의 release baseline이 바뀌면 루트 SSOT, DB hot-state, generated docs, validation report, packaging/manuals, shared release-baseline constant를 같은 lane에서 같이 닫는다.
-5. reusable harness 변경이면 root와 `standard-template/`를 같이 갱신하고, release-only 변경이면 `installer/`, `pmw-app/`, `packaging/`, manuals를 갱신한다. copied project에 복사되는 guardrail이면 starter runtime/test도 같이 갱신한다.
-6. source 안정화 전에는 `dist/windows-exe-v1.2/`를 다시 만들지 않는다.
-7. `dist/`를 직접 수정하지 않는다.
+3. runtime/state 변경이면 이 문서의 module boundary와 write surface 표부터 대조한다.
+4. 사용자 설치 흐름이 바뀌면 `reference/manuals/*`를 같이 갱신한다.
+5. 유지보수 레포의 release baseline이 바뀌면 루트 SSOT, DB hot-state, generated docs, validation report, packaging/manuals, shared release-baseline constant를 같은 lane에서 같이 닫는다.
+6. reusable harness 변경이면 root와 `standard-template/`를 같이 갱신하고, release-only 변경이면 `installer/`, `pmw-app/`, `packaging/`, manuals를 갱신한다. copied project에 복사되는 guardrail이면 starter runtime/test도 같이 갱신한다.
+7. source 안정화 전에는 `dist/windows-exe-v1.2/`를 다시 만들지 않는다.
+8. `dist/`를 직접 수정하지 않는다.
 
 ## 6. GitHub 공개 기준
 

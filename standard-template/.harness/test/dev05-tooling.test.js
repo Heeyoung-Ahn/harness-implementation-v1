@@ -2446,8 +2446,9 @@ test("handoff regenerates CURRENT_STATE next-agent wording from canonical handof
   assert.equal(handoff.workflowDetails?.role, "Developer");
   assert.deepEqual(handoff.workflowDetails?.missingSections, []);
   assert.deepEqual(handoff.workflowDetails?.readFirst, [
-    "`.agents/artifacts/CURRENT_STATE.md`",
-    "`.agents/artifacts/TASK_LIST.md`"
+    "`.agents/artifacts/REQUIREMENTS.md`",
+    "`.agents/artifacts/ARCHITECTURE_GUIDE.md`",
+    "`active packet and any approved project design/source artifact cited by the task`"
   ]);
   assert.equal(
     handoff.workflowDetails?.turnCloseReporting.some((item) =>

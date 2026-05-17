@@ -20,11 +20,17 @@
 - Do not rewrite canonical meaning of still-live tasks or risks.
 
 ## Must Read SSOT
-- `.agents/artifacts/CURRENT_STATE.md`
-- `.agents/artifacts/TASK_LIST.md`
 - `.agents/artifacts/PREVENTIVE_MEMORY.md`
-- `reference/artifacts/PROJECT_HISTORY.md`
-- `reference/artifacts/HANDOFF_ARCHIVE.md`
+- `.agents/artifacts/PROJECT_HISTORY.md`
+
+## Read First
+- `.agents/runtime/ACTIVE_CONTEXT.json`
+
+## Conditional Supporting References
+- Use `.agents/artifacts/CURRENT_STATE.md` and `.agents/artifacts/TASK_LIST.md` only when `ACTIVE_CONTEXT.reentryContract.mustReadNext`, route troubleshooting, or baton/history compaction needs the compatibility view.
+- Use `.agents/artifacts/PREVENTIVE_MEMORY.md` only when repeated friction or promotion review is in scope.
+- Use `.agents/artifacts/PROJECT_HISTORY.md` only when durable milestone or rebaseline history is being created or compacted.
+- Use `reference/artifacts/HANDOFF_ARCHIVE.md` when archive-backed handoff compaction is in scope and the file already exists, or when the current closeout explicitly creates the first archive entry.
 
 ## Allowed Actions
 - Compress noisy history.

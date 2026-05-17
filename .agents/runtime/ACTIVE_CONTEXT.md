@@ -7,12 +7,12 @@
 - 복구 명령: node .harness/runtime/state/dev05-cli.js context --repair
 - 다음 workflow: .agents/workflows/plan.md
 - 선택된 lane: 현재 열린 작업 없음
-- 계약 digest: ec1d3594a4f03e81b2203f34cf6d2fb9d9e6acf8a6b849ec0072bd976451661b
+- 계약 digest: 841c2816e7ef9fde58146e73919f2c016d30571886d59b5e4975c20673c0c155
 
 ## 현재 작업
 - 단계: planning
 - 게이트: open
-- 초점: V1.3 standard harness starter baseline is stable; PLN-24 closed; reusable baseline is on planning hold. Release packaging and downstream mutation remain not approved.
+- 초점: V1.3 standard harness starter baseline is stable; PLN-25 is closed; the reusable baseline is on planner hold with no active lane.
 - 목표: Preserve the V1.3 installable standard harness baseline while implementing DEV-11 PMW removal and Active Context replacement under the release gate.
 - 작업: 현재 열린 작업 없음
 
@@ -20,9 +20,10 @@
 - 다음 담당: planner
 - 다음 workflow: .agents/workflows/plan.md
 - route 상태: ready
-- 다음 행동: No active implementation lane. Keep the reusable baseline on planning hold until the user opens a new approved lane; release packaging and downstream mutation remain separate future approvals.
+- 다음 행동: Keep the reusable baseline on planning hold until a new approved lane is selected.
+- 다음 작업 기준 SSOT: .agents/artifacts/REQUIREMENTS.md
 - 다음 작업 기준 SSOT: .agents/artifacts/IMPLEMENTATION_PLAN.md
-- 다음 작업 기준 SSOT: reference/packets/PKT-01_PLN-24_DESTRUCTIVE_ARTIFACT_RETIREMENT_MERGE_APPROVAL.md
+- 다음 작업 기준 SSOT: reference/packets/PKT-01_PLN-25_LONG_CONTEXT_REENTRY_AND_IMPLEMENTATION_PLAN_REBASELINE.md
 - 승인 경계: Do not start implementation, testing, or closeout work until the required route and approval are explicit.
 - 넘지 말 것: No implementation or approval-state mutation.
 - 넘지 말 것: No testing or reviewer closeout work.
@@ -33,7 +34,7 @@
 - .agents/runtime/ACTIVE_CONTEXT.json
 - .agents/artifacts/REQUIREMENTS.md
 - .agents/artifacts/IMPLEMENTATION_PLAN.md
-- reference/packets/PKT-01_PLN-24_DESTRUCTIVE_ARTIFACT_RETIREMENT_MERGE_APPROVAL.md
+- reference/packets/PKT-01_PLN-25_LONG_CONTEXT_REENTRY_AND_IMPLEMENTATION_PLAN_REBASELINE.md
 - .agents/artifacts/VALIDATION_REPORT.json
 
 ## 결정과 막힘
@@ -41,9 +42,10 @@
 - 열린 막힘 없음
 
 ## 최근 인계
-- 2026-05-17T02:46:47.488Z: planner -> planner / [planner -> planner] PLN-24 is closed. Approved destructive retirement / merge execution completed as scan/disposition-driven no-op physical retirement: no holds, day_start wording migrated in root and standard-template, no physical deletion/merge/tombstone required, root/starter evidence passed, and Reviewer approved closeout. Release packaging and downstream mutation remain not approved.
+- 2026-05-17T23:20:25.741Z: planner -> planner / [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.
+- 인계 기준 SSOT: .agents/artifacts/REQUIREMENTS.md
 - 인계 기준 SSOT: .agents/artifacts/IMPLEMENTATION_PLAN.md
-- 인계 기준 SSOT: reference/packets/PKT-01_PLN-24_DESTRUCTIVE_ARTIFACT_RETIREMENT_MERGE_APPROVAL.md
+- 인계 기준 SSOT: reference/packets/PKT-01_PLN-25_LONG_CONTEXT_REENTRY_AND_IMPLEMENTATION_PLAN_REBASELINE.md
 - 인계 승인 경계: Do not start implementation, testing, or closeout work until the required route and approval are explicit.
 - 인계 금지선: No implementation or approval-state mutation.
 - 인계 금지선: No testing or reviewer closeout work.
@@ -51,7 +53,7 @@
 
 ## 검증 상태
 - 통과 / gate pass / blocking 0개
-- 마지막 검증 시각: 2026-05-17T02:47:05.891Z
+- 마지막 검증 시각: 2026-05-17T23:20:35.870Z
 
 ## 출처
 - currentState: .agents/artifacts/CURRENT_STATE.md
@@ -65,4 +67,4 @@
 - validationReport: .agents/artifacts/VALIDATION_REPORT.json
 - validationReportMarkdown: .agents/artifacts/VALIDATION_REPORT.md
 - workflowContract: .agents/workflows/plan.md
-- activePacket: reference/packets/PKT-01_PLN-24_DESTRUCTIVE_ARTIFACT_RETIREMENT_MERGE_APPROVAL.md
+- activePacket: reference/packets/PKT-01_PLN-25_LONG_CONTEXT_REENTRY_AND_IMPLEMENTATION_PLAN_REBASELINE.md

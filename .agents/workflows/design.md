@@ -21,9 +21,21 @@
 - Do not approve implementation-ready UI behavior when user approval is still pending.
 
 ## Must Read SSOT
-- `.agents/artifacts/CURRENT_STATE.md`
-- `.agents/artifacts/TASK_LIST.md`
+- `.agents/artifacts/REQUIREMENTS.md`
+- `.agents/artifacts/ARCHITECTURE_GUIDE.md`
 - `reference/artifacts/UI_DESIGN.md`
+
+## Read First
+- `.agents/runtime/ACTIVE_CONTEXT.json`
+- `.agents/artifacts/REQUIREMENTS.md`
+- `.agents/artifacts/ARCHITECTURE_GUIDE.md`
+- `reference/artifacts/UI_DESIGN.md`
+- active packet and any approved project design/source artifact cited by the task
+
+## Conditional Supporting References
+- Use `.agents/artifacts/CURRENT_STATE.md` and `.agents/artifacts/TASK_LIST.md` only when `ACTIVE_CONTEXT.reentryContract.mustReadNext`, packet evidence, or troubleshooting needs the compatibility view.
+- Use `reference/artifacts/PRODUCT_UX_ARCHETYPE.md` when the route is defining or validating the user-facing archetype and deviation boundary.
+- Use `reference/manuals/ROLE_THREAD_PLAYBOOK.md` when starting or resuming a dedicated Designer thread.
 
 ## Allowed Actions
 - Define information hierarchy, states, interactions, and mockup expectations.

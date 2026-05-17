@@ -104,10 +104,9 @@ export function buildActiveContext({
       : handoffExecution.workflow;
   const latestHandoffPayload = latestHandoff?.payload ?? {};
   const workflowReadFirst = normalizePathList(handoffExecution.workflowDetails?.readFirst ?? []);
-  const nextRequiredSsot = uniquePathList([
-    IMPLEMENTATION_PLAN_PATH,
-    ...stripCompatibilityFirstReadPaths(normalizePathList(latestHandoffPayload.requiredSsot ?? []))
-  ]);
+  const nextRequiredSsot = uniquePathList(
+    stripCompatibilityFirstReadPaths(normalizePathList(latestHandoffPayload.requiredSsot ?? []))
+  );
   const nextDoNotCross = normalizeTextList(latestHandoffPayload.doNotCross ?? []);
   const activePacket = activeTask?.sourceRef ?? releaseState?.sourceRef ?? null;
   const mustReadNext = uniquePathList([
@@ -117,12 +116,7 @@ export function buildActiveContext({
     activePacket,
     VALIDATION_REPORT_JSON
   ]);
-  const sourceTrace = uniquePathList([
-    IMPLEMENTATION_PLAN_PATH,
-    ...nextRequiredSsot,
-    activePacket,
-    VALIDATION_REPORT_JSON
-  ]);
+  const sourceTrace = uniquePathList([...nextRequiredSsot, activePacket, VALIDATION_REPORT_JSON]);
   const activeTaskSummary = activeTask
     ? {
         workItemId: activeTask.workItemId,

@@ -12,24 +12,28 @@ Do not use it as daily execution truth, packet status, or workflow handoff truth
 
 If it conflicts with `CURRENT_STATE`, `TASK_LIST`, packet status, DB hot-state, explicit user approval, or workflow handoff truth, those execution-state sources win.
 
+## Durable Timeline
+- 2026-04-22: The reusable standard harness first-ship baseline closed through `deep interview -> requirements final approval -> architecture / implementation / UI sync -> rough mockup -> per-work-item packet approval -> implementation -> generated docs / read model / PMW / cutover -> refactor / security / review gate`.
+- 2026-04-22: Follow-up planning began to preserve the baseline while adding the `core / optional profile / project packet` structure for more complex downstream projects.
+- 2026-04-23: The reusable follow-up contract wave closed across `PLN-03`, `PLN-04`, `PLN-05`, `DSG-02`, `OPS-02`, `QLT-01`, `OPS-01`, `PRF-01`, `PRF-02`, `PRF-03`, `TST-03`, `REV-02`, `SIM-01`, `SIM-02`, `SIM-03`, and `REV-03`.
+- 2026-04-24: `DEV-06` closed after hardening `standard-template/` for real copied-project use, including launcher preflight, green starter tests, formal starter review/test templates, and placeholder script disposition.
+- 2026-04-26: `PLN-06` closed as the standalone business-system harness V1.1 lane with no essential readiness item deferred.
+- 2026-04-27: `REL-02` closed as the V1.2 installable harness and PMW baseline reconciliation lane, aligning the installer, separate PMW app, packaging, manuals, SSOT, DB truth, generated docs, and release validator.
+- 2026-05-02: `PLN-07` closed after sequencing and delivering the V1.3 PMW operator-console and workflow-contract wave through `DEV-07`, `DEV-08`, and `DEV-09`.
+- 2026-05-03: User direction superseded the PMW extension path; `PLN-08` and `DEV-10` became superseded history while `PLN-09` opened as the CLI-first PMW decommission and Active Context rebaseline lane.
+- 2026-05-10: `PLN-10` closed after sequencing and closing `OPS-04`, `QLT-02`, `OPS-06`, and `OPS-05`. `OPS-07` opened next to make planner-hold closeout deterministic.
+- 2026-05-11: `PLN-11` closed after the user approved the `2 + 2` split. `OPS-08`, `QLT-03`, `OPS-09`, and `PLN-12` then closed in sequence, followed by `OPS-10` planner-hold closeout.
+- 2026-05-11: `PLN-13` closed as planning evidence for the shipped-surface sequence, and `OPS-11`, `OPS-12`, and `OPS-13` closed the bootstrapper, template payload, and manual consolidation wave.
+- 2026-05-14: `OPS-19` closed after planner-only helper implementation, tester verification, reviewer approval, and planner closeout reflection. `PLN-18` opened next for project-architecture SSOT restoration and long-term context authority.
+- 2026-05-15 to 2026-05-17: `OPS-26`, `OPS-27`, `PLN-22`, `PLN-23`, and the sequential rebuild slices closed through planning, implementation, verification, review, and cutover evidence. The canonical operational substrate became `.harness/operating_state.sqlite` plus structured runtime APIs, with generated views and cutover sequencing approved under the rebuild program.
+- 2026-05-18: `PLN-25` opened as the long-context re-entry and implementation-plan rebaseline lane. Its purpose is to make `IMPLEMENTATION_PLAN.md` a real implementation plan again, narrow default AI read paths, and add a maintainer architecture map for the harness runtime.
+
 ## What To Record Here
 - milestones that changed the project baseline
 - planning decisions that redirected later packet sequencing
 - major reversals, rebaselines, or decommissions
 - incidents where the team learned a reusable boundary or failure pattern
 - historical rationale that later packets need to understand why a rule exists
-
-## Good Development-Stage Examples
-- The project replaced a manual spreadsheet workflow with an approved web workflow:
-  record this as a durable milestone because later packets need to understand the source-of-truth change.
-- Requirements freeze approved a reduced first release and deferred reporting:
-  record this because later planning packets depend on the sequencing decision.
-- A production incident showed that import rollback was missing:
-  record the incident and the resulting rule change if it affects future packet planning.
-- A project architecture rebaseline moved background jobs out of the web process:
-  record this as durable system history because later implementation packets depend on the boundary.
-- A validation rule was tightened after repeated stale generated-doc drift:
-  record the incident and rule change if it changed reusable policy, not just one bugfix.
 
 ## What Not To Record Here
 - current open blocker list

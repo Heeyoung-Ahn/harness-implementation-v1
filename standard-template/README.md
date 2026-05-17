@@ -37,6 +37,7 @@
 ## 이 starter에 두지 않는 것
 
 - maintainer repo 전용 generated runtime output
+- generated runtime reports such as `.agents/runtime/reports/*`, `.agents/runtime/recovery-reports/*`, `.agents/runtime/agent-traces/*`
 - prebuilt `VALIDATION_REPORT.*`
 - prebuilt `ACTIVE_CONTEXT.*`
 - repo-local `.harness/operating_state.sqlite`
@@ -47,7 +48,7 @@
 
 ## 첫 사용 순서
 
-1. 가능하면 상위 저장소 또는 npm bootstrapper entrypoint가 호출하는 `installer/install-harness.js` contract로 새 프로젝트를 생성한다.
+1. 가능하면 maintainer repo installer나 release bootstrapper가 호출하는 `installer/install-harness.js` contract로 새 프로젝트를 생성한다.
 2. 수동 설치라면 starter payload의 **내용물 전체**를 새 프로젝트 레포 루트에 복사한다.
 3. Node.js 24 이상이 설치되어 있는지 확인한다.
 4. 프로젝트 루트에서 `INIT_STANDARD_HARNESS.cmd` 또는 `npm run harness:init`를 실행한다.

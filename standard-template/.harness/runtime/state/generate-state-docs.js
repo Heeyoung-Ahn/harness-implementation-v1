@@ -396,17 +396,15 @@ function renderHandoffList(handoffs) {
 
 function resolveCompatibilityMustReadNext({ repoRoot, releaseState, focusWorkItem, latestHandoff, handoffExecution }) {
   const startHerePath = path.resolve(repoRoot, "START_HERE.md");
+  const workflowReadFirst = handoffExecution.workflowDetails?.readFirst ?? [];
   return uniqueList(
     [
       ".agents/runtime/ACTIVE_CONTEXT.json",
       handoffExecution.workflow === "manual_selection_required" ? null : handoffExecution.workflow,
       fs.existsSync(startHerePath) ? "START_HERE.md" : null,
+      ...workflowReadFirst,
       ...(latestHandoff?.payload?.requiredSsot ?? []),
-      ".agents/artifacts/REQUIREMENTS.md",
-      ".agents/artifacts/ARCHITECTURE_GUIDE.md",
-      ".agents/artifacts/IMPLEMENTATION_PLAN.md",
       COMPATIBILITY_TASK_LIST_PATH,
-      ".agents/artifacts/PREVENTIVE_MEMORY.md",
       focusWorkItem?.sourceRef ?? releaseState?.sourceRef ?? null
     ].filter(Boolean)
   );

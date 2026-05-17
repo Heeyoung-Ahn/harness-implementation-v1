@@ -23,12 +23,18 @@
 - Do not override human approval boundaries such as `Ready For Code`, packet exit, or release approval.
 
 ## Must Read SSOT
-- `.agents/artifacts/CURRENT_STATE.md`
-- `.agents/artifacts/TASK_LIST.md`
-- `.agents/artifacts/IMPLEMENTATION_PLAN.md`
-- `.agents/artifacts/PROJECT_PROGRESS.md`
-- `.agents/artifacts/VALIDATION_REPORT.md`
-- `reference/artifacts/WALKTHROUGH.md`
+- `.agents/runtime/ACTIVE_CONTEXT.json`
+- latest handoff and active packet when one exists
+
+## Read First
+- `.agents/runtime/ACTIVE_CONTEXT.json`
+
+## Conditional Supporting References
+- Use `.agents/artifacts/CURRENT_STATE.md` and `.agents/artifacts/TASK_LIST.md` only when `ACTIVE_CONTEXT.reentryContract.mustReadNext`, route troubleshooting, or baton readability checks need the compatibility view.
+- Use `.agents/artifacts/IMPLEMENTATION_PLAN.md` and `.agents/artifacts/PROJECT_PROGRESS.md` when route reconciliation depends on approved sequencing or progress history.
+- Use `.agents/artifacts/VALIDATION_REPORT.md` when validation evidence already exists or the next action depends on validation-gate status.
+- Use `reference/artifacts/WALKTHROUGH.md` when Tester evidence exists and PM coordination needs the tested-versus-untested breakdown.
+- Use `reference/artifacts/REVIEW_REPORT.md` when post-review routing or residual-risk coordination is the active PM task.
 
 ## Allowed Actions
 - Summarize current execution state and identify the next concrete workflow/action.

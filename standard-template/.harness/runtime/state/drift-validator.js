@@ -36,7 +36,6 @@ const SOURCE_WAVE_LEDGER_PATH = "reference/artifacts/AUTHORITATIVE_SOURCE_WAVE_L
 const ACTIVE_PROFILES_PATH = ".agents/artifacts/ACTIVE_PROFILES.md";
 const TASK_LIST_PATH = ".agents/artifacts/TASK_LIST.md";
 const CURRENT_STATE_PATH = ".agents/artifacts/CURRENT_STATE.md";
-const IMPLEMENTATION_PLAN_PATH = ".agents/artifacts/IMPLEMENTATION_PLAN.md";
 const REPOSITORY_LAYOUT_PATH = "reference/artifacts/REPOSITORY_LAYOUT_OWNERSHIP.md";
 const GATE_PROFILE_CONTRACT_PATH = ".harness/runtime/state/gate-profiles.js";
 const RISK_CLASS_ORDER = {
@@ -3042,7 +3041,11 @@ function validateActiveContextJson({ store, repoRoot, content, findings }) {
   }
 
   const mustReadNext = context.reentryContract?.mustReadNext ?? [];
-  for (const requiredPath of [IMPLEMENTATION_PLAN_PATH, VALIDATION_REPORT_JSON]) {
+  const activeContextRequiredPaths = [
+    VALIDATION_REPORT_JSON,
+    ...(Array.isArray(context.nextWork?.requiredSsot) ? context.nextWork.requiredSsot : [])
+  ];
+  for (const requiredPath of activeContextRequiredPaths) {
     if (mustReadNext.includes(requiredPath)) {
       continue;
     }
@@ -3118,7 +3121,12 @@ function validateActiveContextJson({ store, repoRoot, content, findings }) {
   }
 
   const sourceTrace = context.reentryContract?.sourceTrace ?? [];
-  for (const requiredPath of [IMPLEMENTATION_PLAN_PATH, VALIDATION_REPORT_JSON]) {
+  const sourceTraceRequiredPaths = [
+    VALIDATION_REPORT_JSON,
+    ...(Array.isArray(context.nextWork?.requiredSsot) ? context.nextWork.requiredSsot : []),
+    context.sources?.activePacket
+  ].filter(Boolean);
+  for (const requiredPath of sourceTraceRequiredPaths) {
     if (sourceTrace.includes(requiredPath)) {
       continue;
     }

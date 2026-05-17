@@ -155,7 +155,11 @@ function writeWorkflowContractFixtures(repoRoot) {
       fileName: "dev.md",
       title: "Developer Workflow",
       role: "Developer",
-      mustRead: ["`.agents/artifacts/CURRENT_STATE.md`", "`.agents/artifacts/TASK_LIST.md`"]
+      mustRead: [
+        "`.agents/artifacts/REQUIREMENTS.md`",
+        "`.agents/artifacts/ARCHITECTURE_GUIDE.md`",
+        "`active packet and any approved project design/source artifact cited by the task`"
+      ]
     },
     {
       fileName: "docu.md",
@@ -193,13 +197,22 @@ function writeWorkflowContractFixtures(repoRoot) {
       fileName: "review.md",
       title: "Review Workflow",
       role: "Reviewer",
-      mustRead: ["`.agents/artifacts/CURRENT_STATE.md`", "`.agents/artifacts/TASK_LIST.md`"]
+      mustRead: [
+        "`.agents/artifacts/REQUIREMENTS.md`",
+        "`.agents/artifacts/ARCHITECTURE_GUIDE.md`",
+        "`active packet and any approved project design/source artifact cited by the task`",
+        "`reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`"
+      ]
     },
     {
       fileName: "test.md",
       title: "Test Workflow",
       role: "Tester",
-      mustRead: ["`.agents/artifacts/CURRENT_STATE.md`", "`.agents/artifacts/TASK_LIST.md`"]
+      mustRead: [
+        "`.agents/artifacts/REQUIREMENTS.md`",
+        "`.agents/artifacts/ARCHITECTURE_GUIDE.md`",
+        "`active packet and any approved project design/source artifact cited by the task`"
+      ]
     }
   ];
 

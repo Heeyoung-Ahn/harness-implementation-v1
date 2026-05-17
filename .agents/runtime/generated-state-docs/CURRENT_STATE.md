@@ -4,17 +4,17 @@
 - Release stage: planning
 - Release gate state: open
 - Release goal: Preserve the V1.3 installable standard harness baseline while implementing DEV-11 PMW removal and Active Context replacement under the release gate.
-- Generated at: 2026-05-17T02:46:47.488Z
+- Generated at: 2026-05-17T23:20:25.741Z
 
 ## Current Focus Summary
-- V1.3 standard harness starter baseline is stable; PLN-24 closed; reusable baseline is on planning hold. Release packaging and downstream mutation remain not approved.
+- V1.3 standard harness starter baseline is stable; PLN-25 is closed; the reusable baseline is on planner hold with no active lane.
 
 ## Current Focus Detail
 - Stage: planning
 - Gate state: open
 - Goal: Preserve the V1.3 installable standard harness baseline while implementing DEV-11 PMW removal and Active Context replacement under the release gate.
-- Focus: V1.3 standard harness starter baseline is stable; PLN-24 closed; reusable baseline is on planning hold. Release packaging and downstream mutation remain not approved.
-- Source: reference/packets/PKT-01_PLN-24_DESTRUCTIVE_ARTIFACT_RETIREMENT_MERGE_APPROVAL.md
+- Focus: V1.3 standard harness starter baseline is stable; PLN-25 is closed; the reusable baseline is on planner hold with no active lane.
+- Source: reference/packets/PKT-01_PLN-25_LONG_CONTEXT_REENTRY_AND_IMPLEMENTATION_PLAN_REBASELINE.md
 
 ## Decision Required Summary
 - 0 open decisions require attention.
@@ -27,5 +27,5 @@
 
 ## Generation Metadata
 - Generated docs: CURRENT_STATE.md, TASK_LIST.md
-- Source revision: 2026-05-17T02:46:47.488Z
+- Source revision: 2026-05-17T23:20:25.741Z
 - Sync status: fresh at generation time
