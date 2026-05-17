@@ -114,10 +114,10 @@
 ## Required Reading Rule
 1. `AGENTS.md`
 2. `.agents/rules/workspace.md`
-3. `.agents/artifacts/CURRENT_STATE.md`
-4. `.agents/artifacts/TASK_LIST.md`
-5. 현재 lane에 맞는 workflow
-6. 현재 lane에 필요한 baseline artifact
+3. `.agents/runtime/ACTIVE_CONTEXT.json`
+4. 현재 lane에 맞는 workflow 또는 `ACTIVE_CONTEXT.nextWork.workflow`
+5. 현재 lane에 필요한 baseline artifact 또는 `ACTIVE_CONTEXT.reentryContract.mustReadNext`
+6. `.agents/artifacts/CURRENT_STATE.md`와 `.agents/artifacts/TASK_LIST.md`는 `ACTIVE_CONTEXT`가 명시적으로 요구하거나 compatibility troubleshooting/evidence가 필요할 때만 읽는다.
 7. 명시적으로 활성화된 optional profile artifact
 8. 현재 작업의 active project packet과 authoritative source artifact
 9. 필요한 추가 reference material

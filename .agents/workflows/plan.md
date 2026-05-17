@@ -27,6 +27,10 @@
 - `.agents/artifacts/TASK_LIST.md`
 - `.agents/artifacts/REQUIREMENTS.md`
 
+## Read First
+- `.agents/runtime/ACTIVE_CONTEXT.json`
+- `.agents/artifacts/REQUIREMENTS.md`
+
 ## Conditional Supporting References
 - Use `reference/artifacts/PROJECT_STARTER_DOC_PACK.md` when starting a new project, reopening kickoff scope, or checking whether project purpose, roles, workflows, scope, screens, data, permissions, tests, deployment, and operations are defined before implementation.
 - Use `reference/artifacts/VERIFICATION_SCENARIO_TEMPLATE.md` when defining packet acceptance or verification expectations.

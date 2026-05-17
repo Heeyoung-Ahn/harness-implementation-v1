@@ -115,14 +115,14 @@ AI에게는 어디를 먼저 읽어야 하는지, 어떤 문서를 정본으로 
 - `starter mode`는 운영 강도다.
 - `packet`은 이번 일의 경계다.
 - `manual`은 설명서다.
-- 실제 현재 상태는 `CURRENT_STATE`, `TASK_LIST`, packet status, handoff, DB hot-state로 본다.
+- 실제 현재 상태는 DB hot-state, latest handoff, packet status, `ACTIVE_CONTEXT`를 먼저 보고, `CURRENT_STATE`와 `TASK_LIST`는 필요할 때만 compatibility/generated view로 함께 본다.
 
 ### 2.2 Operator One-Page Checklist
 
 작업 시작 전에 아래 순서만 먼저 본다.
 
-1. `CURRENT_STATE.md`와 `TASK_LIST.md`를 본다.
-2. `ACTIVE_CONTEXT`는 빠른 재진입용 요약으로만 본다.
+1. `ACTIVE_CONTEXT`를 먼저 본다.
+2. `CURRENT_STATE.md`와 `TASK_LIST.md`는 `ACTIVE_CONTEXT`가 명시적으로 요구하거나 fallback/troubleshooting이 필요할 때만 본다.
 3. starter를 방금 복사한 직후라면 `ACTIVE_CONTEXT.*`가 아직 없을 수 있으니 `harness:init` 또는 `harness:context` 이후 다시 본다.
 4. 지금 작업에 packet이 필요한지 확인한다.
 5. 구현이나 문서 변경이면 `Ready For Code`가 있는지 확인한다.
@@ -323,8 +323,8 @@ flowchart TD
 | `.agents/artifacts/ARCHITECTURE_GUIDE.md` | 어떻게 나눠 설계할 것인가 | requirements 확정 후 |
 | `.agents/artifacts/IMPLEMENTATION_PLAN.md` | 어떤 순서로 닫을 것인가 | lane와 packet 순서 확인 시 |
 | `.agents/rules/HARNESS_OPERATING_CONTRACT.md` | workflow-entry, approval boundary, packet-before-code, baton, role separation | 어떤 문서가 authority인지 헷갈릴 때 |
-| `.agents/artifacts/CURRENT_STATE.md` | 지금 어디까지 왔는가 | 매일 시작할 때 |
-| `.agents/artifacts/TASK_LIST.md` | 현재 작업과 다음 작업 | 매일 시작할 때 |
+| `.agents/artifacts/CURRENT_STATE.md` | generated/current compatibility view | fallback, evidence 확인, troubleshooting 시 |
+| `.agents/artifacts/TASK_LIST.md` | generated/task compatibility view | fallback, evidence 확인, troubleshooting 시 |
 | `.agents/artifacts/DOMAIN_CONTEXT.md` | data-impact 기준선과 도메인 맥락 | 데이터/DB 영향 판단 시 |
 | `.agents/artifacts/SYSTEM_CONTEXT.md` | 시스템 경계와 외부 연동 맥락 | system boundary 판단 시 |
 | `.agents/artifacts/PROJECT_HISTORY.md` | 장기 rebaseline과 과거 결정 이력 | 과거 변경이 현재 판단에 영향 줄 때 |
@@ -529,7 +529,8 @@ Role: Planner
 Goal: 구매결재 시스템의 첫 구현 packet을 준비한다.
 Allowed scope: 요구사항 정리, packet 범위, 승인 질문
 Do not: 코드 수정, 구현 시작
-Required inputs: REQUIREMENTS, CURRENT_STATE, TASK_LIST, starter doc pack
+Required inputs: ACTIVE_CONTEXT, REQUIREMENTS, active packet/source docs, starter doc pack
+Compatibility fallback: read CURRENT_STATE/TASK_LIST only when ACTIVE_CONTEXT explicitly requires them or troubleshooting needs them
 Expected output: packet draft, open decisions, Ready For Code 승인 질문
 Validation: source/evidence 누락이 없어야 함
 Next handoff: Developer
@@ -748,15 +749,15 @@ cloud에서 오래 걸리는 후보 작업을 돌렸을 때 로컬 정본으로 
 - 목적: 현재 단계, 현재 focus, 다음 action을 짧게 본다.
 - 언제 쓰나: 하루 시작, 중단 후 복귀, handoff 직후.
 - 기대 출력: 현재 stage, focus, next action 요약이 나온다.
-- 실패 시 첫 대응: `harness:init`이 끝났는지, `CURRENT_STATE.md`와 DB 상태가 비어 있지 않은지 확인한다.
-- 관련 아티팩트: `CURRENT_STATE.md`, `ACTIVE_CONTEXT.*`
+- 실패 시 첫 대응: `harness:init`이 끝났는지, `ACTIVE_CONTEXT.*`와 DB 상태가 비어 있지 않은지 확인한다. 필요하면 `CURRENT_STATE.md`를 compatibility view로 확인한다.
+- 관련 아티팩트: `ACTIVE_CONTEXT.*`, `CURRENT_STATE.md`
 
 ### `npm run harness:next`
 - 목적: 다음 workflow와 구체 next work를 확인한다.
 - 언제 쓰나: 지금 뭘 해야 할지 애매할 때.
 - 기대 출력: 다음 owner, workflow, next first action이 나온다.
-- 실패 시 첫 대응: `TASK_LIST.md`와 최신 handoff가 비어 있지 않은지 확인한다.
-- 관련 아티팩트: `TASK_LIST.md`, `ACTIVE_CONTEXT.*`
+- 실패 시 첫 대응: `ACTIVE_CONTEXT.*`와 최신 handoff가 비어 있지 않은지 확인한다. 필요하면 `TASK_LIST.md`를 compatibility view로 확인한다.
+- 관련 아티팩트: `ACTIVE_CONTEXT.*`, `TASK_LIST.md`
 
 ### `npm run harness:context`
 - 목적: AI용 JSON과 사람용 Markdown active context를 생성 또는 갱신한다.
@@ -834,7 +835,8 @@ cloud에서 오래 걸리는 후보 작업을 돌렸을 때 로컬 정본으로 
 - `npm run harness:status`
 - `npm run harness:next`
 - 필요하면 `npm run harness:context`
-- `CURRENT_STATE.md`와 `TASK_LIST.md`를 보고 오늘 판단할 항목을 잡는다.
+- `ACTIVE_CONTEXT.md` 또는 `npm run harness:status` / `npm run harness:next`로 오늘 판단할 항목을 잡는다.
+- 필요하면 `CURRENT_STATE.md`와 `TASK_LIST.md`를 compatibility view로 확인한다.
 
 AI가 하는 일:
 
@@ -937,7 +939,8 @@ Role: Planner
 Goal: 다음 구현 packet의 범위와 승인 경계를 닫는다.
 Allowed scope: 요구사항, 설계 영향, acceptance, 검증 시나리오, 승인 질문
 Do not: 코드 수정, 구현 시작
-Required inputs: ACTIVE_CONTEXT, CURRENT_STATE, TASK_LIST, REQUIREMENTS, active packet/source docs
+Required inputs: ACTIVE_CONTEXT, REQUIREMENTS, active packet/source docs
+Compatibility fallback: read CURRENT_STATE/TASK_LIST only when ACTIVE_CONTEXT explicitly requires them or troubleshooting needs them
 Expected output: packet draft, open decisions, Ready For Code 승인 요청
 ```
 
@@ -987,13 +990,15 @@ CLOUD_LOCAL_MERGE_PLAYBOOK 기준으로 cloud에서 할 범위, 로컬에 남길
 ## 22. 트러블슈팅과 FAQ
 
 ### Q. `ACTIVE_CONTEXT`가 오래된 상태처럼 보인다
-- 먼저 `CURRENT_STATE.md`, `TASK_LIST.md`, 최신 handoff가 실제 상태와 맞는지 본다.
+- 먼저 최신 handoff와 `npm run harness:status` / `npm run harness:next` 결과가 실제 상태와 맞는지 본다.
 - 그 다음 `npm run harness:context`를 다시 실행한다.
+- 필요하면 `CURRENT_STATE.md`와 `TASK_LIST.md`를 compatibility view로 대조한다.
 
 ### Q. copied starter에 `ACTIVE_CONTEXT.json`이나 `.md`가 없다
 - installable starter payload는 generated `ACTIVE_CONTEXT.*`를 싣지 않는다.
 - 새 프로젝트 루트로 복사한 뒤 `npm run harness:init` 또는 `npm run harness:context`를 실행하면 현재 프로젝트 기준으로 다시 생성된다.
-- init/context 전에는 `START_HERE.md`, `CURRENT_STATE.md`, `TASK_LIST.md`, 실행 직후 validator 결과를 우선해서 본다.
+- init/context 전에는 `START_HERE.md`와 실행 직후 validator 결과를 우선해서 본다.
+- compatibility placeholder가 남아 있다면 `CURRENT_STATE.md`와 `TASK_LIST.md`는 bootstrap fallback으로만 참고한다.
 
 ### Q. validator에서 FAIL이 나온다
 - 가장 위 finding부터 읽는다.

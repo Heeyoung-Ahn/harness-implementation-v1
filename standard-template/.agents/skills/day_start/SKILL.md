@@ -57,7 +57,7 @@ Return a concise start brief with these sections:
 ## Rules
 
 - Use the user's language.
-- Treat `.agents/artifacts/CURRENT_STATE.md` as the live execution truth unless direct evidence contradicts it.
+- Treat `.agents/runtime/ACTIVE_CONTEXT.json` plus the operational DB state as the live execution route; use `.agents/artifacts/CURRENT_STATE.md` only as a generated compatibility fallback when the re-entry contract asks for it or troubleshooting needs it.
 - Start by echoing the `ACTIVE_CONTEXT` first-read contract: selected lane, next workflow, must-read-next list, and whether fallback reading was required.
 - If direct evidence contradicts the saved state, flag the mismatch instead of silently resolving it.
 - Read preventive rules only when they directly affect today's scope.

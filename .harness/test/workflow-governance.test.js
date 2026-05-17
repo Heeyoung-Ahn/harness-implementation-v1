@@ -4,12 +4,12 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-import { resolveHandoff, runTransition } from "../runtime/state/dev05-tooling.js";
+import { resolveHandoff, runTransition, runValidator } from "../runtime/state/dev05-tooling.js";
 import { createOperatingStateStore } from "../runtime/state/operating-state-store.js";
 import { workflowForOwner } from "../runtime/state/workflow-routing.js";
 import { createClock, seedStandardRepo, writeOpsPacket, writeStateSurfaces } from "./dev05-test-helpers.js";
 
-test("handoff ignores CURRENT_STATE-only route hints when canonical live authority is absent", () => {
+test("handoff regenerates CURRENT_STATE route hints from canonical state when live authority is absent", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "workflow-governance-handoff-current-state-ignored-"));
   seedStandardRepo(repoRoot);
   const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
@@ -39,7 +39,7 @@ test("handoff ignores CURRENT_STATE-only route hints when canonical live authori
   const handoff = resolveHandoff({ repoRoot, dbPath, outputDir: repoRoot });
   assert.equal(handoff.ok, true);
   assert.equal(handoff.resolvedBy, "default_planner");
-  assert.equal(handoff.currentStateNextAgent, "Designer resolving the UI evidence contract");
+  assert.equal(handoff.currentStateNextAgent, "Planner");
   assert.equal(handoff.workflow, ".agents/workflows/plan.md");
   assert.equal(handoff.workflowDetails?.role, "Planner");
   assert.deepEqual(handoff.workflowDetails?.missingSections, []);
@@ -100,6 +100,20 @@ test("planner fallback blocks mutating work when the route only resolves through
   );
   assert.equal(activeContext.nextWork.workflow, null);
   assert.equal(activeContext.nextWork.workflowRouteStatus, "planner_fallback_blocked");
+
+  const validation = runValidator({ repoRoot, dbPath, outputDir: repoRoot });
+  assert.equal(
+    validation.findings.some((finding) => finding.code === "active_context_route_mismatch"),
+    false
+  );
+  assert.equal(
+    validation.findings.some(
+      (finding) =>
+        finding.code === "active_context_must_read_missing" &&
+        finding.requiredPath === ".agents/workflows/plan.md"
+    ),
+    false
+  );
 });
 
 test("planner fallback allows non-mutating planning work when the route resolves through latest handoff", () => {
@@ -215,6 +229,9 @@ test("transition apply writes compact baton fields into handoff payload and acti
   );
   assert.equal(activeContext.nextWork.workflow, ".agents/workflows/dev.md");
   assert.equal(activeContext.nextWork.approvalBoundary, handoff?.payload?.approvalBoundary);
-  assert.deepEqual(activeContext.nextWork.requiredSsot, handoff?.payload?.requiredSsot);
+  assert.deepEqual(activeContext.nextWork.requiredSsot, [
+    ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+    packetPath
+  ]);
   assert.deepEqual(activeContext.nextWork.doNotCross, handoff?.payload?.doNotCross);
 });

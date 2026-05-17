@@ -1,10 +1,10 @@
 # TASK_LIST
 
 ## Technical Facts
-- Open work items: 65
+- Open work items: 68
 - Open blocked or at-risk items: 0
 - Recent handoffs captured: 10
-- Generated at: 2026-05-16T12:53:17.043Z
+- Generated at: 2026-05-17T02:46:47.488Z
 
 ## Blocked / At Risk Summary
 - 0 open blocker or risks require attention.
@@ -18,6 +18,9 @@
 ## Work Item Detail
 | ID | Title | Status | Next Action |
 |---|---|---|---|
+| PLN-24 | Destructive artifact retirement / merge approval | closed | No active implementation lane. Keep the reusable baseline on planning hold until the user opens a new approved lane; release packaging and downstream mutation remain separate future approvals. |
+| PLN-23 | Cutover execution approval | closed | No active implementation lane. Open a separate Planner approval packet only if the user explicitly approves destructive artifact retirement / merge after inbound-reference scan and migration/tombstone/exemption handling. |
+| PLN-22 | Operational authority rebuild and harness reset | closed | No active implementation lane. Open a new Planner approval lane only if the user explicitly approves cutover execution or destructive artifact retirement / merge. |
 | PLN-21 | PLN-21 Operational single-source authority and governance simplification | closed | Keep the reusable baseline on planning hold until a new approved lane is selected. |
 | PLN-20 | Maintainer / starter boundary and payload separation | closed | Keep the reusable baseline on planning hold until a new approved lane is selected. |
 | OPS-27 | Post-transition validation / Active Context freshness convergence | closed | Clarify the PLN-20 planning boundary for the first starter-shipped ACTIVE_CONTEXT payload-handling slice before any Ready For Code decision. |
@@ -85,18 +88,18 @@
 | DEV-04 | PMW read surface | done | Closed after browser verification passed at http://127.0.0.1:4173. |
 
 ## Handoff Log
-- 2026-05-16T12:53:17.043Z: [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.
-- 2026-05-16T12:53:10.763Z: [reviewer -> planner] Reviewer confirmed PLN-21 slice 3 stayed within validator simplification and risk-tiered closeout scope and approved packet closeout.
-- 2026-05-16T12:53:02.781Z: [tester -> reviewer] Tester verified root/starter targeted and full suites plus validator, validation-report, and status evidence for PLN-21 slice 3.
-- 2026-05-16T12:52:13.722Z: [developer -> tester] Developer completed PLN-21 slice 3 validator simplification and risk-tiered closeout implementation with updated reusable regression coverage.
-- 2026-05-16T12:29:38.922Z: [planner -> developer] Ready For Code is approved for PLN-21 slice 3 only. Developer should implement validator simplification plus risk-tiered closeout while leaving slice-4 parity reduction and other deferred lanes blocked.
-- 2026-05-16T12:27:59.998Z: [planner -> planner] PLN-21 slice 3 detailed agreement is approved. The lane is now limited to validator simplification plus risk-tiered closeout planning, while Ready For Code remains pending.
-- 2026-05-16T12:24:45.177Z: [planner -> planner] Opened PLN-21 as the selected slice-3 Planner lane after slice-2 closeout. Slice 3 now covers validator simplification and risk-tiered closeout planning only; Ready For Code remains pending.
-- 2026-05-16T10:21:56.794Z: [planner -> planner] Planner recorded PLN-21 slice 2 closeout after tester verification and reviewer approval. Return the reusable baseline to planning hold and keep later PLN-21 slices blocked until an explicit follow-up lane reopens them.
-- 2026-05-16T10:20:35.774Z: [reviewer -> planner] Reviewer approved PLN-21 slice 2 closeout after confirming live Ready For Code state now follows work-item metadata, packet truth notes remain approval/scope/audit evidence only, root/standard-template parity is clean, and no slice-3 scope breach is present.
-- 2026-05-16T10:19:35.861Z: [tester -> reviewer] Tester verified PLN-21 slice 2 with targeted root/starter dev05-tooling regression, root npm test 91/91, standard-template npm test 82/82, root/starter validator pass, and regenerated validation-report evidence.
+- 2026-05-17T02:46:47.488Z: [planner -> planner] PLN-24 is closed. Approved destructive retirement / merge execution completed as scan/disposition-driven no-op physical retirement: no holds, day_start wording migrated in root and standard-template, no physical deletion/merge/tombstone required, root/starter evidence passed, and Reviewer approved closeout. Release packaging and downstream mutation remain not approved.
+- 2026-05-17T02:45:44.047Z: [reviewer -> planner] PLN-24 Reviewer closeout approved. No findings inside the approved boundary; scan/disposition evidence has no holds, old day_start live-truth wording is migrated in root and standard-template, physical deletion/merge was correctly no-op after exemptions, root/starter evidence is clean, and release packaging/downstream mutation remain out of scope.
+- 2026-05-17T02:43:13.283Z: [tester -> reviewer] PLN-24 Tester verification passed. Disposition evidence classifies all references with no holds, confirms two day_start migrations, no physical deletion or merge, no release packaging or downstream mutation, and root/starter targeted tests, validators, validation reports, contexts, and cutover-preflight all pass.
+- 2026-05-17T02:40:21.606Z: [developer -> tester] PLN-24 Developer execution completed. Same-turn inbound-reference scan classified all candidates with no holds, migrated day_start live-truth wording in root and standard-template, performed no physical deletion or merge because candidates are retained exemptions or already excluded starter runtime outputs, and root/starter tests, validators, validation reports, context, and preflight passed.
+- 2026-05-17T02:30:35.426Z: [planner -> developer] PLN-24 execution approved by user. Developer may execute only the approved root-first destructive retirement / merge lane after same-turn inbound-reference scan, disposition table, rollback proof, and freshness gate pass with no hold items. Release packaging and downstream mutation remain not approved.
+- 2026-05-17T02:27:25.438Z: [planner -> planner] PLN-24 scan and disposition criteria are approved by the user; Ready For Code and destructive artifact retirement / merge execution remain on hold pending explicit execution approval.
+- 2026-05-17T02:22:53.408Z: [planner -> planner] Open a Planner approval packet for final destructive artifact retirement / merge, including inbound-reference scan criteria and migration/tombstone/exemption disposition gates. Execution remains unapproved.
+- 2026-05-17T02:16:36.808Z: [planner -> planner] PLN-23 cutover execution is closed. User-approved root cutover executed as a no-op migration apply, Developer/Tester/Reviewer/Planner evidence is recorded, validation passes, and destructive artifact retirement / merge remains separately gated.
+- 2026-05-17T02:12:29.207Z: [reviewer -> planner] PLN-23 Reviewer closeout approved. No findings inside the approved cutover boundary; root-only migration-apply was a no-op, root/starter evidence is clean, rollback/preflight proof is sufficient, and destructive artifact retirement / merge remains gated.
+- 2026-05-17T02:11:14.256Z: [tester -> reviewer] PLN-23 Tester verification passed. Root and standard-template targeted/full suites passed, validators/reports/context/preflight remained clean, root cutover applied 0 changes, and no destructive artifact retirement / merge occurred.
 
 ## Generation Metadata
 - Generated docs: CURRENT_STATE.md, TASK_LIST.md
-- Source revision: 2026-05-16T12:53:17.043Z
+- Source revision: 2026-05-17T02:46:47.488Z
 - Sync status: fresh at generation time

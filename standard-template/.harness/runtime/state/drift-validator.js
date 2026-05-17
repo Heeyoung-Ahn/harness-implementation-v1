@@ -3,7 +3,13 @@ import path from "node:path";
 
 import { ACTIVE_CONTEXT_JSON, ACTIVE_CONTEXT_MARKDOWN } from "./active-context.js";
 import { AGENT_TRACES_DIR, VALIDATION_REPORT_JSON, resolveGeneratedDocReadPath } from "./harness-paths.js";
-import { CURRENT_STATE_DOC, TASK_LIST_DOC, calculateChecksum } from "./generate-state-docs.js";
+import {
+  CURRENT_STATE_DOC,
+  TASK_LIST_DOC,
+  COMPATIBILITY_CURRENT_STATE_PATH,
+  COMPATIBILITY_TASK_LIST_PATH,
+  calculateChecksum
+} from "./generate-state-docs.js";
 import { GATE_PROFILE_IDS, resolveGateProfile } from "./gate-profiles.js";
 import { looksLikeStarterPlaceholder } from "./init-project.js";
 import {
@@ -33,6 +39,11 @@ const CURRENT_STATE_PATH = ".agents/artifacts/CURRENT_STATE.md";
 const IMPLEMENTATION_PLAN_PATH = ".agents/artifacts/IMPLEMENTATION_PLAN.md";
 const REPOSITORY_LAYOUT_PATH = "reference/artifacts/REPOSITORY_LAYOUT_OWNERSHIP.md";
 const GATE_PROFILE_CONTRACT_PATH = ".harness/runtime/state/gate-profiles.js";
+const RISK_CLASS_ORDER = {
+  low: 1,
+  normal: 2,
+  high: 3
+};
 const WORKFLOW_CONTRACT_PATHS = [
   ".agents/workflows/deploy.md",
   ".agents/workflows/design.md",
@@ -565,6 +576,20 @@ export function validateGeneratedStateDocs({
   }
 
   validateActiveContextContract({ store, repoRoot, outputDir, findings });
+  validateCompatibilityFallbackSurface({
+    store,
+    repoRoot,
+    relativePath: CURRENT_STATE_PATH,
+    requiredMarkers: ["## Snapshot", "## Next Recommended Agent", "## Latest Handoff Summary"],
+    findings
+  });
+  validateCompatibilityFallbackSurface({
+    store,
+    repoRoot,
+    relativePath: TASK_LIST_PATH,
+    requiredMarkers: ["## Active Locks", "## Active Tasks", "## Completed Tasks", "## Handoff Log"],
+    findings
+  });
   validateSourceRefs(store, repoRoot, findings);
   validateFreshness(store, findings);
   validateHarnessOwnedPaths(repoRoot, findings);
@@ -1420,8 +1445,8 @@ function readUtf8File(filePath, findings) {
   return readRequiredUtf8File({
     filePath,
     findings,
-    missingCode: "generated_doc_missing",
-    missingMessage: `Missing generated doc: ${path.basename(filePath)}`,
+    missingCode: "generation_failed",
+    missingMessage: `Missing generated surface: ${path.basename(filePath)}`,
     pathKey: "path"
   });
 }
@@ -1670,6 +1695,8 @@ function validateGateProfileEvidence({ workItem, packetPath, content, header, ga
       message: `${packetPath} cannot use light gate profile for ${layerClassification} layer work.`
     });
   }
+  const fields = parseBulletFields(content);
+  validateCloseoutRiskFloor({ workItem, packetPath, content, header, fields, gateProfile, findings });
 
   const manifest = sliceSection(content, "## Verification Manifest");
   if (!manifest) {
@@ -1686,7 +1713,8 @@ function validateGateProfileEvidence({ workItem, packetPath, content, header, ga
 
   const requiredMarkers = gateProfileEvidenceMarkers(gateProfile.id, {
     header,
-    fields: parseBulletFields(content)
+    fields,
+    content
   });
   for (const marker of requiredMarkers) {
     if (manifest.toLowerCase().includes(marker.toLowerCase())) {
@@ -1704,6 +1732,26 @@ function validateGateProfileEvidence({ workItem, packetPath, content, header, ga
   }
 }
 
+function validateCloseoutRiskFloor({ workItem, packetPath, content, header, fields, gateProfile, findings }) {
+  const declaredRisk = declaredRiskClassFromTier(getFieldValue(fields ?? {}, "Closeout risk tier"));
+  if (!declaredRisk) {
+    return;
+  }
+  const detectedFloor = detectRiskFloor({ content, header, gateProfile });
+  if (riskClassRank(declaredRisk) >= riskClassRank(detectedFloor)) {
+    return;
+  }
+  findings.push({
+    code: "closeout_risk_floor_mismatch",
+    severity: "error",
+    workItemId: workItem.workItemId,
+    packetPath,
+    declaredRisk,
+    detectedRiskFloor: detectedFloor,
+    message: `${packetPath} declares closeout risk ${declaredRisk}, but detected risk floor is ${detectedFloor}. Effective risk class must use the higher value.`
+  });
+}
+
 function gateProfileEvidenceMarkers(profileId, options = {}) {
   const markers = {
     light: ["canonical artifact", "handoff"],
@@ -1715,9 +1763,16 @@ function gateProfileEvidenceMarkers(profileId, options = {}) {
   const closeoutRiskTier = normalizeCloseoutRiskTier(
     getFieldValue(options.fields ?? {}, "Closeout risk tier")
   );
+  const declaredRisk = declaredRiskClassFromTier(closeoutRiskTier);
+  const detectedFloor = detectRiskFloor({
+    content: options.content ?? "",
+    header: options.header ?? {},
+    gateProfile: resolveGateProfile(profileId)
+  });
   if (
     profileId === "contract" &&
-    (closeoutRiskTier === "low-risk" || closeoutRiskTier === "low-risk-planner-closeout")
+    declaredRisk === "low" &&
+    riskClassRank(detectedFloor) <= RISK_CLASS_ORDER.low
   ) {
     return resolvedMarkers.filter((marker) => marker !== "review closeout");
   }
@@ -1725,8 +1780,65 @@ function gateProfileEvidenceMarkers(profileId, options = {}) {
 }
 
 function normalizeCloseoutRiskTier(value) {
+  if (value == null) {
+    return null;
+  }
   const normalized = normalizeValue(value);
   return normalized || null;
+}
+
+function declaredRiskClassFromTier(value) {
+  const normalized = normalizeCloseoutRiskTier(value);
+  if (!normalized) {
+    return null;
+  }
+  if (normalized.startsWith("low")) {
+    return "low";
+  }
+  if (normalized.startsWith("normal") || normalized.startsWith("standard")) {
+    return "normal";
+  }
+  if (normalized.startsWith("high") || normalized.startsWith("release")) {
+    return "high";
+  }
+  return null;
+}
+
+function riskClassRank(value) {
+  return RISK_CLASS_ORDER[value] ?? RISK_CLASS_ORDER.low;
+}
+
+function detectRiskFloor({ content = "", header = {}, gateProfile = null } = {}) {
+  const headerRisk = declaredRiskClassFromTier(getHeaderProposed(header, "Risk if started now"));
+  if (headerRisk) {
+    return headerRisk;
+  }
+  if (gateProfile?.id === "release") {
+    return "high";
+  }
+  const haystack = String(content ?? "").toLowerCase();
+  if (
+    haystack.includes("authority-model mutation") ||
+    haystack.includes("authority model mutation") ||
+    haystack.includes("shipped starter payload") ||
+    haystack.includes("release packaging") ||
+    haystack.includes("security-sensitive") ||
+    haystack.includes("data / cutover") ||
+    haystack.includes("data/cutover") ||
+    haystack.includes("artifact retirement execution") ||
+    haystack.includes("authority cutover")
+  ) {
+    return "high";
+  }
+  if (
+    gateProfile?.id === "contract" ||
+    haystack.includes("validator behavior") ||
+    haystack.includes("workflow/tooling") ||
+    haystack.includes("reusable runtime")
+  ) {
+    return "normal";
+  }
+  return "low";
 }
 
 function validateRegisteredTaskPacket({ artifact, repoRoot, findings }) {
@@ -2690,7 +2802,7 @@ function validateProjectionState(store, projectionName, content, findings) {
   const projection = store.getGenerationState(projectionName);
   if (!projection) {
     findings.push({
-      code: "generation_state_missing",
+      code: "generation_failed",
       severity: "error",
       projectionName,
       message: `${projectionName} has no generation_state row.`
@@ -2705,6 +2817,36 @@ function validateProjectionState(store, projectionName, content, findings) {
       severity: "error",
       projectionName,
       message: `${projectionName} checksum does not match generation_state.`
+    });
+    findings.push({
+      code: "stale_generated_view",
+      severity: "error",
+      projectionName,
+      message: `${projectionName} content no longer matches the last generated projection state.`
+    });
+  }
+}
+
+function validateCompatibilityFallbackSurface({ store, repoRoot, relativePath, requiredMarkers: _requiredMarkers, findings }) {
+  const absolutePath = path.resolve(repoRoot, relativePath);
+  const content = readRequiredUtf8File({
+    filePath: absolutePath,
+    findings,
+    missingCode: "generation_failed",
+    missingMessage: `${relativePath} generated compatibility surface is missing.`,
+    pathKey: "path"
+  });
+  if (content == null) {
+    return;
+  }
+
+  const projection = store.getGenerationState(relativePath);
+  if (!projection) {
+    findings.push({
+      code: "generation_failed",
+      severity: "error",
+      projectionName: relativePath,
+      message: `${relativePath} has no generation_state row.`
     });
   }
 }
@@ -2796,6 +2938,8 @@ function validateFreshness(store, findings) {
   for (const projectionName of [
     CURRENT_STATE_DOC,
     TASK_LIST_DOC,
+    COMPATIBILITY_CURRENT_STATE_PATH,
+    COMPATIBILITY_TASK_LIST_PATH,
     ACTIVE_CONTEXT_JSON,
     ACTIVE_CONTEXT_MARKDOWN
   ]) {
@@ -2805,6 +2949,12 @@ function validateFreshness(store, findings) {
     }
 
     if (projection.generatedAt < latestSourceChange) {
+      findings.push({
+        code: "stale_generated_view",
+        severity: "error",
+        projectionName,
+        message: `${projectionName} is stale relative to the latest DB mutation timestamp.`
+      });
       findings.push({
         code: "freshness_drift_detected",
         severity: "error",
@@ -2892,7 +3042,7 @@ function validateActiveContextJson({ store, repoRoot, content, findings }) {
   }
 
   const mustReadNext = context.reentryContract?.mustReadNext ?? [];
-  for (const requiredPath of [CURRENT_STATE_PATH, TASK_LIST_PATH, VALIDATION_REPORT_JSON]) {
+  for (const requiredPath of [IMPLEMENTATION_PLAN_PATH, VALIDATION_REPORT_JSON]) {
     if (mustReadNext.includes(requiredPath)) {
       continue;
     }
@@ -2914,7 +3064,10 @@ function validateActiveContextJson({ store, repoRoot, content, findings }) {
     includeWorkflowDetails: true
   });
   const expectedWorkflow =
-    handoffExecution.workflow === "manual_selection_required" ? null : handoffExecution.workflow;
+    handoffExecution.workflow === "manual_selection_required" ||
+    handoffExecution.routeStatus === "planner_fallback_blocked"
+      ? null
+      : handoffExecution.workflow;
   const expectedActiveTask = selectActiveWorkItem(workItems, { repoRoot });
 
   if ((context.nextWork?.workflow ?? null) !== expectedWorkflow) {
@@ -2965,7 +3118,7 @@ function validateActiveContextJson({ store, repoRoot, content, findings }) {
   }
 
   const sourceTrace = context.reentryContract?.sourceTrace ?? [];
-  for (const requiredPath of [CURRENT_STATE_PATH, TASK_LIST_PATH, IMPLEMENTATION_PLAN_PATH]) {
+  for (const requiredPath of [IMPLEMENTATION_PLAN_PATH, VALIDATION_REPORT_JSON]) {
     if (sourceTrace.includes(requiredPath)) {
       continue;
     }

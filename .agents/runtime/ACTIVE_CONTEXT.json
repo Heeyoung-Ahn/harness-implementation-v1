@@ -1,6 +1,6 @@
 {
   "schemaVersion": "standard-harness-active-context/v2",
-  "generatedAt": "2026-05-16T12:53:17.043Z",
+  "generatedAt": "2026-05-17T02:46:47.488Z",
   "project": {
     "repoRoot": "C:\\Newface\\30 Github\\harness-implementation-v1",
     "name": "harness-implementation-v1"
@@ -8,9 +8,9 @@
   "release": {
     "stage": "planning",
     "gate": "open",
-    "focus": "V1.3 standard harness starter baseline is stable; PLN-21 is closed; the reusable baseline is on planner hold with no active lane.",
+    "focus": "V1.3 standard harness starter baseline is stable; PLN-24 closed; reusable baseline is on planning hold. Release packaging and downstream mutation remain not approved.",
     "goal": "Preserve the V1.3 installable standard harness baseline while implementing DEV-11 PMW removal and Active Context replacement under the release gate.",
-    "sourceRef": "reference/packets/PKT-01_PLN-21_OPERATIONAL_SINGLE_SOURCE_AUTHORITY_AND_GOVERNANCE_SIMPLIFICATION.md"
+    "sourceRef": "reference/packets/PKT-01_PLN-24_DESTRUCTIVE_ARTIFACT_RETIREMENT_MERGE_APPROVAL.md"
   },
   "selectedLane": null,
   "activeTask": null,
@@ -20,10 +20,8 @@
     "workflowRouteStatus": "ready",
     "resolvedBy": "latest_handoff",
     "requiredSsot": [
-      ".agents/artifacts/CURRENT_STATE.md",
-      ".agents/artifacts/TASK_LIST.md",
       ".agents/artifacts/IMPLEMENTATION_PLAN.md",
-      "reference/packets/PKT-01_PLN-21_OPERATIONAL_SINGLE_SOURCE_AUTHORITY_AND_GOVERNANCE_SIMPLIFICATION.md"
+      "reference/packets/PKT-01_PLN-24_DESTRUCTIVE_ARTIFACT_RETIREMENT_MERGE_APPROVAL.md"
     ],
     "approvalBoundary": "Do not start implementation, testing, or closeout work until the required route and approval are explicit.",
     "doNotCross": [
@@ -31,7 +29,7 @@
       "No testing or reviewer closeout work.",
       "No guessing a workflow when the route is unclear."
     ],
-    "action": "Keep the reusable baseline on planning hold until a new approved lane is selected."
+    "action": "No active implementation lane. Keep the reusable baseline on planning hold until the user opens a new approved lane; release packaging and downstream mutation remain separate future approvals."
   },
   "reentryContract": {
     "firstRead": ".agents/runtime/ACTIVE_CONTEXT.json",
@@ -40,36 +38,31 @@
     "workflowRouteStatus": "ready",
     "mustReadNext": [
       ".agents/workflows/plan.md",
-      ".agents/artifacts/CURRENT_STATE.md",
-      ".agents/artifacts/TASK_LIST.md",
-      ".agents/artifacts/IMPLEMENTATION_PLAN.md",
-      "reference/packets/PKT-01_PLN-21_OPERATIONAL_SINGLE_SOURCE_AUTHORITY_AND_GOVERNANCE_SIMPLIFICATION.md",
+      ".agents/runtime/ACTIVE_CONTEXT.json",
       ".agents/artifacts/REQUIREMENTS.md",
+      ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+      "reference/packets/PKT-01_PLN-24_DESTRUCTIVE_ARTIFACT_RETIREMENT_MERGE_APPROVAL.md",
       ".agents/artifacts/VALIDATION_REPORT.json"
     ],
     "sourceTrace": [
-      ".agents/artifacts/CURRENT_STATE.md",
-      ".agents/artifacts/TASK_LIST.md",
       ".agents/artifacts/IMPLEMENTATION_PLAN.md",
-      "reference/packets/PKT-01_PLN-21_OPERATIONAL_SINGLE_SOURCE_AUTHORITY_AND_GOVERNANCE_SIMPLIFICATION.md",
+      "reference/packets/PKT-01_PLN-24_DESTRUCTIVE_ARTIFACT_RETIREMENT_MERGE_APPROVAL.md",
       ".agents/artifacts/VALIDATION_REPORT.json"
     ],
-    "digest": "c13dd891b817878a383fadacd98b610723b7bd2848b85b9a2b7bf63cd7b6c10e"
+    "digest": "ec1d3594a4f03e81b2203f34cf6d2fb9d9e6acf8a6b849ec0072bd976451661b"
   },
   "blockers": [],
   "decisions": [],
   "latestHandoff": {
-    "createdAt": "2026-05-16T12:53:17.043Z",
+    "createdAt": "2026-05-17T02:46:47.488Z",
     "fromRole": "planner",
     "toRole": "planner",
-    "summary": "[planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.",
-    "sourceRef": "reference/packets/PKT-01_PLN-21_OPERATIONAL_SINGLE_SOURCE_AUTHORITY_AND_GOVERNANCE_SIMPLIFICATION.md",
-    "nextFirstAction": "Keep the reusable baseline on planning hold until a new approved lane is selected.",
+    "summary": "[planner -> planner] PLN-24 is closed. Approved destructive retirement / merge execution completed as scan/disposition-driven no-op physical retirement: no holds, day_start wording migrated in root and standard-template, no physical deletion/merge/tombstone required, root/starter evidence passed, and Reviewer approved closeout. Release packaging and downstream mutation remain not approved.",
+    "sourceRef": "reference/packets/PKT-01_PLN-24_DESTRUCTIVE_ARTIFACT_RETIREMENT_MERGE_APPROVAL.md",
+    "nextFirstAction": "No active implementation lane. Keep the reusable baseline on planning hold until the user opens a new approved lane; release packaging and downstream mutation remain separate future approvals.",
     "requiredSsot": [
-      ".agents/artifacts/CURRENT_STATE.md",
-      ".agents/artifacts/TASK_LIST.md",
       ".agents/artifacts/IMPLEMENTATION_PLAN.md",
-      "reference/packets/PKT-01_PLN-21_OPERATIONAL_SINGLE_SOURCE_AUTHORITY_AND_GOVERNANCE_SIMPLIFICATION.md"
+      "reference/packets/PKT-01_PLN-24_DESTRUCTIVE_ARTIFACT_RETIREMENT_MERGE_APPROVAL.md"
     ],
     "approvalBoundary": "Do not start implementation, testing, or closeout work until the required route and approval are explicit.",
     "doNotCross": [
@@ -84,53 +77,34 @@
     "findingCount": 0,
     "blockingFindingCount": 0,
     "gateDecision": "pass",
-    "executedAt": "2026-05-16T12:53:26.226Z",
+    "executedAt": "2026-05-17T02:47:05.891Z",
     "traceSummary": null,
-    "candidateGates": [
-      {
-        "id": "required-evidence-present",
-        "phase": "candidate-only",
-        "description": "Required evidence artifacts exist for the active work item."
-      },
-      {
-        "id": "source-references-resolve",
-        "phase": "candidate-only",
-        "description": "Referenced packet, SSOT, validation, and trace sources resolve locally."
-      },
-      {
-        "id": "semantic-trace-present",
-        "phase": "candidate-only",
-        "description": "A lightweight semantic trace artifact exists for the active work item."
-      },
-      {
-        "id": "evidence-non-contradictory",
-        "phase": "candidate-only",
-        "description": "Trace, packet, and active work metadata do not contradict each other."
-      },
-      {
-        "id": "evidence-freshness",
-        "phase": "candidate-only",
-        "description": "Validation and trace timestamps match the current report turn."
-      },
-      {
-        "id": "validation-context-parity",
-        "phase": "candidate-only",
-        "description": "Validation report and ACTIVE_CONTEXT expose the same validation summary."
-      }
-    ]
+    "candidateGates": []
   },
   "generatedDocs": [
     {
-      "projectionName": "CURRENT_STATE.md",
-      "generatedAt": "2026-05-16T12:53:17.043Z",
+      "projectionName": ".agents/artifacts/CURRENT_STATE.md",
+      "generatedAt": "2026-05-17T02:46:47.488Z",
       "freshnessState": "fresh",
-      "sourceRevision": "2026-05-16T12:53:17.043Z"
+      "sourceRevision": "2026-05-17T02:46:47.488Z"
+    },
+    {
+      "projectionName": ".agents/artifacts/TASK_LIST.md",
+      "generatedAt": "2026-05-17T02:46:47.488Z",
+      "freshnessState": "fresh",
+      "sourceRevision": "2026-05-17T02:46:47.488Z"
+    },
+    {
+      "projectionName": "CURRENT_STATE.md",
+      "generatedAt": "2026-05-17T02:46:47.488Z",
+      "freshnessState": "fresh",
+      "sourceRevision": "2026-05-17T02:46:47.488Z"
     },
     {
       "projectionName": "TASK_LIST.md",
-      "generatedAt": "2026-05-16T12:53:17.043Z",
+      "generatedAt": "2026-05-17T02:46:47.488Z",
       "freshnessState": "fresh",
-      "sourceRevision": "2026-05-16T12:53:17.043Z"
+      "sourceRevision": "2026-05-17T02:46:47.488Z"
     }
   ],
   "sources": {
@@ -145,6 +119,6 @@
     "validationReport": ".agents/artifacts/VALIDATION_REPORT.json",
     "validationReportMarkdown": ".agents/artifacts/VALIDATION_REPORT.md",
     "workflowContract": ".agents/workflows/plan.md",
-    "activePacket": "reference/packets/PKT-01_PLN-21_OPERATIONAL_SINGLE_SOURCE_AUTHORITY_AND_GOVERNANCE_SIMPLIFICATION.md"
+    "activePacket": "reference/packets/PKT-01_PLN-24_DESTRUCTIVE_ARTIFACT_RETIREMENT_MERGE_APPROVAL.md"
   }
 }

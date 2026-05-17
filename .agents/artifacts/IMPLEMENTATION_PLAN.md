@@ -29,7 +29,9 @@
 
 2026-05-14 `OPS-19` is closed after planner-only helper implementation, tester verification, reviewer approval, and planner closeout reflection. `PLN-18` is now approved as the next planning rebaseline lane so project-architecture SSOT restoration, long-term context authority, and workflow-entry guardrails can be settled before `OPS-17`, `OPS-18`, `QLT-04`, and `PLN-17` continue.
 
-2026-05-15 `OPS-26` closed after landing the narrow planner packet-open semantic-preflight hardening. The same day, a residual post-transition validation-freshness stale window reproduced again during `OPS-26` closeout, so `OPS-27` opened as the next narrow planning lane and is now closed after implementation, tester verification, reviewer approval, and planner closeout. `PLN-20` remains deferred follow-up, not completed; its slice-1 payload policy is now fixed to option A on 2026-05-16, meaning generated starter-shipped `ACTIVE_CONTEXT.*` is excluded from payload and must be regenerated after starter bootstrap/context entry. The next planning decision is `Ready For Code` for that first payload-handling slice.
+2026-05-15 `OPS-26` closed after landing the narrow planner packet-open semantic-preflight hardening. The same day, a residual post-transition validation-freshness stale window reproduced again during `OPS-26` closeout, so `OPS-27` opened as the next narrow planning lane and is now closed after implementation, tester verification, reviewer approval, and planner closeout. `PLN-20` remains deferred follow-up, not completed; its slice-1 payload policy is now fixed to option A on 2026-05-16, meaning generated starter-shipped `ACTIVE_CONTEXT.*` is excluded from payload and must be regenerated after starter bootstrap/context entry.
+
+2026-05-16 the user approved `PLN-22 / REBUILD-01` as the single next planning program. The active planning lane is now the operational-authority rebuild and harness reset program. Approved planning decisions include the canonical operational substrate of `.harness/operating_state.sqlite` plus structured runtime API, the 12-artifact classification draft as the planning baseline, live-state Markdown removal or generated-on-demand transition, generated-view fallback requirements, and the Phase 3 authority-freeze rule. On 2026-05-17 the user approved the Planner recommendations for Decisions 4 through 9 as planning baseline only, with Decision 5 effective risk class computed as max(declared risk, detected risk floor) and Decision 9 artifact retirement / merge execution gated by inbound-reference scan plus reference migration / tombstone / exemption handling. The same day, the user approved the sequential implementation slices and `Ready For Code` boundary for the program, and Slice 1, Slice 2, Slice 3, and Slice 4 non-destructive starter/parity finalization closed through Developer / Tester / Reviewer evidence with Planner closeout reflection. `PLN-23` cutover execution then closed after explicit user approval, root-only no-op migration apply evidence, Tester verification, Reviewer closeout, and Planner reflection. Final destructive artifact retirement / merge execution remains gated until separate approval.
 
 ## Follow-Up Phase Plan
 1. approved release-ready baseline을 보존하면서 follow-up planning lane을 연다.
@@ -124,9 +126,9 @@ Open the next planning lane after `OPS-07` without repeating the previous mixed-
 - Phase 2: parked `OPS-09` structured packet-exit metadata and closeout parser hardening, then parked `PLN-12` lane-typed packet minimums and approval-surface reduction
 
 ### Operator Next Action
-- `PLN-21` is closed; latest closeout handoff is `planner -> planner`.
-- Keep the reusable baseline on planning hold until a new approved lane is selected.
-- Source packet: `reference/packets/PKT-01_PLN-21_OPERATIONAL_SINGLE_SOURCE_AUTHORITY_AND_GOVERNANCE_SIMPLIFICATION.md`.
+- `PLN-24` is closed; latest closeout handoff is `planner -> planner`.
+- No active implementation lane. Keep the reusable baseline on planning hold until the user opens a new approved lane; release packaging and downstream mutation remain separate future approvals.
+- Source packet: `reference/packets/PKT-01_PLN-24_DESTRUCTIVE_ARTIFACT_RETIREMENT_MERGE_APPROVAL.md`.
 - Preserve packet-before-code, active-context derived authority, generated-doc immutability, root/starter sync, Tester/Reviewer separation, and human approval gates.
 
 ## OPS-08 Reusable Security Review Evidence Generalization

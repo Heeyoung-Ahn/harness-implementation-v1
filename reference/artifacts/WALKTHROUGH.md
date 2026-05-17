@@ -2,6 +2,196 @@
 
 Use this artifact to record verification evidence and manual test results.
 
+## 2026-05-17 PLN-23 Cutover Execution Tester Verification
+
+- Scope: tester verification for approved `PLN-23` root cutover execution after Developer handoff.
+- Environment: local maintainer workspace on Windows PowerShell.
+- Tested scope:
+  - root cutover execution evidence and rollback/preflight boundary
+  - `standard-template` parity / starter-safety validation without starter cutover mutation
+  - root and `standard-template` targeted and full regression suites
+  - validator, validation-report, Active Context, and cutover-preflight freshness
+  - absence of destructive artifact retirement / merge execution
+- Evidence:
+  - root targeted regression:
+    - `node --test .harness/test/starter-payload-contract.test.js .harness/test/bootstrap-runtime.test.js .harness/test/dev05-tooling.test.js .harness/test/workflow-governance.test.js`: `59/59 pass`
+  - `standard-template` targeted regression:
+    - `node --test .harness/test/dev05-tooling.test.js .harness/test/workflow-governance.test.js`: `50/50 pass`
+  - root full suite:
+    - `npm.cmd test`: `98/98 pass`
+  - `standard-template` full suite:
+    - `npm.cmd test`: `89/89 pass`
+  - root cutover execution:
+    - `node .harness/runtime/state/dev05-cli.js migration-apply`: `ok: true`, `applied: 0`, `changes: []`
+    - `node .harness/runtime/state/dev05-cli.js migration-preview`: `changeCount: 0`, `changes: []`
+    - cutover report written at `.agents/runtime/reports/CUTOVER_PRECHECK.md` and `.agents/runtime/reports/CUTOVER_PRECHECK.json`
+  - root verification:
+    - `node .harness/runtime/state/dev05-cli.js validate`: `ok: true`, findings `[]`
+    - `node .harness/runtime/state/dev05-cli.js validation-report`: gate decision `pass`, findings `[]`
+    - `node .harness/runtime/state/dev05-cli.js context`: active task `PLN-23`, owner `tester`, workflow `.agents/workflows/test.md`
+    - `node .harness/runtime/state/dev05-cli.js cutover-preflight`: `ok: true`, `cutoverReady: true`, `migrationPreview.changeCount: 0`, `rollbackBundle.missingPaths: []`, `rollbackBundle.needsOperatorBackup: false`
+  - `standard-template` verification:
+    - `node .harness/runtime/state/dev05-cli.js validate`: `ok: true`, findings `[]`
+    - `node .harness/runtime/state/dev05-cli.js validation-report`: gate decision `pass`, findings `[]`
+    - `node .harness/runtime/state/dev05-cli.js cutover-preflight`: `ok: true`, `cutoverReady: true`, `migrationPreview.changeCount: 0`, `rollbackBundle.missingPaths: []`, `rollbackBundle.needsOperatorBackup: false`
+  - destructive retirement check:
+    - `git diff --name-status` showed tracked modifications only; no `D` or `R` entries
+    - no artifact deletion, merge, tombstone, release packaging, or downstream mutation was executed
+- Environment note:
+  - one parallel root `validation-report` attempt hit a transient Windows file-open error on `.agents/artifacts/VALIDATION_REPORT.md`; the same command passed when rerun alone.
+- Untested scope:
+  - destructive artifact retirement / merge was not tested because it remains outside this packet and requires separate approval.
+  - starter cutover mutation was not tested because `standard-template` is validation/parity target only for this packet.
+- Result: tester verification passed for `PLN-23`. No Tester-discovered remediation item remains.
+- Handoff:
+  - Reviewer should inspect high-risk closeout readiness, evidence sufficiency, root-only mutation containment, rollback/preflight proof, and preserved destructive-retirement gate.
+
+## 2026-05-17 PLN-22 Slice 2 Remediation Tester Verification
+
+- Scope: tester verification for the narrow Slice 2 reviewer-finding remediation after the approved `developer -> tester` handoff.
+- Tested scope:
+  - Planner/manual prompt-template contracts no longer declare `CURRENT_STATE` / `TASK_LIST` as required inputs
+  - `ACTIVE_CONTEXT` first-read plus compatibility-fallback wording remains identical in root and `standard-template`
+  - remediation walkthrough evidence and validation results are sufficient for the approved narrow scope
+  - destructive artifact retirement / merge execution boundary remains preserved
+- Evidence:
+  - root manual prompt-template lines now read:
+    - `Required inputs: ACTIVE_CONTEXT, REQUIREMENTS, active packet/source docs, starter doc pack`
+    - `Compatibility fallback: read CURRENT_STATE/TASK_LIST only when ACTIVE_CONTEXT explicitly requires them or troubleshooting needs them`
+    - `Required inputs: ACTIVE_CONTEXT, REQUIREMENTS, active packet/source docs`
+    - `Compatibility fallback: read CURRENT_STATE/TASK_LIST only when ACTIVE_CONTEXT explicitly requires them or troubleshooting needs them`
+  - `standard-template` manual prompt-template lines match the same four lines exactly
+  - root / `standard-template` `reference/manuals/HARNESS_MANUAL.md` SHA256 parity: pass
+  - repo scan found no live stale required-input contract patterns; the only textual match is the remediation evidence note inside this walkthrough
+  - root `node .harness/runtime/state/dev05-cli.js validate`: `ok: true`, findings `[]`
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`: gate decision `pass`, findings `[]`
+  - `standard-template` `node .harness/runtime/state/dev05-cli.js validate`: `ok: true`, findings `[]`
+  - root `ACTIVE_CONTEXT.json`: owner `tester`, workflow `.agents/workflows/test.md`, `firstRead: .agents/runtime/ACTIVE_CONTEXT.json`
+  - `git diff --name-status`: modified files only; no `D` or `R` entries
+  - prior remediation evidence in this walkthrough remains sufficient for root / `standard-template` full suites:
+    - root `npm.cmd test`: `97/97 pass`
+    - `standard-template` `npm.cmd test`: `88/88 pass`
+- Untested scope:
+  - no destructive artifact retirement / merge execution was tested because it remains gated outside this remediation slice
+- Result: tester verification passed for the narrow Slice 2 remediation scope.
+- Handoff:
+  - Reviewer should re-check Slice 2 closeout readiness with the prompt-template contract mismatch removed.
+
+## 2026-05-17 PLN-22 Slice 2 Reviewer Finding Remediation
+
+- Scope: narrow Developer remediation for the Slice 2 reviewer finding in `reference/artifacts/REVIEW_REPORT.md`.
+- Remediated finding:
+  - `reference/manuals/HARNESS_MANUAL.md` and `standard-template/reference/manuals/HARNESS_MANUAL.md` no longer declare `CURRENT_STATE` / `TASK_LIST` as required Planner prompt-template inputs.
+  - The same templates now require `ACTIVE_CONTEXT` first and state that `CURRENT_STATE/TASK_LIST` are compatibility fallback reads only when `ACTIVE_CONTEXT` explicitly requires them or troubleshooting needs them.
+- Files changed:
+  - `reference/manuals/HARNESS_MANUAL.md`
+  - `standard-template/reference/manuals/HARNESS_MANUAL.md`
+- Evidence:
+  - repo scan for stale patterns `Required inputs: ACTIVE_CONTEXT, CURRENT_STATE, TASK_LIST` and `Required inputs: REQUIREMENTS, CURRENT_STATE, TASK_LIST`: no matches
+  - root / `standard-template` `reference/manuals/HARNESS_MANUAL.md` SHA256 parity: pass
+  - root `npm.cmd test`: `97/97 pass`
+  - `standard-template` `npm.cmd test`: `88/88 pass`
+  - root `node .harness/runtime/state/dev05-cli.js validate`: `ok: true`, findings `[]`
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`: gate decision `pass`, findings `[]`
+  - root `node .harness/runtime/state/dev05-cli.js context`: active task `PLN-22`, owner `developer`, workflow `.agents/workflows/dev.md`
+  - `standard-template` `node .harness/runtime/state/dev05-cli.js validate`: `ok: true`, findings `[]`
+  - `standard-template` `node .harness/runtime/state/dev05-cli.js validation-report`: gate decision `pass`, findings `[]`
+- Boundaries preserved:
+  - no implementation authority, approval-state, or destructive artifact retirement / merge execution changes were made
+  - `CURRENT_STATE.md` and `TASK_LIST.md` remain compatibility views pending later tombstone work
+- Result: Developer remediation is complete and ready for Tester verification.
+
+## 2026-05-17 PLN-22 Slice 2 Tester Verification
+
+- Scope: tester verification for `PLN-22` Slice 2 after the approved `developer -> tester` handoff.
+- Environment: local maintainer workspace on Windows PowerShell.
+- Tested scope:
+  - `ACTIVE_CONTEXT` first-read migration away from `CURRENT_STATE.md` / `TASK_LIST.md` as default AI re-entry requirements
+  - root / `standard-template` workflow and manual parity for the reusable Slice 2 migration surfaces
+  - disposition registry evidence for `migrate`, `tombstone`, and `exempt` handling
+  - root / `standard-template` full regression, validator, validation-report, and active-context evidence
+  - destructive artifact retirement / merge non-execution inside Slice 2
+- Evidence:
+  - root full suite:
+    - `npm.cmd test`: `97/97 pass`
+  - `standard-template` full suite:
+    - `npm.cmd test` from `standard-template/`: `88/88 pass`
+  - root validation evidence:
+    - `node .harness/runtime/state/dev05-cli.js validate`: `ok: true`, findings `[]`
+    - `node .harness/runtime/state/dev05-cli.js validation-report`: gate decision `pass`, findings `[]`
+    - `node .harness/runtime/state/dev05-cli.js context`: active task `PLN-22`, owner `tester`, workflow `.agents/workflows/test.md`
+  - `standard-template` validation evidence:
+    - `node .harness/runtime/state/dev05-cli.js validate`: `ok: true`, findings `[]`
+    - `node .harness/runtime/state/dev05-cli.js validation-report`: gate decision `pass`, findings `[]`
+  - root / `standard-template` SHA256 parity confirmed identical values for reusable Slice 2 surfaces:
+    - `AGENTS.md`
+    - `.agents/rules/workspace.md`
+    - `.agents/workflows/plan.md`
+    - `.agents/workflows/dev.md`
+    - `.agents/workflows/test.md`
+    - `.agents/workflows/review.md`
+    - `reference/manuals/HARNESS_MANUAL.md`
+    - `.harness/runtime/state/active-context.js`
+    - `.harness/runtime/state/drift-validator.js`
+    - `.harness/test/active-context.test.js`
+  - parity note:
+    - `.agents/artifacts/REQUIREMENTS.md` hash differs between root and `standard-template`, which is expected because root is the maintainer repo SSOT and starter carries project-starter baseline wording rather than identical repo-local requirements text.
+  - first-read migration evidence:
+    - root `ACTIVE_CONTEXT.json` now exposes `firstRead: .agents/runtime/ACTIVE_CONTEXT.json`
+    - root `mustReadNext` no longer requires `.agents/artifacts/CURRENT_STATE.md` or `.agents/artifacts/TASK_LIST.md`
+    - tester workflow route now reads from `ACTIVE_CONTEXT` plus workflow `Read First` chain, while `CURRENT_STATE.md` / `TASK_LIST.md` remain compatibility views only
+  - disposition registry evidence:
+    - `reference/artifacts/PLN-22_ARTIFACT_REFERENCE_DISPOSITION.md` records completed `migrate` handling for `AGENTS.md`, workspace rule, active role workflows, manual, and starter first-read surface
+    - the same registry records pending `tombstone` status for `.agents/artifacts/CURRENT_STATE.md` and `.agents/artifacts/TASK_LIST.md`
+    - the same registry records active `exempt` status for `.agents/runtime/ACTIVE_CONTEXT.md` and generated-state-doc recovery surfaces
+  - destructive retirement check:
+    - `git diff --name-status` showed modified files only; no `D` or `R` entries appeared
+    - no artifact retirement or merge execution was performed in Slice 2
+- Untested scope:
+  - no tombstone file creation or destructive retirement execution was tested because those remain gated for later slices
+  - no cutover, authority-freeze, or generated-surface retirement conversion was tested because those belong to later slices
+- Result: tester verification passed for `PLN-22` Slice 2. No Tester-discovered remediation item remains in the verified scope.
+- Handoff:
+  - Reviewer should inspect Slice 2 closeout readiness against `ACTIVE_CONTEXT` first-read migration, workflow/manual parity, disposition registry completeness, validation evidence, and the preserved no-destructive-retirement boundary.
+
+## 2026-05-17 PLN-22 Slice 1 Tester Verification
+
+- Scope: tester verification for `PLN-22` Slice 1 after the approved `developer -> tester` handoff.
+- Environment: local maintainer workspace on Windows PowerShell.
+- Tested scope:
+  - effective risk class enforcement uses the higher of declared closeout risk and detected risk floor
+  - low-risk closeout transition is rejected when detected floor is higher than the declared low-risk tier
+  - validator reports `closeout_risk_floor_mismatch` when declared closeout risk is below the detected floor
+  - root / `standard-template` parity for reusable runtime and regression files
+  - validation report and Active Context evidence after the Slice 1 implementation
+  - artifact reference-disposition registry exists and preserves the no-destructive-retirement Slice 1 rule
+- Evidence:
+  - root targeted regression:
+    - `node --test .harness/test/dev05-tooling.test.js`: `44/44 pass`
+  - `standard-template` targeted regression:
+    - `node --test standard-template/.harness/test/dev05-tooling.test.js`: `44/44 pass`
+  - root full suite:
+    - `npm.cmd test`: `97/97 pass`
+  - `standard-template` full suite:
+    - `npm.cmd test` from `standard-template/`: `88/88 pass`
+  - root / `standard-template` hash parity confirmed identical SHA256 values for:
+    - `.harness/runtime/state/dev05-tooling.js`
+    - `.harness/runtime/state/drift-validator.js`
+    - `.harness/test/dev05-tooling.test.js`
+  - root validation evidence:
+    - `npm.cmd run harness:validate`: `ok: true`, findings `[]`
+    - `npm.cmd run harness:validation-report`: gate decision `pass`, findings `[]`
+    - `npm.cmd run harness:context`: active task `PLN-22`, owner `tester`, workflow `.agents/workflows/test.md`
+  - destructive retirement check:
+    - `git diff --name-status` showed modified and new evidence/runtime files only; no deleted or renamed artifact retirement entry was present.
+    - `reference/artifacts/PLN-22_ARTIFACT_REFERENCE_DISPOSITION.md` records: `Do not delete or merge any listed artifact in Slice 1.`
+- Untested scope:
+  - no artifact retirement, merge, tombstone migration, or authority cutover execution was tested because those remain gated for later slices
+  - no hosted CI or remote distribution path was tested because Slice 1 is limited to local runtime/validator/registry proof
+- Result: tester verification passed for `PLN-22` Slice 1. No Tester-discovered remediation item remains in the verified scope.
+- Handoff:
+  - Reviewer should inspect Slice 1 closeout readiness against effective-risk enforcement, root/starter parity, validation evidence, artifact-disposition boundary preservation, and the fact that destructive retirement remains unexecuted.
+
 ## 2026-05-11 OPS-12 Tester Verification
 
 - Scope: tester verification for `OPS-12` template payload contract after the approved `developer -> tester` handoff.
@@ -858,3 +1048,95 @@ Use this artifact to record verification evidence and manual test results.
 - Result: tester verification passed.
 - Handoff:
   - Reviewer should confirm the lane stayed inside the approved post-transition determinism boundary and that packet exit can close without reopening broader workflow architecture packets.
+
+## 2026-05-17 PLN-22 Slice 3 Developer Implementation
+
+- Scope: developer implementation for `PLN-22` Slice 3 generated-only / on-demand derived-surface conversion proof.
+- Environment: local maintainer workspace on Windows PowerShell.
+- Implemented changes:
+  - converted `.agents/artifacts/CURRENT_STATE.md` and `.agents/artifacts/TASK_LIST.md` to generated compatibility views rebuilt from canonical DB state
+  - extended context repair so deleted compatibility views, generated-state-doc surfaces, and `ACTIVE_CONTEXT.*` regenerate without DB mutation
+  - added explicit generated/fallback labeling to compatibility views, `ACTIVE_CONTEXT.md`, and persisted validation summary wording
+  - added validator failure classification for generated-surface absence/staleness and refreshed reusable tests around generated-only behavior
+  - synchronized the reusable runtime/test surfaces into `standard-template`
+- Evidence:
+  - targeted root regressions:
+    - `node --test .harness/test/generated-state-docs.test.js`: pass
+    - `node --test .harness/test/context-repair.test.js`: pass
+    - `node --test .harness/test/active-context.test.js`: pass
+    - `node --test .harness/test/dev05-tooling.test.js`: pass
+  - root full suite: `npm.cmd test` -> `97/97 pass`
+  - `standard-template` full suite: `npm.cmd test` -> `88/88 pass`
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`: pass, findings `[]`
+  - root `node .harness/runtime/state/dev05-cli.js validate`: pass, findings `[]`
+  - root `node .harness/runtime/state/dev05-cli.js context`: pass, active task `PLN-22`, next workflow `.agents/workflows/dev.md`
+  - `standard-template` `node .harness/runtime/state/dev05-cli.js validation-report`: pass, findings `[]`
+  - `standard-template` `node .harness/runtime/state/dev05-cli.js validate`: pass, findings `[]`
+- Proof closed in this slice:
+  - deleted generated outputs recover through `context --repair`
+  - `CURRENT_STATE.md`, `TASK_LIST.md`, and `ACTIVE_CONTEXT.md` are generated compatibility / fallback surfaces rather than manual truth inputs
+  - validator distinguishes generated-surface failure/staleness via `generation_failed` and `stale_generated_view`
+  - no blank re-entry surface remains after regeneration
+- Boundaries preserved:
+  - no cutover execution
+  - no destructive artifact retirement / merge execution
+- Handoff:
+  - Tester should verify Slice 3 generated-only proof, recovery behavior, validation evidence, and no-destructive-retirement boundary.
+
+## 2026-05-17 PLN-22 Slice 3 Tester Verification
+
+- Scope: tester verification for `PLN-22` Slice 3 generated-only / on-demand proof, fallback recovery behavior, and destructive-boundary preservation.
+- Environment: local maintainer workspace on Windows PowerShell.
+- Evidence:
+  - root targeted regressions remained green after final sync:
+    - `node --test .harness/test/generated-state-docs.test.js`: pass
+    - `node --test .harness/test/context-repair.test.js`: pass
+    - `node --test .harness/test/active-context.test.js`: pass
+    - `node --test .harness/test/dev05-tooling.test.js`: pass
+  - root full suite: `npm.cmd test` -> `97/97 pass`
+  - `standard-template` full suite: `npm.cmd test` -> `88/88 pass`
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`: pass, findings `[]`
+  - root `node .harness/runtime/state/dev05-cli.js validate`: pass, findings `[]`
+  - root `node .harness/runtime/state/dev05-cli.js context`: tester route `.agents/workflows/test.md`, next action `Verify the implementation against the packet acceptance criteria.`
+  - `standard-template` `node .harness/runtime/state/dev05-cli.js validation-report`: pass, findings `[]`
+  - `standard-template` `node .harness/runtime/state/dev05-cli.js validate`: pass, findings `[]`
+  - `git diff --name-status`: modified files only; no `D` or `R` entries
+- Passed checks:
+  - `CURRENT_STATE.md`, `TASK_LIST.md`, and `ACTIVE_CONTEXT.md` now behave as generated compatibility / fallback views rather than manual truth inputs
+  - deleted generated outputs are recoverable through `context --repair`
+  - root and `standard-template` reusable runtime/test surfaces stay synchronized for the Slice 3 delta
+  - validator/report/context evidence is clean after the final generated-state refresh
+  - no destructive artifact retirement / merge execution occurred
+- Result: tester verification passed.
+- Handoff:
+  - Reviewer should confirm the Slice 3 generated-only conversion stayed inside the approved boundary, that validation evidence is sufficient, and that cutover / destructive retirement remain gated.
+
+## 2026-05-17 PLN-24 Tester Verification
+
+- Scope: tester verification for approved `PLN-24` destructive artifact retirement / merge execution after Developer scan/disposition work.
+- Environment: local maintainer workspace on Windows PowerShell.
+- Evidence:
+  - disposition evidence: `reference/artifacts/PLN-24_ARTIFACT_RETIREMENT_DISPOSITION.md`
+  - inbound-reference scan file set: 197 files
+  - old live-truth wording migrated: 2 files, root and `standard-template` `day_start` skill
+  - hold count: 0
+  - physical deletion / merge count: 0
+  - root targeted suite: `node --test .harness/test/starter-payload-contract.test.js .harness/test/bootstrap-runtime.test.js .harness/test/dev05-tooling.test.js .harness/test/workflow-governance.test.js` -> pass
+  - `standard-template` targeted suite: `node --test .harness/test/dev05-tooling.test.js .harness/test/workflow-governance.test.js` -> pass
+  - root validation report: pass, findings `[]`, gate `pass`
+  - `standard-template` validation report: pass, findings `[]`, gate `pass`
+  - root validator: `ok: true`, findings `[]`
+  - `standard-template` validator: `ok: true`, findings `[]`
+  - root cutover-preflight: `cutoverReady: true`, `migrationPreview.changeCount: 0`, `rollbackBundle.missingPaths: []`, `rollbackBundle.needsOperatorBackup: false`
+  - `standard-template` cutover-preflight: `cutoverReady: true`, `migrationPreview.changeCount: 0`, `rollbackBundle.missingPaths: []`, `rollbackBundle.needsOperatorBackup: false`
+- Passed checks:
+  - every scanned reference is classified as migration, exempt, already-excluded, or not-needed
+  - no unclassified or `hold` reference remains
+  - no out-of-scope file deletion, merge, release packaging, or downstream mutation occurred
+  - starter runtime artifacts remain excluded from copied starter payload by existing payload contract
+  - retained compatibility and runtime evidence surfaces remain justified as generated fallback, re-entry, recovery, or audit evidence
+- Untested scope:
+  - no release package rebuild or downstream project mutation was tested because both remain outside the approved boundary
+- Result: tester verification passed.
+- Handoff:
+  - Reviewer should inspect the no-op physical retirement decision, source parity, retained-artifact exemptions, rollback evidence, and high-risk packet exit readiness.

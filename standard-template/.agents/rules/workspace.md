@@ -12,8 +12,8 @@ This file is the constitutional entry point for Antigravity and any other agent 
 2. `.agents/rules/agent_behavior.md`
 3. `.agents/runtime/ACTIVE_CONTEXT.json`
 4. the workflow file that matches the requested lane or `ACTIVE_CONTEXT.nextWork.workflow`
-5. `.agents/artifacts/CURRENT_STATE.md`
-6. `.agents/artifacts/TASK_LIST.md`
+5. `.agents/artifacts/CURRENT_STATE.md` only when `ACTIVE_CONTEXT.reentryContract.mustReadNext`, packet evidence, or troubleshooting needs the compatibility view
+6. `.agents/artifacts/TASK_LIST.md` only when `ACTIVE_CONTEXT.reentryContract.mustReadNext`, packet evidence, or troubleshooting needs the compatibility view
 7. the minimum baseline artifacts required by the active task or `ACTIVE_CONTEXT.reentryContract.mustReadNext`
 8. only the explicitly activated optional profile artifacts required by the active task
 9. the active project packet and authoritative source artifacts when the task depends on them
@@ -40,7 +40,7 @@ This file is the constitutional entry point for Antigravity and any other agent 
 - respect explicit user orders exactly
 - apply `.agents/rules/agent_behavior.md` before non-trivial planning, coding, testing, review, handoff, or closeout work
 - treat human-and-Planner-approved project design SSOT as the guiding instruction layer for every agent
-- refresh `CURRENT_STATE.md`, `TASK_LIST.md`, and target files before writing
+- refresh target files and any compatibility views explicitly required by `ACTIVE_CONTEXT.reentryContract.mustReadNext` before writing
 - use the matching workflow before doing state-changing work
 - treat `Core` as always active, `Optional Profile` as explicit-only, and `Project Packet` as required before project-specific code or cutover work
 - keep handoff and lock changes explicit

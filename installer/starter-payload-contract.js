@@ -5,7 +5,10 @@ const REMOVABLE_MATCHERS = [
   { kind: "exact", value: ".harness/operating_state.sqlite-wal" },
   { kind: "exact", value: ".agents/runtime/ACTIVE_CONTEXT.json" },
   { kind: "exact", value: ".agents/runtime/ACTIVE_CONTEXT.md" },
-  { kind: "prefix", value: ".agents/runtime/generated-state-docs/" }
+  { kind: "prefix", value: ".agents/runtime/agent-traces/" },
+  { kind: "prefix", value: ".agents/runtime/generated-state-docs/" },
+  { kind: "prefix", value: ".agents/runtime/recovery-reports/" },
+  { kind: "prefix", value: ".agents/runtime/reports/" }
 ];
 
 const CONDITIONAL_MATCHERS = [
@@ -36,7 +39,7 @@ const REQUIRED_MATCHERS = [
 ];
 
 export const STARTER_PAYLOAD_CONTRACT = {
-  version: "pln-20-slice-1-v1",
+  version: "pln-22-slice-4-v1",
   laneTypes: {
     required: [
       "AGENTS.md",
@@ -70,7 +73,10 @@ export const STARTER_PAYLOAD_CONTRACT = {
       ".harness/operating_state.sqlite-wal",
       ".agents/runtime/ACTIVE_CONTEXT.json",
       ".agents/runtime/ACTIVE_CONTEXT.md",
-      ".agents/runtime/generated-state-docs/*"
+      ".agents/runtime/agent-traces/*",
+      ".agents/runtime/generated-state-docs/*",
+      ".agents/runtime/recovery-reports/*",
+      ".agents/runtime/reports/*"
     ]
   }
 };

@@ -1,6 +1,6 @@
 {
   "command": "context --repair",
-  "timestamp": "2026-05-17T00:30:51.747Z",
+  "timestamp": "2026-05-17T00:29:02.763Z",
   "confidence": "Low",
   "sourcePathsInspected": [
     ".agents/artifacts/REQUIREMENTS.md",
@@ -18,11 +18,11 @@
   "staleOrMissingArtifacts": [
     {
       "artifact": ".agents/runtime/ACTIVE_CONTEXT.json",
-      "reason": "checksum_mismatch"
+      "reason": "active_context_route_mismatch"
     },
     {
       "artifact": ".agents/runtime/ACTIVE_CONTEXT.json",
-      "reason": "stale_generated_view"
+      "reason": "active_context_must_read_missing"
     }
   ],
   "regeneratedArtifacts": [

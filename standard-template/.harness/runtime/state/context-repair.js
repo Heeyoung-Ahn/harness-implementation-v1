@@ -13,7 +13,11 @@ import {
   CURRENT_STATE_DOC,
   TASK_LIST_DOC,
   buildCurrentStateDoc,
-  buildTaskListDoc
+  buildTaskListDoc,
+  buildCompatibilityCurrentStateDoc,
+  buildCompatibilityTaskListDoc,
+  COMPATIBILITY_CURRENT_STATE_PATH,
+  COMPATIBILITY_TASK_LIST_PATH
 } from "./generate-state-docs.js";
 import { GENERATED_DOCS_DIR, RECOVERY_REPORTS_DIR } from "./harness-paths.js";
 import { createOperatingStateStore, DEFAULT_DB_PATH } from "./operating-state-store.js";
@@ -30,6 +34,8 @@ const AUTHORITY_NOT_MODIFIED = [
 const DERIVED_PROJECTIONS = [
   CURRENT_STATE_DOC,
   TASK_LIST_DOC,
+  COMPATIBILITY_CURRENT_STATE_PATH,
+  COMPATIBILITY_TASK_LIST_PATH,
   ACTIVE_CONTEXT_JSON,
   ACTIVE_CONTEXT_MARKDOWN
 ];
@@ -98,7 +104,7 @@ export function runContextRepair({
 function regenerateDerivedOutputs({ store, repoRoot, outputDir, validation = null }) {
   const regenerated = [];
 
-  for (const { content, relativePath } of buildGeneratedDocRepairs({ store })) {
+  for (const { content, relativePath } of buildGeneratedDocRepairs({ store, repoRoot })) {
     writeText(path.resolve(outputDir, relativePath), content);
     regenerated.push(relativePath);
   }
@@ -116,9 +122,11 @@ function regenerateDerivedOutputs({ store, repoRoot, outputDir, validation = nul
   return regenerated;
 }
 
-function buildGeneratedDocRepairs({ store }) {
+function buildGeneratedDocRepairs({ store, repoRoot }) {
   const currentStateGeneratedAt = resolveProjectionGeneratedAt(store, CURRENT_STATE_DOC);
   const taskListGeneratedAt = resolveProjectionGeneratedAt(store, TASK_LIST_DOC);
+  const compatibilityCurrentStateGeneratedAt = resolveProjectionGeneratedAt(store, COMPATIBILITY_CURRENT_STATE_PATH);
+  const compatibilityTaskListGeneratedAt = resolveProjectionGeneratedAt(store, COMPATIBILITY_TASK_LIST_PATH);
   return [
     {
       relativePath: `${GENERATED_DOCS_DIR}/${CURRENT_STATE_DOC}`,
@@ -127,6 +135,20 @@ function buildGeneratedDocRepairs({ store }) {
     {
       relativePath: `${GENERATED_DOCS_DIR}/${TASK_LIST_DOC}`,
       content: buildTaskListDoc(store, { generatedAt: taskListGeneratedAt })
+    },
+    {
+      relativePath: COMPATIBILITY_CURRENT_STATE_PATH,
+      content: buildCompatibilityCurrentStateDoc(store, {
+        repoRoot,
+        generatedAt: compatibilityCurrentStateGeneratedAt
+      })
+    },
+    {
+      relativePath: COMPATIBILITY_TASK_LIST_PATH,
+      content: buildCompatibilityTaskListDoc(store, {
+        repoRoot,
+        generatedAt: compatibilityTaskListGeneratedAt
+      })
     }
   ];
 }
@@ -265,6 +287,12 @@ function buildInspectedPaths(repoRoot, resolvedDbPath) {
 function projectionRelativePath(projectionName) {
   if (projectionName === CURRENT_STATE_DOC || projectionName === TASK_LIST_DOC) {
     return `${GENERATED_DOCS_DIR}/${projectionName}`;
+  }
+  if (
+    projectionName === COMPATIBILITY_CURRENT_STATE_PATH ||
+    projectionName === COMPATIBILITY_TASK_LIST_PATH
+  ) {
+    return projectionName;
   }
   return projectionName;
 }

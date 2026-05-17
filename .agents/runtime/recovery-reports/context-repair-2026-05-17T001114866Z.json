@@ -1,7 +1,7 @@
 {
   "command": "context --repair",
-  "timestamp": "2026-05-17T00:30:51.747Z",
-  "confidence": "Low",
+  "timestamp": "2026-05-17T00:11:14.866Z",
+  "confidence": "High",
   "sourcePathsInspected": [
     ".agents/artifacts/REQUIREMENTS.md",
     ".agents/artifacts/ARCHITECTURE_GUIDE.md",
@@ -15,16 +15,7 @@
     ".agents/runtime/ACTIVE_CONTEXT.md",
     ".harness/operating_state.sqlite"
   ],
-  "staleOrMissingArtifacts": [
-    {
-      "artifact": ".agents/runtime/ACTIVE_CONTEXT.json",
-      "reason": "checksum_mismatch"
-    },
-    {
-      "artifact": ".agents/runtime/ACTIVE_CONTEXT.json",
-      "reason": "stale_generated_view"
-    }
-  ],
+  "staleOrMissingArtifacts": [],
   "regeneratedArtifacts": [
     ".agents/runtime/generated-state-docs/CURRENT_STATE.md",
     ".agents/runtime/generated-state-docs/TASK_LIST.md",
@@ -41,8 +32,8 @@
     ".agents/artifacts/TASK_LIST.md",
     ".harness/operating_state.sqlite"
   ],
-  "validationStatus": "failed",
-  "requiredNextAction": "Hold for Planner or maintainer reconciliation before implementation or closeout continues.",
+  "validationStatus": "clean",
+  "requiredNextAction": "Continue normal workflow.",
   "authorityMutation": false,
   "dbMutation": "none"
 }

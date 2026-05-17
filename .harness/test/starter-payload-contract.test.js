@@ -24,7 +24,10 @@ test("starter payload contract classifies required, conditional, and removable s
   assert.equal(classifyStarterPayloadPath(".harness/operating_state.sqlite-wal"), "removable");
   assert.equal(classifyStarterPayloadPath(".agents/runtime/ACTIVE_CONTEXT.json"), "removable");
   assert.equal(classifyStarterPayloadPath(".agents/runtime/ACTIVE_CONTEXT.md"), "removable");
+  assert.equal(classifyStarterPayloadPath(".agents/runtime/agent-traces/PLN-22.json"), "removable");
   assert.equal(classifyStarterPayloadPath(".agents/runtime/generated-state-docs/CURRENT_STATE.md"), "removable");
+  assert.equal(classifyStarterPayloadPath(".agents/runtime/recovery-reports/context-repair.json"), "removable");
+  assert.equal(classifyStarterPayloadPath(".agents/runtime/reports/CUTOVER_PREFLIGHT.json"), "removable");
 });
 
 test("starter payload contract includes required and conditional surfaces but excludes removable clutter", () => {
@@ -36,11 +39,14 @@ test("starter payload contract includes required and conditional surfaces but ex
   assert.equal(shouldIncludeStarterPayloadPath(".harness/operating_state.sqlite"), false);
   assert.equal(shouldIncludeStarterPayloadPath(".agents/runtime/ACTIVE_CONTEXT.json"), false);
   assert.equal(shouldIncludeStarterPayloadPath(".agents/runtime/ACTIVE_CONTEXT.md"), false);
+  assert.equal(shouldIncludeStarterPayloadPath(".agents/runtime/agent-traces/PLN-22.json"), false);
   assert.equal(shouldIncludeStarterPayloadPath(".agents/runtime/generated-state-docs/TASK_LIST.md"), false);
+  assert.equal(shouldIncludeStarterPayloadPath(".agents/runtime/recovery-reports/latest-context-repair.json"), false);
+  assert.equal(shouldIncludeStarterPayloadPath(".agents/runtime/reports/CUTOVER_PREFLIGHT.md"), false);
 });
 
-test("starter payload contract documents the slice-1 manifest categories", () => {
-  assert.equal(STARTER_PAYLOAD_CONTRACT.version, "pln-20-slice-1-v1");
+test("starter payload contract documents the slice-4 manifest categories", () => {
+  assert.equal(STARTER_PAYLOAD_CONTRACT.version, "pln-22-slice-4-v1");
   assert.deepEqual(Object.keys(STARTER_PAYLOAD_CONTRACT.laneTypes), ["required", "conditional", "removable"]);
   assert.equal(
     STARTER_PAYLOAD_CONTRACT.laneTypes.conditional.includes("reference/manuals/HARNESS_MANUAL.md"),
@@ -53,7 +59,19 @@ test("starter payload contract documents the slice-1 manifest categories", () =>
     true
   );
   assert.equal(
+    STARTER_PAYLOAD_CONTRACT.laneTypes.removable.includes(".agents/runtime/agent-traces/*"),
+    true
+  );
+  assert.equal(
     STARTER_PAYLOAD_CONTRACT.laneTypes.removable.includes(".agents/runtime/ACTIVE_CONTEXT.md"),
+    true
+  );
+  assert.equal(
+    STARTER_PAYLOAD_CONTRACT.laneTypes.removable.includes(".agents/runtime/recovery-reports/*"),
+    true
+  );
+  assert.equal(
+    STARTER_PAYLOAD_CONTRACT.laneTypes.removable.includes(".agents/runtime/reports/*"),
     true
   );
 });

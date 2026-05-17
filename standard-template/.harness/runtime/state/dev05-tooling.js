@@ -44,6 +44,11 @@ const PHASE1_HARD_FAIL_CODES = [
   "active_context_validation_executed_at_mismatch"
 ];
 const PHASE1_WARNING_CODES = ["evidence_linkage_thin", "reviewer_rationale_thin"];
+const RISK_CLASS_ORDER = {
+  low: 1,
+  normal: 2,
+  high: 3
+};
 const PHASE1_REVIEWER_ONLY_CODES = [
   "design_intent_fulfillment",
   "work_fit_assessment",
@@ -475,7 +480,7 @@ export function writeValidationReport({ repoRoot = process.cwd(), outputDir = re
   finalizedReport.traceSummary = finalizedTraceArtifact?.summary ?? null;
   fs.writeFileSync(markdownPath, buildValidationReportMarkdown(finalizedReport), "utf8");
   fs.writeFileSync(jsonPath, `${JSON.stringify(finalizedReport, null, 2)}\n`, "utf8");
-  withStore({ dbPath, repoRoot }, (store) => writeGeneratedStateDocs({ store, outputDir }));
+  withStore({ dbPath, repoRoot }, (store) => writeGeneratedStateDocs({ store, outputDir, repoRoot }));
   withStore({ dbPath, repoRoot }, (store) =>
     writeActiveContext({
       store,
@@ -1005,7 +1010,7 @@ function buildTransitionPlan({ store, repoRoot, options }) {
   }
   if (transition === "tester-to-planner-low-risk-closeout" && !lowRiskPlannerCloseoutApproved) {
     errors.push(
-      `${packetSourceRef ?? sourceRef ?? "The active packet"} must declare - Closeout risk tier: low-risk before tester-to-planner-low-risk-closeout can be used.`
+      `${packetSourceRef ?? sourceRef ?? "The active packet"} must declare - Closeout risk tier: low-risk and have no higher detected risk floor before tester-to-planner-low-risk-closeout can be used.`
     );
   }
   if (fromOwner && workItem?.owner && normalizeOwner(workItem.owner) !== fromOwner) {
@@ -1217,6 +1222,7 @@ function applyTransitionPlan({ store, repoRoot, outputDir, plan, options }) {
   const metadata = {
     ...(store.getWorkItem(plan.workItemId)?.metadata ?? {}),
     gateProfile: plan.gateProfile,
+    packetSourceRef: plan.packetSourceRef ?? plan.sourceRef,
     ...(plan.readyForCode === "approved" ? { readyForCode: "approved" } : {}),
     ...(isClosedStatus(plan.status) ? { closedAt: timestamp, closedBy: plan.toOwner ?? "unknown" } : {}),
     lastTransition: {
@@ -1273,11 +1279,9 @@ function applyTransitionPlan({ store, repoRoot, outputDir, plan, options }) {
     payload: buildCompactHandoffPayload(plan)
   });
 
-  updateCanonicalTaskList({ repoRoot, plan, timestamp });
-  updateCanonicalCurrentState({ repoRoot, plan, timestamp });
   updateCanonicalImplementationPlan({ repoRoot, plan });
   updateCanonicalProjectProgress({ repoRoot, plan });
-  const generatedDocs = writeGeneratedStateDocs({ store, outputDir });
+  const generatedDocs = writeGeneratedStateDocs({ store, outputDir, repoRoot });
 
   return {
     ...plan,
@@ -1489,11 +1493,72 @@ function readPacketCloseoutRiskTier(repoRoot, packetPath, sourceRef) {
 
 function isLowRiskPlannerCloseoutApproved({ repoRoot, packetPath = null, sourceRef = null, workItem = null }) {
   const runtimeTier = normalizeCloseoutRiskTier(workItem?.metadata?.closeoutRiskTier);
-  if (runtimeTier && LOW_RISK_CLOSEOUT_TIERS.has(runtimeTier)) {
+  const detectedRiskFloor = detectPacketRiskFloor({ repoRoot, packetPath, sourceRef });
+  if (runtimeTier && LOW_RISK_CLOSEOUT_TIERS.has(runtimeTier) && riskClassRank(detectedRiskFloor) <= RISK_CLASS_ORDER.low) {
     return true;
   }
   const packetTier = readPacketCloseoutRiskTier(repoRoot, packetPath, sourceRef);
-  return Boolean(packetTier && LOW_RISK_CLOSEOUT_TIERS.has(packetTier));
+  return Boolean(packetTier && LOW_RISK_CLOSEOUT_TIERS.has(packetTier) && riskClassRank(detectedRiskFloor) <= RISK_CLASS_ORDER.low);
+}
+
+function riskClassRank(value) {
+  return RISK_CLASS_ORDER[normalizeRiskClass(value)] ?? RISK_CLASS_ORDER.low;
+}
+
+function normalizeRiskClass(value) {
+  const normalized = normalizeCloseoutRiskTier(value);
+  if (!normalized) {
+    return null;
+  }
+  if (normalized.startsWith("low")) {
+    return "low";
+  }
+  if (normalized.startsWith("normal") || normalized.startsWith("standard")) {
+    return "normal";
+  }
+  if (normalized.startsWith("high") || normalized.startsWith("release")) {
+    return "high";
+  }
+  return null;
+}
+
+function detectPacketRiskFloor({ repoRoot, packetPath = null, sourceRef = null }) {
+  const resolvedPacketPath = resolvePacketMarkdownPath(repoRoot, packetPath, sourceRef);
+  if (!resolvedPacketPath) {
+    return "low";
+  }
+  const relativePacketPath = path.relative(repoRoot, resolvedPacketPath).replace(/\\/g, "/");
+  const riskHeader = normalizeRiskClass(readPacketHeaderValue(repoRoot, relativePacketPath, "Risk if started now"));
+  if (riskHeader) {
+    return riskHeader;
+  }
+  const gateProfile = normalizePacketHeaderValue(readPacketHeaderValue(repoRoot, relativePacketPath, "Gate profile"));
+  if (gateProfile === "release") {
+    return "high";
+  }
+  const content = fs.readFileSync(resolvedPacketPath, "utf8").toLowerCase();
+  if (
+    content.includes("authority-model mutation") ||
+    content.includes("authority model mutation") ||
+    content.includes("shipped starter payload") ||
+    content.includes("release packaging") ||
+    content.includes("security-sensitive") ||
+    content.includes("data / cutover") ||
+    content.includes("data/cutover") ||
+    content.includes("artifact retirement execution") ||
+    content.includes("authority cutover")
+  ) {
+    return "high";
+  }
+  if (
+    gateProfile === "contract" ||
+    content.includes("validator behavior") ||
+    content.includes("workflow/tooling") ||
+    content.includes("reusable runtime")
+  ) {
+    return "normal";
+  }
+  return "low";
 }
 
 function normalizePacketHeaderValue(value) {
@@ -2817,6 +2882,7 @@ function buildValidationReportMarkdown(report) {
     `- Cutover ready: ${report.cutoverReady ? "yes" : "no"}`,
     `- Gate decision: ${report.gateDecision}`,
     `- Next action: ${report.nextAction}`,
+    "- Surface role: persisted gate evidence only; live re-entry should use `.agents/runtime/ACTIVE_CONTEXT.json` and CLI context/status.",
     "",
     "## Active Profiles",
     `- Source: ${report.profileSummary.path}`,

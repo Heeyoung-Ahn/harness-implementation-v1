@@ -32,6 +32,15 @@
 - `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`
 - `reference/artifacts/REVIEW_REPORT.md`
 
+## Read First
+- `.agents/runtime/ACTIVE_CONTEXT.json`
+- `.agents/artifacts/REQUIREMENTS.md`
+- `.agents/artifacts/ARCHITECTURE_GUIDE.md`
+- `.agents/artifacts/IMPLEMENTATION_PLAN.md`
+- active packet and any approved project design/source artifact cited by the task
+- `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md`
+- `reference/artifacts/REVIEW_REPORT.md`
+
 ## Conditional Supporting References
 - Use `reference/artifacts/VERIFICATION_SCENARIO_TEMPLATE.md` when assessing whether Tester evidence covers the expected scenario classes.
 - Use `reference/manuals/CLOUD_LOCAL_MERGE_PLAYBOOK.md` when reviewing output that came from cloud, separate worktrees, branches, patches, or PRs.

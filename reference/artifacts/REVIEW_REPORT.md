@@ -1,5 +1,105 @@
 # Review Report
 
+## 2026-05-17 PLN-23 Cutover Execution Closeout
+
+- Scope: reviewer closeout for approved `PLN-23` root cutover execution after Developer execution and Tester verification.
+- Findings:
+  - none inside the approved `PLN-23` cutover execution boundary
+- Review result:
+  - approved execution stayed inside the packet scope. The only cutover command path executed was root `migration-apply`, and it returned `applied: 0`, `changes: []`.
+  - root-only mutation containment is adequate. `standard-template` was used as validation/parity target only, not as a cutover mutation target.
+  - rollback/preflight evidence is sufficient: root and starter preflight both report `cutoverReady: true`, `migrationPreview.changeCount: 0`, `rollbackBundle.missingPaths: []`, and `rollbackBundle.needsOperatorBackup: false`.
+  - Tester evidence is sufficient for the reviewed scope: root targeted `59/59`, starter targeted `50/50`, root full suite `98/98`, starter full suite `89/89`, validators/reports/context/preflight all clean.
+  - destructive artifact retirement / merge remains outside this packet. Reviewed `git diff --name-status` evidence shows no tracked `D` or `R` entries, and no deletion, merge, tombstone, release packaging, or downstream mutation was executed.
+- Validation:
+  - root targeted tests: `node --test .harness/test/starter-payload-contract.test.js .harness/test/bootstrap-runtime.test.js .harness/test/dev05-tooling.test.js .harness/test/workflow-governance.test.js`
+  - `standard-template` targeted tests: `node --test .harness/test/dev05-tooling.test.js .harness/test/workflow-governance.test.js`
+  - root full suite: `npm.cmd test`
+  - `standard-template` full suite: `npm.cmd test`
+  - root and `standard-template` validators: `node .harness/runtime/state/dev05-cli.js validate`
+  - root and `standard-template` validation reports: `node .harness/runtime/state/dev05-cli.js validation-report`
+  - root and `standard-template` cutover preflight: `node .harness/runtime/state/dev05-cli.js cutover-preflight`
+  - root Active Context: `node .harness/runtime/state/dev05-cli.js context`
+- Residual risk:
+  - final destructive artifact retirement / merge remains unapproved and still requires a separate approval packet with inbound-reference scan plus migration / tombstone / exemption handling.
+  - no additional reviewer remediation is required inside the approved `PLN-23` cutover execution boundary.
+- Result:
+  - `PLN-23` cutover execution is approved for reviewer closeout.
+  - handoff may proceed to Planner for packet closeout reflection and continued hold on destructive artifact retirement / merge.
+- Status: done
+
+## 2026-05-17 PLN-22 Slice 2 Closeout Re-Review
+
+- Scope: reviewer closeout re-review for `PLN-22` Slice 2 after narrow Developer remediation and Tester re-verification.
+- Findings:
+  - none inside the approved `PLN-22` Slice 2 boundary
+- Review result:
+  - the prior blocking manual prompt-template mismatch is closed. Root and `standard-template` reusable manuals now require `ACTIVE_CONTEXT` first and describe `CURRENT_STATE.md` / `TASK_LIST.md` only as compatibility fallback reads
+  - root and `standard-template` manual prompt-template wording is synchronized, and reviewed evidence shows no live stale required-input contract remains
+  - remediation evidence and validation evidence are sufficient for the reviewed narrow scope, including root / `standard-template` parity, full-suite evidence carried forward in walkthrough, fresh validator/report evidence, and active review-lane `ACTIVE_CONTEXT` parity
+  - artifact-disposition boundary remains preserved. `CURRENT_STATE.md` and `TASK_LIST.md` remain compatibility views pending later tombstone work, and reviewed evidence still shows no destructive artifact retirement or merge execution occurred in Slice 2
+- Validation:
+  - reviewer checked `ACTIVE_CONTEXT.json`, `reference/manuals/HARNESS_MANUAL.md`, `standard-template/reference/manuals/HARNESS_MANUAL.md`, `reference/artifacts/WALKTHROUGH.md`, and `reference/artifacts/PLN-22_ARTIFACT_REFERENCE_DISPOSITION.md`
+  - root `node .harness/runtime/state/dev05-cli.js validate`: findings `[]`
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`: gate decision `pass`
+- Residual risk:
+  - `.agents/artifacts/CURRENT_STATE.md` and `.agents/artifacts/TASK_LIST.md` still remain pending compatibility-view tombstone work in later slices
+  - actual artifact retirement / merge execution remains separately gated behind inbound-reference proof and later approval
+- Result:
+  - `PLN-22` Slice 2 is approved for reviewer closeout
+  - no reviewer remediation is required inside the approved Slice 2 boundary
+  - handoff may proceed to Planner for slice closeout reflection and later-slice gating
+- Status: done
+
+## 2026-05-17 PLN-22 Slice 2 Closeout Review
+
+- Scope: reviewer closeout review for `PLN-22` Slice 2 after tester verification.
+- Findings:
+  - blocking: `reference/manuals/HARNESS_MANUAL.md` and `standard-template/reference/manuals/HARNESS_MANUAL.md` still declare `CURRENT_STATE` and `TASK_LIST` as required Planner inputs in the reusable prompt templates (`:532`, `:941`). That contradicts the approved Slice 2 intent to move default AI/operator first-read routing onto `ACTIVE_CONTEXT` and demote `CURRENT_STATE.md` / `TASK_LIST.md` to compatibility or fallback-only surfaces.
+- Review result:
+  - the runtime and workflow changes do move canonical AI re-entry to `ACTIVE_CONTEXT.json`, and the tester evidence is sufficient for the code-path and parity portions of the slice
+  - the disposition registry correctly records `migrate`, `tombstone`, and `exempt` boundaries, and reviewed evidence still shows no destructive artifact retirement or merge execution
+  - however, the reusable manual prompt templates still present the compatibility views as normative required inputs, so the slice does not yet fully close the workflow/manual migration boundary it set out to cover
+- Validation:
+  - reviewer checked `ACTIVE_CONTEXT.json`, `AGENTS.md`, `.agents/rules/workspace.md`, `.agents/workflows/review.md`, `reference/manuals/HARNESS_MANUAL.md`, `standard-template/START_HERE.md`, `reference/artifacts/WALKTHROUGH.md`, and `reference/artifacts/PLN-22_ARTIFACT_REFERENCE_DISPOSITION.md`
+  - tester evidence remains clean for root / `standard-template` full suites, validator, validation-report, parity hashes, and no-destructive-retirement checks
+- Residual risk:
+  - `.agents/artifacts/CURRENT_STATE.md` and `.agents/artifacts/TASK_LIST.md` remain compatibility views pending later tombstone work
+  - actual artifact retirement / merge execution remains separately gated behind inbound-reference proof and later approval
+- Result:
+  - `PLN-22` Slice 2 is not approved for reviewer closeout yet
+  - remediation should remove or rewrite the remaining manual prompt-template requirements that still make `CURRENT_STATE` / `TASK_LIST` look mandatory
+  - handoff should return to Developer for a narrow documentation remediation slice, then re-enter Tester and Reviewer
+- Status: remediation required
+
+## 2026-05-17 PLN-22 Slice 1 Closeout Review
+
+- Scope: reviewer closeout review for `PLN-22` Slice 1 after tester verification.
+- Findings:
+  - none inside the approved `PLN-22` Slice 1 boundary
+- Review result:
+  - effective-risk enforcement is present in the reusable runtime and validator surfaces. Low-risk closeout no longer passes when the detected risk floor is higher, and validator failure is explicit through `closeout_risk_floor_mismatch`
+  - root and `standard-template` reusable runtime and regression files remain synchronized for the Slice 1 change set
+  - validation evidence is sufficient for the reviewed scope: targeted root/starter regressions, root/starter full suites, validator, validation-report, and Active Context evidence are all present and clean
+  - artifact-disposition boundary is preserved. Slice 1 added the disposition registry and preserved the explicit `Do not delete or merge any listed artifact in Slice 1` rule
+  - reviewed evidence shows no destructive artifact retirement or merge execution occurred in Slice 1; later migration, tombstone, exemption, and cutover work remain gated follow-up scope
+- Validation:
+  - root targeted `node --test .harness/test/dev05-tooling.test.js`
+  - `standard-template` targeted `node --test standard-template/.harness/test/dev05-tooling.test.js`
+  - root full suite `npm.cmd test`
+  - `standard-template` full suite `npm.cmd test`
+  - root `npm.cmd run harness:validate`
+  - root `npm.cmd run harness:validation-report`
+  - root `npm.cmd run harness:context`
+- Residual risk:
+  - Slice 2 cannot start destructive artifact retirement or merge execution until inbound-reference migration, tombstone, or exemption evidence is produced
+  - Slice 1 does not close the broader `PLN-22` packet; it only closes the approved first implementation-proof slice
+- Result:
+  - `PLN-22` Slice 1 is approved for reviewer closeout
+  - no reviewer remediation is required inside the approved Slice 1 boundary
+  - handoff may proceed to Planner for slice closeout reflection and later-slice gating
+- Status: done
+
 ## 2026-05-14 PLN-19 OPS-21 Slice Review
 - Scope reviewed:
   project-facing SSOT scrub for downstream-app starter readiness.
@@ -1400,4 +1500,85 @@ Use this artifact when the project enters a formal review gate.
   - `PLN-19` is approved for packet exit
   - no reviewer remediation is required for the bounded downstream-app readiness remediation wave
   - handoff may proceed to Planner for closeout and next-lane selection
+- Status: done
+
+## 2026-05-17 PLN-22 Slice 3 Closeout
+
+- Scope: reviewer closeout for `PLN-22` Slice 3 generated-only / on-demand derived-surface conversion after tester verification.
+- Findings:
+  - none inside the approved Slice 3 boundary
+- Review result:
+  - `CURRENT_STATE.md`, `TASK_LIST.md`, and `ACTIVE_CONTEXT.md` now behave as generated compatibility / fallback views rather than manual truth authority
+  - `context --repair` restores deleted generated outputs without mutating canonical DB authority
+  - validator failure classification now distinguishes generated-surface absence / staleness while preserving canonical-state authority checks
+  - root and `standard-template` reusable runtime/test surfaces remain synchronized for the Slice 3 delta
+  - cutover and destructive artifact retirement / merge execution remain gated and were not executed
+- Validation:
+  - root targeted regressions: `node --test .harness/test/generated-state-docs.test.js`, `node --test .harness/test/context-repair.test.js`, `node --test .harness/test/active-context.test.js`, `node --test .harness/test/dev05-tooling.test.js`
+  - root full suite: `npm.cmd test`
+  - `standard-template` full suite: `npm.cmd test`
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`
+  - root `node .harness/runtime/state/dev05-cli.js validate`
+  - `standard-template` `node .harness/runtime/state/dev05-cli.js validation-report`
+  - `standard-template` `node .harness/runtime/state/dev05-cli.js validate`
+- Residual risk:
+  - Slice 4 cutover and actual destructive artifact retirement / merge execution are still blocked pending later approval and prerequisite proof
+  - `CURRENT_STATE.md` / `TASK_LIST.md` are compatibility views in this slice, not final retired artifacts
+- Result:
+  - `PLN-22` Slice 3 is approved for reviewer closeout
+  - handoff may proceed to Planner for Slice 3 closeout reflection and next-lane planning
+- Status: done
+
+## 2026-05-17 PLN-22 Slice 4 Non-Destructive Closeout
+
+- Scope: reviewer closeout for `PLN-22` Slice 4 non-destructive starter/parity finalization after tester verification.
+- Findings:
+  - none inside the approved Slice 4 non-destructive boundary
+- Review result:
+  - starter payload filtering now excludes generated/runtime maintainer artifacts that must not be copied into new projects: semantic traces, recovery reports, cutover/preflight reports, generated state docs, `ACTIVE_CONTEXT.*`, and sqlite operational state
+  - GitHub and local bootstrap coverage proves those excluded runtime artifacts are not fetched or applied to target projects
+  - root and `standard-template` reusable tests prove `cutover-preflight` is read-only and leaves legacy write-path migration changes pending until separately approved cutover
+  - approval boundary was preserved: no `migration-apply`, cutover execution, artifact deletion, artifact merge, or destructive retirement occurred
+- Validation:
+  - root targeted tests: `node --test .harness/test/starter-payload-contract.test.js .harness/test/bootstrap-runtime.test.js .harness/test/dev05-tooling.test.js`
+  - `standard-template` targeted tests: `node --test .harness/test/dev05-tooling.test.js`
+  - root full suite: `npm.cmd test`
+  - `standard-template` full suite: `npm.cmd test`
+  - root and `standard-template` validators: `node .harness/runtime/state/dev05-cli.js validate`
+  - root and `standard-template` validation reports: `node .harness/runtime/state/dev05-cli.js validation-report`
+  - root and `standard-template` non-destructive preflight: `node .harness/runtime/state/dev05-cli.js cutover-preflight`
+- Residual risk:
+  - actual cutover execution remains unapproved
+  - final destructive artifact retirement / merge remains unapproved and still requires a fresh inbound-reference scan plus migration / tombstone / exemption handling
+- Result:
+  - `PLN-22` Slice 4 non-destructive scope is approved for reviewer closeout
+  - handoff may proceed to Planner for closeout reflection and hold until a separate cutover or destructive retirement approval lane is opened
+- Status: done
+
+## 2026-05-17 PLN-24 Destructive Artifact Retirement / Merge Closeout
+
+- Scope: reviewer closeout for approved `PLN-24` final destructive artifact retirement / merge execution after Tester verification.
+- Findings:
+  - none inside the approved `PLN-24` boundary
+- Review result:
+  - same-turn inbound-reference scan and disposition evidence classifies all candidates with `hold` count 0
+  - the only required migration was the root and `standard-template` `day_start` skill wording away from old `CURRENT_STATE.md` live-truth language
+  - no physical deletion or merge was performed; this is acceptable because every remaining candidate is a generated compatibility view, first-read re-entry output, recovery/report/trace evidence surface, or starter-local runtime output already excluded from copied starter payloads
+  - no release packaging, downstream project mutation, unapproved deletion, or unapproved tombstone was executed
+  - root and `standard-template` evidence covers targeted regression, validation-report, validator, Active Context, and cutover-preflight after the execution lane
+  - retained compatibility/runtime evidence surfaces are explicitly justified; they are not hidden `hold` items
+- Validation:
+  - root targeted suite: `node --test .harness/test/starter-payload-contract.test.js .harness/test/bootstrap-runtime.test.js .harness/test/dev05-tooling.test.js .harness/test/workflow-governance.test.js`
+  - `standard-template` targeted suite: `node --test .harness/test/dev05-tooling.test.js .harness/test/workflow-governance.test.js`
+  - root and `standard-template` validation reports: gate `pass`, findings `[]`
+  - root and `standard-template` validators: `ok: true`, findings `[]`
+  - root and `standard-template` cutover-preflight: `cutoverReady: true`, `migrationPreview.changeCount: 0`, `rollbackBundle.missingPaths: []`, `rollbackBundle.needsOperatorBackup: false`
+  - active wording scan: no active root/starter `live execution truth` hit remains outside the `PLN-24` evidence artifact's scan-command text
+- Residual risk:
+  - no additional residual reusable defect was found inside the approved `PLN-24` boundary
+  - release packaging and downstream mutation remain not approved and were not reviewed as release-ready work
+- Result:
+  - `PLN-24` is approved for packet exit
+  - no reviewer remediation is required
+  - handoff may proceed to Planner for closeout reflection and planning hold
 - Status: done

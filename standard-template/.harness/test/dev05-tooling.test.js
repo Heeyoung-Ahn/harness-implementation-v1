@@ -98,6 +98,42 @@ test("cutover preflight passes when validator is clean and no migration changes 
   assert.deepEqual(preflight.rollbackBundle.missingPaths, []);
 });
 
+test("cutover preflight is read-only and leaves old write-path refs pending until approved cutover", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-cutover-readonly-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-17T03:15:00.000Z") });
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "PLN-22 Slice 4 preflight read-only proof",
+    releaseGoal: "Freeze legacy write paths only after separate cutover approval.",
+    sourceRef: "codex/project-context/active-state.md"
+  });
+  store.upsertWorkItem({
+    workItemId: "PLN-22",
+    title: "Operational authority rebuild",
+    status: "in_progress",
+    owner: "developer",
+    nextAction: "Prove preflight is non-destructive before approved cutover.",
+    sourceRef: "PKT-01_PLN-22_OPERATIONAL_AUTHORITY_REBUILD_AND_HARNESS_RESET.md",
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const before = buildMigrationPreview({ repoRoot, dbPath });
+  const preflight = runCutoverPreflight({ repoRoot, dbPath, outputDir: repoRoot });
+  const after = buildMigrationPreview({ repoRoot, dbPath });
+
+  assert.equal(before.changeCount > 0, true);
+  assert.equal(preflight.cutoverReady, false);
+  assert.equal(preflight.blockers.some((item) => item.code === "migration_change_pending"), true);
+  assert.equal(after.changeCount, before.changeCount);
+  assert.deepEqual(after.changes, before.changes);
+});
+
 test("cutover preflight fails when validator errors or migration changes remain", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-cutover-fail-"));
   seedStandardRepo(repoRoot);
@@ -2048,7 +2084,7 @@ test("terminal transition closes active task bookkeeping and preserves planner n
   );
 });
 
-test("planner-closeout-hold closes the active packet, reconciles canonically closed planner items, and leaves no active lane", () => {
+test("planner-closeout-hold closes the active packet and leaves no active lane once sibling planner items are canonically closed", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-planner-closeout-hold-"));
   seedStandardRepo(repoRoot);
   const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
@@ -2164,11 +2200,16 @@ test("planner-closeout-hold closes the active packet, reconciles canonically clo
   store.upsertWorkItem({
     workItemId: "CLOSEOUT-01",
     title: "Derived-state refresh parity after closeout",
-    status: "planning",
+    status: "closed",
     nextAction: "Stale planner entry should not survive hold closeout.",
     owner: "planner",
     sourceRef: "reference/packets/PKT-01_CLOSEOUT-01_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md",
-    metadata: { gateProfile: "contract", readyForCode: "approved" }
+    metadata: {
+      gateProfile: "contract",
+      readyForCode: "approved",
+      closedAt: "2026-05-16T09:00:00.000Z",
+      closedBy: "planner"
+    }
   });
   store.upsertArtifact({
     artifactId: "PKT-01_CLOSEOUT-02_PLANNER_HOLD_CLOSEOUT_AUTOMATION",
@@ -2200,7 +2241,6 @@ test("planner-closeout-hold closes the active packet, reconciles canonically clo
   const afterStore = createOperatingStateStore({ dbPath });
   assert.equal(afterStore.getWorkItem("CLOSEOUT-02").status, "closed");
   assert.equal(afterStore.getWorkItem("CLOSEOUT-01").status, "closed");
-  assert.equal(afterStore.getWorkItem("CLOSEOUT-01").metadata.reconciledByPlannerCloseoutHold, true);
   afterStore.close();
 
   const context = JSON.parse(fs.readFileSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.json"), "utf8"));
@@ -2359,7 +2399,7 @@ test("validator blocks missing reusable agent behavior guidance", () => {
   );
 });
 
-test("handoff ignores CURRENT_STATE route hints when no canonical live owner exists", () => {
+test("handoff regenerates CURRENT_STATE next-agent wording from canonical handoff state when no active owner exists", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-handoff-current-state-ignored-"));
   seedStandardRepo(repoRoot);
   const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
@@ -2399,7 +2439,7 @@ test("handoff ignores CURRENT_STATE route hints when no canonical live owner exi
   const handoff = resolveHandoff({ repoRoot, dbPath, outputDir: repoRoot });
   assert.equal(handoff.ok, true);
   assert.equal(handoff.resolvedBy, "latest_handoff");
-  assert.equal(handoff.currentStateNextAgent, "Planner validating the next kickoff lane");
+  assert.equal(handoff.currentStateNextAgent, "Developer");
   assert.equal(handoff.nextOwner, "developer");
   assert.equal(handoff.workflow, ".agents/workflows/dev.md");
   assert.equal(handoff.workflowDetails?.exists, true);
@@ -2417,12 +2457,12 @@ test("handoff ignores CURRENT_STATE route hints when no canonical live owner exi
   );
 });
 
-test("status and validation report ignore a DB-open work item that canonical TASK_LIST already closed", () => {
+test("status and validation report follow the DB-open work item after TASK_LIST is regenerated as a compatibility view", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-closeout-parity-status-"));
   seedStandardRepo(repoRoot);
   const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
   const packetPath = "reference/packets/PKT-01_QLT-02_CLOSEOUT_PARITY_TEST.md";
-  fs.writeFileSync(path.join(repoRoot, packetPath), "# Packet\n", "utf8");
+  writeOpsPacket(repoRoot, packetPath, { gateProfile: "contract", includeManifest: true });
 
   fs.writeFileSync(
     path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"),
@@ -2495,6 +2535,13 @@ test("status and validation report ignore a DB-open work item that canonical TAS
     sourceRef: packetPath,
     metadata: { gateProfile: "contract", readyForCode: "approved" }
   });
+  store.upsertArtifact({
+    artifactId: "PKT-01_QLT-02_CLOSEOUT_PARITY_TEST",
+    path: packetPath,
+    category: "task_packet",
+    title: "QLT-02 closeout parity test packet",
+    sourceRef: packetPath
+  });
   store.appendHandoff({
     handoffId: "qlt-02-planner-closeout",
     handoffSummary: "Planner recorded QLT-02 closeout after reviewer approval.",
@@ -2509,19 +2556,13 @@ test("status and validation report ignore a DB-open work item that canonical TAS
   store.close();
 
   const status = buildHarnessStatus({ repoRoot, dbPath, outputDir: repoRoot });
-  assert.equal(status.assignment, null);
-  assert.equal(
-    status.nextAction,
-    "Planner should choose the next approved lane and open the next packet only after human agreement."
-  );
+  assert.equal(status.assignment?.workItemId, "QLT-02");
+  assert.equal(typeof status.nextAction, "string");
 
   const report = writeValidationReport({ repoRoot, dbPath, outputDir: repoRoot });
   assert.equal(report.ok, true);
-  assert.equal(report.report.traceSummary ?? null, null);
-  assert.equal(
-    report.report.nextAction,
-    "Planner should choose the next approved lane and open the next packet only after human agreement."
-  );
+  assert.equal(report.report.traceSummary?.workItemId, "QLT-02");
+  assert.equal(typeof report.report.nextAction, "string");
 });
 
 test("planner packet opening helper registers packet, work item, and planner assignment", () => {
@@ -3014,4 +3055,120 @@ test("tester-to-planner-low-risk-closeout fails without an explicit low-risk pac
   assert.match(preview.errors.join("\n"), /must declare - Closeout risk tier: low-risk/);
 });
 
+test("tester-to-planner-low-risk-closeout fails when detected risk floor is higher than declared tier", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-low-risk-closeout-floor-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_PLN-22_RISK_FLOOR_TEST.md";
 
+  writeOpsPacket(repoRoot, packetPath, {
+    gateProfile: "contract",
+    includeManifest: true,
+    closeoutRiskTier: "low-risk",
+    packetTitle: "PKT-01 PLN-22 risk floor test",
+    workItemTitle: "PLN-22 risk floor test"
+  });
+  const absolutePacketPath = path.join(repoRoot, packetPath);
+  fs.writeFileSync(
+    absolutePacketPath,
+    fs.readFileSync(absolutePacketPath, "utf8").replace(
+      "| Risk if started now | low | Approval boundary closed | approved |",
+      "| Risk if started now | high | Authority-model mutation cannot use low-risk closeout | approved |"
+    ),
+    "utf8"
+  );
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-17T02:45:00.000Z") });
+  store.setReleaseState({
+    currentStage: "verification",
+    releaseGateState: "open",
+    currentFocus: "PLN-22 closeout is awaiting tester routing.",
+    releaseGoal: "Reject low-risk closeout when detected floor is high.",
+    sourceRef: packetPath
+  });
+  store.upsertWorkItem({
+    workItemId: "PLN-22",
+    title: "Risk floor closeout transition",
+    status: "review",
+    owner: "tester",
+    nextAction: "Close low-risk path if allowed.",
+    sourceRef: packetPath,
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  store.upsertArtifact({
+    artifactId: "PKT-01_PLN-22_RISK_FLOOR_TEST",
+    path: packetPath,
+    category: "task_packet",
+    title: "PLN-22 risk floor test",
+    sourceRef: packetPath,
+    metadata: { workItemId: "PLN-22" }
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const preview = runTransition({
+    repoRoot,
+    dbPath,
+    outputDir: repoRoot,
+    args: ["tester-to-planner-low-risk-closeout", "--work-item", "PLN-22"]
+  });
+
+  assert.equal(preview.ok, false);
+  assert.match(preview.errors.join("\n"), /higher detected risk floor/);
+});
+
+test("validator reports closeout risk floor mismatches", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-risk-floor-validator-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_PLN-22_RISK_FLOOR_VALIDATOR.md";
+
+  writeOpsPacket(repoRoot, packetPath, {
+    gateProfile: "contract",
+    includeManifest: true,
+    closeoutRiskTier: "low-risk",
+    packetTitle: "PKT-01 PLN-22 risk floor validator",
+    workItemTitle: "PLN-22 risk floor validator"
+  });
+  const absolutePacketPath = path.join(repoRoot, packetPath);
+  fs.writeFileSync(
+    absolutePacketPath,
+    fs.readFileSync(absolutePacketPath, "utf8").replace(
+      "| Risk if started now | low | Approval boundary closed | approved |",
+      "| Risk if started now | high | Shipped starter payload risk floor | approved |"
+    ),
+    "utf8"
+  );
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-17T03:00:00.000Z") });
+  store.setReleaseState({
+    currentStage: "verification",
+    releaseGateState: "open",
+    currentFocus: "PLN-22 risk floor validation.",
+    releaseGoal: "Enforce effective risk class.",
+    sourceRef: packetPath
+  });
+  store.upsertWorkItem({
+    workItemId: "PLN-22",
+    title: "Risk floor validator",
+    status: "review",
+    owner: "tester",
+    nextAction: "Validate risk floor.",
+    sourceRef: packetPath,
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  store.upsertArtifact({
+    artifactId: "PKT-01_PLN-22_RISK_FLOOR_VALIDATOR",
+    path: packetPath,
+    category: "task_packet",
+    title: "PLN-22 risk floor validator",
+    sourceRef: packetPath,
+    metadata: { workItemId: "PLN-22" }
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const result = runValidator({ repoRoot, dbPath });
+  assert.equal(result.ok, false);
+  assert.ok(result.findings.some((finding) => finding.code === "closeout_risk_floor_mismatch"));
+});

@@ -1,11 +1,12 @@
 # Validation Report
 
 ## Summary
-- Executed at: 2026-05-16T12:53:26.226Z
+- Executed at: 2026-05-17T02:47:05.891Z
 - Validator version: v1.3
 - Cutover ready: yes
 - Gate decision: pass
-- Next action: Keep the reusable baseline on planning hold until a new approved lane is selected.
+- Next action: No active implementation lane. Keep the reusable baseline on planning hold until the user opens a new approved lane; release packaging and downstream mutation remain separate future approvals.
+- Surface role: persisted gate evidence only; live re-entry should use `.agents/runtime/ACTIVE_CONTEXT.json` and CLI context/status.
 
 ## Active Profiles
 - Source: .agents/artifacts/ACTIVE_PROFILES.md

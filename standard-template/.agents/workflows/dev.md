@@ -30,6 +30,13 @@
 - `.agents/artifacts/IMPLEMENTATION_PLAN.md`
 - active packet and any approved project design/source artifact cited by the task
 
+## Read First
+- `.agents/runtime/ACTIVE_CONTEXT.json`
+- `.agents/artifacts/REQUIREMENTS.md`
+- `.agents/artifacts/ARCHITECTURE_GUIDE.md`
+- `.agents/artifacts/IMPLEMENTATION_PLAN.md`
+- active packet and any approved project design/source artifact cited by the task
+
 ## Conditional Supporting References
 - Use `reference/artifacts/VERIFICATION_SCENARIO_TEMPLATE.md` for implementation self-check when the packet has scenario-based acceptance or manual verification requirements.
 - Use `reference/manuals/CLOUD_LOCAL_MERGE_PLAYBOOK.md` when consuming cloud, branch, patch, PR, or separate worktree output.

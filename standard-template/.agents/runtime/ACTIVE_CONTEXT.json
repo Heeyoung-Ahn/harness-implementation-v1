@@ -1,6 +1,6 @@
 {
   "schemaVersion": "standard-harness-active-context/v2",
-  "generatedAt": "2026-05-16T09:25:51.301Z",
+  "generatedAt": "2026-05-17T02:41:33.880Z",
   "project": {
     "repoRoot": "C:\\Newface\\30 Github\\harness-implementation-v1\\standard-template",
     "name": "standard-template"
@@ -19,10 +19,12 @@
     "workflow": ".agents/workflows/plan.md",
     "workflowRouteStatus": "ready",
     "resolvedBy": "default_planner",
-    "requiredSsot": [],
+    "requiredSsot": [
+      ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+    ],
     "approvalBoundary": null,
     "doNotCross": [],
-    "action": "No active task is recorded. Review CURRENT_STATE and TASK_LIST."
+    "action": "No active task is recorded. Review IMPLEMENTATION_PLAN and the latest handoff."
   },
   "reentryContract": {
     "firstRead": ".agents/runtime/ACTIVE_CONTEXT.json",
@@ -31,18 +33,16 @@
     "workflowRouteStatus": "ready",
     "mustReadNext": [
       ".agents/workflows/plan.md",
-      ".agents/artifacts/CURRENT_STATE.md",
-      ".agents/artifacts/TASK_LIST.md",
+      ".agents/runtime/ACTIVE_CONTEXT.json",
       ".agents/artifacts/REQUIREMENTS.md",
-      ".agents/artifacts/VALIDATION_REPORT.json"
-    ],
-    "sourceTrace": [
-      ".agents/artifacts/CURRENT_STATE.md",
-      ".agents/artifacts/TASK_LIST.md",
       ".agents/artifacts/IMPLEMENTATION_PLAN.md",
       ".agents/artifacts/VALIDATION_REPORT.json"
     ],
-    "digest": "6fa353316c854f5cdb12b6f404adeebf640d1b3dcb868f8524b03dfb311bcd35"
+    "sourceTrace": [
+      ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+      ".agents/artifacts/VALIDATION_REPORT.json"
+    ],
+    "digest": "ff0a4d5835889b025fe6b6266d7a04dbf6a9fdc2767c3740fc7ebdec7063a836"
   },
   "blockers": [],
   "decisions": [],
@@ -53,51 +53,32 @@
     "findingCount": 0,
     "blockingFindingCount": 0,
     "gateDecision": "pass",
-    "executedAt": "2026-05-16T09:25:51.110Z",
+    "executedAt": "2026-05-17T02:41:33.242Z",
     "traceSummary": null,
-    "candidateGates": [
-      {
-        "id": "required-evidence-present",
-        "phase": "candidate-only",
-        "description": "Required evidence artifacts exist for the active work item."
-      },
-      {
-        "id": "source-references-resolve",
-        "phase": "candidate-only",
-        "description": "Referenced packet, SSOT, validation, and trace sources resolve locally."
-      },
-      {
-        "id": "semantic-trace-present",
-        "phase": "candidate-only",
-        "description": "A lightweight semantic trace artifact exists for the active work item."
-      },
-      {
-        "id": "evidence-non-contradictory",
-        "phase": "candidate-only",
-        "description": "Trace, packet, and active work metadata do not contradict each other."
-      },
-      {
-        "id": "evidence-freshness",
-        "phase": "candidate-only",
-        "description": "Validation and trace timestamps match the current report turn."
-      },
-      {
-        "id": "validation-context-parity",
-        "phase": "candidate-only",
-        "description": "Validation report and ACTIVE_CONTEXT expose the same validation summary."
-      }
-    ]
+    "candidateGates": []
   },
   "generatedDocs": [
     {
+      "projectionName": ".agents/artifacts/CURRENT_STATE.md",
+      "generatedAt": "2026-05-17T02:41:33.382Z",
+      "freshnessState": "fresh",
+      "sourceRevision": "empty-store"
+    },
+    {
+      "projectionName": ".agents/artifacts/TASK_LIST.md",
+      "generatedAt": "2026-05-17T02:41:33.382Z",
+      "freshnessState": "fresh",
+      "sourceRevision": "empty-store"
+    },
+    {
       "projectionName": "CURRENT_STATE.md",
-      "generatedAt": "2026-05-16T09:25:51.170Z",
+      "generatedAt": "2026-05-17T02:41:33.382Z",
       "freshnessState": "fresh",
       "sourceRevision": "empty-store"
     },
     {
       "projectionName": "TASK_LIST.md",
-      "generatedAt": "2026-05-16T09:25:51.170Z",
+      "generatedAt": "2026-05-17T02:41:33.382Z",
       "freshnessState": "fresh",
       "sourceRevision": "empty-store"
     }

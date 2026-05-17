@@ -42,13 +42,15 @@
 
 그 다음부터는 `reference/manuals/HARNESS_MANUAL.md`를 기준으로 운영하면 된다.
 
-## 3. 처음에는 이 문서만 연다
+## 3. 초기화가 끝난 뒤 처음에는 이 문서만 연다
 
-- `.agents/artifacts/CURRENT_STATE.md`
+- `.agents/runtime/ACTIVE_CONTEXT.md`
 - `.agents/artifacts/REQUIREMENTS.md`
 - `reference/planning/PLN-00_DEEP_INTERVIEW.md`
 - `reference/planning/PLN-01_REQUIREMENTS_FREEZE.md`
 - `reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md`
+
+`ACTIVE_CONTEXT.md`가 아직 없다면 `npm run harness:init` 또는 `npm run harness:context`를 먼저 실행한다.
 
 ## 4. 처음에는 열지 않아도 되는 것
 

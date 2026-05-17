@@ -1,11 +1,12 @@
 # Validation Report
 
 ## Summary
-- Executed at: 2026-05-16T09:25:51.110Z
+- Executed at: 2026-05-17T02:41:33.242Z
 - Validator version: v1.3
 - Cutover ready: yes
 - Gate decision: pass
 - Next action: No blocker is recorded. Continue with the current approved packet or open the next planning lane.
+- Surface role: persisted gate evidence only; live re-entry should use `.agents/runtime/ACTIVE_CONTEXT.json` and CLI context/status.
 
 ## Active Profiles
 - Source: .agents/artifacts/ACTIVE_PROFILES.md

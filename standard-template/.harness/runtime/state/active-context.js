@@ -19,6 +19,7 @@ const IMPLEMENTATION_PLAN_PATH = ".agents/artifacts/IMPLEMENTATION_PLAN.md";
 const PROJECT_PROGRESS_PATH = ".agents/artifacts/PROJECT_PROGRESS.md";
 const PREVENTIVE_MEMORY_PATH = ".agents/artifacts/PREVENTIVE_MEMORY.md";
 const ACTIVE_CONTEXT_SCHEMA_VERSION = "standard-harness-active-context/v2";
+const COMPATIBILITY_FIRST_READ_PATHS = new Set([CURRENT_STATE_PATH, TASK_LIST_PATH]);
 
 export function writeActiveContext({ store, repoRoot = process.cwd(), outputDir = repoRoot, validation = null } = {}) {
   const root = path.resolve(repoRoot);
@@ -102,23 +103,23 @@ export function buildActiveContext({
       ? null
       : handoffExecution.workflow;
   const latestHandoffPayload = latestHandoff?.payload ?? {};
-  const nextRequiredSsot = normalizePathList(latestHandoffPayload.requiredSsot ?? []);
-  const nextDoNotCross = normalizeTextList(latestHandoffPayload.doNotCross ?? []);
   const workflowReadFirst = normalizePathList(handoffExecution.workflowDetails?.readFirst ?? []);
+  const nextRequiredSsot = uniquePathList([
+    IMPLEMENTATION_PLAN_PATH,
+    ...stripCompatibilityFirstReadPaths(normalizePathList(latestHandoffPayload.requiredSsot ?? []))
+  ]);
+  const nextDoNotCross = normalizeTextList(latestHandoffPayload.doNotCross ?? []);
   const activePacket = activeTask?.sourceRef ?? releaseState?.sourceRef ?? null;
   const mustReadNext = uniquePathList([
     nextWorkflow,
-    CURRENT_STATE_PATH,
-    TASK_LIST_PATH,
-    ...nextRequiredSsot,
     ...workflowReadFirst,
+    ...nextRequiredSsot,
     activePacket,
     VALIDATION_REPORT_JSON
   ]);
   const sourceTrace = uniquePathList([
-    CURRENT_STATE_PATH,
-    TASK_LIST_PATH,
     IMPLEMENTATION_PLAN_PATH,
+    ...nextRequiredSsot,
     activePacket,
     VALIDATION_REPORT_JSON
   ]);
@@ -173,7 +174,7 @@ export function buildActiveContext({
       action:
         activeTask?.nextAction ??
         latestHandoffPayload.nextFirstAction ??
-        "No active task is recorded. Review CURRENT_STATE and TASK_LIST."
+        "No active task is recorded. Review IMPLEMENTATION_PLAN and the latest handoff."
     },
     reentryContract,
     blockers: openRisks.map((risk) => ({
@@ -243,6 +244,8 @@ export function renderActiveContextMarkdown(context) {
     "## 시작 계약",
     `- 첫 AI 재진입 읽기: ${context.reentryContract.firstRead}`,
     `- 사람 확인용 보조 문서: ${context.reentryContract.fallbackHumanView}`,
+    "- 문서 성격: generated human fallback view; live write authority는 아님",
+    "- 복구 명령: node .harness/runtime/state/dev05-cli.js context --repair",
     `- 다음 workflow: ${context.nextWork.workflow ?? "수동 선택 필요"}`,
     task
       ? `- 선택된 lane: ${task.workItemId} / ${task.status} / 담당 ${task.owner ?? "미지정"}`
@@ -440,6 +443,20 @@ function normalizePathValue(value) {
 function normalizeTextValue(value) {
   const text = String(value ?? "").trim();
   return text || null;
+}
+
+function stripCompatibilityFirstReadPaths(values) {
+  const result = [];
+
+  for (const value of values) {
+    const normalized = normalizePathValue(value);
+    if (!normalized || COMPATIBILITY_FIRST_READ_PATHS.has(normalized)) {
+      continue;
+    }
+    result.push(normalized);
+  }
+
+  return uniquePathList(result);
 }
 
 function writeText(targetPath, content) {

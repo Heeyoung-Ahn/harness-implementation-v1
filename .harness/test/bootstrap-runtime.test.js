@@ -93,7 +93,10 @@ test("bootstrapHarnessProject downloads the standard-template tree from GitHub a
               { path: "standard-template/.agents/scripts/init-project.js", type: "blob" },
               { path: "standard-template/.agents/runtime/ACTIVE_CONTEXT.json", type: "blob" },
               { path: "standard-template/.agents/runtime/ACTIVE_CONTEXT.md", type: "blob" },
+              { path: "standard-template/.agents/runtime/agent-traces/PLN-22.json", type: "blob" },
               { path: "standard-template/.agents/runtime/generated-state-docs/CURRENT_STATE.md", type: "blob" },
+              { path: "standard-template/.agents/runtime/recovery-reports/context-repair.json", type: "blob" },
+              { path: "standard-template/.agents/runtime/reports/CUTOVER_PREFLIGHT.md", type: "blob" },
               { path: "standard-template/.harness/operating_state.sqlite", type: "blob" }
             ]
           }),
@@ -142,10 +145,16 @@ test("bootstrapHarnessProject downloads the standard-template tree from GitHub a
   assert.equal(fs.existsSync(path.join(repoRoot, ".harness", "operating_state.sqlite")), false);
   assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.json")), false);
   assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.md")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "agent-traces", "PLN-22.json")), false);
   assert.equal(
     fs.existsSync(path.join(repoRoot, ".agents", "runtime", "generated-state-docs", "CURRENT_STATE.md")),
     false
   );
+  assert.equal(
+    fs.existsSync(path.join(repoRoot, ".agents", "runtime", "recovery-reports", "context-repair.json")),
+    false
+  );
+  assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "reports", "CUTOVER_PREFLIGHT.md")), false);
   assert.equal(fs.existsSync(path.join(repoRoot, "README.md")), true);
   assert.equal(fs.existsSync(path.join(repoRoot, "reference", "manuals", "HARNESS_MANUAL.md")), true);
   assert.deepEqual(writtenWrappers, [repoRoot]);
@@ -178,6 +187,20 @@ test("bootstrapHarnessProject accepts a lightly initialized existing git repo ta
     "# Generated\n",
     "utf8"
   );
+  fs.mkdirSync(path.join(localStarterRoot, ".agents", "runtime", "agent-traces"), { recursive: true });
+  fs.writeFileSync(path.join(localStarterRoot, ".agents", "runtime", "agent-traces", "PLN-22.json"), "{}\n", "utf8");
+  fs.mkdirSync(path.join(localStarterRoot, ".agents", "runtime", "recovery-reports"), { recursive: true });
+  fs.writeFileSync(
+    path.join(localStarterRoot, ".agents", "runtime", "recovery-reports", "context-repair.json"),
+    "{}\n",
+    "utf8"
+  );
+  fs.mkdirSync(path.join(localStarterRoot, ".agents", "runtime", "reports"), { recursive: true });
+  fs.writeFileSync(
+    path.join(localStarterRoot, ".agents", "runtime", "reports", "CUTOVER_PREFLIGHT.md"),
+    "# Preflight\n",
+    "utf8"
+  );
   fs.mkdirSync(path.join(localStarterRoot, ".harness"), { recursive: true });
   fs.writeFileSync(path.join(localStarterRoot, ".harness", "operating_state.sqlite"), "starter-db", "utf8");
   fs.mkdirSync(path.join(localStarterRoot, "reference", "manuals"), { recursive: true });
@@ -202,9 +225,15 @@ test("bootstrapHarnessProject accepts a lightly initialized existing git repo ta
   assert.equal(fs.existsSync(path.join(repoRoot, "AGENTS.md")), true);
   assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.json")), false);
   assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.md")), false);
+  assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "agent-traces", "PLN-22.json")), false);
   assert.equal(
     fs.existsSync(path.join(repoRoot, ".agents", "runtime", "generated-state-docs", "CURRENT_STATE.md")),
     false
   );
+  assert.equal(
+    fs.existsSync(path.join(repoRoot, ".agents", "runtime", "recovery-reports", "context-repair.json")),
+    false
+  );
+  assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "reports", "CUTOVER_PREFLIGHT.md")), false);
   assert.equal(fs.existsSync(path.join(repoRoot, ".harness", "operating_state.sqlite")), false);
 });
