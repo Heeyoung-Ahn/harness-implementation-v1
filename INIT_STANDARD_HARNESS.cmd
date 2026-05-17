@@ -29,5 +29,9 @@ if !NODE_MAJOR_NUM! LSS 24 (
 
 node ".agents\scripts\init-project.js" %*
 set "EXIT_CODE=%ERRORLEVEL%"
+if "%EXIT_CODE%"=="0" (
+  echo.
+  echo Initialization finished. Review the next-step summary above before closing this window.
+)
 popd >nul
 exit /b %EXIT_CODE%

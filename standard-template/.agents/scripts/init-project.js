@@ -97,7 +97,14 @@ try {
       `- Project slug: ${result.projectSlug}`,
       `- Active profiles: ${result.activeProfiles.length ? result.activeProfiles.join(", ") : "none"}`,
       `- DB path: ${result.dbPath}`,
-      `- Next action: ${result.nextAction}`
+      `- Next action: ${result.nextAction}`,
+      "",
+      "Initialization is complete.",
+      "Do this next:",
+      "- Open START_HERE.md",
+      "- Run npm run harness:status",
+      "- Run npm run harness:context",
+      "- Close PLN-00 and PLN-01 before opening the first implementation packet"
     ].join("\n") + "\n"
   );
   process.exit(0);
