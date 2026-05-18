@@ -273,9 +273,9 @@ export function initializeProjectStarter({
   const initializedAt = now();
   const initializedDate = initializedAt.slice(0, 10);
 
-  const currentFocus = `Close PLN-00 kickoff interview and PLN-01 requirements freeze for ${normalizedProjectName}.`;
+  const currentFocus = `Fill PROJECT_STARTER_DOC_PACK, close PLN-00 kickoff interview, and approve PLN-01 requirements freeze for ${normalizedProjectName}.`;
   const releaseGoal = `Define the first approved project baseline for ${normalizedProjectName} on top of the standard harness starter.`;
-  const bootstrapSummary = `Bootstrapped ${normalizedProjectName} from the standard harness starter and opened PLN-00 kickoff discovery.`;
+  const bootstrapSummary = `Bootstrapped ${normalizedProjectName} from the standard harness starter and opened kickoff discovery plus starter-doc-pack closure.`;
 
   writeFile(
     resolvedRoot,
@@ -394,7 +394,7 @@ export function initializeProjectStarter({
       title: `${normalizedProjectName} requirements baseline is not approved yet`,
       severity: "medium",
       status: "open",
-      unblockCondition: "Close PLN-00 and PLN-01 with explicit user confirmation.",
+      unblockCondition: "Fill PROJECT_STARTER_DOC_PACK and close PLN-00/PLN-01 with explicit user confirmation.",
       sourceRef: ".agents/artifacts/REQUIREMENTS.md",
       metadata: {
         initializedDate
@@ -524,7 +524,7 @@ function buildProjectReadme({ projectName, projectSlug, initializedDate, activeP
     "## Harness Bootstrap",
     `- Project slug: \`${projectSlug}\``,
     `- Active optional profiles: ${activeProfileLine}`,
-    "- Next step: close PLN-00 and PLN-01 before opening implementation.",
+    "- Next step: fill PROJECT_STARTER_DOC_PACK, close PLN-00 and PLN-01, then sync architecture before opening implementation.",
     "",
     "## First Commands",
     "- `npm test`",
@@ -563,6 +563,7 @@ function buildCurrentStateDoc({ projectName, currentFocus, releaseGoal, initiali
     "",
     "## Must Read Next",
     "- `START_HERE.md`",
+    "- `reference/artifacts/PROJECT_STARTER_DOC_PACK.md`",
     "- `.agents/artifacts/REQUIREMENTS.md`",
     "- `reference/planning/PLN-00_DEEP_INTERVIEW.md`",
     "- `reference/planning/PLN-01_REQUIREMENTS_FREEZE.md`",
@@ -570,7 +571,9 @@ function buildCurrentStateDoc({ projectName, currentFocus, releaseGoal, initiali
     "## Open Decisions / Blockers",
     "- No active blocker is currently recorded.",
     `- ${projectName} was bootstrapped from the current standard harness starter on ${initializedDate}.`,
+    "- Use `PROJECT_STARTER_DOC_PACK.md` to replace kickoff placeholders before claiming the baseline is concrete.",
     "- Close PLN-00 and PLN-01 before claiming a project-specific implementation lane is active.",
+    "- Do not sync architecture / implementation / UI or open the first task packet before PLN-01 is approved.",
     "",
     "## Latest Handoff Summary",
     `- ${initializedDate}: ${bootstrapSummary}`
@@ -582,23 +585,24 @@ function buildTaskListDoc({ projectName, currentFocus, bootstrapSummary, initial
     "# Task List",
     "",
     "## Current Release Target",
-    `- Close the kickoff baseline so ${projectName} can open its first approved project packet safely.`,
+    `- Close the starter doc pack, kickoff baseline, and requirements freeze so ${projectName} can open its first approved project packet safely.`,
     "",
     "## Active Locks",
     "| Task ID | Scope | Owner | Status | Started At | Notes |",
     "|---|---|---|---|---|---|",
-    `| PLN-00 | requirements discovery | planner | active | ${initializedDate} | kickoff interview lane |`,
+    `| PLN-00 | requirements discovery | planner | active | ${initializedDate} | kickoff interview lane and starter-doc-pack closure |`,
     "",
     "## Active Tasks",
     "| Task ID | Title | Scope | Owner | Status | Priority | Depends On | Verification |",
     "|---|---|---|---|---|---|---|---|",
-    "| PLN-00 | Kickoff interview | requirements discovery | planner | in_progress | P0 | `reference/planning/PLN-00_DEEP_INTERVIEW.md` | requirements draft |",
+    "| PLN-00 | Kickoff interview | requirements discovery | planner | in_progress | P0 | `reference/planning/PLN-00_DEEP_INTERVIEW.md` | starter doc pack + requirements draft |",
     "| PLN-01 | Requirements freeze | baseline approval | planner | todo | P0 | `.agents/artifacts/REQUIREMENTS.md` | freeze/defer/open-question decision |",
     "- Use `START_HERE.md` as the kickoff checklist if a planner or PM is opening this repo first.",
+    "- Use `reference/artifacts/PROJECT_STARTER_DOC_PACK.md` as the rough-baseline gap checklist before deep interview answers are promoted.",
     `- ${currentFocus}`,
-    "- Sync architecture / implementation / UI baseline only after requirements approval.",
+    "- Sync architecture / implementation / UI baseline only after requirements freeze approval.",
     "- Activate optional profiles only when the project actually needs them.",
-    "- Do not open project packets before the baseline artifacts are aligned.",
+    "- Do not open project packets before the requirements freeze is approved and the baseline artifacts are aligned.",
     "- Keep `.agents/artifacts/PROJECT_PROGRESS.md` aligned with actual execution state.",
     "",
     "## Blocked Tasks",
@@ -669,7 +673,11 @@ function updateRequirementsText(text, { projectName, userGoal, opsGoal, approval
   next = replaceSection(next, "### 운영 목표", `- ${opsGoal}`);
   next = replaceSection(next, "### 승인 목표", `- ${approvalGoal}`);
   next = replaceSection(next, "## Active Profile Selection", renderActiveProfiles(activeProfiles));
-  next = replaceSection(next, "## Open Questions", `- Close implementation-critical discovery questions for ${projectName} in PLN-00.`);
+  next = replaceSection(
+    next,
+    "## Open Questions",
+    `- Replace starter placeholders using PROJECT_STARTER_DOC_PACK and close implementation-critical discovery questions for ${projectName} in PLN-00 before PLN-01 approval.`
+  );
   next = replaceSection(next, "## Deferred Items", "- none yet");
   return next;
 }
@@ -702,8 +710,9 @@ function updateImplementationPlanText(text, { projectName, currentFocus, activeP
     "## Operator Next Action",
     [
       `- Start PLN-00 deep interview for ${projectName}.`,
-      "- Sync `.agents/artifacts/ARCHITECTURE_GUIDE.md`, `.agents/artifacts/IMPLEMENTATION_PLAN.md`, and `reference/artifacts/UI_DESIGN.md` only after requirements approval.",
-      "- Open the first project packet only after requirements, architecture, and profile selection are aligned."
+      "- Fill `reference/artifacts/PROJECT_STARTER_DOC_PACK.md` before treating the kickoff baseline as concrete.",
+      "- Approve PLN-01 requirements freeze before syncing `.agents/artifacts/ARCHITECTURE_GUIDE.md`, `.agents/artifacts/IMPLEMENTATION_PLAN.md`, and `reference/artifacts/UI_DESIGN.md`.",
+      "- Open the first project packet only after requirements freeze, architecture baseline, and profile selection are aligned."
     ].join("\n")
   );
   return next;
@@ -780,13 +789,13 @@ function starterArtifactSeed() {
 function defaultNextAction(workItemId, projectName) {
   switch (workItemId) {
     case "PLN-01":
-      return `Freeze the ${projectName} requirements baseline after PLN-00.`;
+      return `Freeze the ${projectName} requirements baseline after PROJECT_STARTER_DOC_PACK and PLN-00 are concrete.`;
     case "PLN-02":
       return "Sync architecture, implementation, and UI after requirements approval.";
     case "DSG-01":
       return "Lock the rough direction and global behavior contract.";
     case "PKT-01":
-      return "Open the first project packet before code.";
+      return "Open the first project packet only after PLN-01 is approved and the baseline sync is complete.";
     case "DEV-03":
       return "Run validator and generated-doc checks after the first implementation packet changes live truth.";
     case "DEV-04":

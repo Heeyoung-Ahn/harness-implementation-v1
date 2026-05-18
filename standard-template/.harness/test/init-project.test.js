@@ -31,6 +31,7 @@ test("initializes a copied starter repo and seeds active-context-ready state", (
   assert.equal(packageJson.name, "wbms-budget-suite");
 
   const currentState = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"), "utf8");
+  const taskList = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "TASK_LIST.md"), "utf8");
   const requirements = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "REQUIREMENTS.md"), "utf8");
   const readme = fs.readFileSync(path.join(repoRoot, "README.md"), "utf8");
   const implementationPlan = fs.readFileSync(
@@ -49,7 +50,10 @@ test("initializes a copied starter repo and seeds active-context-ready state", (
   assert.match(currentState, /Current Stage: kickoff_interview/);
   assert.match(currentState, /WBMS Budget Suite/);
   assert.match(currentState, /START_HERE\.md/);
+  assert.match(currentState, /PROJECT_STARTER_DOC_PACK/);
+  assert.match(taskList, /PROJECT_STARTER_DOC_PACK/);
   assert.match(readme, /START_HERE\.md/);
+  assert.match(result.nextAction, /PROJECT_STARTER_DOC_PACK/);
   assert.match(requirements, /PRF-01 admin grid application profile/);
   assert.match(requirements, /PRF-02 authoritative spreadsheet source profile/);
   assert.match(implementationPlan, /Selected profiles at bootstrap:/);

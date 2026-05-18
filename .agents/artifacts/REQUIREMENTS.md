@@ -127,13 +127,16 @@
 2. SOP 준수: 승인된 workflow, gate, validation rule, cutover sequence는 임의로 우회하지 않는다. SOP 변경이 필요하면 requirements 또는 architecture 수준 변경으로 올린다.
 3. human in the loop: requirements freeze, architecture sync, mockup approval, cutover, security risk acceptance 같은 핵심 판단은 사람 승인 지점을 명시적으로 둔다.
 4. decision-ready authoring: 결정 요청 문서는 사용자가 raw trade-off를 다시 해석하지 않게, `최대한 쉽게` 읽히면서도 `충분한 근거`를 함께 제공하는 형식으로 작성한다.
-5. progressive elaboration: 최초 requirements, architecture, implementation plan, UI design은 러프한 기준선일 수 있지만, 실제 작업 단위에 들어갈 때는 더 구체적인 task-level planning과 design agreement를 거쳐야 한다.
-6. layered standardization: core는 모든 프로젝트에 공통인 계약만 포함하고, 반복 유형은 profile로 분리하며, 프로젝트 고유 내용은 project packet으로만 닫는다.
-7. authoritative source: 외부에서 주어진 기획, 정책, 연동, 규정 문서는 권위 있는 입력으로 등록하고 추적 가능해야 한다.
-8. legacy integration safety: 기존 프로그램과 연동되는 data-impact 작업은 기존 스키마와 운영 프로세스를 확인하고, 테이블명/컬럼명/데이터 운영 방식 차이로 운영 이슈가 생기지 않도록 사용자 승인 기반으로 설계한다.
-9. planning precedence: 새 사용자 기획 문서를 받으면 requirements, architecture, implementation, active packet에 즉시 영향 평가를 걸고, 기존 구현의 안정적 유지보다 신규 기획의 완전 반영을 우선한다.
-10. environment clarity: deploy, test, cutover 성격의 작업은 source 환경, target 환경, 실행 주체, rollback 경계를 명시해야 한다.
-11. deployable template sync: 표준 하네스의 재사용 가능한 baseline이 바뀌면 `standard-template/`의 대응 자산도 같은 lane 안에서 함께 갱신되어야 하며, 템플릿 sync가 빠진 상태를 완료로 보지 않는다.
+5. risk-proportional decision support: 초기 기획의 핵심 결정은 비전공자도 downstream impact를 읽을 수 있게 설명하고, 리스크가 큰 결정일수록 영향 범위와 되돌리기 비용을 더 자세히 드러낸다.
+6. sequential closure: 상호 독립적이지 않은 결정사항은 한 번에 묶어 닫지 않고, decision queue를 먼저 보여 준 뒤 한 개씩 닫는다. 앞선 결정으로 전제가 바뀌면 후속 질문과 남은 결정 목록도 즉시 갱신한다.
+7. final product confirmation: requirements freeze 전에는 “이 결정 기준으로 첫 버전 제품이 어떤 모습이 되는지”를 한 번에 요약해 보여 주고 최종 human confirmation을 받는다.
+8. progressive elaboration: 최초 requirements, architecture, implementation plan, UI design은 러프한 기준선일 수 있지만, 실제 작업 단위에 들어갈 때는 더 구체적인 task-level planning과 design agreement를 거쳐야 한다.
+9. layered standardization: core는 모든 프로젝트에 공통인 계약만 포함하고, 반복 유형은 profile로 분리하며, 프로젝트 고유 내용은 project packet으로만 닫는다.
+10. authoritative source: 외부에서 주어진 기획, 정책, 연동, 규정 문서는 권위 있는 입력으로 등록하고 추적 가능해야 한다.
+11. legacy integration safety: 기존 프로그램과 연동되는 data-impact 작업은 기존 스키마와 운영 프로세스를 확인하고, 테이블명/컬럼명/데이터 운영 방식 차이로 운영 이슈가 생기지 않도록 사용자 승인 기반으로 설계한다.
+12. planning precedence: 새 사용자 기획 문서를 받으면 requirements, architecture, implementation, active packet에 즉시 영향 평가를 걸고, 기존 구현의 안정적 유지보다 신규 기획의 완전 반영을 우선한다.
+13. environment clarity: deploy, test, cutover 성격의 작업은 source 환경, target 환경, 실행 주체, rollback 경계를 명시해야 한다.
+14. deployable template sync: 표준 하네스의 재사용 가능한 baseline이 바뀌면 `standard-template/`의 대응 자산도 같은 lane 안에서 함께 갱신되어야 하며, 템플릿 sync가 빠진 상태를 완료로 보지 않는다.
 
 ## Authoring And Approval Workflow
 1. `.agents/artifacts/REQUIREMENTS.md` 작성은 구현에 필요한 이슈, 제약, 승인 기준, 보안 기대치가 닫히거나 명시적으로 deferred 될 때까지 deep interview를 진행한다.

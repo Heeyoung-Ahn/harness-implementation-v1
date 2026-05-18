@@ -9,6 +9,15 @@
 - 각 문서는 rough baseline이어도 되지만, 빈칸 상태로 구현을 시작하지는 않는다.
 - 프로젝트별 상세 값은 packet과 approved project artifact로 내려간다.
 - 아래 템플릿은 non-technical planner/operator가 큰 항목을 빠뜨리지 않게 하는 starter pack이다.
+- 프로젝트 목적, 핵심 workflow, source-of-truth, 승인 경계, 운영 환경 중 implementation-critical 항목이 비어 있으면 planning hold를 유지한다.
+- 이 문서 팩, `PLN-00_DEEP_INTERVIEW.md`, `PLN-01_REQUIREMENTS_FREEZE.md`가 충분히 닫히기 전에는 architecture / implementation / UI sync나 첫 task packet으로 넘어가지 않는다.
+
+## Planner Stop Rule
+
+- 이 문서 팩은 packet 대체물이 아니다. kickoff baseline을 채우는 입력물이다.
+- 큰 항목이 비어 있으면 Planner는 질문을 더 진행해야 하며, chat 요약만 남기고 넘어가면 안 된다.
+- rough baseline이라도 first version scope를 설명할 수 있어야 한다.
+- blank cell이 scope, data, approval, deployment 판단에 영향을 주면 requirements freeze를 막는다.
 
 ## 1. Project Charter
 
@@ -84,3 +93,4 @@
 - 범위와 제외 범위가 구분되는가
 - 화면, 데이터, API의 연결이 보이는가
 - 테스트와 운영 기준이 정의되었는가
+- 위 항목 중 비어 있는 것이 `PLN-01` 승인 blocker인지 아닌지가 분명한가

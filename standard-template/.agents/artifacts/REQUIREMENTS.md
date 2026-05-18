@@ -77,12 +77,15 @@
 2. SOP compliance: 승인된 workflow, validation rule, cutover sequence를 임의로 우회하지 않는다.
 3. human in the loop: requirements freeze, architecture sync, cutover, security risk acceptance 같은 핵심 판단은 사람 승인 지점을 둔다.
 4. decision-ready authoring: 사용자가 결정을 내려야 하는 문서는 `권장 결론`, `핵심 근거`, `예외 조건`, `fallback`을 함께 제공한다.
-5. progressive elaboration: rough baseline 승인만으로 바로 코드에 들어가지 않고, task-level packet으로 다시 닫는다.
-6. layered standardization: 특정 도메인, 특정 기술스택, 특정 운영환경 절차는 core 기본값으로 넣지 않는다.
-7. authoritative source: 외부 기획, 정책, 업무 절차, 연동 명세는 권위 있는 source로 등록하고 추적한다.
-8. legacy integration safety: 기존 프로그램과 연동되는 data-impact 작업은 기존 스키마와 운영 프로세스를 확인하고, 테이블명/컬럼명/데이터 운영 방식 차이로 운영 이슈가 생기지 않도록 사용자 승인 기반으로 설계한다.
-9. planning precedence: 새 사용자 기획 문서를 받으면 requirements, architecture, implementation, active packet에 즉시 영향 평가를 걸고, 기존 구현의 안정적 유지보다 신규 기획의 완전 반영을 우선한다.
-10. environment clarity: deploy, test, cutover 성격의 작업은 source 환경, target 환경, execution target, rollback 경계를 명시한다.
+5. risk-proportional decision support: 초기 기획의 핵심 결정은 비전공자도 downstream impact를 읽을 수 있게 설명하고, 리스크가 큰 결정일수록 영향 범위와 되돌리기 비용을 더 자세히 드러낸다.
+6. sequential closure: 상호 독립적이지 않은 결정사항은 한 번에 묶어 닫지 않고, decision queue를 보여 준 뒤 한 개씩 닫는다. 앞선 결정으로 전제가 바뀌면 후속 질문도 즉시 갱신한다.
+7. final product confirmation: requirements freeze 전에는 “이 결정 기준으로 첫 버전 제품이 어떤 모습이 되는지”를 한 번에 요약해 보여 주고 최종 human confirmation을 받는다.
+8. progressive elaboration: rough baseline 승인만으로 바로 코드에 들어가지 않고, task-level packet으로 다시 닫는다.
+9. layered standardization: 특정 도메인, 특정 기술스택, 특정 운영환경 절차는 core 기본값으로 넣지 않는다.
+10. authoritative source: 외부 기획, 정책, 업무 절차, 연동 명세는 권위 있는 source로 등록하고 추적한다.
+11. legacy integration safety: 기존 프로그램과 연동되는 data-impact 작업은 기존 스키마와 운영 프로세스를 확인하고, 테이블명/컬럼명/데이터 운영 방식 차이로 운영 이슈가 생기지 않도록 사용자 승인 기반으로 설계한다.
+12. planning precedence: 새 사용자 기획 문서를 받으면 requirements, architecture, implementation, active packet에 즉시 영향 평가를 걸고, 기존 구현의 안정적 유지보다 신규 기획의 완전 반영을 우선한다.
+13. environment clarity: deploy, test, cutover 성격의 작업은 source 환경, target 환경, execution target, rollback 경계를 명시한다.
 
 ## Authoring And Approval Workflow
 1. implementation-critical issue가 닫히거나 명시적으로 deferred 될 때까지 requirements를 먼저 정리한다.

@@ -376,6 +376,7 @@ flowchart TD
 
 새 프로젝트를 시작할 때는 바로 구현하지 않는다.
 먼저 [PROJECT_STARTER_DOC_PACK.md](../artifacts/PROJECT_STARTER_DOC_PACK.md)를 채운다.
+이 문서 팩, `PLN-00_DEEP_INTERVIEW.md`, `PLN-01_REQUIREMENTS_FREEZE.md`가 충분히 닫히기 전에는 architecture / implementation / UI sync나 첫 task packet으로 넘어가지 않는다.
 
 설치와 초기화 단계에서 먼저 구분할 점:
 
@@ -976,7 +977,10 @@ cloud에서 오래 걸리는 후보 작업을 돌렸을 때 로컬 정본으로 
 ```text
 이 프로젝트를 하네스 기준으로 시작하려고 합니다.
 PROJECT_STARTER_DOC_PACK 기준으로 목적, 사용자 역할, 업무 흐름, 범위, 화면, 데이터, 권한, 테스트, 배포/운영 기준 중 빠진 항목을 질문해 주세요.
-구현은 시작하지 말고, 먼저 REQUIREMENTS와 첫 packet에 필요한 결정 목록을 정리해 주세요.
+답변은 chat 요약으로만 끝내지 말고, PLN-00_DEEP_INTERVIEW.md와 REQUIREMENTS.md에 반영할 approved/open/deferred 항목으로 정리해 주세요.
+PLN-01 requirements freeze blocker를 먼저 닫고, architecture / implementation / packet으로는 넘어가지 마세요.
+질문은 한 번에 하나의 결정사항만 던지고, 각 결정이 이후 UX, data, test, deployment에 어떤 영향을 주는지도 쉬운 말로 설명해 주세요.
+마지막에는 첫 버전 제품이 어떤 모습이 되는지 요약해 보여 주고 최종 freeze 확인을 받아 주세요.
 ```
 
 ### Planner thread 시작
