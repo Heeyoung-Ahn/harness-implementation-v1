@@ -8,8 +8,8 @@ This file is the Codex entry point for the standard multi-IDE, multi-agent harne
 2. Read `.agents/rules/agent_behavior.md`.
 3. Read `.agents/runtime/ACTIVE_CONTEXT.json` as the first AI re-entry surface. If it is missing or stale, regenerate it before broad rereads.
 4. Read the workflow that matches the active lane or `ACTIVE_CONTEXT.nextWork.workflow` when that route is explicit.
-5. Read `.agents/artifacts/CURRENT_STATE.md`.
-6. Read `.agents/artifacts/TASK_LIST.md`.
+5. Read `.agents/artifacts/CURRENT_STATE.md` only when `ACTIVE_CONTEXT.reentryContract.mustReadNext`, packet evidence, or troubleshooting needs the compatibility view.
+6. Read `.agents/artifacts/TASK_LIST.md` only when `ACTIVE_CONTEXT.reentryContract.mustReadNext`, packet evidence, or troubleshooting needs the compatibility view.
 7. Read only the baseline artifacts required for the active task or `ACTIVE_CONTEXT.reentryContract.mustReadNext`.
 8. If an optional profile is explicitly active, read only the profile artifacts required by the active task.
 9. If the active task depends on a project packet or authoritative source, read that packet/source before state-changing work.

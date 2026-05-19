@@ -19,6 +19,16 @@ Run this skill through the `Project Manager` lens: reconcile what happened, pres
 5. define the next responsible workflow
 6. define the next first action
 
+## Read Order
+
+1. `.agents/runtime/ACTIVE_CONTEXT.json`
+2. the workflow file that owned today's work, or `.agents/workflows/pm.md` when the route is unclear
+3. the active packet and approved source artifacts when today's work was packet-bound
+4. `.agents/artifacts/CURRENT_STATE.md` and `.agents/artifacts/TASK_LIST.md` when updating baton state or checking route drift
+5. validation evidence such as `.agents/artifacts/VALIDATION_REPORT.*`, `reference/artifacts/WALKTHROUGH.md`, or `reference/artifacts/REVIEW_REPORT.md` only when today's workflow required them
+6. `.agents/artifacts/PREVENTIVE_MEMORY.md` only when a repeated issue qualifies for promotion review
+7. the most recent note under `reference/artifacts/daily/` only when a human-facing daily note is already in use or clearly needed
+
 ## Reconciliation Gate
 
 Do not claim a clean closeout if any of these remain ambiguous:
@@ -55,5 +65,8 @@ Return a concise closeout with:
 - Use the user's language for closeout and confirmation prompts.
 - Prefer short confirmation questions when evidence does not fully close a conflict.
 - Do not silently rewrite stable context from a guess.
+- Treat the day's plan as closed only when the baton, next workflow, and next first action are explicit; do not create a separate daily-plan authority document.
+- `reference/artifacts/daily/*` is optional. Create or update it only when a human-facing daily note is actually useful.
+- `harness:validate` and `harness:validation-report` are required before forward handoff when today's work changed implementation, reusable runtime/state, or packet evidence that the owning workflow requires. Do not pretend they ran on planning-only days when they did not.
 - Promote repeated issues into preventive memory only when the trigger, rule, and check method are explicit enough to reuse.
 - If the next workflow owns planning, implementation, testing, review, deployment, or documentation work, report the handoff recommendation instead of performing that workflow's work inside this skill.

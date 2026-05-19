@@ -21,9 +21,20 @@
 - Do not change product behavior during deployment as a substitute for a dev lane.
 
 ## Must Read SSOT
-- `.agents/artifacts/CURRENT_STATE.md`
-- `.agents/artifacts/TASK_LIST.md`
 - `reference/artifacts/DEPLOYMENT_PLAN.md`
+- active packet and latest approved validation/review evidence required by the deployment route
+
+## Read First
+- `.agents/runtime/ACTIVE_CONTEXT.json`
+- `reference/artifacts/DEPLOYMENT_PLAN.md`
+- active packet and any approved project design/source artifact cited by the task
+
+## Conditional Supporting References
+- Use `.agents/artifacts/CURRENT_STATE.md` and `.agents/artifacts/TASK_LIST.md` only when `ACTIVE_CONTEXT.reentryContract.mustReadNext`, packet evidence, or troubleshooting needs the compatibility view.
+- Use `reference/manuals/AUTOMATION_CATALOG.md` when recurring deploy-readiness, stale-validation, or post-release checks are part of the approved operation plan.
+- Use `reference/manuals/CLOUD_LOCAL_MERGE_PLAYBOOK.md` when deployment includes output that originated from cloud, separate worktrees, branches, patches, or PRs.
+- Use `reference/artifacts/VERIFICATION_SCENARIO_TEMPLATE.md` when defining or checking deployment smoke-test scenarios.
+- Use `.agents/artifacts/VALIDATION_REPORT.md`, `reference/artifacts/WALKTHROUGH.md`, `reference/artifacts/REVIEW_REPORT.md`, and `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md` when deploy readiness depends on the latest validation, test, review, or closeout evidence.
 
 ## Allowed Actions
 - Confirm deploy gate readiness.
@@ -37,6 +48,7 @@
 
 ## Required Outputs
 - Deployment or cutover evidence aligned with the approved topology.
+- Automation follow-up recommendation when recurring deploy or operations checks are needed.
 - Clear success/failure status and rollback note when applicable.
 
 ## Turn Close Reporting

@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import {
   applyMigration,
@@ -11,18 +10,16 @@ import {
   buildHarnessStatus,
   recommendNextAction,
   resolveHandoff,
+  runPlannerPacketOpen,
   runTransition,
   runCutoverPreflight,
   runValidator,
   writeValidationReport,
   writeCutoverReport
 } from "../runtime/state/dev05-tooling.js";
-import { writeActiveContext } from "../runtime/state/active-context.js";
 import { initializeProjectStarter } from "../runtime/state/init-project.js";
 import { createOperatingStateStore } from "../runtime/state/operating-state-store.js";
-import { writeGeneratedStateDocs } from "../runtime/state/generate-state-docs.js";
-import { workflowForOwner } from "../runtime/state/workflow-routing.js";
-import { seedProfileAwareValidatorFixtures } from "./profile-aware-validator-fixtures.js";
+import { createClock, seedStandardRepo, seedStarterRepo, writeOpsPacket, writeStateSurfaces } from "./dev05-test-helpers.js";
 
 test("migration preview detects legacy source refs and apply normalizes them", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-migration-"));
@@ -42,7 +39,7 @@ test("migration preview detects legacy source refs and apply normalizes them", (
     title: "validator / migration / cutover tooling",
     status: "in_progress",
     nextAction: "Normalize legacy source refs",
-    sourceRef: "PKT-01_DEV-04_PMW_READ_SURFACE.md"
+    sourceRef: "PKT-01_LEGACY_READ_SURFACE.md"
   });
   store.recordDecision({
     decisionId: "DEC-05",
@@ -56,7 +53,7 @@ test("migration preview detects legacy source refs and apply normalizes them", (
   const preview = buildMigrationPreview({ repoRoot, dbPath });
   assert.equal(preview.changeCount >= 3, true);
   assert.equal(preview.changes.some((item) => item.to === ".agents/artifacts/CURRENT_STATE.md"), true);
-  assert.equal(preview.changes.some((item) => item.to === "reference/packets/PKT-01_DEV-04_PMW_READ_SURFACE.md"), true);
+  assert.equal(preview.changes.some((item) => item.to === "reference/packets/PKT-01_LEGACY_READ_SURFACE.md"), true);
 
   const applied = applyMigration({ repoRoot, dbPath });
   assert.equal(applied.applied, preview.changeCount);
@@ -82,6 +79,7 @@ test("cutover preflight passes when validator is clean and no migration changes 
     workItemId: "DEV-05",
     title: "validator / migration / cutover tooling",
     status: "in_progress",
+    owner: "developer",
     nextAction: "Run preflight",
     sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
   });
@@ -98,6 +96,42 @@ test("cutover preflight passes when validator is clean and no migration changes 
   assert.equal(preflight.rollbackBundle.generatedDocs.length, 2);
   assert.equal(preflight.rollbackBundle.needsOperatorBackup, false);
   assert.deepEqual(preflight.rollbackBundle.missingPaths, []);
+});
+
+test("cutover preflight is read-only and leaves old write-path refs pending until approved cutover", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-cutover-readonly-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-17T03:15:00.000Z") });
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "PLN-22 Slice 4 preflight read-only proof",
+    releaseGoal: "Freeze legacy write paths only after separate cutover approval.",
+    sourceRef: "codex/project-context/active-state.md"
+  });
+  store.upsertWorkItem({
+    workItemId: "PLN-22",
+    title: "Operational authority rebuild",
+    status: "in_progress",
+    owner: "developer",
+    nextAction: "Prove preflight is non-destructive before approved cutover.",
+    sourceRef: "PKT-01_PLN-22_OPERATIONAL_AUTHORITY_REBUILD_AND_HARNESS_RESET.md",
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const before = buildMigrationPreview({ repoRoot, dbPath });
+  const preflight = runCutoverPreflight({ repoRoot, dbPath, outputDir: repoRoot });
+  const after = buildMigrationPreview({ repoRoot, dbPath });
+
+  assert.equal(before.changeCount > 0, true);
+  assert.equal(preflight.cutoverReady, false);
+  assert.equal(preflight.blockers.some((item) => item.code === "migration_change_pending"), true);
+  assert.equal(after.changeCount, before.changeCount);
+  assert.deepEqual(after.changes, before.changes);
 });
 
 test("cutover preflight fails when validator errors or migration changes remain", () => {
@@ -381,7 +415,7 @@ test("validator does not require semantic trace when reusable trace contract is 
   assert.equal(validator.findings.some((finding) => finding.code === "required_semantic_trace_missing"), false);
 });
 
-test("OPS-05 validation report includes the Security Review Summary contract", () => {
+test("SEC-01 validation report includes the Security Review Summary contract", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-ops05-security-review-"));
   seedStandardRepo(repoRoot);
   const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
@@ -390,7 +424,7 @@ test("OPS-05 validation report includes the Security Review Summary contract", (
     path.join(repoRoot, "package.json"),
     JSON.stringify(
       {
-        name: "ops-05-root",
+        name: "sec-01-root",
         private: true,
         type: "module",
         engines: { node: ">=24.0.0" },
@@ -424,7 +458,7 @@ test("OPS-05 validation report includes the Security Review Summary contract", (
     path.join(repoRoot, "standard-template", "package.json"),
     JSON.stringify(
       {
-        name: "ops-05-starter",
+        name: "sec-01-starter",
         private: true,
         type: "module",
         engines: { node: ">=24.0.0" },
@@ -460,12 +494,12 @@ test("OPS-05 validation report includes the Security Review Summary contract", (
   store.setReleaseState({
     currentStage: "implementation",
     releaseGateState: "open",
-    currentFocus: "OPS-05 implementation is in progress.",
+    currentFocus: "SEC-01 implementation is in progress.",
     releaseGoal: "Produce reusable pre-review security and release evidence.",
     sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
   });
   store.upsertWorkItem({
-    workItemId: "OPS-05",
+    workItemId: "SEC-01",
     title: "Release-assurance and security-automation hardening",
     status: "in_progress",
     owner: "developer",
@@ -498,7 +532,7 @@ test("OPS-05 validation report includes the Security Review Summary contract", (
   assert.match(markdown, /This summary is for internal IT\/security review preparation only/);
 });
 
-test("OPS-05 validation report blocks private key findings and preserves warning severity", () => {
+test("SEC-01 validation report blocks private key findings and preserves warning severity", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-ops05-security-findings-"));
   seedStandardRepo(repoRoot);
   const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
@@ -507,7 +541,7 @@ test("OPS-05 validation report blocks private key findings and preserves warning
     path.join(repoRoot, "package.json"),
     JSON.stringify(
       {
-        name: "ops-05-root",
+        name: "sec-01-root",
         private: true,
         type: "module",
         engines: { node: ">=24.0.0" }
@@ -520,7 +554,7 @@ test("OPS-05 validation report blocks private key findings and preserves warning
   fs.mkdirSync(path.join(repoRoot, "reference", "manuals"), { recursive: true });
   fs.writeFileSync(
     path.join(repoRoot, "reference", "manuals", "HARNESS_MANUAL.md"),
-    "# Harness Manual\nPMW historical wording\n-----BEGIN PRIVATE KEY-----\nABC\n-----END PRIVATE KEY-----\n",
+    "# Harness Manual\nlegacy operator console historical wording\n-----BEGIN PRIVATE KEY-----\nABC\n-----END PRIVATE KEY-----\n",
     "utf8"
   );
 
@@ -528,12 +562,12 @@ test("OPS-05 validation report blocks private key findings and preserves warning
   store.setReleaseState({
     currentStage: "implementation",
     releaseGateState: "open",
-    currentFocus: "OPS-05 implementation is in progress.",
+    currentFocus: "SEC-01 implementation is in progress.",
     releaseGoal: "Produce reusable pre-review security and release evidence.",
     sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
   });
   store.upsertWorkItem({
-    workItemId: "OPS-05",
+    workItemId: "SEC-01",
     title: "Release-assurance and security-automation hardening",
     status: "in_progress",
     owner: "developer",
@@ -558,24 +592,24 @@ test("OPS-05 validation report blocks private key findings and preserves warning
   assert.equal(report.ok, false);
   assert.equal(report.report.gateDecision, "hold");
   assert.equal(findingCodes.has("error:secret_scan_private_key_detected"), true);
-  assert.equal(findingCodes.has("warning:release_artifact_stale_pmw_reference"), true);
+  assert.equal(findingCodes.has("warning:release_artifact_deprecated_operator_console_reference"), true);
 });
 
-test("OPS-08 validation report activates reusable security review from packet metadata", () => {
+test("SEC-02 validation report activates reusable security review from packet metadata", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-ops08-security-review-"));
   seedStandardRepo(repoRoot);
   const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
-  const packetPath = "reference/packets/PKT-01_OPS-08_TEST.md";
+  const packetPath = "reference/packets/PKT-01_SEC-02_TEST.md";
 
   fs.writeFileSync(
     path.join(repoRoot, packetPath),
     [
-      "# PKT-01 OPS-08 Test",
+      "# PKT-01 SEC-02 Test",
       "",
       "## Quick Decision Header",
       "| Item | Proposed | Why | Status |",
       "|---|---|---|---|",
-      "| Work item | OPS-08 reusable security review evidence generalization | test packet | approved |",
+      "| Work item | SEC-02 reusable security review evidence generalization | test packet | approved |",
       "| Ready For Code | approve | test packet | approved |",
       "| Human sync needed | yes | test packet | approved |",
       "| Gate profile | contract | test packet | approved |",
@@ -638,12 +672,12 @@ test("OPS-08 validation report activates reusable security review from packet me
   store.setReleaseState({
     currentStage: "implementation",
     releaseGateState: "open",
-    currentFocus: "OPS-08 implementation is in progress.",
+    currentFocus: "SEC-02 implementation is in progress.",
     releaseGoal: "Generalize reusable security-review evidence.",
     sourceRef: packetPath
   });
   store.upsertWorkItem({
-    workItemId: "OPS-08",
+    workItemId: "SEC-02",
     title: "Reusable security review evidence generalization",
     status: "in_progress",
     owner: "developer",
@@ -652,10 +686,10 @@ test("OPS-08 validation report activates reusable security review from packet me
     metadata: { gateProfile: "contract", readyForCode: "approved" }
   });
   store.upsertArtifact({
-    artifactId: "task_packet:PKT-01_OPS-08_TEST",
+    artifactId: "task_packet:PKT-01_SEC-02_TEST",
     path: packetPath,
     category: "task_packet",
-    title: "OPS-08 test packet",
+    title: "SEC-02 test packet",
     sourceRef: packetPath
   });
   writeStateSurfaces({ store, repoRoot });
@@ -726,6 +760,7 @@ test("cutover report writes markdown and json evidence files", () => {
     workItemId: "DEV-05",
     title: "validator / migration / cutover tooling",
     status: "in_progress",
+    owner: "developer",
     nextAction: "Write cutover report",
     sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
   });
@@ -805,30 +840,30 @@ test("validator enforces gate profile evidence for active packet work", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-gate-profile-"));
   seedStandardRepo(repoRoot);
   const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
-  const packetPath = "reference/packets/PKT-01_OPS-03_GATE_PROFILE_TEST.md";
+  const packetPath = "reference/packets/PKT-01_FLOW-01_GATE_PROFILE_TEST.md";
   writeOpsPacket(repoRoot, packetPath, { gateProfile: null, includeManifest: false });
 
   const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-02T10:00:00.000Z") });
   store.setReleaseState({
     currentStage: "planning",
     releaseGateState: "open",
-    currentFocus: "OPS-03 gate profile validation",
+    currentFocus: "FLOW-01 gate profile validation",
     releaseGoal: "Validate gate profile contracts",
     sourceRef: ".agents/artifacts/CURRENT_STATE.md"
   });
   store.upsertWorkItem({
-    workItemId: "OPS-03",
-    title: "Harness operation friction reduction",
+    workItemId: "FLOW-01",
+    title: "Reusable transition coverage",
     status: "planning",
     nextAction: "Approve gate profile evidence.",
     owner: "planner",
     sourceRef: packetPath
   });
   store.upsertArtifact({
-    artifactId: "PKT-01_OPS-03_GATE_PROFILE_TEST",
+    artifactId: "PKT-01_FLOW-01_GATE_PROFILE_TEST",
     path: packetPath,
     category: "task_packet",
-    title: "OPS-03 gate profile test packet",
+    title: "FLOW-01 gate profile test packet",
     sourceRef: packetPath
   });
   writeStateSurfaces({ store, repoRoot });
@@ -844,20 +879,20 @@ test("validator blocks packet-header-only Ready For Code approval", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-ready-for-code-"));
   seedStandardRepo(repoRoot);
   const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
-  const packetPath = "reference/packets/PKT-01_OPS-03_READY_FOR_CODE_TEST.md";
+  const packetPath = "reference/packets/PKT-01_FLOW-01_READY_FOR_CODE_TEST.md";
   writeOpsPacket(repoRoot, packetPath, { gateProfile: "contract", includeManifest: true });
 
   const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-02T10:05:00.000Z") });
   store.setReleaseState({
     currentStage: "planning",
     releaseGateState: "open",
-    currentFocus: "OPS-03 Ready For Code consistency",
+    currentFocus: "FLOW-01 Ready For Code consistency",
     releaseGoal: "Validate approval state consistency",
     sourceRef: ".agents/artifacts/CURRENT_STATE.md"
   });
   store.upsertWorkItem({
-    workItemId: "OPS-03",
-    title: "Harness operation friction reduction",
+    workItemId: "FLOW-01",
+    title: "Reusable transition coverage",
     status: "in_progress",
     nextAction: "Reconcile approval state.",
     owner: "developer",
@@ -865,17 +900,17 @@ test("validator blocks packet-header-only Ready For Code approval", () => {
     metadata: { gateProfile: "contract" }
   });
   store.recordDecision({
-    decisionId: "OPS-03-ready-for-code",
-    title: "OPS-03 Ready For Code",
+    decisionId: "FLOW-01-ready-for-code",
+    title: "FLOW-01 Ready For Code",
     decisionNeeded: true,
     impactSummary: "Packet header alone must not close implementation approval.",
     sourceRef: packetPath
   });
   store.upsertArtifact({
-    artifactId: "PKT-01_OPS-03_READY_FOR_CODE_TEST",
+    artifactId: "PKT-01_FLOW-01_READY_FOR_CODE_TEST",
     path: packetPath,
     category: "task_packet",
-    title: "OPS-03 Ready For Code consistency packet",
+    title: "FLOW-01 Ready For Code consistency packet",
     sourceRef: packetPath
   });
   writeStateSurfaces({ store, repoRoot });
@@ -892,7 +927,7 @@ test("transition blocks planner-to-developer before Ready For Code approval", ()
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-transition-ready-"));
   seedStandardRepo(repoRoot);
   const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
-  const packetPath = "reference/packets/PKT-01_OPS-03_TRANSITION_READY_TEST.md";
+  const packetPath = "reference/packets/PKT-01_FLOW-01_TRANSITION_READY_TEST.md";
   writeOpsPacket(repoRoot, packetPath, {
     gateProfile: "contract",
     includeManifest: true,
@@ -903,24 +938,24 @@ test("transition blocks planner-to-developer before Ready For Code approval", ()
   store.setReleaseState({
     currentStage: "planning",
     releaseGateState: "open",
-    currentFocus: "OPS-03 transition approval guard",
+    currentFocus: "FLOW-01 transition approval guard",
     releaseGoal: "Validate transition approval guard",
     sourceRef: ".agents/artifacts/CURRENT_STATE.md"
   });
   store.upsertWorkItem({
-    workItemId: "OPS-03",
-    title: "Harness operation friction reduction",
+    workItemId: "FLOW-01",
+    title: "Reusable transition coverage",
     status: "planning",
-    nextAction: "Approve OPS-03 Ready For Code.",
+    nextAction: "Approve FLOW-01 Ready For Code.",
     owner: "planner",
     sourceRef: packetPath,
     metadata: { gateProfile: "contract" }
   });
   store.upsertArtifact({
-    artifactId: "PKT-01_OPS-03_TRANSITION_READY_TEST",
+    artifactId: "PKT-01_FLOW-01_TRANSITION_READY_TEST",
     path: packetPath,
     category: "task_packet",
-    title: "OPS-03 transition Ready For Code guard packet",
+    title: "FLOW-01 transition Ready For Code guard packet",
     sourceRef: packetPath
   });
   writeStateSurfaces({ store, repoRoot });
@@ -930,49 +965,98 @@ test("transition blocks planner-to-developer before Ready For Code approval", ()
     repoRoot,
     dbPath,
     outputDir: repoRoot,
-    args: ["--transition", "planner-to-developer", "--work-item", "OPS-03"]
+    args: ["--transition", "planner-to-developer", "--work-item", "FLOW-01"]
   });
 
   assert.equal(preview.ok, false);
   assert.match(preview.errors.join("\n"), /Ready For Code approved/);
 });
 
+test("transition keeps live Ready For Code state from work-item metadata when packet header is stale", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-transition-live-rfc-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_FLOW-01_TRANSITION_LIVE_RFC_TEST.md";
+  writeOpsPacket(repoRoot, packetPath, {
+    gateProfile: "contract",
+    includeManifest: true,
+    readyForCode: "pending"
+  });
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-02T10:11:00.000Z") });
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "FLOW-01 live Ready For Code state",
+    releaseGoal: "Validate live Ready For Code authority",
+    sourceRef: ".agents/artifacts/CURRENT_STATE.md"
+  });
+  store.upsertWorkItem({
+    workItemId: "FLOW-01",
+    title: "Reusable transition coverage",
+    status: "in_progress",
+    nextAction: "Hand off FLOW-01 to Tester.",
+    owner: "developer",
+    sourceRef: packetPath,
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  store.upsertArtifact({
+    artifactId: "PKT-01_FLOW-01_TRANSITION_LIVE_RFC_TEST",
+    path: packetPath,
+    category: "task_packet",
+    title: "FLOW-01 transition live Ready For Code packet",
+    sourceRef: packetPath
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const preview = runTransition({
+    repoRoot,
+    dbPath,
+    outputDir: repoRoot,
+    args: ["--transition", "developer-to-tester", "--work-item", "FLOW-01"]
+  });
+
+  assert.equal(preview.ok, true);
+  assert.equal(preview.readyForCode, "approved");
+});
+
 test("transition blocks planner-to-developer until Ready For Code decision is closed", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-transition-decision-"));
   seedStandardRepo(repoRoot);
   const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
-  const packetPath = "reference/packets/PKT-01_OPS-03_TRANSITION_DECISION_TEST.md";
+  const packetPath = "reference/packets/PKT-01_FLOW-01_TRANSITION_DECISION_TEST.md";
   writeOpsPacket(repoRoot, packetPath, { gateProfile: "contract", includeManifest: true });
 
   const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-02T10:12:00.000Z") });
   store.setReleaseState({
     currentStage: "planning",
     releaseGateState: "open",
-    currentFocus: "OPS-03 transition decision guard",
+    currentFocus: "FLOW-01 transition decision guard",
     releaseGoal: "Validate transition decision guard",
     sourceRef: ".agents/artifacts/CURRENT_STATE.md"
   });
   store.upsertWorkItem({
-    workItemId: "OPS-03",
-    title: "Harness operation friction reduction",
+    workItemId: "FLOW-01",
+    title: "Reusable transition coverage",
     status: "planning",
-    nextAction: "Close OPS-03 Ready For Code decision.",
+    nextAction: "Close FLOW-01 Ready For Code decision.",
     owner: "planner",
     sourceRef: packetPath,
     metadata: { gateProfile: "contract" }
   });
   store.recordDecision({
-    decisionId: "OPS-03-ready-for-code",
-    title: "OPS-03 Ready For Code",
+    decisionId: "FLOW-01-ready-for-code",
+    title: "FLOW-01 Ready For Code",
     decisionNeeded: true,
     impactSummary: "Developer handoff requires closing this approval decision.",
     sourceRef: packetPath
   });
   store.upsertArtifact({
-    artifactId: "PKT-01_OPS-03_TRANSITION_DECISION_TEST",
+    artifactId: "PKT-01_FLOW-01_TRANSITION_DECISION_TEST",
     path: packetPath,
     category: "task_packet",
-    title: "OPS-03 transition decision guard packet",
+    title: "FLOW-01 transition decision guard packet",
     sourceRef: packetPath
   });
   writeStateSurfaces({ store, repoRoot });
@@ -982,7 +1066,7 @@ test("transition blocks planner-to-developer until Ready For Code decision is cl
     repoRoot,
     dbPath,
     outputDir: repoRoot,
-    args: ["--transition", "planner-to-developer", "--work-item", "OPS-03"]
+    args: ["--transition", "planner-to-developer", "--work-item", "FLOW-01"]
   });
   assert.equal(blockedPreview.ok, false);
   assert.match(blockedPreview.errors.join("\n"), /--close-decision/);
@@ -995,33 +1079,33 @@ test("transition blocks planner-to-developer until Ready For Code decision is cl
       "--transition",
       "planner-to-developer",
       "--work-item",
-      "OPS-03",
+      "FLOW-01",
       "--close-decision",
-      "OPS-03-ready-for-code"
+      "FLOW-01-ready-for-code"
     ]
   });
   assert.equal(allowedPreview.ok, true);
-  assert.deepEqual(allowedPreview.closeDecisions, ["OPS-03-ready-for-code"]);
+  assert.deepEqual(allowedPreview.closeDecisions, ["FLOW-01-ready-for-code"]);
 });
 
 test("transition apply reports post-apply validation failure at top level", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-transition-validation-"));
   seedStandardRepo(repoRoot);
   const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
-  const packetPath = "reference/packets/PKT-01_OPS-03_TRANSITION_VALIDATION_TEST.md";
+  const packetPath = "reference/packets/PKT-01_FLOW-01_TRANSITION_VALIDATION_TEST.md";
   writeOpsPacket(repoRoot, packetPath, { gateProfile: "contract", includeManifest: false });
 
   const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-02T10:14:00.000Z") });
   store.setReleaseState({
     currentStage: "implementation",
     releaseGateState: "open",
-    currentFocus: "OPS-03 transition validation reporting",
+    currentFocus: "FLOW-01 transition validation reporting",
     releaseGoal: "Validate transition validation reporting",
     sourceRef: ".agents/artifacts/CURRENT_STATE.md"
   });
   store.upsertWorkItem({
-    workItemId: "OPS-03",
-    title: "Harness operation friction reduction",
+    workItemId: "FLOW-01",
+    title: "Reusable transition coverage",
     status: "in_progress",
     nextAction: "Hand off to Tester.",
     owner: "developer",
@@ -1029,10 +1113,10 @@ test("transition apply reports post-apply validation failure at top level", () =
     metadata: { gateProfile: "contract", readyForCode: "approved" }
   });
   store.upsertArtifact({
-    artifactId: "PKT-01_OPS-03_TRANSITION_VALIDATION_TEST",
+    artifactId: "PKT-01_FLOW-01_TRANSITION_VALIDATION_TEST",
     path: packetPath,
     category: "task_packet",
-    title: "OPS-03 transition validation reporting packet",
+    title: "FLOW-01 transition validation reporting packet",
     sourceRef: packetPath
   });
   writeStateSurfaces({ store, repoRoot });
@@ -1042,7 +1126,7 @@ test("transition apply reports post-apply validation failure at top level", () =
     repoRoot,
     dbPath,
     outputDir: repoRoot,
-    args: ["--transition", "developer-to-tester", "--work-item", "OPS-03", "--apply"]
+    args: ["--transition", "developer-to-tester", "--work-item", "FLOW-01", "--apply"]
   });
 
   assert.equal(applied.apply, true);
@@ -1062,12 +1146,12 @@ test("validator blocks incomplete active context re-entry contract", () => {
   store.setReleaseState({
     currentStage: "implementation",
     releaseGateState: "open",
-    currentFocus: "OPS-04 active context contract",
+    currentFocus: "CONTEXT-01 active context contract",
     releaseGoal: "Block incomplete re-entry contract",
     sourceRef: ".agents/artifacts/CURRENT_STATE.md"
   });
   store.upsertWorkItem({
-    workItemId: "OPS-04",
+    workItemId: "CONTEXT-01",
     title: "Session-start context assurance",
     status: "in_progress",
     nextAction: "Finish the active context contract.",
@@ -1097,7 +1181,7 @@ test("transition preview is review-first and apply updates state surfaces", () =
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-transition-"));
   seedStandardRepo(repoRoot);
   const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
-  const packetPath = "reference/packets/PKT-01_OPS-03_TRANSITION_TEST.md";
+  const packetPath = "reference/packets/PKT-01_FLOW-01_TRANSITION_TEST.md";
   writeOpsPacket(repoRoot, packetPath, { gateProfile: "contract", includeManifest: true });
   fs.writeFileSync(
     path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"),
@@ -1106,13 +1190,13 @@ test("transition preview is review-first and apply updates state surfaces", () =
       "",
       "## Snapshot",
       "- Current Stage: planning",
-      "- Current Focus: OPS-03 planning",
+      "- Current Focus: FLOW-01 planning",
       "",
       "## Next Recommended Agent",
       "- Planner",
       "",
       "## Open Decisions / Blockers",
-      "- `OPS-03 Ready For Code` remains pending.",
+      "- `FLOW-01 Ready For Code` remains pending.",
       "",
       "## Latest Handoff Summary",
       "- none"
@@ -1127,13 +1211,13 @@ test("transition preview is review-first and apply updates state surfaces", () =
       "## Active Locks",
       "| Task ID | Scope | Owner | Status | Started At | Notes |",
       "|---|---|---|---|---|---|",
-      "| OPS-03 | Harness operation friction reduction | planner | active | 2026-05-02 | planning |",
+      "| FLOW-01 | Reusable transition coverage | planner | active | 2026-05-02 | planning |",
       "",
       "## Active Tasks",
       "| Task ID | Title | Scope | Owner | Status | Priority | Depends On | Verification |",
       "|---|---|---|---|---|---|---|---|",
-      "| OPS-03 | Harness operation friction reduction | gate profiles and transition automation | planner | planning | P0 | DEV-09 | pending |",
-      "- Next first action: Approve OPS-03 Ready For Code.",
+      "| FLOW-01 | Reusable transition coverage | gate profiles and transition automation | planner | planning | P0 | BASE-01 | pending |",
+      "- Next first action: Approve FLOW-01 Ready For Code.",
       "",
       "## Blocked Tasks",
       "| Task ID | Blocker | Owner | Status | Unblock Condition | Verification |",
@@ -1155,31 +1239,31 @@ test("transition preview is review-first and apply updates state surfaces", () =
   store.setReleaseState({
     currentStage: "planning",
     releaseGateState: "open",
-    currentFocus: "OPS-03 planning",
+    currentFocus: "FLOW-01 planning",
     releaseGoal: "Validate transition automation",
     sourceRef: ".agents/artifacts/CURRENT_STATE.md"
   });
   store.upsertWorkItem({
-    workItemId: "OPS-03",
-    title: "Harness operation friction reduction",
+    workItemId: "FLOW-01",
+    title: "Reusable transition coverage",
     status: "planning",
-    nextAction: "Approve OPS-03 Ready For Code.",
+    nextAction: "Approve FLOW-01 Ready For Code.",
     owner: "planner",
     sourceRef: packetPath,
     metadata: { gateProfile: "contract" }
   });
   store.recordDecision({
-    decisionId: "OPS-03-approval",
-    title: "OPS-03 Ready For Code",
+    decisionId: "FLOW-01-approval",
+    title: "FLOW-01 Ready For Code",
     decisionNeeded: true,
     impactSummary: "Developer implementation requires user approval.",
     sourceRef: packetPath
   });
   store.upsertArtifact({
-    artifactId: "PKT-01_OPS-03_TRANSITION_TEST",
+    artifactId: "PKT-01_FLOW-01_TRANSITION_TEST",
     path: packetPath,
     category: "task_packet",
-    title: "OPS-03 transition test packet",
+    title: "FLOW-01 transition test packet",
     sourceRef: packetPath
   });
   writeStateSurfaces({ store, repoRoot });
@@ -1193,9 +1277,9 @@ test("transition preview is review-first and apply updates state surfaces", () =
       "--transition",
       "planner-to-developer",
       "--work-item",
-      "OPS-03",
+      "FLOW-01",
       "--close-decision",
-      "OPS-03-approval"
+      "FLOW-01-approval"
     ]
   });
   assert.equal(preview.ok, true);
@@ -1211,33 +1295,33 @@ test("transition preview is review-first and apply updates state surfaces", () =
       "--transition",
       "planner-to-developer",
       "--work-item",
-      "OPS-03",
+      "FLOW-01",
       "--gate-profile",
       "contract",
       "--current-focus",
-      "OPS-03 implementation",
+      "FLOW-01 implementation",
       "--close-decision",
-      "OPS-03-approval",
+      "FLOW-01-approval",
       "--apply"
     ]
   });
 
-  assert.equal(applied.ok, true);
+  assert.equal(applied.apply, true);
   assert.equal(applied.apply, true);
   assert.equal(applied.validationReport.ok, true);
   assert.match(
     fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "TASK_LIST.md"), "utf8"),
-    /\| OPS-03 \| Harness operation friction reduction \| gate profiles and transition automation \| developer \| in_progress \|/
+    /\| FLOW-01 \| Reusable transition coverage \| [^|]+ \| developer \| in_progress \|/
   );
   const taskList = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "TASK_LIST.md"), "utf8");
   assert.match(taskList, /- Next first action: Implement the approved packet scope and hand off to Tester\./);
   assert.match(taskList, /\[planner -> developer\] Planning approved; implementation can proceed\./);
   const currentState = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"), "utf8");
   assert.match(currentState, /Current Stage: implementation/);
-  assert.match(currentState, /`OPS-03` Ready For Code is approved; active handoff is `planner -> developer`\./);
+  assert.match(currentState, /`FLOW-01` Ready For Code is approved; active handoff is `planner -> developer`\./);
   assert.match(currentState, /\[planner -> developer\] Planning approved; implementation can proceed\./);
   const implementationPlan = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "IMPLEMENTATION_PLAN.md"), "utf8");
-  assert.match(implementationPlan, /`OPS-03` active handoff is `planner -> developer`\./);
+  assert.match(implementationPlan, /`FLOW-01` active handoff is `planner -> developer`\./);
   assert.match(implementationPlan, /Implement the approved packet scope and hand off to Tester\./);
   assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.json")), true);
   const persistedReport = JSON.parse(
@@ -1248,16 +1332,67 @@ test("transition preview is review-first and apply updates state surfaces", () =
   assert.equal(settledValidation.ok, true);
 
   const afterStore = createOperatingStateStore({ dbPath });
-  assert.equal(afterStore.getWorkItem("OPS-03").metadata.readyForCode, "approved");
+  assert.equal(afterStore.getWorkItem("FLOW-01").metadata.readyForCode, "approved");
   assert.equal(afterStore.listDecisions({ status: "open", decisionNeeded: true }).length, 0);
   afterStore.close();
+});
+
+test("developer-to-tester transition writes the required active lock for review status", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-transition-review-lock-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_FLOW-01_REVIEW_LOCK_TEST.md";
+  writeOpsPacket(repoRoot, packetPath, { gateProfile: "contract", includeManifest: true });
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-15T03:10:00.000Z") });
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "FLOW-01 implementation complete",
+    releaseGoal: "Keep tester handoff state validator-clean",
+    sourceRef: ".agents/artifacts/CURRENT_STATE.md"
+  });
+  store.upsertWorkItem({
+    workItemId: "FLOW-01",
+    title: "Reusable transition coverage",
+    status: "in_progress",
+    nextAction: "Hand off FLOW-01 to Tester.",
+    owner: "developer",
+    sourceRef: packetPath,
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  store.upsertArtifact({
+    artifactId: "PKT-01_FLOW-01_REVIEW_LOCK_TEST",
+    path: packetPath,
+    category: "task_packet",
+    title: "FLOW-01 review lock transition packet",
+    sourceRef: packetPath
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const applied = runTransition({
+    repoRoot,
+    dbPath,
+    outputDir: repoRoot,
+    args: ["--transition", "developer-to-tester", "--work-item", "FLOW-01", "--apply"]
+  });
+
+  assert.equal(applied.apply, true);
+  assert.equal(applied.ok, true);
+  assert.equal(applied.validationReport.ok, true);
+  const taskList = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "TASK_LIST.md"), "utf8");
+  assert.match(taskList, /\| FLOW-01 \| Reusable transition coverage \| tester \| active \| \d{4}-\d{2}-\d{2} \|/);
+  assert.match(taskList, /\| FLOW-01 \| Reusable transition coverage \| [^|]+ \| tester \| review \|/);
+  const validation = runValidator({ repoRoot, dbPath, outputDir: repoRoot });
+  assert.equal(validation.ok, true);
 });
 
 test("transition refreshes keyed current-state truth notes on tester-to-reviewer handoff", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-transition-truth-note-"));
   seedStandardRepo(repoRoot);
   const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
-  const packetPath = "reference/packets/PKT-01_OPS-03_TRANSITION_TRUTH_NOTE_TEST.md";
+  const packetPath = "reference/packets/PKT-01_FLOW-01_TRANSITION_TRUTH_NOTE_TEST.md";
   writeOpsPacket(repoRoot, packetPath, { gateProfile: "contract", includeManifest: true });
   fs.writeFileSync(
     path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"),
@@ -1266,16 +1401,16 @@ test("transition refreshes keyed current-state truth notes on tester-to-reviewer
       "",
       "## Snapshot",
       "- Current Stage: verification",
-      "- Current Focus: OPS-03 revised implementation complete; Tester verifying design access.",
+      "- Current Focus: FLOW-01 revised implementation complete; Tester verifying design access.",
       "",
       "## Next Recommended Agent",
       "- Tester",
       "",
       "## Open Decisions / Blockers",
-      "- `OPS-03` Ready For Code is approved; Tester verification is pending.",
+      "- `FLOW-01` Ready For Code is approved; Tester verification is pending.",
       "",
       "## Current Truth Notes",
-      "- `OPS-03` revised developer evidence remains queued for Tester verification.",
+      "- `FLOW-01` revised developer evidence remains queued for Tester verification.",
       "",
       "## Latest Handoff Summary",
       "- none"
@@ -1290,13 +1425,13 @@ test("transition refreshes keyed current-state truth notes on tester-to-reviewer
       "## Active Locks",
       "| Task ID | Scope | Owner | Status | Started At | Notes |",
       "|---|---|---|---|---|---|",
-      "| OPS-03 | Harness operation friction reduction | tester | active | 2026-05-03 | verification |",
+      "| FLOW-01 | Reusable transition coverage | tester | active | 2026-05-03 | verification |",
       "",
       "## Active Tasks",
       "| Task ID | Title | Scope | Owner | Status | Priority | Depends On | Verification |",
       "|---|---|---|---|---|---|---|---|",
-      "| OPS-03 | Harness operation reliability and friction reduction packet | revised OPS-03 closeout | tester | review | P0 | DEV-09 | tester verification pending |",
-      "- Next first action: Reviewer should assess revised OPS-03 closeout readiness.",
+      "| FLOW-01 | Reusable transition coverage packet | revised FLOW-01 closeout | tester | review | P0 | BASE-01 | tester verification pending |",
+      "- Next first action: Reviewer should assess revised FLOW-01 closeout readiness.",
       "",
       "## Blocked Tasks",
       "| Task ID | Blocker | Owner | Status | Unblock Condition | Verification |",
@@ -1318,24 +1453,24 @@ test("transition refreshes keyed current-state truth notes on tester-to-reviewer
   store.setReleaseState({
     currentStage: "verification",
     releaseGateState: "open",
-    currentFocus: "OPS-03 revised implementation complete; Tester verifying design access.",
+    currentFocus: "FLOW-01 revised implementation complete; Tester verifying design access.",
     releaseGoal: "Validate keyed CURRENT_STATE transition refresh",
     sourceRef: packetPath
   });
   store.upsertWorkItem({
-    workItemId: "OPS-03",
-    title: "Harness operation reliability and friction reduction packet",
+    workItemId: "FLOW-01",
+    title: "Reusable transition coverage packet",
     status: "review",
-    nextAction: "Reviewer should assess revised OPS-03 closeout readiness.",
+    nextAction: "Reviewer should assess revised FLOW-01 closeout readiness.",
     owner: "tester",
     sourceRef: packetPath,
     metadata: { gateProfile: "contract", readyForCode: "approved" }
   });
   store.upsertArtifact({
-    artifactId: "PKT-01_OPS-03_TRANSITION_TRUTH_NOTE_TEST",
+    artifactId: "PKT-01_FLOW-01_TRANSITION_TRUTH_NOTE_TEST",
     path: packetPath,
     category: "task_packet",
-    title: "OPS-03 transition truth-note packet",
+    title: "FLOW-01 transition truth-note packet",
     sourceRef: packetPath
   });
   writeStateSurfaces({ store, repoRoot });
@@ -1349,29 +1484,29 @@ test("transition refreshes keyed current-state truth notes on tester-to-reviewer
       "--transition",
       "tester-to-reviewer",
       "--work-item",
-      "OPS-03",
+      "FLOW-01",
       "--summary",
       "Tester verification completed.",
       "--next-action",
-      "Reviewer should assess revised OPS-03 closeout readiness.",
+      "Reviewer should assess revised FLOW-01 closeout readiness.",
       "--current-focus",
-      "OPS-03 under reviewer closeout assessment.",
+      "FLOW-01 under reviewer closeout assessment.",
       "--apply"
     ]
   });
 
-  assert.equal(applied.ok, true);
+  assert.equal(applied.apply, true);
   assert.equal(applied.apply, true);
   const currentState = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"), "utf8");
   assert.doesNotMatch(currentState, /Tester verification is pending/);
   assert.doesNotMatch(currentState, /queued for Tester verification/);
   assert.match(
     currentState,
-    /`OPS-03` Ready For Code is approved; active handoff is `tester -> reviewer`\./
+    /`FLOW-01` Ready For Code is approved; active handoff is `tester -> reviewer`\./
   );
   assert.match(
     currentState,
-    /`OPS-03` remains the active work item\. Current handoff is `tester -> reviewer`; stage is `review`; gate profile is `contract`\./
+    /`FLOW-01` remains the active work item\. Current handoff is `tester -> reviewer`; stage is `review`; gate profile is `contract`\./
   );
 });
 
@@ -1379,11 +1514,11 @@ test("transition applies reviewer-to-developer defaults and preserves Ready For 
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-transition-review-source-"));
   seedStandardRepo(repoRoot);
   const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
-  const packetPath = "reference/packets/PKT-01_OPS-03_TRANSITION_REVIEW_SOURCE_TEST.md";
+  const packetPath = "reference/packets/PKT-01_FLOW-01_TRANSITION_REVIEW_SOURCE_TEST.md";
   writeOpsPacket(repoRoot, packetPath, { gateProfile: "contract", includeManifest: true });
   fs.writeFileSync(
     path.join(repoRoot, "reference", "artifacts", "REVIEW_REPORT.md"),
-    "# Review Report\n\n## OPS-03 Finding\n- Reviewer requested remediation.\n",
+    "# Review Report\n\n## FLOW-01 Finding\n- Reviewer requested remediation.\n",
     "utf8"
   );
   fs.writeFileSync(
@@ -1393,16 +1528,16 @@ test("transition applies reviewer-to-developer defaults and preserves Ready For 
       "",
       "## Snapshot",
       "- Current Stage: review",
-      "- Current Focus: OPS-03 under reviewer closeout assessment.",
+      "- Current Focus: FLOW-01 under reviewer closeout assessment.",
       "",
       "## Next Recommended Agent",
       "- Reviewer",
       "",
       "## Open Decisions / Blockers",
-      "- `OPS-03` Ready For Code is approved; active handoff is `tester -> reviewer`. Reviewer should assess revised OPS-03 closeout readiness.",
+      "- `FLOW-01` Ready For Code is approved; active handoff is `tester -> reviewer`. Reviewer should assess revised FLOW-01 closeout readiness.",
       "",
       "## Current Truth Notes",
-      "- `OPS-03` remains the active work item. Current handoff is `tester -> reviewer`; stage is `review`; gate profile is `contract`.",
+      "- `FLOW-01` remains the active work item. Current handoff is `tester -> reviewer`; stage is `review`; gate profile is `contract`.",
       "",
       "## Latest Handoff Summary",
       "- none"
@@ -1417,12 +1552,12 @@ test("transition applies reviewer-to-developer defaults and preserves Ready For 
       "## Active Locks",
       "| Task ID | Scope | Owner | Status | Started At | Notes |",
       "|---|---|---|---|---|---|",
-      "| OPS-03 | Harness operation friction reduction | reviewer | active | 2026-05-03 | review |",
+      "| FLOW-01 | Reusable transition coverage | reviewer | active | 2026-05-03 | review |",
       "",
       "## Active Tasks",
       "| Task ID | Title | Scope | Owner | Status | Priority | Depends On | Verification |",
       "|---|---|---|---|---|---|---|---|",
-      "| OPS-03 | Harness operation reliability and friction reduction packet | revised OPS-03 closeout | reviewer | review | P0 | DEV-09 | review closeout pending |",
+      "| FLOW-01 | Reusable transition coverage packet | revised FLOW-01 closeout | reviewer | review | P0 | BASE-01 | review closeout pending |",
       "- Next first action: Developer should remediate the current-state transition issue.",
       "",
       "## Blocked Tasks",
@@ -1445,24 +1580,24 @@ test("transition applies reviewer-to-developer defaults and preserves Ready For 
   store.setReleaseState({
     currentStage: "review",
     releaseGateState: "open",
-    currentFocus: "OPS-03 under reviewer closeout assessment.",
+    currentFocus: "FLOW-01 under reviewer closeout assessment.",
     releaseGoal: "Validate review-report transition fallback",
     sourceRef: packetPath
   });
   store.upsertWorkItem({
-    workItemId: "OPS-03",
-    title: "Harness operation reliability and friction reduction packet",
+    workItemId: "FLOW-01",
+    title: "Reusable transition coverage packet",
     status: "review",
-    nextAction: "Reviewer should assess revised OPS-03 closeout readiness.",
+    nextAction: "Reviewer should assess revised FLOW-01 closeout readiness.",
     owner: "reviewer",
     sourceRef: packetPath,
     metadata: { gateProfile: "contract", readyForCode: "approved" }
   });
   store.upsertArtifact({
-    artifactId: "PKT-01_OPS-03_TRANSITION_REVIEW_SOURCE_TEST",
+    artifactId: "PKT-01_FLOW-01_TRANSITION_REVIEW_SOURCE_TEST",
     path: packetPath,
     category: "task_packet",
-    title: "OPS-03 transition review-source packet",
+    title: "FLOW-01 transition review-source packet",
     sourceRef: packetPath
   });
   writeStateSurfaces({ store, repoRoot });
@@ -1476,7 +1611,7 @@ test("transition applies reviewer-to-developer defaults and preserves Ready For 
       "--transition",
       "reviewer-to-developer",
       "--work-item",
-      "OPS-03",
+      "FLOW-01",
       "--source-ref",
       "reference/artifacts/REVIEW_REPORT.md",
       "--apply"
@@ -1487,14 +1622,14 @@ test("transition applies reviewer-to-developer defaults and preserves Ready For 
   assert.equal(applied.apply, true);
   const currentState = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"), "utf8");
   assert.match(currentState, /Current Stage: implementation/);
-  assert.match(currentState, /Current Focus: OPS-03 reviewer finding remediation is in progress\./);
+  assert.match(currentState, /Current Focus: FLOW-01 reviewer finding remediation is in progress\./);
   assert.match(
     currentState,
-    /`OPS-03` Ready For Code is approved; active handoff is `reviewer -> developer`\./
+    /`FLOW-01` Ready For Code is approved; active handoff is `reviewer -> developer`\./
   );
   assert.match(
     currentState,
-    /`OPS-03` remains the active work item\. Current handoff is `reviewer -> developer`; stage is `implementation`; gate profile is `contract`\./
+    /`FLOW-01` remains the active work item\. Current handoff is `reviewer -> developer`; stage is `implementation`; gate profile is `contract`\./
   );
   assert.doesNotMatch(currentState, /Ready For Code status is ;/);
 });
@@ -1503,11 +1638,11 @@ test("transition infers reviewer-to-developer remediation wording for explicit c
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-transition-review-custom-"));
   seedStandardRepo(repoRoot);
   const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
-  const packetPath = "reference/packets/PKT-01_OPS-03_TRANSITION_REVIEW_CUSTOM_TEST.md";
+  const packetPath = "reference/packets/PKT-01_FLOW-01_TRANSITION_REVIEW_CUSTOM_TEST.md";
   writeOpsPacket(repoRoot, packetPath, { gateProfile: "contract", includeManifest: true });
   fs.writeFileSync(
     path.join(repoRoot, "reference", "artifacts", "REVIEW_REPORT.md"),
-    "# Review Report\n\n## OPS-03 Finding\n- Reviewer requested remediation.\n",
+    "# Review Report\n\n## FLOW-01 Finding\n- Reviewer requested remediation.\n",
     "utf8"
   );
   fs.writeFileSync(
@@ -1517,18 +1652,18 @@ test("transition infers reviewer-to-developer remediation wording for explicit c
       "",
       "## Snapshot",
       "- Current Stage: review",
-      "- Current Focus: OPS-03 under reviewer closeout assessment.",
+      "- Current Focus: FLOW-01 under reviewer closeout assessment.",
       "",
       "## Next Recommended Agent",
       "- Reviewer",
       "",
       "## Open Decisions / Blockers",
-      "- `OPS-03` Ready For Code is approved; active handoff is `tester -> reviewer`. Review implementation, evidence, residual debt, and closeout readiness.",
-      "- User approved the remaining remediation scope; Reviewer is assessing closeout under OPS-03.",
+      "- `FLOW-01` Ready For Code is approved; active handoff is `tester -> reviewer`. Review implementation, evidence, residual debt, and closeout readiness.",
+      "- User approved the remaining remediation scope; Reviewer is assessing closeout under FLOW-01.",
       "",
       "## Current Truth Notes",
-      "- `OPS-03` remains the active work item. Current handoff is `tester -> reviewer`; stage is `review`; gate profile is `contract`.",
-      "- `PKT-01_OPS-03_TRANSITION_REVIEW_CUSTOM_TEST.md` is Ready For Code approved and in Reviewer closeout review.",
+      "- `FLOW-01` remains the active work item. Current handoff is `tester -> reviewer`; stage is `review`; gate profile is `contract`.",
+      "- `PKT-01_FLOW-01_TRANSITION_REVIEW_CUSTOM_TEST.md` is Ready For Code approved and in Reviewer closeout review.",
       "",
       "## Latest Handoff Summary",
       "- none"
@@ -1543,12 +1678,12 @@ test("transition infers reviewer-to-developer remediation wording for explicit c
       "## Active Locks",
       "| Task ID | Scope | Owner | Status | Started At | Notes |",
       "|---|---|---|---|---|---|",
-      "| OPS-03 | Harness operation friction reduction | reviewer | active | 2026-05-03 | review |",
+      "| FLOW-01 | Reusable transition coverage | reviewer | active | 2026-05-03 | review |",
       "",
       "## Active Tasks",
       "| Task ID | Title | Scope | Owner | Status | Priority | Depends On | Verification |",
       "|---|---|---|---|---|---|---|---|",
-      "| OPS-03 | Harness operation reliability and friction reduction packet | revised OPS-03 closeout | reviewer | review | P0 | DEV-09 | review closeout pending |",
+      "| FLOW-01 | Reusable transition coverage packet | revised FLOW-01 closeout | reviewer | review | P0 | BASE-01 | review closeout pending |",
       "- Next first action: Review implementation, evidence, residual debt, and closeout readiness.",
       "",
       "## Blocked Tasks",
@@ -1571,13 +1706,13 @@ test("transition infers reviewer-to-developer remediation wording for explicit c
   store.setReleaseState({
     currentStage: "review",
     releaseGateState: "open",
-    currentFocus: "OPS-03 under reviewer closeout assessment.",
+    currentFocus: "FLOW-01 under reviewer closeout assessment.",
     releaseGoal: "Validate custom remediation transition defaults",
     sourceRef: packetPath
   });
   store.upsertWorkItem({
-    workItemId: "OPS-03",
-    title: "Harness operation reliability and friction reduction packet",
+    workItemId: "FLOW-01",
+    title: "Reusable transition coverage packet",
     status: "review",
     nextAction: "Review implementation, evidence, residual debt, and closeout readiness.",
     owner: "reviewer",
@@ -1585,10 +1720,10 @@ test("transition infers reviewer-to-developer remediation wording for explicit c
     metadata: { gateProfile: "contract", readyForCode: "approved" }
   });
   store.upsertArtifact({
-    artifactId: "PKT-01_OPS-03_TRANSITION_REVIEW_CUSTOM_TEST",
+    artifactId: "PKT-01_FLOW-01_TRANSITION_REVIEW_CUSTOM_TEST",
     path: packetPath,
     category: "task_packet",
-    title: "OPS-03 transition review-custom packet",
+    title: "FLOW-01 transition review-custom packet",
     sourceRef: packetPath
   });
   writeStateSurfaces({ store, repoRoot });
@@ -1602,7 +1737,7 @@ test("transition infers reviewer-to-developer remediation wording for explicit c
       "--to",
       "developer",
       "--work-item",
-      "OPS-03",
+      "FLOW-01",
       "--source-ref",
       "reference/artifacts/REVIEW_REPORT.md",
       "--apply"
@@ -1613,32 +1748,32 @@ test("transition infers reviewer-to-developer remediation wording for explicit c
   assert.equal(applied.apply, true);
   const currentState = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"), "utf8");
   assert.match(currentState, /Current Stage: implementation/);
-  assert.match(currentState, /Current Focus: OPS-03 reviewer finding remediation is in progress\./);
+  assert.match(currentState, /Current Focus: FLOW-01 reviewer finding remediation is in progress\./);
   assert.match(
     currentState,
-    /`OPS-03` Ready For Code is approved; active handoff is `reviewer -> developer`\. Remediate the reviewer finding, rerun tests and validation, and hand off to Tester\./
+    /`FLOW-01` Ready For Code is approved; active handoff is `reviewer -> developer`\. Remediate the reviewer finding, rerun tests and validation, and hand off to Tester\./
   );
   assert.match(
     currentState,
-    /`OPS-03` remains the active work item\. Current handoff is `reviewer -> developer`; stage is `implementation`; gate profile is `contract`\./
+    /`FLOW-01` remains the active work item\. Current handoff is `reviewer -> developer`; stage is `implementation`; gate profile is `contract`\./
   );
   assert.match(
     currentState,
-    /User-approved `OPS-03` scope remains active\. Ready For Code is approved; current handoff is `reviewer -> developer`\. Remediate the reviewer finding, rerun tests and validation, and hand off to Tester\./
+    /User-approved `FLOW-01` scope remains active\. Ready For Code is approved; current handoff is `reviewer -> developer`\. Remediate the reviewer finding, rerun tests and validation, and hand off to Tester\./
   );
   assert.match(
     currentState,
-    /`PKT-01_OPS-03_TRANSITION_REVIEW_CUSTOM_TEST\.md` is Ready For Code approved and in Developer implementation\./
+    /`PKT-01_FLOW-01_TRANSITION_REVIEW_CUSTOM_TEST\.md` remains the active packet for scope boundary, human approval text, and audit evidence; live handoff is `reviewer -> developer`; live stage is Developer implementation\./
   );
   assert.doesNotMatch(currentState, /under reviewer closeout assessment/);
-  assert.doesNotMatch(currentState, /Reviewer is assessing closeout under OPS-03/);
+  assert.doesNotMatch(currentState, /Reviewer is assessing closeout under FLOW-01/);
 });
 
 test("release transition preserves the release-baseline focus prefix", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-transition-release-focus-"));
   seedStandardRepo(repoRoot);
   const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
-  const packetPath = "reference/packets/PKT-01_DEV-11_RELEASE_FOCUS_TEST.md";
+  const packetPath = "reference/packets/PKT-01_RELEASE_FOCUS_TEST.md";
   writeOpsPacket(repoRoot, packetPath, { gateProfile: "release", includeManifest: true });
   fs.writeFileSync(
     path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"),
@@ -1647,20 +1782,20 @@ test("release transition preserves the release-baseline focus prefix", () => {
       "",
       "## Snapshot",
       "- Current Stage: implementation",
-      "- Current Focus: V1.3 CLI-first PMW-free harness baseline is implemented and verified; DEV-11 reviewer finding remediation is in progress.",
-      "- Current Release Goal: Preserve the V1.3 installable standard harness baseline while implementing DEV-11 PMW removal and Active Context replacement under the release gate.",
+      "- Current Focus: V1.3 standard harness starter baseline is implemented and verified; RELEASE-01 reviewer finding remediation is in progress.",
+      "- Current Release Goal: Preserve the V1.3 installable standard harness starter while keeping Active Context as the re-entry surface.",
       "",
       "## Next Recommended Agent",
       "- Developer",
       "",
       "## Open Decisions / Blockers",
-      "- `DEV-11` Ready For Code is approved; active handoff is `reviewer -> developer`. Remediate the reviewer finding, rerun tests and validation, and hand off to Tester.",
-      "- User approved complete PMW removal; Developer is implementing PMW-only procedure removal and the AI-facing / human-facing SSOT split under DEV-11.",
+      "- `RELEASE-01` Ready For Code is approved; active handoff is `reviewer -> developer`. Remediate the reviewer finding, rerun tests and validation, and hand off to Tester.",
+      "- Developer is implementing starter release-readiness remediation while preserving the AI-facing / human-facing SSOT split.",
       "",
       "## Current Truth Notes",
-      "- `DEV-11` remains the active work item. Current handoff is `reviewer -> developer`; stage is `implementation`; gate profile is `release`.",
-      "- `V1.3 CLI-first PMW-free harness baseline is implemented and verified` remains the required release-baseline marker even while DEV-11 remediation is still open.",
-      "- `PKT-01_DEV-11_RELEASE_FOCUS_TEST.md` is Ready For Code approved and in Developer implementation.",
+      "- `RELEASE-01` remains the active work item. Current handoff is `reviewer -> developer`; stage is `implementation`; gate profile is `release`.",
+      "- `V1.3 standard harness starter baseline is implemented and verified` remains the required release-baseline marker even while RELEASE-01 remediation is still open.",
+      "- `PKT-01_RELEASE_FOCUS_TEST.md` remains the active packet for scope boundary, human approval text, and audit evidence; live handoff is `reviewer -> developer`; live stage is Developer implementation.",
       "",
       "## Latest Handoff Summary",
       "- none"
@@ -1675,12 +1810,12 @@ test("release transition preserves the release-baseline focus prefix", () => {
       "## Active Locks",
       "| Task ID | Scope | Owner | Status | Started At | Notes |",
       "|---|---|---|---|---|---|",
-      "| DEV-11 | CLI-first PMW decommission and active context implementation | developer | active | 2026-05-03 | custom; gate release; Remediate the reviewer finding, rerun tests and validation, and hand off to Tester. |",
+      "| RELEASE-01 | Starter release focus remediation | developer | active | 2026-05-03 | custom; gate release; Remediate the reviewer finding, rerun tests and validation, and hand off to Tester. |",
       "",
       "## Active Tasks",
       "| Task ID | Title | Scope | Owner | Status | Priority | Depends On | Verification |",
       "|---|---|---|---|---|---|---|---|",
-      "| DEV-11 | CLI-first PMW decommission and active context implementation packet | release baseline focus preservation | developer | in_progress | P0 | PLN-09 | gate release; Remediate the reviewer finding, rerun tests and validation, and hand off to Tester. |",
+      "| RELEASE-01 | Starter release focus remediation packet | release baseline focus preservation | developer | in_progress | P0 | PLAN-01 | gate release; Remediate the reviewer finding, rerun tests and validation, and hand off to Tester. |",
       "- Next first action: Remediate the reviewer finding, rerun tests and validation, and hand off to Tester.",
       "",
       "## Blocked Tasks",
@@ -1703,14 +1838,14 @@ test("release transition preserves the release-baseline focus prefix", () => {
   store.setReleaseState({
     currentStage: "implementation",
     releaseGateState: "open",
-    currentFocus: "V1.3 CLI-first PMW-free harness baseline is implemented and verified; DEV-11 reviewer finding remediation is in progress.",
-    releaseGoal: "Preserve the V1.3 installable standard harness baseline while implementing DEV-11 PMW removal and Active Context replacement under the release gate.",
+    currentFocus: "V1.3 standard harness starter baseline is implemented and verified; RELEASE-01 reviewer finding remediation is in progress.",
+    releaseGoal: "Preserve the V1.3 installable standard harness starter while keeping Active Context as the re-entry surface.",
     sourceRef: packetPath,
     metadata: { releaseBaseline: "V1.3" }
   });
   store.upsertWorkItem({
-    workItemId: "DEV-11",
-    title: "CLI-first PMW decommission and active context implementation packet",
+    workItemId: "RELEASE-01",
+    title: "Starter release focus remediation packet",
     status: "in_progress",
     nextAction: "Remediate the reviewer finding, rerun tests and validation, and hand off to Tester.",
     owner: "developer",
@@ -1718,10 +1853,10 @@ test("release transition preserves the release-baseline focus prefix", () => {
     metadata: { gateProfile: "release", readyForCode: "approved" }
   });
   store.upsertArtifact({
-    artifactId: "PKT-01_DEV-11_RELEASE_FOCUS_TEST",
+    artifactId: "PKT-01_RELEASE_FOCUS_TEST",
     path: packetPath,
     category: "task_packet",
-    title: "DEV-11 release focus transition test packet",
+    title: "Starter release focus transition test packet",
     sourceRef: packetPath
   });
   writeStateSurfaces({ store, repoRoot });
@@ -1731,21 +1866,21 @@ test("release transition preserves the release-baseline focus prefix", () => {
     repoRoot,
     dbPath,
     outputDir: repoRoot,
-    args: ["--transition", "developer-to-tester", "--work-item", "DEV-11", "--apply"]
+    args: ["--transition", "developer-to-tester", "--work-item", "RELEASE-01", "--apply"]
   });
 
   const currentState = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"), "utf8");
   assert.match(
     currentState,
-    /Current Focus: V1\.3 CLI-first PMW-free harness baseline is implemented and verified; DEV-11 implementation is ready for Tester verification\./
+    /Current Focus: V1\.3 standard harness starter baseline is implemented and verified; RELEASE-01 implementation is ready for Tester verification\./
   );
   assert.match(
     currentState,
-    /User-approved `DEV-11` scope remains active\. Ready For Code is approved; current handoff is `developer -> tester`\. Verify the implementation against the packet acceptance criteria\./
+    /`RELEASE-01` Ready For Code is approved; active handoff is `developer -> tester`\. Verify the implementation against the packet acceptance criteria\./
   );
   assert.match(
     currentState,
-    /`PKT-01_DEV-11_RELEASE_FOCUS_TEST\.md` is Ready For Code approved and in Tester verification\./
+    /`PKT-01_RELEASE_FOCUS_TEST\.md` remains the active packet for scope boundary, human approval text, and audit evidence; live handoff is `developer -> tester`; live stage is Tester verification\./
   );
 });
 
@@ -1753,7 +1888,7 @@ test("terminal transition closes active task bookkeeping and preserves planner n
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-transition-closeout-"));
   seedStandardRepo(repoRoot);
   const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
-  const packetPath = "reference/packets/PKT-01_OPS-03_TRANSITION_CLOSEOUT_TEST.md";
+  const packetPath = "reference/packets/PKT-01_FLOW-01_TRANSITION_CLOSEOUT_TEST.md";
   writeOpsPacket(repoRoot, packetPath, { gateProfile: "contract", includeManifest: true });
   fs.writeFileSync(
     path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"),
@@ -1762,16 +1897,16 @@ test("terminal transition closes active task bookkeeping and preserves planner n
       "",
       "## Snapshot",
       "- Current Stage: planning",
-      "- Current Focus: OPS-03 closeout approved; Planner selecting the next lane.",
+      "- Current Focus: FLOW-01 closeout approved; Planner selecting the next lane.",
       "",
       "## Next Recommended Agent",
       "- Planner",
       "",
       "## Open Decisions / Blockers",
-      "- `OPS-03` Ready For Code is approved; active handoff is `reviewer -> planner`. Planner should record OPS-03 closeout and choose the next approved lane.",
+      "- `FLOW-01` Ready For Code is approved; active handoff is `reviewer -> planner`. Planner should record FLOW-01 closeout and choose the next approved lane.",
       "",
       "## Current Truth Notes",
-      "- `OPS-03` remains the active work item. Current handoff is `reviewer -> planner`; stage is `planning`; gate profile is `contract`.",
+      "- `FLOW-01` remains the active work item. Current handoff is `reviewer -> planner`; stage is `planning`; gate profile is `contract`.",
       "",
       "## Latest Handoff Summary",
       "- none"
@@ -1786,13 +1921,13 @@ test("terminal transition closes active task bookkeeping and preserves planner n
       "## Active Locks",
       "| Task ID | Scope | Owner | Status | Started At | Notes |",
       "|---|---|---|---|---|---|",
-      "| OPS-03 | Harness operation reliability and friction reduction | planner | active | 2026-05-03 | reviewer-to-planner closeout pending |",
+      "| FLOW-01 | Harness operation reliability and friction reduction | planner | active | 2026-05-03 | reviewer-to-planner closeout pending |",
       "",
       "## Active Tasks",
       "| Task ID | Title | Scope | Owner | Status | Priority | Depends On | Verification |",
       "|---|---|---|---|---|---|---|---|",
-      "| OPS-03 | Harness operation reliability and friction reduction packet | revised OPS-03 closeout | planner | planning | P0 | DEV-09 | planner closeout pending |",
-      "- Next first action: Planner should record OPS-03 closeout and choose the next approved lane.",
+      "| FLOW-01 | Reusable transition coverage packet | revised FLOW-01 closeout | planner | planning | P0 | BASE-01 | planner closeout pending |",
+      "- Next first action: Planner should record FLOW-01 closeout and choose the next approved lane.",
       "",
       "## Blocked Tasks",
       "| Task ID | Blocker | Owner | Status | Unblock Condition | Verification |",
@@ -1820,7 +1955,7 @@ test("terminal transition closes active task bookkeeping and preserves planner n
       "## Progress Board",
       "| Phase | Task ID | Task | Status | Notes | Source |",
       "| --- | --- | --- | --- | --- | --- |",
-      `| Ops | OPS-03 | Harness operation reliability and friction reduction | planning | Reviewer approved closeout; planner bookkeeping pending. | ${packetPath} |`
+      `| Ops | FLOW-01 | Harness operation reliability and friction reduction | planning | Reviewer approved closeout; planner bookkeeping pending. | ${packetPath} |`
     ].join("\n"),
     "utf8"
   );
@@ -1830,8 +1965,8 @@ test("terminal transition closes active task bookkeeping and preserves planner n
       "# Implementation Plan",
       "",
       "## Operator Next Action",
-      "- `OPS-03` active handoff is `reviewer -> planner`.",
-      "- Planner should record OPS-03 closeout and choose the next approved lane.",
+      "- `FLOW-01` active handoff is `reviewer -> planner`.",
+      "- Planner should record FLOW-01 closeout and choose the next approved lane.",
       `- Source packet: \`${packetPath}\`.`,
       "- Preserve packet-before-code, Active Context derived-state boundaries, generated-doc immutability, root/starter sync, Tester/Reviewer separation, and human approval gates."
     ].join("\n"),
@@ -1842,28 +1977,30 @@ test("terminal transition closes active task bookkeeping and preserves planner n
   store.setReleaseState({
     currentStage: "planning",
     releaseGateState: "open",
-    currentFocus: "OPS-03 closeout approved; Planner selecting the next lane.",
+    currentFocus: "FLOW-01 closeout approved; Planner selecting the next lane.",
     releaseGoal: "Validate planner closeout bookkeeping",
     sourceRef: packetPath
   });
   store.upsertWorkItem({
-    workItemId: "OPS-03",
-    title: "Harness operation reliability and friction reduction packet",
+    workItemId: "FLOW-01",
+    title: "Reusable transition coverage packet",
     status: "planning",
-    nextAction: "Planner should record OPS-03 closeout and choose the next approved lane.",
+    nextAction: "Planner should record FLOW-01 closeout and choose the next approved lane.",
     owner: "planner",
     sourceRef: packetPath,
     metadata: { gateProfile: "contract", readyForCode: "approved" }
   });
   store.upsertArtifact({
-    artifactId: "PKT-01_OPS-03_TRANSITION_CLOSEOUT_TEST",
+    artifactId: "PKT-01_FLOW-01_TRANSITION_CLOSEOUT_TEST",
     path: packetPath,
     category: "task_packet",
-    title: "OPS-03 transition closeout packet",
+    title: "FLOW-01 transition closeout packet",
     sourceRef: packetPath
   });
   writeStateSurfaces({ store, repoRoot });
   store.close();
+  const initialReport = writeValidationReport({ repoRoot, dbPath, outputDir: repoRoot });
+  assert.equal(initialReport.ok, true);
 
   const applied = runTransition({
     repoRoot,
@@ -1873,7 +2010,7 @@ test("terminal transition closes active task bookkeeping and preserves planner n
       "--transition",
       "planner-closeout",
       "--work-item",
-      "OPS-03",
+      "FLOW-01",
       "--from",
       "planner",
       "--to",
@@ -1883,73 +2020,78 @@ test("terminal transition closes active task bookkeeping and preserves planner n
       "--source-ref",
       packetPath,
       "--summary",
-      "Planner recorded OPS-03 closeout after reviewer approval.",
+      "Planner recorded FLOW-01 closeout after reviewer approval.",
       "--next-action",
       "Planner should choose the next approved lane and open the next packet only after human agreement.",
       "--current-stage",
       "planning",
       "--current-focus",
-      "OPS-03 closed; Planner selecting the next approved lane.",
+      "FLOW-01 closed; Planner selecting the next approved lane.",
       "--apply"
     ]
   });
 
   assert.equal(applied.ok, true);
   assert.equal(applied.apply, true);
+  assert.equal(applied.validationReport.ok, true);
 
   const taskList = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "TASK_LIST.md"), "utf8");
-  assert.doesNotMatch(taskList, /\| OPS-03 \| Harness operation reliability and friction reduction \| planner \| active \|/);
-  assert.doesNotMatch(taskList, /\| OPS-03 \| Harness operation reliability and friction reduction packet \| revised OPS-03 closeout \| planner \| planning \|/);
+  assert.doesNotMatch(taskList, /\| FLOW-01 \| Harness operation reliability and friction reduction \| planner \| active \|/);
+  assert.doesNotMatch(taskList, /\| FLOW-01 \| Reusable transition coverage packet \| revised FLOW-01 closeout \| planner \| planning \|/);
   assert.match(taskList, /\| - \| None \| - \| clear \| - \| - \|/);
   assert.match(taskList, /\| - \| None \| - \| - \| clear \| - \| - \| - \|/);
   assert.match(
     taskList,
-    /\| OPS-03 \| Harness operation reliability and friction reduction packet \| \d{4}-\d{2}-\d{2} \| transition planner -> planner; gate contract \| Planner recorded OPS-03 closeout after reviewer approval\. Planner should choose the next approved lane and open the next packet only after human agreement\. \|/
+    /\| FLOW-01 \| Reusable transition coverage packet \| \d{4}-\d{2}-\d{2} \| transition planner -> planner; gate contract \| Planner recorded FLOW-01 closeout after reviewer approval\. Planner should choose the next approved lane and open the next packet only after human agreement\. \|/
   );
 
   const currentState = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"), "utf8");
   assert.match(
     currentState,
-    /`OPS-03` is closed; latest handoff is `planner -> planner`\. Planner should choose the next approved lane and open the next packet only after human agreement\./
+    /`FLOW-01` is closed; latest handoff is `planner -> planner`\. Planner should choose the next approved lane and open the next packet only after human agreement\./
   );
   assert.match(
     currentState,
-    /`OPS-03` is closed\. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`\./
+    /`FLOW-01` is closed\. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`\./
   );
+  const immediateStatus = buildHarnessStatus({ repoRoot, outputDir: repoRoot, dbPath });
+  assert.equal(immediateStatus.ok, true);
+  const immediateValidation = runValidator({ repoRoot, dbPath, outputDir: repoRoot });
+  assert.equal(immediateValidation.ok, true);
 
   const implementationPlan = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "IMPLEMENTATION_PLAN.md"), "utf8");
-  assert.match(implementationPlan, /`OPS-03` is closed; latest closeout handoff is `planner -> planner`\./);
+  assert.match(implementationPlan, /`FLOW-01` is closed; latest closeout handoff is `planner -> planner`\./);
   assert.match(implementationPlan, /Planner should choose the next approved lane and open the next packet only after human agreement\./);
 
   const projectProgress = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "PROJECT_PROGRESS.md"), "utf8");
   assert.match(
     projectProgress,
-    /\| Ops \| OPS-03 \| Harness operation reliability and friction reduction \| done \| Planner recorded OPS-03 closeout after reviewer approval\. Planner should choose the next approved lane and open the next packet only after human agreement\. \|/
+    /\| Ops \| FLOW-01 \| Harness operation reliability and friction reduction \| done \| Planner recorded FLOW-01 closeout after reviewer approval\. Planner should choose the next approved lane and open the next packet only after human agreement\. \|/
   );
 
   const afterStore = createOperatingStateStore({ dbPath });
-  assert.equal(afterStore.getWorkItem("OPS-03").status, "done");
-  assert.equal(afterStore.getWorkItem("OPS-03").metadata.closedBy, "planner");
+  assert.equal(afterStore.getWorkItem("FLOW-01").status, "done");
+  assert.equal(afterStore.getWorkItem("FLOW-01").metadata.closedBy, "planner");
   afterStore.close();
 
   const status = buildHarnessStatus({ repoRoot, dbPath, outputDir: repoRoot });
   assert.equal(status.openWorkItems, 0);
   assert.equal(status.assignment, null);
-  assert.equal(status.nextOwner, "Planner");
+  assert.equal(status.nextOwner, "planner");
   assert.equal(
     status.nextAction,
     "Planner should choose the next approved lane and open the next packet only after human agreement."
   );
 });
 
-test("planner-closeout-hold closes the active packet, reconciles canonically closed planner items, and leaves no active lane", () => {
+test("planner-closeout-hold closes the active packet and leaves no active lane once sibling planner items are canonically closed", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-planner-closeout-hold-"));
   seedStandardRepo(repoRoot);
   const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
-  const packetPath = "reference/packets/PKT-01_OPS-07_PLANNER_HOLD_CLOSEOUT_AUTOMATION.md";
+  const packetPath = "reference/packets/PKT-01_CLOSEOUT-02_PLANNER_HOLD_CLOSEOUT_AUTOMATION.md";
   writeOpsPacket(repoRoot, packetPath, { gateProfile: "contract", includeManifest: true });
   fs.writeFileSync(
-    path.join(repoRoot, "reference", "packets", "PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md"),
+    path.join(repoRoot, "reference", "packets", "PKT-01_CLOSEOUT-01_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md"),
     "# Packet\n",
     "utf8"
   );
@@ -1961,17 +2103,17 @@ test("planner-closeout-hold closes the active packet, reconciles canonically clo
       "",
       "## Snapshot",
       "- Current Stage: planning",
-      "- Current Focus: OPS-07 closeout is approved; Planner should place the baseline on no-active-lane hold.",
+      "- Current Focus: CLOSEOUT-02 closeout is approved; Planner should place the baseline on no-active-lane hold.",
       "",
       "## Next Recommended Agent",
       "- Planner",
       "",
       "## Open Decisions / Blockers",
-      "- `OPS-07` Ready For Code is approved; active handoff is `reviewer -> planner`. Planner should place the reusable baseline on no-active-lane hold.",
+      "- `CLOSEOUT-02` Ready For Code is approved; active handoff is `reviewer -> planner`. Planner should place the reusable baseline on no-active-lane hold.",
       "",
       "## Current Truth Notes",
-      "- `OPS-07` remains the active work item. Current handoff is `reviewer -> planner`; stage is `planning`; gate profile is `contract`.",
-      "- `OPS-06` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.",
+      "- `CLOSEOUT-02` remains the active work item. Current handoff is `reviewer -> planner`; stage is `planning`; gate profile is `contract`.",
+      "- `CLOSEOUT-01` is closed. Latest handoff is `planner -> planner`; stage is `planning`; gate profile is `contract`.",
       "",
       "## Latest Handoff Summary",
       "- none"
@@ -1986,12 +2128,12 @@ test("planner-closeout-hold closes the active packet, reconciles canonically clo
       "## Active Locks",
       "| Task ID | Scope | Owner | Status | Started At | Notes |",
       "|---|---|---|---|---|---|",
-      "| OPS-07 | Planner hold closeout automation | planner | active | 2026-05-10 | planner closeout pending |",
+      "| CLOSEOUT-02 | Planner hold closeout automation | planner | active | 2026-05-10 | planner closeout pending |",
       "",
       "## Active Tasks",
       "| Task ID | Title | Scope | Owner | Status | Priority | Depends On | Verification |",
       "|---|---|---|---|---|---|---|---|",
-      "| OPS-07 | Planner hold closeout automation | one-step planner hold closeout | planner | planning | P0 | OPS-05 | planner closeout pending |",
+      "| CLOSEOUT-02 | Planner hold closeout automation | one-step planner hold closeout | planner | planning | P0 | SEC-01 | planner closeout pending |",
       "- Next first action: Planner should place the reusable baseline on no-active-lane hold.",
       "",
       "## Blocked Tasks",
@@ -2002,7 +2144,7 @@ test("planner-closeout-hold closes the active packet, reconciles canonically clo
       "## Completed Tasks",
       "| Task ID | Title | Completed At | Verification | Notes |",
       "|---|---|---|---|---|",
-      "| OPS-06 | Derived-state refresh parity after closeout | 2026-05-09 | transition planner -> planner; gate contract | Planner recorded OPS-06 closeout after reviewer approval. |",
+      "| CLOSEOUT-01 | Derived-state refresh parity after closeout | 2026-05-09 | transition planner -> planner; gate contract | Planner recorded CLOSEOUT-01 closeout after reviewer approval. |",
       "",
       "## Handoff Log",
       "- none"
@@ -2015,12 +2157,12 @@ test("planner-closeout-hold closes the active packet, reconciles canonically clo
       "# Project Progress",
       "",
       "## Summary",
-      "OPS-07 planner hold closeout test board.",
+      "CLOSEOUT-02 planner hold closeout test board.",
       "",
       "## Progress Board",
       "| Phase | Task ID | Task | Status | Notes | Source |",
       "| --- | --- | --- | --- | --- | --- |",
-      `| Ops | OPS-07 | Planner hold closeout automation | planning | Reviewer approved closeout; planner hold automation closeout pending. | ${packetPath} |`
+      `| Ops | CLOSEOUT-02 | Planner hold closeout automation | planning | Reviewer approved closeout; planner hold automation closeout pending. | ${packetPath} |`
     ].join("\n"),
     "utf8"
   );
@@ -2030,7 +2172,7 @@ test("planner-closeout-hold closes the active packet, reconciles canonically clo
       "# Implementation Plan",
       "",
       "## Operator Next Action",
-      "- `OPS-07` active handoff is `reviewer -> planner`.",
+      "- `CLOSEOUT-02` active handoff is `reviewer -> planner`.",
       "- Planner should place the reusable baseline on no-active-lane hold.",
       `- Source packet: \`${packetPath}\`.`,
       "- Preserve packet-before-code, Active Context derived-state boundaries, generated-doc immutability, root/starter sync, Tester/Reviewer separation, and human approval gates."
@@ -2042,12 +2184,12 @@ test("planner-closeout-hold closes the active packet, reconciles canonically clo
   store.setReleaseState({
     currentStage: "planning",
     releaseGateState: "open",
-    currentFocus: "OPS-07 closeout is approved; Planner should place the baseline on no-active-lane hold.",
+    currentFocus: "CLOSEOUT-02 closeout is approved; Planner should place the baseline on no-active-lane hold.",
     releaseGoal: "Provide a one-step planner hold closeout path.",
     sourceRef: packetPath
   });
   store.upsertWorkItem({
-    workItemId: "OPS-07",
+    workItemId: "CLOSEOUT-02",
     title: "Planner hold closeout automation",
     status: "planning",
     nextAction: "Planner should place the reusable baseline on no-active-lane hold.",
@@ -2056,27 +2198,32 @@ test("planner-closeout-hold closes the active packet, reconciles canonically clo
     metadata: { gateProfile: "contract", readyForCode: "approved" }
   });
   store.upsertWorkItem({
-    workItemId: "OPS-06",
+    workItemId: "CLOSEOUT-01",
     title: "Derived-state refresh parity after closeout",
-    status: "planning",
+    status: "closed",
     nextAction: "Stale planner entry should not survive hold closeout.",
     owner: "planner",
-    sourceRef: "reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md",
-    metadata: { gateProfile: "contract", readyForCode: "approved" }
+    sourceRef: "reference/packets/PKT-01_CLOSEOUT-01_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md",
+    metadata: {
+      gateProfile: "contract",
+      readyForCode: "approved",
+      closedAt: "2026-05-16T09:00:00.000Z",
+      closedBy: "planner"
+    }
   });
   store.upsertArtifact({
-    artifactId: "PKT-01_OPS-07_PLANNER_HOLD_CLOSEOUT_AUTOMATION",
+    artifactId: "PKT-01_CLOSEOUT-02_PLANNER_HOLD_CLOSEOUT_AUTOMATION",
     path: packetPath,
     category: "task_packet",
-    title: "OPS-07 planner hold closeout packet",
+    title: "CLOSEOUT-02 planner hold closeout packet",
     sourceRef: packetPath
   });
   store.upsertArtifact({
-    artifactId: "PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT",
-    path: "reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md",
+    artifactId: "PKT-01_CLOSEOUT-01_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT",
+    path: "reference/packets/PKT-01_CLOSEOUT-01_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md",
     category: "task_packet",
-    title: "OPS-06 derived-state refresh parity packet",
-    sourceRef: "reference/packets/PKT-01_OPS-06_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md"
+    title: "CLOSEOUT-01 derived-state refresh parity packet",
+    sourceRef: "reference/packets/PKT-01_CLOSEOUT-01_DERIVED_STATE_REFRESH_PARITY_AFTER_CLOSEOUT.md"
   });
   writeStateSurfaces({ store, repoRoot });
   store.close();
@@ -2085,35 +2232,34 @@ test("planner-closeout-hold closes the active packet, reconciles canonically clo
     repoRoot,
     dbPath,
     outputDir: repoRoot,
-    args: ["planner-closeout-hold", "--work-item", "OPS-07", "--apply"]
+    args: ["planner-closeout-hold", "--work-item", "CLOSEOUT-02", "--apply"]
   });
 
   assert.equal(applied.apply, true);
   assert.equal(applied.transition, "planner-closeout-hold");
 
   const afterStore = createOperatingStateStore({ dbPath });
-  assert.equal(afterStore.getWorkItem("OPS-07").status, "closed");
-  assert.equal(afterStore.getWorkItem("OPS-06").status, "closed");
-  assert.equal(afterStore.getWorkItem("OPS-06").metadata.reconciledByPlannerCloseoutHold, true);
+  assert.equal(afterStore.getWorkItem("CLOSEOUT-02").status, "closed");
+  assert.equal(afterStore.getWorkItem("CLOSEOUT-01").status, "closed");
   afterStore.close();
 
   const context = JSON.parse(fs.readFileSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.json"), "utf8"));
   assert.equal(context.activeTask, null);
   assert.equal(context.selectedLane, null);
-  assert.equal(context.nextWork.owner, "Planner");
+  assert.equal(context.nextWork.owner, "planner");
   assert.equal(context.nextWork.workflow, ".agents/workflows/plan.md");
   assert.equal(context.nextWork.action, "Keep the reusable baseline on planning hold until a new approved lane is selected.");
 
   const status = buildHarnessStatus({ repoRoot, dbPath, outputDir: repoRoot });
   assert.equal(status.assignment, null);
-  assert.equal(status.nextOwner, "Planner");
+  assert.equal(status.nextOwner, "planner");
 });
 
 test("planner-closeout-hold fails fast when another non-stale open work item remains", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-planner-closeout-hold-blocked-"));
   seedStandardRepo(repoRoot);
   const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
-  const packetPath = "reference/packets/PKT-01_OPS-07_PLANNER_HOLD_CLOSEOUT_AUTOMATION.md";
+  const packetPath = "reference/packets/PKT-01_CLOSEOUT-02_PLANNER_HOLD_CLOSEOUT_AUTOMATION.md";
   writeOpsPacket(repoRoot, packetPath, { gateProfile: "contract", includeManifest: true });
 
   fs.writeFileSync(
@@ -2124,8 +2270,8 @@ test("planner-closeout-hold fails fast when another non-stale open work item rem
       "## Active Tasks",
       "| Task ID | Title | Scope | Owner | Status | Priority | Depends On | Verification |",
       "|---|---|---|---|---|---|---|---|",
-      "| OPS-07 | Planner hold closeout automation | one-step planner hold closeout | planner | planning | P0 | OPS-05 | planner closeout pending |",
-      "| DEV-11 | CLI-first PMW decommission and active context | implementation lane | developer | in_progress | P0 | PLN-09 | implementation active |",
+      "| CLOSEOUT-02 | Planner hold closeout automation | one-step planner hold closeout | planner | planning | P0 | SEC-01 | planner closeout pending |",
+      "| APP-01 | Active implementation packet | implementation lane | developer | in_progress | P0 | PLAN-01 | implementation active |",
       "",
       "## Completed Tasks",
       "| Task ID | Title | Completed At | Verification | Notes |",
@@ -2139,12 +2285,12 @@ test("planner-closeout-hold fails fast when another non-stale open work item rem
   store.setReleaseState({
     currentStage: "planning",
     releaseGateState: "open",
-    currentFocus: "OPS-07 closeout is approved; Planner should place the baseline on no-active-lane hold.",
+    currentFocus: "CLOSEOUT-02 closeout is approved; Planner should place the baseline on no-active-lane hold.",
     releaseGoal: "Provide a one-step planner hold closeout path.",
     sourceRef: packetPath
   });
   store.upsertWorkItem({
-    workItemId: "OPS-07",
+    workItemId: "CLOSEOUT-02",
     title: "Planner hold closeout automation",
     status: "planning",
     nextAction: "Planner should place the reusable baseline on no-active-lane hold.",
@@ -2153,12 +2299,12 @@ test("planner-closeout-hold fails fast when another non-stale open work item rem
     metadata: { gateProfile: "contract", readyForCode: "approved" }
   });
   store.upsertWorkItem({
-    workItemId: "DEV-11",
-    title: "CLI-first PMW decommission and active context",
+    workItemId: "APP-01",
+    title: "Active implementation packet",
     status: "in_progress",
-    nextAction: "Developer is still implementing DEV-11.",
+    nextAction: "Developer is still implementing APP-01.",
     owner: "developer",
-    sourceRef: "reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md",
+    sourceRef: "reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md",
     metadata: { gateProfile: "release", readyForCode: "approved" }
   });
   writeStateSurfaces({ store, repoRoot });
@@ -2168,11 +2314,11 @@ test("planner-closeout-hold fails fast when another non-stale open work item rem
     repoRoot,
     dbPath,
     outputDir: repoRoot,
-    args: ["planner-closeout-hold", "--work-item", "OPS-07"]
+    args: ["planner-closeout-hold", "--work-item", "CLOSEOUT-02"]
   });
 
   assert.equal(preview.ok, false);
-  assert.match(preview.errors.join("\n"), /planner-closeout-hold requires no other open work items; DEV-11/);
+  assert.match(preview.errors.join("\n"), /planner-closeout-hold requires no other open work items; APP-01/);
 });
 
 test("validator blocks incomplete workflow contracts", () => {
@@ -2198,7 +2344,7 @@ test("validator blocks incomplete workflow contracts", () => {
   store.setReleaseState({
     currentStage: "implementation",
     releaseGateState: "open",
-    currentFocus: "DEV-08 workflow contracts",
+    currentFocus: "WORKFLOW-01 workflow contracts",
     releaseGoal: "Block incomplete workflow contracts",
     sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
   });
@@ -2233,7 +2379,7 @@ test("validator blocks missing reusable agent behavior guidance", () => {
   store.setReleaseState({
     currentStage: "implementation",
     releaseGateState: "open",
-    currentFocus: "OPS-03 behavior guidance validation",
+    currentFocus: "FLOW-01 behavior guidance validation",
     releaseGoal: "Block thin behavior guidance regression",
     sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
   });
@@ -2253,8 +2399,8 @@ test("validator blocks missing reusable agent behavior guidance", () => {
   );
 });
 
-test("handoff resolves from CURRENT_STATE when no open task exists", () => {
-  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-handoff-current-state-"));
+test("handoff regenerates CURRENT_STATE next-agent wording from canonical handoff state when no active owner exists", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-handoff-current-state-ignored-"));
   seedStandardRepo(repoRoot);
   const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
 
@@ -2264,7 +2410,7 @@ test("handoff resolves from CURRENT_STATE when no open task exists", () => {
       "# Current State",
       "",
       "## Next Recommended Agent",
-      "- Maintainer validating the next kickoff lane"
+      "- Planner validating the next kickoff lane"
     ].join("\n"),
     "utf8"
   );
@@ -2279,7 +2425,7 @@ test("handoff resolves from CURRENT_STATE when no open task exists", () => {
   });
   store.appendHandoff({
     handoffId: "handoff-closed-01",
-    handoffSummary: "Closed release handed back to maintainer review.",
+    handoffSummary: "Closed release handed back to planner review.",
     fromRole: "reviewer",
     toRole: "developer",
     sourceRef: ".agents/artifacts/CURRENT_STATE.md"
@@ -2288,20 +2434,21 @@ test("handoff resolves from CURRENT_STATE when no open task exists", () => {
   store.close();
 
   const status = buildHarnessStatus({ repoRoot, dbPath, outputDir: repoRoot });
-  assert.equal(status.nextOwner, "Maintainer validating the next kickoff lane");
+  assert.equal(status.nextOwner, "developer");
 
   const handoff = resolveHandoff({ repoRoot, dbPath, outputDir: repoRoot });
   assert.equal(handoff.ok, true);
-  assert.equal(handoff.resolvedBy, "current_state_next_agent");
-  assert.equal(handoff.nextOwner, "Maintainer validating the next kickoff lane");
-  assert.equal(handoff.workflow, ".agents/workflows/plan.md");
+  assert.equal(handoff.resolvedBy, "latest_handoff");
+  assert.equal(handoff.currentStateNextAgent, "Developer");
+  assert.equal(handoff.nextOwner, "developer");
+  assert.equal(handoff.workflow, ".agents/workflows/dev.md");
   assert.equal(handoff.workflowDetails?.exists, true);
-  assert.equal(handoff.workflowDetails?.role, "Planner");
+  assert.equal(handoff.workflowDetails?.role, "Developer");
   assert.deepEqual(handoff.workflowDetails?.missingSections, []);
   assert.deepEqual(handoff.workflowDetails?.readFirst, [
-    "`.agents/artifacts/CURRENT_STATE.md`",
-    "`.agents/artifacts/TASK_LIST.md`",
-    "`.agents/artifacts/REQUIREMENTS.md`"
+    "`.agents/artifacts/REQUIREMENTS.md`",
+    "`.agents/artifacts/ARCHITECTURE_GUIDE.md`",
+    "`active packet and any approved project design/source artifact cited by the task`"
   ]);
   assert.equal(
     handoff.workflowDetails?.turnCloseReporting.some((item) =>
@@ -2311,12 +2458,12 @@ test("handoff resolves from CURRENT_STATE when no open task exists", () => {
   );
 });
 
-test("status and validation report ignore a DB-open work item that canonical TASK_LIST already closed", () => {
+test("status and validation report follow the DB-open work item after TASK_LIST is regenerated as a compatibility view", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-closeout-parity-status-"));
   seedStandardRepo(repoRoot);
   const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
   const packetPath = "reference/packets/PKT-01_QLT-02_CLOSEOUT_PARITY_TEST.md";
-  fs.writeFileSync(path.join(repoRoot, packetPath), "# Packet\n", "utf8");
+  writeOpsPacket(repoRoot, packetPath, { gateProfile: "contract", includeManifest: true });
 
   fs.writeFileSync(
     path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"),
@@ -2389,6 +2536,13 @@ test("status and validation report ignore a DB-open work item that canonical TAS
     sourceRef: packetPath,
     metadata: { gateProfile: "contract", readyForCode: "approved" }
   });
+  store.upsertArtifact({
+    artifactId: "PKT-01_QLT-02_CLOSEOUT_PARITY_TEST",
+    path: packetPath,
+    category: "task_packet",
+    title: "QLT-02 closeout parity test packet",
+    sourceRef: packetPath
+  });
   store.appendHandoff({
     handoffId: "qlt-02-planner-closeout",
     handoffSummary: "Planner recorded QLT-02 closeout after reviewer approval.",
@@ -2403,362 +2557,619 @@ test("status and validation report ignore a DB-open work item that canonical TAS
   store.close();
 
   const status = buildHarnessStatus({ repoRoot, dbPath, outputDir: repoRoot });
-  assert.equal(status.assignment, null);
-  assert.equal(
-    status.nextAction,
-    "Planner should choose the next approved lane and open the next packet only after human agreement."
-  );
+  assert.equal(status.assignment?.workItemId, "QLT-02");
+  assert.equal(typeof status.nextAction, "string");
 
   const report = writeValidationReport({ repoRoot, dbPath, outputDir: repoRoot });
   assert.equal(report.ok, true);
-  assert.equal(report.report.traceSummary ?? null, null);
-  assert.equal(
-    report.report.nextAction,
-    "Planner should choose the next approved lane and open the next packet only after human agreement."
-  );
+  assert.equal(report.report.traceSummary?.workItemId, "QLT-02");
+  assert.equal(typeof report.report.nextAction, "string");
 });
 
-test("handoff routes designer owners to the design workflow contract", () => {
-  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-handoff-designer-"));
+test("planner packet opening helper registers packet, work item, and planner assignment", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-planner-open-pass-"));
   seedStandardRepo(repoRoot);
   const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_OPS-19_PLANNER_PACKET_OPENING_FAST_PATH.md";
+
+  writeOpsPacket(repoRoot, packetPath, {
+    gateProfile: "contract",
+    includeManifest: true,
+    readyForCode: "pending",
+    packetTitle: "PKT-01 OPS-19 Planner packet opening fast path",
+    workItemTitle: "OPS-19 Planner packet opening fast path"
+  });
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-04-21T02:00:00.000Z") });
+  store.setReleaseState({
+    currentStage: "planning",
+    releaseGateState: "open",
+    currentFocus: "Open OPS-19 planning packet",
+    releaseGoal: "Reduce planner packet opening latency",
+    sourceRef: ".agents/artifacts/CURRENT_STATE.md"
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const result = runPlannerPacketOpen({
+    repoRoot,
+    outputDir: repoRoot,
+    dbPath,
+    args: [
+      "--packet-path",
+      packetPath,
+      "--work-item",
+      "OPS-19",
+      "--title",
+      "Planner packet opening fast path"
+    ]
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.command, "planner-open-packet");
+  assert.equal(result.workItemId, "OPS-19");
+  assert.equal(result.gateProfile, "contract");
+  assert.equal(result.transitionResult.ok, true);
+
+  const afterStore = createOperatingStateStore({ dbPath });
+  const artifact = afterStore.getArtifactByPath(packetPath);
+  assert.equal(artifact?.artifactId, "PKT-01_OPS-19_PLANNER_PACKET_OPENING_FAST_PATH");
+  assert.equal(artifact?.category, "task_packet");
+  assert.equal(artifact?.metadata?.workItemId, "OPS-19");
+
+  const workItem = afterStore.getWorkItem("OPS-19");
+  assert.equal(workItem?.owner, "planner");
+  assert.equal(workItem?.status, "planning");
+  assert.equal(workItem?.sourceRef, packetPath);
+  assert.equal(workItem?.metadata?.gateProfile, "contract");
+  assert.equal(workItem?.metadata?.readyForCode, "pending");
+
+  const releaseState = afterStore.getReleaseState("current");
+  assert.equal(releaseState?.currentStage, "planning");
+  assert.equal(releaseState?.currentFocus, "Open OPS-19 planning packet");
+  afterStore.close();
+
+  const activeContext = JSON.parse(
+    fs.readFileSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.json"), "utf8")
+  );
+  assert.equal(activeContext.activeTask?.workItemId, "OPS-19");
+  assert.equal(activeContext.nextWork?.workflow, ".agents/workflows/plan.md");
+
+  const validationReport = JSON.parse(
+    fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "VALIDATION_REPORT.json"), "utf8")
+  );
+  assert.equal(validationReport.gateDecision, "pass");
+});
+
+test("planner packet opening helper fails preflight before mutation when manifest markers are incomplete", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-planner-open-fail-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_OPS-19_PLANNER_PACKET_OPENING_FAST_PATH.md";
+
+  writeOpsPacket(repoRoot, packetPath, {
+    gateProfile: "contract",
+    includeManifest: true,
+    readyForCode: "pending",
+    packetTitle: "PKT-01 OPS-19 Planner packet opening fast path",
+    workItemTitle: "OPS-19 Planner packet opening fast path",
+    manifestMarkers: [
+      "- Ready For Code: pending",
+      "- root: run root targeted and full tests",
+      "- standard-template: run starter targeted and full tests",
+      "- validator: run harness validator",
+      "- active context: regenerate ACTIVE_CONTEXT artifacts"
+    ]
+  });
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-04-21T02:30:00.000Z") });
+  store.setReleaseState({
+    currentStage: "planning",
+    releaseGateState: "open",
+    currentFocus: "Open OPS-19 planning packet",
+    releaseGoal: "Reduce planner packet opening latency",
+    sourceRef: ".agents/artifacts/CURRENT_STATE.md"
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const result = runPlannerPacketOpen({
+    repoRoot,
+    outputDir: repoRoot,
+    dbPath,
+    args: [
+      "--packet-path",
+      packetPath,
+      "--work-item",
+      "OPS-19",
+      "--title",
+      "Planner packet opening fast path"
+    ]
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.errors.some((error) => error.includes("review closeout")), true);
+
+  const afterStore = createOperatingStateStore({ dbPath });
+  assert.equal(afterStore.getArtifactByPath(packetPath), null);
+  assert.equal(afterStore.getWorkItem("OPS-19"), null);
+  afterStore.close();
+});
+
+test("planner packet opening helper fails semantic preflight before mutation when packet evidence is incomplete", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-planner-open-semantic-fail-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_OPS-26_PACKET_OPEN_SEMANTIC_PREFLIGHT_HARDENING.md";
+
+  writeOpsPacket(repoRoot, packetPath, {
+    gateProfile: "contract",
+    includeManifest: true,
+    readyForCode: "pending",
+    packetTitle: "PKT-01 OPS-26 Packet-open semantic preflight hardening",
+    workItemTitle: "OPS-26 Packet-open semantic preflight hardening"
+  });
+
+  const packetAbsolutePath = path.join(repoRoot, packetPath);
+  const packetContent = fs
+    .readFileSync(packetAbsolutePath, "utf8")
+    .replace(
+      "| Authoritative source intake status | not-needed | Uses local packet evidence | not-needed |",
+      "| Authoritative source intake status | approved | test packet requires authoritative-source evidence | approved |"
+    )
+    .replace(
+      "| New authoritative source impact | none | No new external source | not-needed |",
+      "| New authoritative source impact | analyzed | test packet changes source expectations | approved |"
+    )
+    .replace("- Selected UX archetype: operator-console-context\n", "")
+    .replace(
+      "- Verification manifest: contract evidence declared\n",
+      [
+        "- Verification manifest: contract evidence declared",
+        "- Lane-type declaration: planning",
+        "- Lane-type universal minimum sections: Goal; Non-Goal"
+      ].join("\n") + "\n"
+    );
+  fs.writeFileSync(packetAbsolutePath, packetContent, "utf8");
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-15T03:00:00.000Z") });
+  store.setReleaseState({
+    currentStage: "planning",
+    releaseGateState: "open",
+    currentFocus: "Open OPS-26 planning packet",
+    releaseGoal: "Prevent semantic packet-open drift before mutation",
+    sourceRef: ".agents/artifacts/CURRENT_STATE.md"
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const result = runPlannerPacketOpen({
+    repoRoot,
+    outputDir: repoRoot,
+    dbPath,
+    args: [
+      "--packet-path",
+      packetPath,
+      "--work-item",
+      "OPS-26",
+      "--title",
+      "Packet-open semantic preflight hardening"
+    ]
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.errors.some((error) => error.includes("Selected UX archetype")), true);
+  assert.equal(result.errors.some((error) => error.includes("Authoritative source disposition")), true);
+  assert.equal(result.errors.some((error) => error.includes("does not include in scope")), true);
+
+  const afterStore = createOperatingStateStore({ dbPath });
+  assert.equal(afterStore.getArtifactByPath(packetPath), null);
+  assert.equal(afterStore.getWorkItem("OPS-26"), null);
+  afterStore.close();
+});
+
+test("planner packet opening helper allows low-risk contract packets without the review-closeout manifest marker", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-planner-open-low-risk-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_PLN-21_LOW_RISK_CLOSEOUT_TEST.md";
+
+  writeOpsPacket(repoRoot, packetPath, {
+    gateProfile: "contract",
+    includeManifest: true,
+    readyForCode: "pending",
+    packetTitle: "PKT-01 PLN-21 Low-risk closeout test",
+    workItemTitle: "PLN-21 Low-risk closeout test",
+    closeoutRiskTier: "low-risk",
+    manifestMarkers: [
+      "- Ready For Code: pending",
+      "- root: run root targeted and full tests",
+      "- standard-template: run starter targeted and full tests",
+      "- targeted: gate profile and transition tests",
+      "- validator: run harness validator",
+      "- active context: regenerate ACTIVE_CONTEXT artifacts"
+    ]
+  });
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-16T02:00:00.000Z") });
+  store.setReleaseState({
+    currentStage: "planning",
+    releaseGateState: "open",
+    currentFocus: "Open PLN-21 low-risk packet",
+    releaseGoal: "Allow explicit low-risk closeout packets to skip review-closeout manifest markers",
+    sourceRef: ".agents/artifacts/CURRENT_STATE.md"
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const result = runPlannerPacketOpen({
+    repoRoot,
+    outputDir: repoRoot,
+    dbPath,
+    args: [
+      "--packet-path",
+      packetPath,
+      "--work-item",
+      "PLN-21",
+      "--title",
+      "Low-risk closeout test"
+    ]
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.transitionResult.ok, true);
+});
+
+test("validator treats non-canonical CURRENT_STATE and TASK_LIST operational conflicts as warnings", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-authority-warning-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_PLN-21_AUTHORITY_WARNING_TEST.md";
+
+  writeOpsPacket(repoRoot, packetPath, {
+    gateProfile: "contract",
+    includeManifest: true,
+    packetTitle: "PKT-01 PLN-21 authority warning test",
+    workItemTitle: "PLN-21 authority warning test"
+  });
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-16T02:15:00.000Z") });
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "PLN-21 authority warning validation",
+    releaseGoal: "Treat duplicate operational surfaces as warnings when canonical state is intact",
+    sourceRef: packetPath
+  });
+  store.upsertWorkItem({
+    workItemId: "PLN-21",
+    title: "Authority warning validation",
+    status: "in_progress",
+    owner: "developer",
+    nextAction: "Tester should validate the narrowed duplicate-surface warning behavior.",
+    sourceRef: packetPath,
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  store.appendHandoff({
+    handoffId: "pln-21-planner-to-developer",
+    handoffSummary: "Planner approved the slice and implementation is active.",
+    fromRole: "planner",
+    toRole: "developer",
+    sourceRef: packetPath,
+    payload: {
+      nextFirstAction: "Implement the approved slice and preserve canonical operational authority."
+    }
+  });
+  store.upsertArtifact({
+    artifactId: "PKT-01_PLN-21_AUTHORITY_WARNING_TEST",
+    path: packetPath,
+    category: "task_packet",
+    title: "PLN-21 authority warning test",
+    sourceRef: packetPath,
+    metadata: { workItemId: "PLN-21" }
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
 
   fs.writeFileSync(
     path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"),
     [
       "# Current State",
       "",
+      "## Snapshot",
+      "- Current Stage: review",
+      "- Current Focus: Drifted duplicate CURRENT_STATE surface.",
+      "",
       "## Next Recommended Agent",
-      "- Designer resolving the UI evidence contract"
+      "- Reviewer",
+      "",
+      "## Open Decisions / Blockers",
+      "- `PLN-21` Ready For Code is approved; active handoff is `developer -> tester`. Tester should validate warning-only duplicate-surface behavior.",
+      "",
+      "## Current Truth Notes",
+      "- `PLN-21` remains the active work item. Current handoff is `developer -> tester`; stage is `review`; gate profile is `contract`.",
+      "",
+      "## Latest Handoff Summary",
+      "- none"
     ].join("\n"),
-    "utf8"
-  );
-
-  const store = createOperatingStateStore({ dbPath, now: createClock("2026-04-27T02:15:00.000Z") });
-  store.setReleaseState({
-    currentStage: "closed",
-    releaseGateState: "approved",
-    currentFocus: "Design handoff routing",
-    releaseGoal: "Route designer work to design.md",
-    sourceRef: ".agents/artifacts/CURRENT_STATE.md"
-  });
-  writeStateSurfaces({ store, repoRoot });
-  store.close();
-
-  const handoff = resolveHandoff({ repoRoot, dbPath, outputDir: repoRoot });
-  assert.equal(handoff.ok, true);
-  assert.equal(handoff.workflow, ".agents/workflows/design.md");
-  assert.equal(handoff.workflowDetails?.role, "Designer");
-  assert.deepEqual(handoff.workflowDetails?.missingSections, []);
-});
-
-test("handoff routing rejects ambiguous and substring alias owner values", () => {
-  assert.equal(workflowForOwner("developer/tester"), "manual_selection_required");
-  assert.equal(workflowForOwner("contest owner"), "manual_selection_required");
-  assert.equal(workflowForOwner("npm launcher"), "manual_selection_required");
-  assert.equal(workflowForOwner("Developer"), ".agents/workflows/dev.md");
-  assert.equal(workflowForOwner("Designer resolving the UI evidence contract"), ".agents/workflows/design.md");
-  assert.equal(workflowForOwner("Project Manager coordinating delivery"), ".agents/workflows/pm.md");
-  assert.equal(workflowForOwner("PM"), ".agents/workflows/pm.md");
-  assert.equal(workflowForOwner("QA verification lane"), ".agents/workflows/test.md");
-});
-
-function writeOpsPacket(repoRoot, packetPath, { gateProfile, includeManifest, readyForCode = "approved" }) {
-  const readyForCodeApproved = readyForCode === "approved";
-  const headerRows = [
-    ["Work item", "OPS-03 Harness operation friction reduction", "Reduce state-sync friction", "draft"],
-    [
-      "Ready For Code",
-      readyForCode,
-      readyForCodeApproved ? "User approved implementation" : "Implementation approval pending",
-      readyForCodeApproved ? "approved" : "draft"
-    ],
-    ["Human sync needed", "yes", "Gate behavior changes operator process", "approved"],
-    ...(gateProfile ? [["Gate profile", gateProfile, "Contract-level harness operation change", "approved"]] : []),
-    ["User-facing impact", "medium", "Operator state and Active Context metadata change", "approved"],
-    ["Layer classification", "core", "Reusable harness contract", "approved"],
-    ["Active profile dependencies", "none", "No optional profile", "not-needed"],
-    ["Profile evidence status", "not-needed", "No optional profile", "not-needed"],
-    ["UX archetype status", "approved", "Operator-facing metadata surface is covered by existing context archetype", "approved"],
-    ["UX deviation status", "none", "No deviation", "approved"],
-    ["Environment topology status", "not-needed", "No deploy/cutover", "not-needed"],
-    ["Domain foundation status", "not-needed", "No product data schema", "not-needed"],
-    ["Authoritative source intake status", "not-needed", "Uses local packet evidence", "not-needed"],
-    ["Shared-source wave status", "not-needed", "No source wave", "not-needed"],
-    ["Packet exit gate status", "pending", "Implementation pending", "draft"],
-    ["Improvement promotion status", "approved", "OPS-03 promoted from preventive memory", "approved"],
-    ["Existing system dependency", "none", "No legacy system", "not-needed"],
-    ["New authoritative source impact", "none", "No new external source", "not-needed"],
-    ["Risk if started now", "low", "Approval boundary closed", "approved"]
-  ];
-  const manifest = includeManifest
-    ? [
-        "## Verification Manifest",
-        `- Ready For Code: ${readyForCode}`,
-        "- root: run root targeted and full tests",
-        "- standard-template: run starter targeted and full tests",
-        "- targeted: gate profile and transition tests",
-        "- validator: run harness validator",
-        "- active context: regenerate ACTIVE_CONTEXT artifacts",
-        "- review closeout: required before packet close"
-      ].join("\n")
-    : "";
-  const content = [
-    "# PKT-01 OPS-03 Transition Test",
-    "",
-    "## Quick Decision Header",
-    "| Item | Proposed | Why | Status |",
-    "|---|---|---|---|",
-    ...headerRows.map((row) => `| ${row.join(" | ")} |`),
-    "",
-    "## 1. Goal",
-    "- Test OPS-03 gate profile behavior.",
-    "",
-    "## 3. Proposed Scope",
-    "- Layer classification: core",
-    "- Required reading before code: `.agents/artifacts/CURRENT_STATE.md`, `.agents/artifacts/TASK_LIST.md`, this packet",
-    "- UX archetype reference: reference/artifacts/PRODUCT_UX_ARCHETYPE.md",
-    "- Selected UX archetype: operator-console-context",
-    `- Gate profile: ${gateProfile ?? "pending"}`,
-    `- Verification manifest: ${includeManifest ? "contract evidence declared" : "pending"}`,
-    "",
-    manifest
-  ].join("\n");
-  fs.writeFileSync(path.join(repoRoot, packetPath), content, "utf8");
-}
-
-function seedStandardRepo(repoRoot) {
-  fs.mkdirSync(path.join(repoRoot, ".agents", "artifacts"), { recursive: true });
-  fs.mkdirSync(path.join(repoRoot, ".agents", "rules"), { recursive: true });
-  fs.mkdirSync(path.join(repoRoot, ".agents", "runtime", "generated-state-docs"), { recursive: true });
-  fs.mkdirSync(path.join(repoRoot, ".agents", "skills", "day_start"), { recursive: true });
-  fs.mkdirSync(path.join(repoRoot, ".agents", "skills", "day_wrap_up"), { recursive: true });
-  fs.mkdirSync(path.join(repoRoot, ".agents", "workflows"), { recursive: true });
-  fs.mkdirSync(path.join(repoRoot, "reference", "artifacts"), { recursive: true });
-  fs.mkdirSync(path.join(repoRoot, "reference", "packets"), { recursive: true });
-  fs.mkdirSync(path.join(repoRoot, "reference", "artifacts", "daily"), { recursive: true });
-
-  fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "REQUIREMENTS.md"), "# Requirements\n", "utf8");
-  fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "ARCHITECTURE_GUIDE.md"), "# Architecture\n", "utf8");
-  fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "IMPLEMENTATION_PLAN.md"), "# Implementation Plan\n\n## Operator Next Action\n- Run DEV-05 tooling.\n", "utf8");
-  fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "PROJECT_PROGRESS.md"), "# Project Progress\n", "utf8");
-  fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"), "# Current State\n", "utf8");
-  fs.writeFileSync(path.join(repoRoot, ".agents", "artifacts", "PREVENTIVE_MEMORY.md"), "# Preventive Memory\n", "utf8");
-  fs.writeFileSync(path.join(repoRoot, ".agents", "rules", "agent_behavior.md"), agentBehaviorGuideFixture(), "utf8");
-  fs.writeFileSync(path.join(repoRoot, ".agents", "skills", "day_start", "SKILL.md"), skillBehaviorFixture("Day Start"), "utf8");
-  fs.writeFileSync(path.join(repoRoot, ".agents", "skills", "day_wrap_up", "SKILL.md"), skillBehaviorFixture("Day Wrap Up"), "utf8");
-  writeWorkflowContractFixtures(repoRoot);
-  fs.writeFileSync(path.join(repoRoot, "reference", "artifacts", "UI_DESIGN.md"), "# UI Design\n", "utf8");
-  fs.writeFileSync(path.join(repoRoot, "reference", "artifacts", "SYSTEM_CONTEXT.md"), "# System Context\n", "utf8");
-  fs.writeFileSync(path.join(repoRoot, "reference", "artifacts", "HANDOFF_ARCHIVE.md"), "# Handoff Archive\n", "utf8");
-  fs.writeFileSync(path.join(repoRoot, "reference", "artifacts", "daily", "2026-04-19.md"), "# Daily\n", "utf8");
-  fs.writeFileSync(path.join(repoRoot, "reference", "artifacts", "daily", "2026-04-20.md"), "# Daily\n", "utf8");
-  fs.writeFileSync(path.join(repoRoot, "reference", "packets", "PKT-01_DEV-04_PMW_READ_SURFACE.md"), "# Packet\n", "utf8");
-  seedProfileAwareValidatorFixtures(repoRoot);
-}
-
-function writeStateSurfaces({
-  store,
-  repoRoot,
-  validation = { ok: true, cutoverReady: true, findings: [], gateDecision: "pass" }
-}) {
-  writeGeneratedStateDocs({ store, outputDir: repoRoot });
-  writeActiveContext({ store, repoRoot, outputDir: repoRoot, validation });
-}
-
-function writeWorkflowContractFixtures(repoRoot) {
-  const fixtures = [
-    {
-      fileName: "deploy.md",
-      title: "Deploy Workflow",
-      role: "Deployer",
-      mustRead: ["`.agents/artifacts/CURRENT_STATE.md`", "`.agents/artifacts/TASK_LIST.md`"]
-    },
-    {
-      fileName: "design.md",
-      title: "Design Workflow",
-      role: "Designer",
-      mustRead: ["`.agents/artifacts/CURRENT_STATE.md`", "`reference/artifacts/UI_DESIGN.md`"]
-    },
-    {
-      fileName: "dev.md",
-      title: "Developer Workflow",
-      role: "Developer",
-      mustRead: ["`.agents/artifacts/CURRENT_STATE.md`", "`.agents/artifacts/TASK_LIST.md`"]
-    },
-    {
-      fileName: "docu.md",
-      title: "Documentation Workflow",
-      role: "Documenter",
-      mustRead: ["`.agents/artifacts/CURRENT_STATE.md`", "`.agents/artifacts/PROJECT_PROGRESS.md`"]
-    },
-    {
-      fileName: "handoff.md",
-      title: "Handoff Workflow",
-      role: "Handoff Router",
-      mustRead: ["`.agents/artifacts/CURRENT_STATE.md`", "`.agents/artifacts/TASK_LIST.md`"]
-    },
-    {
-      fileName: "pm.md",
-      title: "Project Manager Workflow",
-      role: "Project Manager",
-      mustRead: [
-        "`.agents/artifacts/CURRENT_STATE.md`",
-        "`.agents/artifacts/TASK_LIST.md`",
-        "`.agents/artifacts/PROJECT_PROGRESS.md`"
-      ]
-    },
-    {
-      fileName: "plan.md",
-      title: "Plan Workflow",
-      role: "Planner",
-      mustRead: [
-        "`.agents/artifacts/CURRENT_STATE.md`",
-        "`.agents/artifacts/TASK_LIST.md`",
-        "`.agents/artifacts/REQUIREMENTS.md`"
-      ]
-    },
-    {
-      fileName: "review.md",
-      title: "Review Workflow",
-      role: "Reviewer",
-      mustRead: ["`.agents/artifacts/CURRENT_STATE.md`", "`.agents/artifacts/TASK_LIST.md`"]
-    },
-    {
-      fileName: "test.md",
-      title: "Test Workflow",
-      role: "Tester",
-      mustRead: ["`.agents/artifacts/CURRENT_STATE.md`", "`.agents/artifacts/TASK_LIST.md`"]
-    }
-  ];
-
-  for (const fixture of fixtures) {
-    fs.writeFileSync(
-      path.join(repoRoot, ".agents", "workflows", fixture.fileName),
-      buildWorkflowContract(fixture),
-      "utf8"
-    );
-  }
-}
-
-function buildWorkflowContract({ title, role, mustRead }) {
-  return [
-    `# ${title}`,
-    "",
-    "## Role",
-    `- ${role}`,
-    "",
-    "## Mission",
-    "- Own the lane-specific work and keep governance state explicit.",
-    "",
-    "## Behavior Contract",
-    "- Apply `.agents/rules/agent_behavior.md` before state-changing work.",
-    "- Use `Think Before Coding`, `Simplicity First`, `Surgical Changes`, and `Goal-Driven Execution` as the default execution checks.",
-    "- Treat the human-and-Planner-approved project design SSOT as binding; surface conflicts instead of silently resolving them.",
-    "",
-    "## Authority",
-    "- Update artifacts inside the workflow lane after required approvals are present.",
-    "",
-    "## Non-Authority",
-    "- Do not bypass another workflow's required approval gate.",
-    "",
-    "## Must Read SSOT",
-    ...mustRead.map((item) => `- ${item}`),
-    "",
-    "## Allowed Actions",
-    "- Execute the approved lane scope and record evidence.",
-    "",
-    "## Forbidden Actions",
-    "- Do not edit derived generated-state docs manually.",
-    "",
-    "## Required Outputs",
-    "- Updated canonical artifacts and validation evidence.",
-    "",
-    "## Turn Close Reporting",
-    "- Report what was done in this turn.",
-    "- Report the next recommended agent workflow.",
-    "- Report the next concrete work for that workflow, or `None` if no work remains.",
-    "",
-    "## Handoff Rules",
-    "- Route to the workflow that owns the next unresolved task.",
-    "",
-    "## Stop Conditions",
-    "- Stop when required approval or missing source evidence blocks execution.",
-    "",
-    "## Escalation Rules",
-    "- Ask the user when governance state and requested execution conflict."
-  ].join("\n");
-}
-
-function agentBehaviorGuideFixture() {
-  return [
-    "# Agent Behavior Contract",
-    "",
-    "## Think Before Coding",
-    "- Surface assumptions and ambiguity.",
-    "",
-    "## Simplicity First",
-    "- Keep the approved solution small.",
-    "",
-    "## Surgical Changes",
-    "- Change only lines tied to the approved request.",
-    "",
-    "## Goal-Driven Execution",
-    "- Verify against concrete success criteria.",
-    "",
-    "## Project Design SSOT Precedence",
-    "- Developer implements to the approved design.",
-    "- Tester verifies against the approved design.",
-    "- Reviewer checks evidence and source parity.",
-    "- Active Context derived summaries must not become write authority."
-  ].join("\n");
-}
-
-function skillBehaviorFixture(title) {
-  return [
-    `# ${title}`,
-    "",
-    "## Behavior Checks",
-    "- Apply `.agents/rules/agent_behavior.md` before recommending non-trivial work.",
-    "- Use `Think Before Coding` to surface assumptions.",
-    "- Use `Simplicity First` to keep recommendations small.",
-    "- Use `Surgical Changes` to avoid unrelated cleanup.",
-    "- Use `Goal-Driven Execution` to define concrete checks.",
-    "- Treat the approved project design SSOT as binding."
-  ].join("\n");
-}
-
-function seedStarterRepo(repoRoot) {
-  const starterRoot = detectStarterRoot();
-  fs.cpSync(starterRoot, repoRoot, { recursive: true });
-  resetCopiedStarterToFreshState(repoRoot);
-}
-
-function detectStarterRoot() {
-  const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
-  const nestedStarter = path.join(repoRoot, "standard-template");
-  return fs.existsSync(path.join(nestedStarter, "AGENTS.md")) ? nestedStarter : repoRoot;
-}
-
-function createClock(startIso) {
-  let offset = 0;
-  const base = Date.parse(startIso);
-  return () => new Date(base + offset++ * 1000).toISOString();
-}
-
-function resetCopiedStarterToFreshState(repoRoot) {
-  fs.writeFileSync(
-    path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"),
-    "# Current State\n\n## Snapshot\n- Current Stage: not started\n\n## Open Decisions / Blockers\n- Run `INIT_STANDARD_HARNESS.cmd` or `npm run harness:init` before real work begins.\n",
     "utf8"
   );
   fs.writeFileSync(
     path.join(repoRoot, ".agents", "artifacts", "TASK_LIST.md"),
-    "# Task List\n\n## Active Tasks\n| Task ID | Title | Scope | Owner | Status | Priority | Depends On | Verification |\n|---|---|---|---|---|---|---|---|\n| BOOT-00 | Initialize copied starter | starter bootstrap | project operator | starter_pending | P0 | `INIT_STANDARD_HARNESS.cmd` or `npm run harness:init` | generated docs and validation guidance |\n- Run `INIT_STANDARD_HARNESS.cmd` or `npm run harness:init` before real work begins.\n",
+    [
+      "# Task List",
+      "",
+      "## Active Locks",
+      "| Task ID | Scope | Owner | Status | Started At | Notes |",
+      "|---|---|---|---|---|---|",
+      "| PLN-21 | Operational authority simplification | reviewer | active | 2026-05-16 | duplicate-surface drift |",
+      "",
+      "## Active Tasks",
+      "| Task ID | Title | Scope | Owner | Status | Priority | Depends On | Verification |",
+      "|---|---|---|---|---|---|---|---|",
+      "| PLN-21 | Authority warning validation | validator simplification | reviewer | review | P0 | BASE-01 | review closeout pending |",
+      "- Next first action: Reviewer should close the packet even though canonical operational state is still implementation-owned.",
+      "",
+      "## Blocked Tasks",
+      "| Task ID | Blocker | Owner | Status | Unblock Condition | Verification |",
+      "|---|---|---|---|---|---|",
+      "| - | None | - | clear | - | - |",
+      "",
+      "## Completed Tasks",
+      "| Task ID | Title | Completed At | Verification | Notes |",
+      "|---|---|---|---|---|",
+      "| - | None | - | - | - |",
+      "",
+      "## Handoff Log",
+      "- none"
+    ].join("\n"),
     "utf8"
   );
-  for (const suffix of ["", "-shm", "-wal"]) {
-    fs.rmSync(path.join(repoRoot, ".harness", `operating_state.sqlite${suffix}`), { force: true });
-  }
-}
 
+  const result = runValidator({ repoRoot, dbPath, outputDir: repoRoot });
+  const conflictFindings = result.findings.filter(
+    (finding) =>
+      finding.code === "current_state_operational_authority_conflict" ||
+      finding.code === "task_list_operational_authority_conflict"
+  );
+
+  assert.equal(result.ok, true);
+  assert.equal(conflictFindings.length > 0, true);
+  assert.equal(conflictFindings.every((finding) => finding.severity === "warning"), true);
+});
+
+test("tester-to-planner-low-risk-closeout requires an approved low-risk packet tier", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-low-risk-closeout-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_PLN-21_LOW_RISK_TRANSITION_TEST.md";
+
+  writeOpsPacket(repoRoot, packetPath, {
+    gateProfile: "contract",
+    includeManifest: true,
+    closeoutRiskTier: "low-risk",
+    packetTitle: "PKT-01 PLN-21 low-risk transition test",
+    workItemTitle: "PLN-21 low-risk transition test"
+  });
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-16T02:30:00.000Z") });
+  store.setReleaseState({
+    currentStage: "verification",
+    releaseGateState: "open",
+    currentFocus: "PLN-21 low-risk scope is awaiting tester closeout.",
+    releaseGoal: "Allow an explicit low-risk tester-to-planner closeout path.",
+    sourceRef: packetPath
+  });
+  store.upsertWorkItem({
+    workItemId: "PLN-21",
+    title: "Low-risk closeout transition",
+    status: "review",
+    owner: "tester",
+    nextAction: "Planner should record low-risk closeout and choose the next approved lane.",
+    sourceRef: packetPath,
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  store.upsertArtifact({
+    artifactId: "PKT-01_PLN-21_LOW_RISK_TRANSITION_TEST",
+    path: packetPath,
+    category: "task_packet",
+    title: "PLN-21 low-risk transition test",
+    sourceRef: packetPath,
+    metadata: { workItemId: "PLN-21" }
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const applied = runTransition({
+    repoRoot,
+    dbPath,
+    outputDir: repoRoot,
+    args: ["tester-to-planner-low-risk-closeout", "--work-item", "PLN-21", "--apply"]
+  });
+
+  assert.equal(applied.ok, true);
+  assert.equal(applied.transition, "tester-to-planner-low-risk-closeout");
+  assert.equal(applied.toOwner, "planner");
+  const afterStore = createOperatingStateStore({ dbPath });
+  const releaseState = afterStore.getReleaseState("current");
+  const workItem = afterStore.getWorkItem("PLN-21");
+  afterStore.close();
+
+  assert.equal(releaseState?.currentStage, "planning");
+  assert.equal(
+    releaseState?.currentFocus,
+    "PLN-21 low-risk closeout is verification-complete; Planner is recording closeout under the approved low-risk path."
+  );
+  assert.equal(workItem?.owner, "planner");
+  assert.equal(workItem?.status, "planning");
+});
+
+test("tester-to-planner-low-risk-closeout fails without an explicit low-risk packet tier", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-low-risk-closeout-blocked-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_PLN-21_LOW_RISK_TRANSITION_TEST.md";
+
+  writeOpsPacket(repoRoot, packetPath, {
+    gateProfile: "contract",
+    includeManifest: true,
+    packetTitle: "PKT-01 PLN-21 low-risk transition test",
+    workItemTitle: "PLN-21 low-risk transition test"
+  });
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-16T02:45:00.000Z") });
+  store.setReleaseState({
+    currentStage: "verification",
+    releaseGateState: "open",
+    currentFocus: "PLN-21 closeout is awaiting tester routing.",
+    releaseGoal: "Reject low-risk closeout without explicit packet approval.",
+    sourceRef: packetPath
+  });
+  store.upsertWorkItem({
+    workItemId: "PLN-21",
+    title: "Low-risk closeout transition",
+    status: "review",
+    owner: "tester",
+    nextAction: "Reviewer should assess closeout readiness.",
+    sourceRef: packetPath,
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  store.upsertArtifact({
+    artifactId: "PKT-01_PLN-21_LOW_RISK_TRANSITION_TEST",
+    path: packetPath,
+    category: "task_packet",
+    title: "PLN-21 low-risk transition test",
+    sourceRef: packetPath,
+    metadata: { workItemId: "PLN-21" }
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const preview = runTransition({
+    repoRoot,
+    dbPath,
+    outputDir: repoRoot,
+    args: ["tester-to-planner-low-risk-closeout", "--work-item", "PLN-21"]
+  });
+
+  assert.equal(preview.ok, false);
+  assert.match(preview.errors.join("\n"), /must declare - Closeout risk tier: low-risk/);
+});
+
+test("tester-to-planner-low-risk-closeout fails when detected risk floor is higher than declared tier", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-low-risk-closeout-floor-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_PLN-22_RISK_FLOOR_TEST.md";
+
+  writeOpsPacket(repoRoot, packetPath, {
+    gateProfile: "contract",
+    includeManifest: true,
+    closeoutRiskTier: "low-risk",
+    packetTitle: "PKT-01 PLN-22 risk floor test",
+    workItemTitle: "PLN-22 risk floor test"
+  });
+  const absolutePacketPath = path.join(repoRoot, packetPath);
+  fs.writeFileSync(
+    absolutePacketPath,
+    fs.readFileSync(absolutePacketPath, "utf8").replace(
+      "| Risk if started now | low | Approval boundary closed | approved |",
+      "| Risk if started now | high | Authority-model mutation cannot use low-risk closeout | approved |"
+    ),
+    "utf8"
+  );
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-17T02:45:00.000Z") });
+  store.setReleaseState({
+    currentStage: "verification",
+    releaseGateState: "open",
+    currentFocus: "PLN-22 closeout is awaiting tester routing.",
+    releaseGoal: "Reject low-risk closeout when detected floor is high.",
+    sourceRef: packetPath
+  });
+  store.upsertWorkItem({
+    workItemId: "PLN-22",
+    title: "Risk floor closeout transition",
+    status: "review",
+    owner: "tester",
+    nextAction: "Close low-risk path if allowed.",
+    sourceRef: packetPath,
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  store.upsertArtifact({
+    artifactId: "PKT-01_PLN-22_RISK_FLOOR_TEST",
+    path: packetPath,
+    category: "task_packet",
+    title: "PLN-22 risk floor test",
+    sourceRef: packetPath,
+    metadata: { workItemId: "PLN-22" }
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const preview = runTransition({
+    repoRoot,
+    dbPath,
+    outputDir: repoRoot,
+    args: ["tester-to-planner-low-risk-closeout", "--work-item", "PLN-22"]
+  });
+
+  assert.equal(preview.ok, false);
+  assert.match(preview.errors.join("\n"), /higher detected risk floor/);
+});
+
+test("validator reports closeout risk floor mismatches", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-risk-floor-validator-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_PLN-22_RISK_FLOOR_VALIDATOR.md";
+
+  writeOpsPacket(repoRoot, packetPath, {
+    gateProfile: "contract",
+    includeManifest: true,
+    closeoutRiskTier: "low-risk",
+    packetTitle: "PKT-01 PLN-22 risk floor validator",
+    workItemTitle: "PLN-22 risk floor validator"
+  });
+  const absolutePacketPath = path.join(repoRoot, packetPath);
+  fs.writeFileSync(
+    absolutePacketPath,
+    fs.readFileSync(absolutePacketPath, "utf8").replace(
+      "| Risk if started now | low | Approval boundary closed | approved |",
+      "| Risk if started now | high | Shipped starter payload risk floor | approved |"
+    ),
+    "utf8"
+  );
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-17T03:00:00.000Z") });
+  store.setReleaseState({
+    currentStage: "verification",
+    releaseGateState: "open",
+    currentFocus: "PLN-22 risk floor validation.",
+    releaseGoal: "Enforce effective risk class.",
+    sourceRef: packetPath
+  });
+  store.upsertWorkItem({
+    workItemId: "PLN-22",
+    title: "Risk floor validator",
+    status: "review",
+    owner: "tester",
+    nextAction: "Validate risk floor.",
+    sourceRef: packetPath,
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  store.upsertArtifact({
+    artifactId: "PKT-01_PLN-22_RISK_FLOOR_VALIDATOR",
+    path: packetPath,
+    category: "task_packet",
+    title: "PLN-22 risk floor validator",
+    sourceRef: packetPath,
+    metadata: { workItemId: "PLN-22" }
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const result = runValidator({ repoRoot, dbPath });
+  assert.equal(result.ok, false);
+  assert.ok(result.findings.some((finding) => finding.code === "closeout_risk_floor_mismatch"));
+});

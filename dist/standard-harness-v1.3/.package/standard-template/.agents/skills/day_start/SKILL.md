@@ -14,9 +14,9 @@ The brief should make the first execution step obvious while preserving workflow
 
 1. `.agents/runtime/ACTIVE_CONTEXT.json`
 2. the workflow file named by `ACTIVE_CONTEXT.nextWork.workflow`, or `.agents/workflows/pm.md` when the route is unclear
-3. `.agents/artifacts/CURRENT_STATE.md`
-4. `.agents/artifacts/TASK_LIST.md`
-5. the explicit `ACTIVE_CONTEXT.reentryContract.mustReadNext` items that are still unread
+3. the explicit `ACTIVE_CONTEXT.reentryContract.mustReadNext` items that are still unread
+4. `.agents/artifacts/CURRENT_STATE.md` and `.agents/artifacts/TASK_LIST.md` only when the re-entry contract explicitly requires them or compatibility troubleshooting is needed
+5. the active packet and approved source artifacts only when today's first action depends on them
 6. `.agents/artifacts/PREVENTIVE_MEMORY.md` only if directly relevant
 7. the most recent note under `reference/artifacts/daily/` when today's scope needs recent delta context
 8. any immediately relevant repository evidence
@@ -28,6 +28,7 @@ The brief should make the first execution step obvious while preserving workflow
 - what changed recently
 - blockers, risks, or pending confirmations
 - today's likely top priorities
+- whether today's plan is packet opening, packet execution, packet verification, packet closeout, or planning hold
 - next recommended workflow and owner
 - evidence gaps that would make the next action unsafe to start
 - the first concrete action
@@ -57,8 +58,9 @@ Return a concise start brief with these sections:
 ## Rules
 
 - Use the user's language.
-- Treat `.agents/artifacts/CURRENT_STATE.md` as the live execution truth unless direct evidence contradicts it.
+- Treat `.agents/runtime/ACTIVE_CONTEXT.json` plus the operational DB state as the live execution route; use `.agents/artifacts/CURRENT_STATE.md` only as a generated compatibility fallback when the re-entry contract asks for it or troubleshooting needs it.
 - Start by echoing the `ACTIVE_CONTEXT` first-read contract: selected lane, next workflow, must-read-next list, and whether fallback reading was required.
+- Treat the day's plan as a baton reconstructed from `ACTIVE_CONTEXT`, the active workflow, and the active packet; do not invent a separate daily-plan authority document.
 - If direct evidence contradicts the saved state, flag the mismatch instead of silently resolving it.
 - Read preventive rules only when they directly affect today's scope.
 - Do not bulk-restate project history.

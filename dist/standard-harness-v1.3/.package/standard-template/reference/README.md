@@ -14,12 +14,15 @@ At project kickoff, most people only need:
 ## Other contents
 
 - `artifacts/`: optional artifact templates used when the task needs them
+- `artifacts/HARNESS_FILE_ROUTE_AUDIT_MATRIX.md`: reusable audit map for checking which route reads which files and updates which surfaces
+- `artifacts/daily/`: optional daily-note area that should be created only when an actual daily log is needed
+- `artifacts/DECISION_LOG.md`, `HANDOFF_ARCHIVE.md`, `REVIEW_REPORT.md`, `WALKTHROUGH.md`: optional review/history artifacts created on first use rather than pre-shipped
 - `profiles/`: optional profile packages for explicitly activated project types
 - `packets/`: task-level approval packet templates and created packets
 - `planning/`: kickoff interview and requirements-freeze materials
-- `reports/`: optional review or transfer report material
-- `mockups/`: optional visual review assets
-- `legacy/`: old or superseded reference material
+- `reports/`: optional review or transfer report material that can be created later when a task needs it
+- `mockups/`: optional visual review assets that can be created later when a task needs them
+- `legacy/`: optional archive area for old or superseded reference material
 - `skills/`: optional skill packs
 
 ## Rule

@@ -3,8 +3,15 @@ import path from "node:path";
 
 import { ACTIVE_CONTEXT_JSON, ACTIVE_CONTEXT_MARKDOWN } from "./active-context.js";
 import { AGENT_TRACES_DIR, VALIDATION_REPORT_JSON, resolveGeneratedDocReadPath } from "./harness-paths.js";
-import { CURRENT_STATE_DOC, TASK_LIST_DOC, calculateChecksum } from "./generate-state-docs.js";
+import {
+  CURRENT_STATE_DOC,
+  TASK_LIST_DOC,
+  COMPATIBILITY_CURRENT_STATE_PATH,
+  COMPATIBILITY_TASK_LIST_PATH,
+  calculateChecksum
+} from "./generate-state-docs.js";
 import { GATE_PROFILE_IDS, resolveGateProfile } from "./gate-profiles.js";
+import { looksLikeStarterPlaceholder } from "./init-project.js";
 import {
   RELEASE_BASELINE,
   ROOT_RELEASE_BASELINE_MARKERS,
@@ -15,7 +22,8 @@ import {
   findMissingWorkflowContractSections,
   prioritizeOpenWorkItems,
   selectActiveWorkItem,
-  resolveHandoffExecution
+  resolveHandoffExecution,
+  workflowForOwner
 } from "./workflow-routing.js";
 
 const REQUIRED_SECTIONS = {
@@ -28,9 +36,13 @@ const SOURCE_WAVE_LEDGER_PATH = "reference/artifacts/AUTHORITATIVE_SOURCE_WAVE_L
 const ACTIVE_PROFILES_PATH = ".agents/artifacts/ACTIVE_PROFILES.md";
 const TASK_LIST_PATH = ".agents/artifacts/TASK_LIST.md";
 const CURRENT_STATE_PATH = ".agents/artifacts/CURRENT_STATE.md";
-const IMPLEMENTATION_PLAN_PATH = ".agents/artifacts/IMPLEMENTATION_PLAN.md";
 const REPOSITORY_LAYOUT_PATH = "reference/artifacts/REPOSITORY_LAYOUT_OWNERSHIP.md";
 const GATE_PROFILE_CONTRACT_PATH = ".harness/runtime/state/gate-profiles.js";
+const RISK_CLASS_ORDER = {
+  low: 1,
+  normal: 2,
+  high: 3
+};
 const WORKFLOW_CONTRACT_PATHS = [
   ".agents/workflows/deploy.md",
   ".agents/workflows/design.md",
@@ -563,10 +575,25 @@ export function validateGeneratedStateDocs({
   }
 
   validateActiveContextContract({ store, repoRoot, outputDir, findings });
+  validateCompatibilityFallbackSurface({
+    store,
+    repoRoot,
+    relativePath: CURRENT_STATE_PATH,
+    requiredMarkers: ["## Snapshot", "## Next Recommended Agent", "## Latest Handoff Summary"],
+    findings
+  });
+  validateCompatibilityFallbackSurface({
+    store,
+    repoRoot,
+    relativePath: TASK_LIST_PATH,
+    requiredMarkers: ["## Active Locks", "## Active Tasks", "## Completed Tasks", "## Handoff Log"],
+    findings
+  });
   validateSourceRefs(store, repoRoot, findings);
   validateFreshness(store, findings);
   validateHarnessOwnedPaths(repoRoot, findings);
   validateStructuredTaskTruth(repoRoot, findings);
+  validateDerivedOperationalSurfaceConflicts({ store, repoRoot, findings });
   validateActiveProfiles(repoRoot, findings);
   validateProfileAwareContracts(repoRoot, findings);
   validateRegisteredTaskPackets(store, repoRoot, findings);
@@ -593,6 +620,65 @@ export function validateGeneratedStateDocs({
   };
 }
 
+export function inspectTaskPacketContract({
+  repoRoot = process.cwd(),
+  packetPath,
+  artifactId = null,
+  content = null
+} = {}) {
+  const findings = [];
+  if (!packetPath) {
+    findings.push({
+      code: "task_packet_missing",
+      severity: "warning",
+      packetPath: packetPath ?? null,
+      message: "Task packet semantic inspection requires packetPath."
+    });
+    return { ok: false, findings, header: null, fields: {} };
+  }
+
+  const resolvedPacketPath = path.resolve(repoRoot, packetPath);
+  const packetContent =
+    content ??
+    readRequiredUtf8File({
+      filePath: resolvedPacketPath,
+      findings,
+      missingCode: "task_packet_missing",
+      missingMessage: `Missing task packet artifact: ${packetPath}.`,
+      pathKey: "packetPath"
+    });
+  if (packetContent == null) {
+    return { ok: false, findings, header: null, fields: {} };
+  }
+
+  const artifact = {
+    artifactId: artifactId ?? path.basename(packetPath, path.extname(packetPath)),
+    path: packetPath
+  };
+  const header = parseQuickDecisionHeader(packetContent);
+  if (!header) {
+    findings.push({
+      code: "task_packet_header_missing",
+      severity: "warning",
+      artifactId: artifact.artifactId,
+      packetPath: artifact.path,
+      message: `${artifact.path} is missing the Quick Decision Header table required for task-packet validation.`
+    });
+    return { ok: false, findings, header: null, fields: {} };
+  }
+
+  const fields = parseBulletFields(packetContent);
+  validateTaskPacketHeader({ artifact, header, findings });
+  validateTaskPacketEvidence({ artifact, header, fields, content: packetContent, repoRoot, findings });
+
+  return {
+    ok: findings.every((finding) => finding.severity !== "error"),
+    findings,
+    header,
+    fields
+  };
+}
+
 function validateHarnessOwnedPaths(repoRoot, findings) {
   const packageJsonPath = path.resolve(repoRoot, "package.json");
   if (!fs.existsSync(packageJsonPath)) {
@@ -615,7 +701,7 @@ function validateHarnessOwnedPaths(repoRoot, findings) {
 
     findings.push({
       code: "harness_owned_path_missing",
-      severity: "error",
+      severity: "warning",
       path: relativePath,
       message: `Missing required harness-owned path ${relativePath}.`
     });
@@ -684,7 +770,7 @@ function validateStructuredTaskTruth(repoRoot, findings) {
     if (!content.includes(section)) {
       findings.push({
         code: "structured_task_table_missing",
-        severity: "error",
+        severity: "warning",
         path: TASK_LIST_PATH,
         section,
         message: `${TASK_LIST_PATH} is missing required section ${section}.`
@@ -726,6 +812,133 @@ function validateStructuredTaskTruth(repoRoot, findings) {
   }
 
   validateStructuredTaskConsistency(parsedTables, findings);
+}
+
+function validateDerivedOperationalSurfaceConflicts({ store, repoRoot, findings }) {
+  if (looksLikeStarterPlaceholder(repoRoot)) {
+    return;
+  }
+  validateCurrentStateOperationalAuthorityConflict({ store, repoRoot, findings });
+  validateTaskListOperationalAuthorityConflict({ store, repoRoot, findings });
+}
+
+function validateCurrentStateOperationalAuthorityConflict({ store, repoRoot, findings }) {
+  const currentStatePath = path.resolve(repoRoot, CURRENT_STATE_PATH);
+  if (!fs.existsSync(currentStatePath)) {
+    return;
+  }
+
+  const releaseState = store.getReleaseState("current");
+  const content = fs.readFileSync(currentStatePath, "utf8");
+  const snapshot = sliceSection(content, "## Snapshot");
+  const currentStage = readLabeledBulletValue(snapshot, "Current Stage");
+  const currentFocus = readLabeledBulletValue(snapshot, "Current Focus");
+  const nextRecommendedAgent = extractFirstValue(sliceSection(content, "## Next Recommended Agent"));
+  const handoffExecution = resolveHandoffExecution({
+    repoRoot,
+    workItems: store.listWorkItems(),
+    latestHandoff: store.listRecentHandoffs(1)[0] ?? null
+  });
+
+  if (
+    hasConcreteValue(currentStage, { allowUnknown: false }) &&
+    normalizeValue(currentStage) !== normalizeValue(releaseState?.currentStage ?? "unknown")
+  ) {
+    findings.push({
+      code: "current_state_operational_authority_conflict",
+      severity: "warning",
+      path: CURRENT_STATE_PATH,
+      field: "Current Stage",
+      message: `${CURRENT_STATE_PATH} Current Stage does not match canonical release state.`
+    });
+  }
+
+  if (
+    hasConcreteValue(currentFocus, { allowUnknown: false }) &&
+    normalizeValue(currentFocus) !== normalizeValue(releaseState?.currentFocus ?? "unknown")
+  ) {
+    findings.push({
+      code: "current_state_operational_authority_conflict",
+      severity: "warning",
+      path: CURRENT_STATE_PATH,
+      field: "Current Focus",
+      message: `${CURRENT_STATE_PATH} Current Focus does not match canonical release state.`
+    });
+  }
+
+  const expectedWorkflow = handoffExecution.workflow === "manual_selection_required" ? null : handoffExecution.workflow;
+  const declaredWorkflow = workflowForOwner(nextRecommendedAgent);
+  if (
+    hasConcreteValue(nextRecommendedAgent, { allowUnknown: false }) &&
+    handoffExecution.resolvedBy !== "default_planner" &&
+    expectedWorkflow &&
+    declaredWorkflow !== expectedWorkflow
+  ) {
+    findings.push({
+      code: "current_state_operational_authority_conflict",
+      severity: "warning",
+      path: CURRENT_STATE_PATH,
+      field: "Next Recommended Agent",
+      message: `${CURRENT_STATE_PATH} Next Recommended Agent does not match canonical live routing.`
+    });
+  }
+}
+
+function validateTaskListOperationalAuthorityConflict({ store, repoRoot, findings }) {
+  const taskListPath = path.resolve(repoRoot, TASK_LIST_PATH);
+  if (!fs.existsSync(taskListPath)) {
+    return;
+  }
+
+  const expectedActiveTask = selectActiveWorkItem(store.listWorkItems(), { repoRoot });
+  const content = fs.readFileSync(taskListPath, "utf8");
+  const activeTasksTable = parseMarkdownTable(sliceSection(content, "## Active Tasks"));
+  const activeTaskRows = taskRows(activeTasksTable?.rows ?? []);
+
+  if (!expectedActiveTask) {
+    if (activeTaskRows.length > 0) {
+      findings.push({
+        code: "task_list_operational_authority_conflict",
+        severity: "warning",
+        path: TASK_LIST_PATH,
+        message: `${TASK_LIST_PATH} records an active task even though canonical live state has no active work item.`
+      });
+    }
+    return;
+  }
+
+  const matchingRow = activeTaskRows.find((row) => normalizeValue(row["Task ID"] ?? "") === normalizeValue(expectedActiveTask.workItemId));
+  if (!matchingRow) {
+    return;
+  }
+
+  if (normalizeTaskStatus(matchingRow.Status) !== normalizeTaskStatus(expectedActiveTask.status)) {
+    findings.push({
+      code: "task_list_operational_authority_conflict",
+      severity: "warning",
+      path: TASK_LIST_PATH,
+      taskId: expectedActiveTask.workItemId,
+      field: "Status",
+      message: `${TASK_LIST_PATH} task ${expectedActiveTask.workItemId} status does not match canonical live state.`
+    });
+  }
+
+  const expectedOwnerWorkflow = workflowForOwner(expectedActiveTask.owner ?? "");
+  const declaredOwnerWorkflow = workflowForOwner(matchingRow.Owner);
+  if (
+    hasConcreteValue(matchingRow.Owner, { allowUnknown: false }) &&
+    expectedOwnerWorkflow !== "manual_selection_required" &&
+    declaredOwnerWorkflow !== expectedOwnerWorkflow
+  ) {
+    findings.push({
+      code: "task_list_operational_authority_conflict",
+      severity: "warning",
+      path: TASK_LIST_PATH,
+      taskId: expectedActiveTask.workItemId,
+      field: "Owner",
+      message: `${TASK_LIST_PATH} task ${expectedActiveTask.workItemId} owner does not match canonical live routing.`
+    });
+  }
 }
 
 function validateStructuredTaskConsistency(parsedTables, findings) {
@@ -826,6 +1039,42 @@ function parseMarkdownTable(sectionContent) {
 
 function parseMarkdownTableRow(line) {
   return line.split("|").slice(1, -1).map((cell) => cell.trim());
+}
+
+function extractFirstValue(sectionContent) {
+  if (!sectionContent) {
+    return null;
+  }
+
+  for (const rawLine of sectionContent.split("\n")) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("## ")) {
+      continue;
+    }
+    if (line.startsWith("- ")) {
+      return line.slice(2).trim();
+    }
+    return line;
+  }
+
+  return null;
+}
+
+function readLabeledBulletValue(sectionContent, label) {
+  if (!sectionContent) {
+    return null;
+  }
+
+  const matcher = new RegExp(`^-\\s*${escapeRegExp(label)}\\s*:\\s*(.*)$`, "i");
+  for (const rawLine of sectionContent.split("\n")) {
+    const line = rawLine.trim();
+    const match = line.match(matcher);
+    if (match) {
+      return match[1].trim();
+    }
+  }
+
+  return null;
 }
 
 function isMarkdownTableSeparator(cells) {
@@ -1195,8 +1444,8 @@ function readUtf8File(filePath, findings) {
   return readRequiredUtf8File({
     filePath,
     findings,
-    missingCode: "generated_doc_missing",
-    missingMessage: `Missing generated doc: ${path.basename(filePath)}`,
+    missingCode: "generation_failed",
+    missingMessage: `Missing generated surface: ${path.basename(filePath)}`,
     pathKey: "path"
   });
 }
@@ -1445,6 +1694,8 @@ function validateGateProfileEvidence({ workItem, packetPath, content, header, ga
       message: `${packetPath} cannot use light gate profile for ${layerClassification} layer work.`
     });
   }
+  const fields = parseBulletFields(content);
+  validateCloseoutRiskFloor({ workItem, packetPath, content, header, fields, gateProfile, findings });
 
   const manifest = sliceSection(content, "## Verification Manifest");
   if (!manifest) {
@@ -1459,7 +1710,11 @@ function validateGateProfileEvidence({ workItem, packetPath, content, header, ga
     return;
   }
 
-  const requiredMarkers = gateProfileEvidenceMarkers(gateProfile.id);
+  const requiredMarkers = gateProfileEvidenceMarkers(gateProfile.id, {
+    header,
+    fields,
+    content
+  });
   for (const marker of requiredMarkers) {
     if (manifest.toLowerCase().includes(marker.toLowerCase())) {
       continue;
@@ -1476,14 +1731,113 @@ function validateGateProfileEvidence({ workItem, packetPath, content, header, ga
   }
 }
 
-function gateProfileEvidenceMarkers(profileId) {
+function validateCloseoutRiskFloor({ workItem, packetPath, content, header, fields, gateProfile, findings }) {
+  const declaredRisk = declaredRiskClassFromTier(getFieldValue(fields ?? {}, "Closeout risk tier"));
+  if (!declaredRisk) {
+    return;
+  }
+  const detectedFloor = detectRiskFloor({ content, header, gateProfile });
+  if (riskClassRank(declaredRisk) >= riskClassRank(detectedFloor)) {
+    return;
+  }
+  findings.push({
+    code: "closeout_risk_floor_mismatch",
+    severity: "error",
+    workItemId: workItem.workItemId,
+    packetPath,
+    declaredRisk,
+    detectedRiskFloor: detectedFloor,
+    message: `${packetPath} declares closeout risk ${declaredRisk}, but detected risk floor is ${detectedFloor}. Effective risk class must use the higher value.`
+  });
+}
+
+function gateProfileEvidenceMarkers(profileId, options = {}) {
   const markers = {
     light: ["canonical artifact", "handoff"],
     standard: ["approved packet", "targeted test", "validator", "handoff"],
     contract: ["Ready For Code", "root", "standard-template", "targeted", "validator", "active context", "review closeout"],
     release: ["release-baseline", "packaging", "validator", "review closeout"]
   };
-  return markers[profileId] ?? [];
+  const resolvedMarkers = [...(markers[profileId] ?? [])];
+  const closeoutRiskTier = normalizeCloseoutRiskTier(
+    getFieldValue(options.fields ?? {}, "Closeout risk tier")
+  );
+  const declaredRisk = declaredRiskClassFromTier(closeoutRiskTier);
+  const detectedFloor = detectRiskFloor({
+    content: options.content ?? "",
+    header: options.header ?? {},
+    gateProfile: resolveGateProfile(profileId)
+  });
+  if (
+    profileId === "contract" &&
+    declaredRisk === "low" &&
+    riskClassRank(detectedFloor) <= RISK_CLASS_ORDER.low
+  ) {
+    return resolvedMarkers.filter((marker) => marker !== "review closeout");
+  }
+  return resolvedMarkers;
+}
+
+function normalizeCloseoutRiskTier(value) {
+  if (value == null) {
+    return null;
+  }
+  const normalized = normalizeValue(value);
+  return normalized || null;
+}
+
+function declaredRiskClassFromTier(value) {
+  const normalized = normalizeCloseoutRiskTier(value);
+  if (!normalized) {
+    return null;
+  }
+  if (normalized.startsWith("low")) {
+    return "low";
+  }
+  if (normalized.startsWith("normal") || normalized.startsWith("standard")) {
+    return "normal";
+  }
+  if (normalized.startsWith("high") || normalized.startsWith("release")) {
+    return "high";
+  }
+  return null;
+}
+
+function riskClassRank(value) {
+  return RISK_CLASS_ORDER[value] ?? RISK_CLASS_ORDER.low;
+}
+
+function detectRiskFloor({ content = "", header = {}, gateProfile = null } = {}) {
+  const headerRisk = declaredRiskClassFromTier(getHeaderProposed(header, "Risk if started now"));
+  if (headerRisk) {
+    return headerRisk;
+  }
+  if (gateProfile?.id === "release") {
+    return "high";
+  }
+  const haystack = String(content ?? "").toLowerCase();
+  if (
+    haystack.includes("authority-model mutation") ||
+    haystack.includes("authority model mutation") ||
+    haystack.includes("shipped starter payload") ||
+    haystack.includes("release packaging") ||
+    haystack.includes("security-sensitive") ||
+    haystack.includes("data / cutover") ||
+    haystack.includes("data/cutover") ||
+    haystack.includes("artifact retirement execution") ||
+    haystack.includes("authority cutover")
+  ) {
+    return "high";
+  }
+  if (
+    gateProfile?.id === "contract" ||
+    haystack.includes("validator behavior") ||
+    haystack.includes("workflow/tooling") ||
+    haystack.includes("reusable runtime")
+  ) {
+    return "normal";
+  }
+  return "low";
 }
 
 function validateRegisteredTaskPacket({ artifact, repoRoot, findings }) {
@@ -2447,7 +2801,7 @@ function validateProjectionState(store, projectionName, content, findings) {
   const projection = store.getGenerationState(projectionName);
   if (!projection) {
     findings.push({
-      code: "generation_state_missing",
+      code: "generation_failed",
       severity: "error",
       projectionName,
       message: `${projectionName} has no generation_state row.`
@@ -2462,6 +2816,36 @@ function validateProjectionState(store, projectionName, content, findings) {
       severity: "error",
       projectionName,
       message: `${projectionName} checksum does not match generation_state.`
+    });
+    findings.push({
+      code: "stale_generated_view",
+      severity: "error",
+      projectionName,
+      message: `${projectionName} content no longer matches the last generated projection state.`
+    });
+  }
+}
+
+function validateCompatibilityFallbackSurface({ store, repoRoot, relativePath, requiredMarkers: _requiredMarkers, findings }) {
+  const absolutePath = path.resolve(repoRoot, relativePath);
+  const content = readRequiredUtf8File({
+    filePath: absolutePath,
+    findings,
+    missingCode: "generation_failed",
+    missingMessage: `${relativePath} generated compatibility surface is missing.`,
+    pathKey: "path"
+  });
+  if (content == null) {
+    return;
+  }
+
+  const projection = store.getGenerationState(relativePath);
+  if (!projection) {
+    findings.push({
+      code: "generation_failed",
+      severity: "error",
+      projectionName: relativePath,
+      message: `${relativePath} has no generation_state row.`
     });
   }
 }
@@ -2553,6 +2937,8 @@ function validateFreshness(store, findings) {
   for (const projectionName of [
     CURRENT_STATE_DOC,
     TASK_LIST_DOC,
+    COMPATIBILITY_CURRENT_STATE_PATH,
+    COMPATIBILITY_TASK_LIST_PATH,
     ACTIVE_CONTEXT_JSON,
     ACTIVE_CONTEXT_MARKDOWN
   ]) {
@@ -2562,6 +2948,12 @@ function validateFreshness(store, findings) {
     }
 
     if (projection.generatedAt < latestSourceChange) {
+      findings.push({
+        code: "stale_generated_view",
+        severity: "error",
+        projectionName,
+        message: `${projectionName} is stale relative to the latest DB mutation timestamp.`
+      });
       findings.push({
         code: "freshness_drift_detected",
         severity: "error",
@@ -2649,7 +3041,11 @@ function validateActiveContextJson({ store, repoRoot, content, findings }) {
   }
 
   const mustReadNext = context.reentryContract?.mustReadNext ?? [];
-  for (const requiredPath of [CURRENT_STATE_PATH, TASK_LIST_PATH, VALIDATION_REPORT_JSON]) {
+  const activeContextRequiredPaths = [
+    VALIDATION_REPORT_JSON,
+    ...(Array.isArray(context.nextWork?.requiredSsot) ? context.nextWork.requiredSsot : [])
+  ];
+  for (const requiredPath of activeContextRequiredPaths) {
     if (mustReadNext.includes(requiredPath)) {
       continue;
     }
@@ -2671,7 +3067,10 @@ function validateActiveContextJson({ store, repoRoot, content, findings }) {
     includeWorkflowDetails: true
   });
   const expectedWorkflow =
-    handoffExecution.workflow === "manual_selection_required" ? null : handoffExecution.workflow;
+    handoffExecution.workflow === "manual_selection_required" ||
+    handoffExecution.routeStatus === "planner_fallback_blocked"
+      ? null
+      : handoffExecution.workflow;
   const expectedActiveTask = selectActiveWorkItem(workItems, { repoRoot });
 
   if ((context.nextWork?.workflow ?? null) !== expectedWorkflow) {
@@ -2722,7 +3121,12 @@ function validateActiveContextJson({ store, repoRoot, content, findings }) {
   }
 
   const sourceTrace = context.reentryContract?.sourceTrace ?? [];
-  for (const requiredPath of [CURRENT_STATE_PATH, TASK_LIST_PATH, IMPLEMENTATION_PLAN_PATH]) {
+  const sourceTraceRequiredPaths = [
+    VALIDATION_REPORT_JSON,
+    ...(Array.isArray(context.nextWork?.requiredSsot) ? context.nextWork.requiredSsot : []),
+    context.sources?.activePacket
+  ].filter(Boolean);
+  for (const requiredPath of sourceTraceRequiredPaths) {
     if (sourceTrace.includes(requiredPath)) {
       continue;
     }

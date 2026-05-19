@@ -3,6 +3,7 @@ import path from "node:path";
 
 export const GENERATED_DOCS_DIR = ".agents/runtime/generated-state-docs";
 export const RUNTIME_REPORTS_DIR = ".agents/runtime/reports";
+export const RECOVERY_REPORTS_DIR = ".agents/runtime/recovery-reports";
 export const AGENT_TRACES_DIR = ".agents/runtime/agent-traces";
 export const CUTOVER_REPORT_MARKDOWN = `${RUNTIME_REPORTS_DIR}/CUTOVER_PRECHECK.md`;
 export const CUTOVER_REPORT_JSON = `${RUNTIME_REPORTS_DIR}/CUTOVER_PRECHECK.json`;
@@ -10,8 +11,9 @@ export const VALIDATION_REPORT_MARKDOWN = ".agents/artifacts/VALIDATION_REPORT.m
 export const VALIDATION_REPORT_JSON = ".agents/artifacts/VALIDATION_REPORT.json";
 export const ACTIVE_PROFILES_MARKDOWN = ".agents/artifacts/ACTIVE_PROFILES.md";
 export const REPOSITORY_LAYOUT_MARKDOWN = "reference/artifacts/REPOSITORY_LAYOUT_OWNERSHIP.md";
-export const ACTIVE_CONTEXT_PACKET_MARKDOWN = "reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md";
-export const DEV05_PACKET_MARKDOWN = "reference/packets/PKT-01_DEV-05_VALIDATOR_MIGRATION_CUTOVER.md";
+export const WORK_ITEM_PACKET_TEMPLATE_MARKDOWN = "reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md";
+export const ACTIVE_CONTEXT_PACKET_MARKDOWN = WORK_ITEM_PACKET_TEMPLATE_MARKDOWN;
+export const DEV05_PACKET_MARKDOWN = WORK_ITEM_PACKET_TEMPLATE_MARKDOWN;
 export const REVIEW_REPORT_MARKDOWN = "reference/artifacts/REVIEW_REPORT.md";
 
 export const ARTIFACT_PATHS = {

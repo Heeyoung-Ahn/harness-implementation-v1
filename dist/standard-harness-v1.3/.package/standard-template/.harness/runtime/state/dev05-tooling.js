@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { writeActiveContext } from "./active-context.js";
-import { validateGeneratedStateDocs } from "./drift-validator.js";
+import { inspectTaskPacketContract, validateGeneratedStateDocs } from "./drift-validator.js";
 import { CURRENT_STATE_DOC, TASK_LIST_DOC, writeGeneratedStateDocs } from "./generate-state-docs.js";
 import {
   DEFAULT_GATE_PROFILE_ID,
@@ -29,7 +29,8 @@ import {
   isClosedStatus,
   readCanonicalTaskLifecycleHints,
   resolveHandoffExecution,
-  selectActiveWorkItem
+  selectActiveWorkItem,
+  workflowForOwner
 } from "./workflow-routing.js";
 
 const AGENT_TRACE_SCHEMA_VERSION = "standard-harness-agent-trace/v1";
@@ -43,6 +44,11 @@ const PHASE1_HARD_FAIL_CODES = [
   "active_context_validation_executed_at_mismatch"
 ];
 const PHASE1_WARNING_CODES = ["evidence_linkage_thin", "reviewer_rationale_thin"];
+const RISK_CLASS_ORDER = {
+  low: 1,
+  normal: 2,
+  high: 3
+};
 const PHASE1_REVIEWER_ONLY_CODES = [
   "design_intent_fulfillment",
   "work_fit_assessment",
@@ -127,13 +133,14 @@ const SECURITY_REVIEW_SECRET_RULES = [
     recovery: "Remove the Slack token-like string from the release-facing file before internal review."
   }
 ];
+const LOW_RISK_CLOSEOUT_TIERS = new Set(["low-risk", "low-risk-planner-closeout"]);
 const SECURITY_REVIEW_ARTIFACT_AUDIT_RULES = [
   {
-    code: "release_artifact_stale_pmw_reference",
+    code: "release_artifact_deprecated_operator_console_reference",
     severity: "warning",
-    pattern: /\bPMW\b|\bProject Monitor Web\b/i,
-    message: "A release-facing artifact still contains stale PMW-era wording.",
-    recovery: "Remove stale PMW-era wording from shipped release-facing artifacts before internal review."
+    pattern: /\bdeprecated operator console\b|\blegacy operator console\b/i,
+    message: "A release-facing artifact still contains deprecated operator-console wording.",
+    recovery: "Remove deprecated operator-console wording from shipped release-facing artifacts before internal review."
   },
   {
     code: "release_artifact_security_approval_claim",
@@ -184,12 +191,12 @@ export const STANDARD_PATH_MIGRATIONS = {
   "PKT-01_DEV-01_DB_FOUNDATION.md": "reference/packets/PKT-01_DEV-01_DB_FOUNDATION.md",
   "PKT-01_DEV-02_GENERATED_STATE_DOCS.md": "reference/packets/PKT-01_DEV-02_GENERATED_STATE_DOCS.md",
   "PKT-01_DEV-03_CONTEXT_RESTORATION_READ_MODEL.md": "reference/packets/PKT-01_DEV-03_CONTEXT_RESTORATION_READ_MODEL.md",
-  "PKT-01_DEV-04_PMW_READ_SURFACE.md": "reference/packets/PKT-01_DEV-04_PMW_READ_SURFACE.md",
+  "PKT-01_LEGACY_READ_SURFACE.md": "reference/packets/PKT-01_LEGACY_READ_SURFACE.md",
   "PKT-01_WORK_ITEM_PACKET_TEMPLATE.md": "reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md",
   "PLN-00_DEEP_INTERVIEW.md": "reference/planning/PLN-00_DEEP_INTERVIEW.md",
   "PLN-01_REQUIREMENTS_FREEZE.md": "reference/planning/PLN-01_REQUIREMENTS_FREEZE.md",
   "PROTOTYPE_REFERENCE.md": "reference/planning/PROTOTYPE_REFERENCE.md",
-  "docs/dev-04-pmw-read-surface-mockup.html": "reference/mockups/dev-04-pmw-read-surface-mockup.html",
+  "docs/legacy-read-surface-mockup.html": "reference/mockups/legacy-read-surface-mockup.html",
   "codex/project-context/durable-context.md": "reference/artifacts/SYSTEM_CONTEXT.md",
   "codex/project-context/restart-handoff-2026-04-19.md": "reference/artifacts/HANDOFF_ARCHIVE.md",
   "codex/project-context/daily/2026-04-19.md": "reference/artifacts/daily/2026-04-19.md",
@@ -473,7 +480,7 @@ export function writeValidationReport({ repoRoot = process.cwd(), outputDir = re
   finalizedReport.traceSummary = finalizedTraceArtifact?.summary ?? null;
   fs.writeFileSync(markdownPath, buildValidationReportMarkdown(finalizedReport), "utf8");
   fs.writeFileSync(jsonPath, `${JSON.stringify(finalizedReport, null, 2)}\n`, "utf8");
-  withStore({ dbPath, repoRoot }, (store) => writeGeneratedStateDocs({ store, outputDir }));
+  withStore({ dbPath, repoRoot }, (store) => writeGeneratedStateDocs({ store, outputDir, repoRoot }));
   withStore({ dbPath, repoRoot }, (store) =>
     writeActiveContext({
       store,
@@ -521,12 +528,62 @@ export function writeValidationReport({ repoRoot = process.cwd(), outputDir = re
     })
   );
 
+  // One extra validator pass closes the last report/context lag window after transition-time writes.
+  const convergedValidation = runValidator({ repoRoot, outputDir, dbPath });
+  const convergedReport = {
+    ...settledReport,
+    ok: convergedValidation.ok,
+    cutoverReady: convergedValidation.cutoverReady,
+    findings: convergedValidation.findings,
+    gateDecision: convergedValidation.ok ? "pass" : "hold"
+  };
+  if (securityReview) {
+    convergedReport.securityReview = securityReview.summary;
+    if (securityReview.summary.contractStatus === "requested") {
+      convergedReport.findings = [...convergedReport.findings, ...securityReview.additionalFindings];
+      const hasBlockingSecurityFinding = convergedReport.findings.some((finding) => finding?.severity === "error");
+      convergedReport.ok = !hasBlockingSecurityFinding;
+      convergedReport.cutoverReady = !hasBlockingSecurityFinding;
+      convergedReport.gateDecision = hasBlockingSecurityFinding ? "hold" : "pass";
+    }
+  }
+  convergedReport.nextAction = withStore({ dbPath, repoRoot }, (store) => {
+    const fallback = recommendNextActionFromState(store, convergedValidation, repoRoot);
+    if (securityReview?.summary?.contractStatus === "requested") {
+      return recommendSecurityReviewNextAction({
+        findings: convergedReport.findings,
+        fallback
+      });
+    }
+    return fallback;
+  });
+  const convergedTraceArtifact = withStore({ dbPath, repoRoot }, (store) =>
+    writeAgentTraceArtifact({
+      store,
+      repoRoot: root,
+      outputDir,
+      executedAt: convergedReport.executedAt,
+      report: convergedReport
+    })
+  );
+  convergedReport.traceSummary = convergedTraceArtifact?.summary ?? null;
+  fs.writeFileSync(markdownPath, buildValidationReportMarkdown(convergedReport), "utf8");
+  fs.writeFileSync(jsonPath, `${JSON.stringify(convergedReport, null, 2)}\n`, "utf8");
+  withStore({ dbPath, repoRoot }, (store) =>
+    writeActiveContext({
+      store,
+      repoRoot,
+      outputDir,
+      validation: convergedReport
+    })
+  );
+
   return {
-    ok: settledValidation.ok,
+    ok: convergedValidation.ok,
     command: "validation-report",
     markdownPath,
     jsonPath,
-    report: settledReport
+    report: convergedReport
   };
 }
 
@@ -600,6 +657,102 @@ export function runTransition({
   };
 }
 
+export function runPlannerPacketOpen({
+  repoRoot = process.cwd(),
+  outputDir = repoRoot,
+  dbPath = DEFAULT_DB_PATH,
+  args = []
+} = {}) {
+  const options = parseTransitionArgs(args);
+  const preflight = withStore({ dbPath, repoRoot }, (store) =>
+    buildPlannerPacketOpenPlan({ store, repoRoot, options })
+  );
+
+  if (!preflight.ok) {
+    return preflight;
+  }
+
+  withStore({ dbPath, repoRoot }, (store) => {
+    store.upsertArtifact({
+      artifactId: preflight.artifactId,
+      path: preflight.packetPath,
+      category: "task_packet",
+      title: preflight.title,
+      sourceRef: preflight.packetPath,
+      metadata: {
+        ...(store.getArtifactByPath(preflight.packetPath)?.metadata ?? {}),
+        workItemId: preflight.workItemId,
+        gateProfile: preflight.gateProfile,
+        laneType: preflight.laneType ?? null
+      }
+    });
+    store.upsertWorkItem({
+      workItemId: preflight.workItemId,
+      title: preflight.title,
+      status: preflight.status,
+      nextAction: preflight.nextAction,
+      sourceRef: preflight.packetPath,
+      domainHint: preflight.domainHint,
+      riskHint: preflight.riskHint,
+      owner: "planner",
+      metadata: {
+        ...(store.getWorkItem(preflight.workItemId)?.metadata ?? {}),
+        gateProfile: preflight.gateProfile,
+        readyForCode: preflight.readyForCode ?? "pending",
+        laneType: preflight.laneType ?? null
+      }
+    });
+  });
+
+  const transitionArgs = [
+    "--apply",
+    "--work-item",
+    preflight.workItemId,
+    "--from",
+    "planner",
+    "--to",
+    "planner",
+    "--status",
+    preflight.status,
+    "--gate-profile",
+    preflight.gateProfile,
+    "--source-ref",
+    preflight.packetPath,
+    "--summary",
+    preflight.summary,
+    "--next-action",
+    preflight.nextAction
+  ];
+
+  if (preflight.currentStage) {
+    transitionArgs.push("--current-stage", preflight.currentStage);
+  }
+  if (preflight.currentFocus) {
+    transitionArgs.push("--current-focus", preflight.currentFocus);
+  }
+
+  const transitionResult = runTransition({ repoRoot, outputDir, dbPath, args: transitionArgs });
+
+  return {
+    ok: transitionResult.ok,
+    command: "planner-open-packet",
+    apply: true,
+    packetPath: preflight.packetPath,
+    artifactId: preflight.artifactId,
+    workItemId: preflight.workItemId,
+    title: preflight.title,
+    gateProfile: preflight.gateProfile,
+    readyForCode: preflight.readyForCode,
+    status: preflight.status,
+    nextAction: preflight.nextAction,
+    summary: preflight.summary,
+    checks: preflight.checks,
+    plannedUpdates: transitionResult.plannedUpdates,
+    errors: transitionResult.errors ?? [],
+    transitionResult
+  };
+}
+
 function parseTransitionArgs(args) {
   const options = { apply: false };
   for (let index = 0; index < args.length; index += 1) {
@@ -627,6 +780,166 @@ function parseTransitionArgs(args) {
   return options;
 }
 
+function buildPlannerPacketOpenPlan({ store, repoRoot, options }) {
+  const packetPath = options.packetPath ?? options.packet ?? options.sourceRef;
+  const workItemId = options.workItem ?? options.workItemId;
+  const title = options.title;
+  const owner = normalizeOwner(options.owner ?? "planner");
+  const status = options.status ?? "planning";
+  const packetAbsolutePath = packetPath ? path.resolve(repoRoot, packetPath) : null;
+  const checks = [];
+  const errors = [];
+
+  if (!packetPath) {
+    errors.push("Missing --packet-path.");
+  }
+  if (!workItemId) {
+    errors.push("Missing --work-item.");
+  }
+  if (!title) {
+    errors.push("Missing --title.");
+  }
+  if (owner !== "planner") {
+    errors.push(`Planner packet opening helper only supports owner planner; received ${options.owner ?? "missing"}.`);
+  }
+  if (packetPath && (!packetPath.endsWith(".md") || !packetPath.startsWith("reference/packets/"))) {
+    errors.push(`Packet path must point to a markdown packet under reference/packets. (${packetPath})`);
+  }
+  if (packetAbsolutePath && !fs.existsSync(packetAbsolutePath)) {
+    errors.push(`Packet path does not exist: ${packetPath}.`);
+  }
+
+  const releaseState = store.getReleaseState("current");
+  const openWorkItems = store
+    .listWorkItems()
+    .filter((item) => !isClosedStatus(item.status) && item.workItemId !== workItemId);
+  if (openWorkItems.length > 0) {
+    errors.push(
+      `Planner packet opening requires no other open work items; ${openWorkItems[0].workItemId} (${openWorkItems[0].owner ?? "unassigned"} / ${openWorkItems[0].status}) must be closed or explicitly routed first.`
+    );
+  }
+
+  const packetContent = packetAbsolutePath && fs.existsSync(packetAbsolutePath)
+    ? fs.readFileSync(packetAbsolutePath, "utf8")
+    : null;
+  const gateProfile =
+    resolveGateProfile(options.gateProfile)?.id ??
+    resolveGateProfile(readPacketHeaderValue(repoRoot, packetPath, "Gate profile"))?.id ??
+    null;
+  const readyForCode = readPacketReadyForCode(repoRoot, packetPath) || "pending";
+  const laneType = readPacketBulletFieldValue(repoRoot, packetPath, "Lane-type declaration");
+  const artifactId = options.artifactId ?? inferPacketArtifactId(packetPath);
+  const requiredHeaderRows = [
+    "Work item",
+    "Ready For Code",
+    "Human sync needed",
+    "Gate profile",
+    "User-facing impact",
+    "Layer classification",
+    "Active profile dependencies",
+    "Profile evidence status",
+    "UX archetype status",
+    "UX deviation status",
+    "Environment topology status",
+    "Domain foundation status",
+    "Authoritative source intake status",
+    "Shared-source wave status",
+    "Packet exit gate status",
+    "Existing system dependency",
+    "New authoritative source impact",
+    "Risk if started now"
+  ];
+
+  for (const label of requiredHeaderRows) {
+    const value = readPacketHeaderValue(repoRoot, packetPath, label);
+    checks.push({
+      check: `header:${label}`,
+      ok: Boolean(value),
+      detail: value ?? "missing"
+    });
+    if (!value) {
+      errors.push(`Quick Decision Header is missing required row: ${label}.`);
+    }
+  }
+
+  if (!gateProfile) {
+    errors.push(`Packet gate profile is missing or invalid. (${options.gateProfile ?? "not declared"})`);
+  }
+
+  const manifest = packetContent ? readPacketSection(packetContent, "## Verification Manifest") : null;
+  checks.push({
+    check: "verification-manifest",
+    ok: Boolean(manifest),
+    detail: manifest ? "present" : "missing"
+  });
+  if (!manifest) {
+    errors.push("Packet is missing ## Verification Manifest.");
+  }
+
+  for (const marker of plannerOpenRequiredManifestMarkers(gateProfile, { repoRoot, packetPath })) {
+    const ok = Boolean(manifest && manifest.toLowerCase().includes(marker.toLowerCase()));
+    checks.push({
+      check: `manifest:${marker}`,
+      ok,
+      detail: ok ? "present" : "missing"
+    });
+    if (!ok) {
+      errors.push(`Verification Manifest is missing gate-profile marker: ${marker}.`);
+    }
+  }
+
+  const semanticContract = packetContent
+    ? inspectTaskPacketContract({
+        repoRoot,
+        packetPath,
+        artifactId,
+        content: packetContent
+      })
+    : null;
+  const semanticErrors = semanticContract?.findings?.filter((finding) => finding.severity === "error") ?? [];
+  checks.push({
+    check: "task-packet-semantic-contract",
+    ok: semanticErrors.length === 0,
+    detail: semanticErrors.length === 0 ? "pass" : `${semanticErrors.length} error(s)`
+  });
+  for (const finding of semanticErrors) {
+    const message = `Task packet semantic preflight failed: ${finding.message}`;
+    if (!errors.includes(message)) {
+      errors.push(message);
+    }
+  }
+
+  const workItemLabel = workItemId ?? "selected work item";
+  const defaultNextAction =
+    options.nextAction ??
+    `Review the ${workItemLabel} detailed agreement proposal and decide whether to approve, adjust, or hold Ready For Code before implementation opens.`;
+  const defaultSummary =
+    options.summary ?? `Opened ${workItemLabel} as the selected Planner packet for review before implementation opens.`;
+
+  return {
+    ok: errors.length === 0,
+    command: "planner-open-packet",
+    apply: false,
+    packetPath,
+    artifactId,
+    workItemId,
+    title,
+    gateProfile,
+    readyForCode,
+    laneType,
+    status,
+    owner,
+    nextAction: defaultNextAction,
+    summary: defaultSummary,
+    currentStage: options.currentStage ?? releaseState?.currentStage ?? "planning",
+    currentFocus: options.currentFocus ?? releaseState?.currentFocus ?? null,
+    domainHint: options.domainHint ?? null,
+    riskHint: options.riskHint ?? null,
+    checks,
+    errors
+  };
+}
+
 function buildTransitionPlan({ store, repoRoot, options }) {
   const baseTransitionDefaults = transitionDefaultsFor(options.transition);
   const transition = options.transition ?? baseTransitionDefaults.transition;
@@ -647,7 +960,19 @@ function buildTransitionPlan({ store, repoRoot, options }) {
   const sourceRef = options.sourceRef ?? workItem?.sourceRef ?? releaseState?.sourceRef ?? ".agents/artifacts/TASK_LIST.md";
   const packetSourceRef = workItem?.sourceRef ?? sourceRef;
   const gateProfile = resolveTransitionGateProfile({ options, workItem, repoRoot });
-  const packetReadyForCode = readPacketReadyForCode(repoRoot, sourceRef) || workItem?.metadata?.readyForCode || null;
+  const packetReadyForCode = readPacketReadyForCode(repoRoot, packetSourceRef) || null;
+  const metadataReadyForCode = normalizeReadyForCodeState(workItem?.metadata?.readyForCode);
+  const liveReadyForCode =
+    transition === "planner-to-developer"
+      ? packetReadyForCode === "approved"
+        ? "approved"
+        : metadataReadyForCode
+      : metadataReadyForCode ?? packetReadyForCode;
+  const lowRiskPlannerCloseoutApproved = isLowRiskPlannerCloseoutApproved({
+    repoRoot,
+    sourceRef: packetSourceRef,
+    workItem
+  });
   const closeDecisions = parseListOption(options.closeDecision ?? options.closeDecisions);
   const openReadyForCodeDecision = workItem ? findOpenReadyForCodeTransitionDecision(store, workItem) : null;
   const summary =
@@ -682,6 +1007,11 @@ function buildTransitionPlan({ store, repoRoot, options }) {
   }
   if (!toOwner) {
     errors.push("Missing --to or named transition target owner.");
+  }
+  if (transition === "tester-to-planner-low-risk-closeout" && !lowRiskPlannerCloseoutApproved) {
+    errors.push(
+      `${packetSourceRef ?? sourceRef ?? "The active packet"} must declare - Closeout risk tier: low-risk and have no higher detected risk floor before tester-to-planner-low-risk-closeout can be used.`
+    );
   }
   if (fromOwner && workItem?.owner && normalizeOwner(workItem.owner) !== fromOwner) {
     errors.push(`Transition source owner mismatch: expected ${fromOwner}, current owner is ${workItem.owner}.`);
@@ -734,7 +1064,7 @@ function buildTransitionPlan({ store, repoRoot, options }) {
     toOwner,
     status,
     gateProfile: gateProfile?.id ?? null,
-    readyForCode: packetReadyForCode,
+    readyForCode: liveReadyForCode,
     gateProfileSummary: summarizeGateProfile(gateProfile),
     summary,
     nextAction,
@@ -793,6 +1123,16 @@ function transitionDefaultsFor(transition = "custom") {
       currentFocusTemplate: "{workItemId} is under reviewer closeout assessment.",
       summary: "Tester verification completed; Reviewer should assess packet exit readiness.",
       nextAction: "Review implementation, evidence, residual debt, and closeout readiness."
+    },
+    "tester-to-planner-low-risk-closeout": {
+      transition: "tester-to-planner-low-risk-closeout",
+      from: "tester",
+      to: "planner",
+      status: "planning",
+      currentStage: "planning",
+      currentFocusTemplate: "{workItemId} low-risk closeout is verification-complete; Planner is recording closeout under the approved low-risk path.",
+      summary: "Tester verified the approved low-risk scope; Planner should record packet closeout under the low-risk closeout path.",
+      nextAction: "Planner should record low-risk closeout and choose the next approved lane."
     },
     "reviewer-to-developer": {
       transition: "reviewer-to-developer",
@@ -882,6 +1222,7 @@ function applyTransitionPlan({ store, repoRoot, outputDir, plan, options }) {
   const metadata = {
     ...(store.getWorkItem(plan.workItemId)?.metadata ?? {}),
     gateProfile: plan.gateProfile,
+    packetSourceRef: plan.packetSourceRef ?? plan.sourceRef,
     ...(plan.readyForCode === "approved" ? { readyForCode: "approved" } : {}),
     ...(isClosedStatus(plan.status) ? { closedAt: timestamp, closedBy: plan.toOwner ?? "unknown" } : {}),
     lastTransition: {
@@ -935,26 +1276,12 @@ function applyTransitionPlan({ store, repoRoot, outputDir, plan, options }) {
     fromRole: plan.fromOwner,
     toRole: plan.toOwner,
     sourceRef: plan.sourceRef,
-    payload: {
-      transition: plan.transition,
-      workItemId: plan.workItemId,
-      gateProfile: plan.gateProfile,
-      completedScope: plan.summary,
-      nextFirstAction: plan.nextAction,
-      requiredSsot: [
-        ".agents/artifacts/CURRENT_STATE.md",
-        ".agents/artifacts/TASK_LIST.md",
-        ".agents/artifacts/IMPLEMENTATION_PLAN.md",
-        plan.sourceRef
-      ].filter(Boolean)
-    }
+    payload: buildCompactHandoffPayload(plan)
   });
 
-  updateCanonicalTaskList({ repoRoot, plan, timestamp });
-  updateCanonicalCurrentState({ repoRoot, plan, timestamp });
   updateCanonicalImplementationPlan({ repoRoot, plan });
   updateCanonicalProjectProgress({ repoRoot, plan });
-  const generatedDocs = writeGeneratedStateDocs({ store, outputDir });
+  const generatedDocs = writeGeneratedStateDocs({ store, outputDir, repoRoot });
 
   return {
     ...plan,
@@ -1045,6 +1372,11 @@ function readPacketReadyForCode(repoRoot, sourceRef) {
   return value === "approved" || value === "approve" ? "approved" : value;
 }
 
+function normalizeReadyForCodeState(value) {
+  const normalized = normalizePacketHeaderValue(value);
+  return normalized === "approved" || normalized === "approve" ? "approved" : normalized || null;
+}
+
 function readPacketBulletFieldValue(repoRoot, sourceRef, label) {
   if (!sourceRef || !sourceRef.endsWith(".md")) {
     return null;
@@ -1062,6 +1394,47 @@ function readPacketBulletFieldValue(repoRoot, sourceRef, label) {
     }
   }
   return null;
+}
+
+function inferPacketArtifactId(packetPath) {
+  if (!packetPath) {
+    return null;
+  }
+  return path.basename(packetPath, path.extname(packetPath));
+}
+
+function readPacketSection(content, sectionHeading) {
+  const start = content.indexOf(sectionHeading);
+  if (start === -1) {
+    return null;
+  }
+  const afterStart = content.slice(start + sectionHeading.length).trimStart();
+  const nextHeadingMatch = afterStart.match(/\n##\s+/);
+  if (!nextHeadingMatch) {
+    return afterStart;
+  }
+  return afterStart.slice(0, nextHeadingMatch.index).trimEnd();
+}
+
+function plannerOpenRequiredManifestMarkers(gateProfile, options = {}) {
+  const markers = {
+    light: ["canonical artifact", "handoff"],
+    standard: ["approved packet", "targeted test", "validator", "handoff"],
+    contract: ["Ready For Code", "root", "standard-template", "targeted", "validator", "active context", "review closeout"],
+    release: ["release-baseline", "packaging", "validator", "review closeout"]
+  };
+  const resolvedMarkers = [...(markers[gateProfile] ?? [])];
+  if (
+    gateProfile === "contract" &&
+    isLowRiskPlannerCloseoutApproved({
+      repoRoot: options.repoRoot ?? null,
+      packetPath: options.packetPath ?? null,
+      sourceRef: options.sourceRef ?? null
+    })
+  ) {
+    return resolvedMarkers.filter((marker) => marker !== "review closeout");
+  }
+  return resolvedMarkers;
 }
 
 function findOpenReadyForCodeTransitionDecision(store, workItem) {
@@ -1087,6 +1460,105 @@ function readPacketHeaderValue(repoRoot, sourceRef, label) {
     .map((line) => line.trim())
     .find((line) => line.toLowerCase().startsWith(`| ${target} |`) || new RegExp(`^\\|\\s*${escapeRegExp(target)}\\s*\\|`, "i").test(line));
   return row ? row.split("|")[2]?.trim() : null;
+}
+
+function resolvePacketMarkdownPath(repoRoot, packetPath, sourceRef) {
+  const candidate = packetPath ?? sourceRef;
+  if (!repoRoot || !candidate || !String(candidate).endsWith(".md")) {
+    return null;
+  }
+  const resolved = path.isAbsolute(candidate) ? candidate : path.resolve(repoRoot, candidate);
+  return fs.existsSync(resolved) ? resolved : null;
+}
+
+function normalizeCloseoutRiskTier(value) {
+  const normalized = String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[`*_]/g, "")
+    .replace(/\s+/g, "-");
+  return normalized || null;
+}
+
+function readPacketCloseoutRiskTier(repoRoot, packetPath, sourceRef) {
+  const resolvedPacketPath = resolvePacketMarkdownPath(repoRoot, packetPath, sourceRef);
+  if (!resolvedPacketPath) {
+    return null;
+  }
+  const content = fs.readFileSync(resolvedPacketPath, "utf8");
+  const matcher = /^-\s*Closeout risk tier\s*:\s*(.*)$/im;
+  const match = content.match(matcher);
+  return match ? normalizeCloseoutRiskTier(match[1]) : null;
+}
+
+function isLowRiskPlannerCloseoutApproved({ repoRoot, packetPath = null, sourceRef = null, workItem = null }) {
+  const runtimeTier = normalizeCloseoutRiskTier(workItem?.metadata?.closeoutRiskTier);
+  const detectedRiskFloor = detectPacketRiskFloor({ repoRoot, packetPath, sourceRef });
+  if (runtimeTier && LOW_RISK_CLOSEOUT_TIERS.has(runtimeTier) && riskClassRank(detectedRiskFloor) <= RISK_CLASS_ORDER.low) {
+    return true;
+  }
+  const packetTier = readPacketCloseoutRiskTier(repoRoot, packetPath, sourceRef);
+  return Boolean(packetTier && LOW_RISK_CLOSEOUT_TIERS.has(packetTier) && riskClassRank(detectedRiskFloor) <= RISK_CLASS_ORDER.low);
+}
+
+function riskClassRank(value) {
+  return RISK_CLASS_ORDER[normalizeRiskClass(value)] ?? RISK_CLASS_ORDER.low;
+}
+
+function normalizeRiskClass(value) {
+  const normalized = normalizeCloseoutRiskTier(value);
+  if (!normalized) {
+    return null;
+  }
+  if (normalized.startsWith("low")) {
+    return "low";
+  }
+  if (normalized.startsWith("normal") || normalized.startsWith("standard")) {
+    return "normal";
+  }
+  if (normalized.startsWith("high") || normalized.startsWith("release")) {
+    return "high";
+  }
+  return null;
+}
+
+function detectPacketRiskFloor({ repoRoot, packetPath = null, sourceRef = null }) {
+  const resolvedPacketPath = resolvePacketMarkdownPath(repoRoot, packetPath, sourceRef);
+  if (!resolvedPacketPath) {
+    return "low";
+  }
+  const relativePacketPath = path.relative(repoRoot, resolvedPacketPath).replace(/\\/g, "/");
+  const riskHeader = normalizeRiskClass(readPacketHeaderValue(repoRoot, relativePacketPath, "Risk if started now"));
+  if (riskHeader) {
+    return riskHeader;
+  }
+  const gateProfile = normalizePacketHeaderValue(readPacketHeaderValue(repoRoot, relativePacketPath, "Gate profile"));
+  if (gateProfile === "release") {
+    return "high";
+  }
+  const content = fs.readFileSync(resolvedPacketPath, "utf8").toLowerCase();
+  if (
+    content.includes("authority-model mutation") ||
+    content.includes("authority model mutation") ||
+    content.includes("shipped starter payload") ||
+    content.includes("release packaging") ||
+    content.includes("security-sensitive") ||
+    content.includes("data / cutover") ||
+    content.includes("data/cutover") ||
+    content.includes("artifact retirement execution") ||
+    content.includes("authority cutover")
+  ) {
+    return "high";
+  }
+  if (
+    gateProfile === "contract" ||
+    content.includes("validator behavior") ||
+    content.includes("workflow/tooling") ||
+    content.includes("reusable runtime")
+  ) {
+    return "normal";
+  }
+  return "low";
 }
 
 function normalizePacketHeaderValue(value) {
@@ -1289,12 +1761,18 @@ function updateCanonicalTaskList({ repoRoot, plan, timestamp }) {
       Notes: `${plan.summary} ${plan.nextAction}`.trim()
     });
   } else {
-    content = updateMarkdownTableRow(content, "## Active Locks", "Task ID", plan.workItemId, {
+    content = upsertMarkdownTableRow(content, "## Active Locks", "Task ID", plan.workItemId, {
+      "Task ID": plan.workItemId,
+      Scope: plan.workItemTitle ?? plan.workItemId,
       Owner: plan.toOwner,
       Status: "active",
+      "Started At": timestamp.slice(0, 10),
       Notes: `${plan.transition}; gate ${plan.gateProfile}; ${plan.nextAction}`
     });
-    content = updateMarkdownTableRow(content, "## Active Tasks", "Task ID", plan.workItemId, {
+    content = upsertMarkdownTableRow(content, "## Active Tasks", "Task ID", plan.workItemId, {
+      "Task ID": plan.workItemId,
+      Title: plan.workItemTitle ?? plan.workItemId,
+      Scope: plan.workItemTitle ?? plan.workItemId,
       Owner: plan.toOwner,
       Status: plan.status,
       Verification: `gate ${plan.gateProfile}; ${plan.nextAction}`
@@ -1411,7 +1889,7 @@ function buildActivePacketStateBullet(plan) {
   if (isClosedStatus(plan.status)) {
     return `- \`${packetName}\` is closed with the latest handoff \`${plan.fromOwner ?? "unknown"} -> ${plan.toOwner}\`.`;
   }
-  return `- \`${packetName}\` is Ready For Code approved and in ${describeStageForPacket(plan.currentStage)}.`;
+  return `- \`${packetName}\` remains the active packet for scope boundary, human approval text, and audit evidence; live handoff is \`${plan.fromOwner ?? "unknown"} -> ${plan.toOwner}\`; live stage is ${describeStageForPacket(plan.currentStage)}.`;
 }
 
 function describeStageForPacket(currentStage) {
@@ -2060,6 +2538,40 @@ function recommendNextActionFromState(store, validation, repoRoot = process.cwd(
   return "No blocker is recorded. Continue with the current approved packet or open the next planning lane.";
 }
 
+function buildCompactHandoffPayload(plan) {
+  return {
+    transition: plan.transition,
+    workItemId: plan.workItemId,
+    gateProfile: plan.gateProfile,
+    completedScope: plan.summary,
+    nextWorkflow: resolveNextWorkflowForRole(plan.toOwner),
+    nextFirstAction: plan.nextAction,
+    requiredSsot: buildRequiredSsotForRole(plan),
+    approvalBoundary: approvalBoundaryForRole(plan.toOwner),
+    doNotCross: doNotCrossForRole(plan.toOwner)
+  };
+}
+
+function buildRequiredSsotForRole(plan) {
+  switch (normalizeRoleValue(plan.toOwner)) {
+    case "planner":
+      return uniquePathList([ARTIFACT_PATHS.requirements, ARTIFACT_PATHS.plan, plan.sourceRef]);
+    case "developer":
+      return uniquePathList([plan.sourceRef]);
+    case "tester":
+      return uniquePathList([plan.sourceRef, VALIDATION_REPORT_JSON, VALIDATION_REPORT_MARKDOWN]);
+    case "reviewer":
+      return uniquePathList([
+        plan.sourceRef,
+        "reference/artifacts/PACKET_EXIT_QUALITY_GATE.md",
+        VALIDATION_REPORT_JSON,
+        VALIDATION_REPORT_MARKDOWN
+      ]);
+    default:
+      return uniquePathList([plan.sourceRef]);
+  }
+}
+
 function recoveryForFinding(finding) {
   const code = finding.code ?? "unknown";
   if (code === "starter_bootstrap_pending") {
@@ -2385,6 +2897,7 @@ function buildValidationReportMarkdown(report) {
     `- Cutover ready: ${report.cutoverReady ? "yes" : "no"}`,
     `- Gate decision: ${report.gateDecision}`,
     `- Next action: ${report.nextAction}`,
+    "- Surface role: persisted gate evidence only; live re-entry should use `.agents/runtime/ACTIVE_CONTEXT.json` and CLI context/status.",
     "",
     "## Active Profiles",
     `- Source: ${report.profileSummary.path}`,
@@ -2632,6 +3145,61 @@ function uniquePathList(paths) {
 
 function uniqueStringList(values) {
   return [...new Set((values ?? []).filter((value) => typeof value === "string" && value.length > 0))];
+}
+
+function normalizeRoleValue(role) {
+  return String(role ?? "").trim().toLowerCase();
+}
+
+function resolveNextWorkflowForRole(role) {
+  const workflow = workflowForOwner(role);
+  return workflow === "manual_selection_required" ? null : workflow;
+}
+
+function approvalBoundaryForRole(role) {
+  switch (normalizeRoleValue(role)) {
+    case "planner":
+      return "Do not start implementation, testing, or closeout work until the required route and approval are explicit.";
+    case "developer":
+      return "Implement only the approved packet scope. Do not change approval state, workflow authority, or unrelated governance surfaces.";
+    case "tester":
+      return "Verify the approved scope only. Do not rewrite implementation or change approval state.";
+    case "reviewer":
+      return "Assess closeout readiness only. Do not implement fixes or change approval state from the review lane.";
+    default:
+      return "Stay inside the approved packet and workflow authority. Escalate instead of guessing.";
+  }
+}
+
+function doNotCrossForRole(role) {
+  switch (normalizeRoleValue(role)) {
+    case "planner":
+      return [
+        "No implementation or approval-state mutation.",
+        "No testing or reviewer closeout work.",
+        "No guessing a workflow when the route is unclear."
+      ];
+    case "developer":
+      return [
+        "No approval-state changes.",
+        "No unrelated routing or governance edits.",
+        "No manual edits to generated state docs."
+      ];
+    case "tester":
+      return [
+        "No implementation changes.",
+        "No approval-state changes.",
+        "No manual edits to generated state docs."
+      ];
+    case "reviewer":
+      return [
+        "No implementation changes.",
+        "No tester verification rewrite.",
+        "No packet closeout without reviewer rationale."
+      ];
+    default:
+      return ["Do not exceed the current packet scope or workflow authority."];
+  }
 }
 
 function resolveDbPath(repoRoot, dbPath) {

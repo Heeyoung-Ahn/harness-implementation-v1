@@ -292,24 +292,29 @@ validator는 주로 이런 것을 본다.
 ```mermaid
 flowchart TD
     A["Kickoff / harness:init"] --> B["Project starter doc pack"]
-    B --> C["REQUIREMENTS 정리"]
-    C --> D["ARCHITECTURE_GUIDE / IMPLEMENTATION_PLAN 정리"]
-    D --> E["첫 Packet 작성"]
-    E --> F{"Ready For Code 승인"}
-    F -->|No| E
-    F -->|Yes| G["Developer 구현"]
-    G --> H["Tester 검증"]
-    H --> I["Reviewer 검토"]
-    I --> J{"수정 필요?"}
-    J -->|Yes| G
-    J -->|No| K["Deploy / Closeout"]
-    K --> L["Operations / 다음 Lane"]
+    B --> C["PLN-00 deep interview"]
+    C --> D["REQUIREMENTS 정리"]
+    D --> E["PLN-01 requirements freeze"]
+    E --> F["ARCHITECTURE_GUIDE / IMPLEMENTATION_PLAN / UI sync"]
+    F --> G["첫 Packet 작성"]
+    G --> H{"Ready For Code 승인"}
+    H -->|No| G
+    H -->|Yes| I["Developer 구현"]
+    I --> J["Tester 검증"]
+    J --> K["Reviewer 검토"]
+    K --> L{"수정 필요?"}
+    L -->|Yes| I
+    L -->|No| M["Deploy / Closeout"]
+    M --> N["Operations / 다음 Lane"]
 ```
 
-실전에서는 Designer, Deployer, Documenter가 중간에 추가될 수 있다.
-하지만 처음 사용자는 아래 질문만 기억하면 된다.
+`START_HERE.md`는 최초 적용부터 `PLN-01` freeze까지의 진입문서다.
+이 manual은 freeze 이후 운영과 전체 lifecycle 해석을 담당한다.
 
-- 지금은 kickoff 전인가, packet 전인가, 구현 중인가, 검증 중인가, closeout 중인가
+실전에서는 Designer, Deployer, Documenter가 중간에 추가될 수 있다.
+하지만 운영자는 아래 질문만 기억하면 된다.
+
+- 지금은 kickoff 전인가, freeze 전인가, packet 전인가, 구현 중인가, 검증 중인가, closeout 중인가
 - 지금 역할은 Planner, Developer, Tester, Reviewer 중 어디에 가까운가
 - 다음 단계로 가려면 사람이 승인해야 하는가
 - 지금 읽어야 할 정본 문서는 무엇인가
@@ -374,8 +379,19 @@ flowchart TD
 
 ## 5. 프로젝트 시작 절차
 
-새 프로젝트를 시작할 때는 바로 구현하지 않는다.
-먼저 [PROJECT_STARTER_DOC_PACK.md](../artifacts/PROJECT_STARTER_DOC_PACK.md)를 채운다.
+새 프로젝트를 처음 적용하는 진입 흐름은 `START_HERE.md`가 담당한다.
+manual에서는 그 이후 운영자가 lifecycle 전체에서 어떤 기준을 유지해야 하는지 설명한다.
+
+새 프로젝트 kickoff의 최신 기준은 아래 순서다.
+
+1. `npm run harness:init`
+2. `npm run harness:status`
+3. `PROJECT_STARTER_DOC_PACK.md` rough baseline 작성
+4. `PLN-00_DEEP_INTERVIEW.md`로 implementation-critical 질문 정리
+5. `.agents/artifacts/REQUIREMENTS.md` 반영
+6. `PLN-01_REQUIREMENTS_FREEZE.md`에 approved / deferred / open 상태와 human approval boundary 기록
+7. freeze가 충분히 닫힌 뒤 architecture / implementation / UI sync와 첫 packet 검토
+
 이 문서 팩, `PLN-00_DEEP_INTERVIEW.md`, `PLN-01_REQUIREMENTS_FREEZE.md`가 충분히 닫히기 전에는 architecture / implementation / UI sync나 첫 task packet으로 넘어가지 않는다.
 
 설치와 초기화 단계에서 먼저 구분할 점:
@@ -385,7 +401,7 @@ flowchart TD
 - 실제 운영 강도는 첫 packet을 열 때 `Gate profile`을 `light` / `standard` / `contract` / `release` 중 무엇으로 둘지 결정하면서 정한다.
 - 그래서 설치 후에 "starter mode를 바꾸는 명령"을 찾기보다, 현재 또는 다음 packet의 `Gate profile` 판단이 맞는지 보는 것이 맞다.
 
-처음에 닫아야 할 항목은 아래다.
+kickoff에서 닫아야 할 항목은 아래다.
 
 1. 프로젝트 목적 정의
 2. 사용자 역할 정의
@@ -396,23 +412,18 @@ flowchart TD
 7. 권한과 승인 규칙 정의
 8. 테스트 기준 정의
 9. 배포 및 운영 기준 정의
-10. 그다음에 구현 시작
+10. freeze 전 blocker 구분
 
 운영자가 해야 할 일은 완벽한 설계서를 처음부터 쓰는 것이 아니다.
-빠진 질문을 드러내고, 구현을 시작해도 되는 수준까지 모호함을 줄이는 것이다.
+빠진 질문을 드러내고, `PLN-01` freeze 전에 반드시 닫아야 할 blocker와 나중으로 미룰 항목을 구분하는 것이다.
 
-처음 사용자 기준 작업 순서:
+freeze 이후 작업 순서:
 
-1. `npm run harness:init`
-2. `npm run harness:status`
-3. `npm run harness:next`
-4. starter doc pack rough draft 작성
-5. `REQUIREMENTS.md` 기준 요구사항 정리
-6. `ARCHITECTURE_GUIDE.md` 기준 설계 boundary 정리
-7. `IMPLEMENTATION_PLAN.md`에 현재/다음 구현 순서와 blocker를 짧게 정리
-8. 첫 packet drafting
-9. `Ready For Code` 승인
-10. 구현 thread 시작
+1. `ARCHITECTURE_GUIDE.md` 기준 설계 boundary 정리
+2. `IMPLEMENTATION_PLAN.md`에 현재/다음 구현 순서와 blocker를 짧게 정리
+3. 첫 packet drafting
+4. `Ready For Code` 승인
+5. 구현 thread 시작
 
 처음부터 모든 문서를 완벽히 닫으려 하지 말고, 아래 세 단계를 나눈다.
 
@@ -928,6 +939,9 @@ cloud에서 오래 걸리는 후보 작업을 돌렸을 때 로컬 정본으로 
 
 ## 18. 설치 후 정상 동작 확인
 
+최초 적용과 kickoff 준비 순서는 `START_HERE.md`를 따른다.
+이 섹션은 설치 후 하네스가 정상 상태인지 확인하는 운영 체크다.
+
 처음 사용자는 아래 네 단계까지만 확인하면 된다.
 
 1. `npm run harness:init`
@@ -949,12 +963,13 @@ cloud에서 오래 걸리는 후보 작업을 돌렸을 때 로컬 정본으로 
 - `.harness/operating_state.sqlite`가 있는지
 - `VALIDATION_REPORT`의 첫 finding이 무엇인지
 
-처음 사용자는 위 순서만 읽고도 30분 이내에 첫 init과 기본 상태 점검까지 도달하는 것을 목표로 한다.
+위 네 단계가 통과하면 kickoff 문서 정리는 `START_HERE.md`의 `Kick-off 표준 흐름`으로 이어간다.
 
 ## 19. 기존 프로젝트에 적용하기
 
 이미 진행 중인 프로젝트에도 하네스를 붙일 수 있다.
 이 경우에는 새 프로젝트처럼 바로 requirements부터 다시 쓰기보다, 현재 상태를 안전하게 읽어 오는 것이 먼저다.
+`START_HERE.md`는 기존 프로젝트가 새 프로젝트 init과 다른 흐름이라는 점만 안내하고, 상세 운영은 이 섹션을 따른다.
 
 기본 흐름:
 
@@ -962,23 +977,27 @@ cloud에서 오래 걸리는 후보 작업을 돌렸을 때 로컬 정본으로 
 2. 하네스 파일을 프로젝트 루트에 적용한다.
 3. `npm run harness:migration-preview`로 어떤 legacy source가 감지됐고 어떤 정리가 필요한지 본다.
 4. preview 결과를 확인한 뒤 `npm run harness:migration-apply`로 초기 상태를 반영한다.
-5. `harness:status`, `harness:context`, `harness:validate`로 하네스 기준 상태를 점검한다.
+5. `npm run harness:status`, `npm run harness:context`, `npm run harness:validate`로 하네스 기준 상태를 점검한다.
 
 주의할 점:
 
 - migration은 새 기능 설계가 아니라 기존 상태를 하네스 규칙에 맞춰 읽어 오는 단계다.
 - preview를 건너뛰고 바로 apply하지 않는다.
 - 기존 프로젝트의 실제 요구사항과 승인 상태는 결국 packet과 canonical docs로 다시 닫아야 한다.
+- 파일이 많은 기존 repo는 installer/bootstrap 충돌 범위를 먼저 검토한다.
 
 ## 20. 자주 쓰는 프롬프트 예시
 
 ### 프로젝트 시작
 
+최초 적용부터 kickoff freeze까지의 전체 프롬프트는 `START_HERE.md`의 `AI에게 요청할 Kick-off Deep Interview`를 우선 사용한다.
+manual에는 운영 중 짧게 다시 열 때 쓸 축약형만 둔다.
+
 ```text
 이 프로젝트를 하네스 기준으로 시작하려고 합니다.
 PROJECT_STARTER_DOC_PACK 기준으로 목적, 사용자 역할, 업무 흐름, 범위, 화면, 데이터, 권한, 테스트, 배포/운영 기준 중 빠진 항목을 질문해 주세요.
 답변은 chat 요약으로만 끝내지 말고, PLN-00_DEEP_INTERVIEW.md와 REQUIREMENTS.md에 반영할 approved/open/deferred 항목으로 정리해 주세요.
-PLN-01 requirements freeze blocker를 먼저 닫고, architecture / implementation / packet으로는 넘어가지 마세요.
+PLN-01 requirements freeze blocker를 먼저 닫고, architecture / implementation / UI sync / packet으로는 넘어가지 마세요.
 질문은 한 번에 하나의 결정사항만 던지고, 각 결정이 이후 UX, data, test, deployment에 어떤 영향을 주는지도 쉬운 말로 설명해 주세요.
 마지막에는 첫 버전 제품이 어떤 모습이 되는지 요약해 보여 주고 최종 freeze 확인을 받아 주세요.
 ```

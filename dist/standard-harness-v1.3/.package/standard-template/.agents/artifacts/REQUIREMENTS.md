@@ -25,18 +25,16 @@
 ## Active Profile Selection
 - [활성화할 optional profile이 있으면 적는다. 없으면 none]
 
-## V1.1 Standalone Harness Baseline
+## Standard Harness Starter Baseline
 - 하네스 runtime은 `.harness/runtime/*`에 있고, 하네스 테스트는 `.harness/test/*`에 있다.
 - 제품 코드는 `src/`, `app/`, `backend/`, `frontend/`, `server/` 등 프로젝트가 선택한 경로를 사용할 수 있다.
 - Node.js 24+는 하네스 runtime 요구사항이며, 제품 앱 runtime 요구사항이 아니다.
 - `reference/artifacts/REPOSITORY_LAYOUT_OWNERSHIP.md`를 layout ownership 기준으로 사용한다.
 - `.agents/artifacts/ACTIVE_PROFILES.md`가 active optional profile 선언의 stable artifact다.
 
-## V1.2 Installable Harness / PMW Baseline
-- installer는 프로젝트명, 대상 폴더, active profile을 받아 새 repo 폴더를 만들고 standard-template 복사, harness init, PMW export, PMW registry registration을 수행한다.
-- PMW는 별도 앱이며 project registry에서 복수 프로젝트를 add/remove/archive/select 한다.
-- 표준 하네스는 `.agents/runtime/project-manifest.json`과 `.agents/runtime/pmw-read-model.json`만 PMW용으로 관리한다.
-- PMW는 `.agents/.harness/task/profile/validation truth`를 직접 수정하지 않는다.
+## Installable Starter Baseline
+- installer는 프로젝트명, 대상 폴더, active profile을 받아 새 repo 폴더를 만들고 standard-template 복사와 harness init을 수행한다.
+- 표준 하네스는 repo-local `.agents/*`와 `.harness/*`를 사용해 프로젝트 상태, workflow, validation evidence를 관리한다.
 - canonical manual은 `reference/manuals/HARNESS_MANUAL.md`다.
 
 ## Optional Profile Catalog
@@ -66,10 +64,10 @@
 ## Required Reading Rule
 1. `AGENTS.md`
 2. `.agents/rules/workspace.md`
-3. `.agents/artifacts/CURRENT_STATE.md`
-4. `.agents/artifacts/TASK_LIST.md`
-5. 현재 lane에 맞는 workflow
-6. 현재 lane에 필요한 baseline artifact
+3. `.agents/runtime/ACTIVE_CONTEXT.json`
+4. 현재 lane에 맞는 workflow 또는 `ACTIVE_CONTEXT.nextWork.workflow`
+5. 현재 lane에 필요한 baseline artifact 또는 `ACTIVE_CONTEXT.reentryContract.mustReadNext`
+6. `.agents/artifacts/CURRENT_STATE.md`와 `.agents/artifacts/TASK_LIST.md`는 `ACTIVE_CONTEXT`가 명시적으로 요구하거나 compatibility troubleshooting/evidence가 필요할 때만 읽는다.
 7. 명시적으로 활성화된 optional profile artifact
 8. 현재 작업의 active project packet과 authoritative source artifact
 9. 필요한 추가 reference material
@@ -79,19 +77,22 @@
 2. SOP compliance: 승인된 workflow, validation rule, cutover sequence를 임의로 우회하지 않는다.
 3. human in the loop: requirements freeze, architecture sync, cutover, security risk acceptance 같은 핵심 판단은 사람 승인 지점을 둔다.
 4. decision-ready authoring: 사용자가 결정을 내려야 하는 문서는 `권장 결론`, `핵심 근거`, `예외 조건`, `fallback`을 함께 제공한다.
-5. progressive elaboration: rough baseline 승인만으로 바로 코드에 들어가지 않고, task-level packet으로 다시 닫는다.
-6. layered standardization: 특정 도메인, 특정 기술스택, 특정 운영환경 절차는 core 기본값으로 넣지 않는다.
-7. authoritative source: 외부 기획, 정책, 업무 절차, 연동 명세는 권위 있는 source로 등록하고 추적한다.
-8. legacy integration safety: 기존 프로그램과 연동되는 data-impact 작업은 기존 스키마와 운영 프로세스를 확인하고, 테이블명/컬럼명/데이터 운영 방식 차이로 운영 이슈가 생기지 않도록 사용자 승인 기반으로 설계한다.
-9. planning precedence: 새 사용자 기획 문서를 받으면 requirements, architecture, implementation, active packet에 즉시 영향 평가를 걸고, 기존 구현의 안정적 유지보다 신규 기획의 완전 반영을 우선한다.
-10. environment clarity: deploy, test, cutover 성격의 작업은 source 환경, target 환경, execution target, rollback 경계를 명시한다.
+5. risk-proportional decision support: 초기 기획의 핵심 결정은 비전공자도 downstream impact를 읽을 수 있게 설명하고, 리스크가 큰 결정일수록 영향 범위와 되돌리기 비용을 더 자세히 드러낸다.
+6. sequential closure: 상호 독립적이지 않은 결정사항은 한 번에 묶어 닫지 않고, decision queue를 보여 준 뒤 한 개씩 닫는다. 앞선 결정으로 전제가 바뀌면 후속 질문도 즉시 갱신한다.
+7. final product confirmation: requirements freeze 전에는 “이 결정 기준으로 첫 버전 제품이 어떤 모습이 되는지”를 한 번에 요약해 보여 주고 최종 human confirmation을 받는다.
+8. progressive elaboration: rough baseline 승인만으로 바로 코드에 들어가지 않고, task-level packet으로 다시 닫는다.
+9. layered standardization: 특정 도메인, 특정 기술스택, 특정 운영환경 절차는 core 기본값으로 넣지 않는다.
+10. authoritative source: 외부 기획, 정책, 업무 절차, 연동 명세는 권위 있는 source로 등록하고 추적한다.
+11. legacy integration safety: 기존 프로그램과 연동되는 data-impact 작업은 기존 스키마와 운영 프로세스를 확인하고, 테이블명/컬럼명/데이터 운영 방식 차이로 운영 이슈가 생기지 않도록 사용자 승인 기반으로 설계한다.
+12. planning precedence: 새 사용자 기획 문서를 받으면 requirements, architecture, implementation, active packet에 즉시 영향 평가를 걸고, 기존 구현의 안정적 유지보다 신규 기획의 완전 반영을 우선한다.
+13. environment clarity: deploy, test, cutover 성격의 작업은 source 환경, target 환경, execution target, rollback 경계를 명시한다.
 
 ## Authoring And Approval Workflow
 1. implementation-critical issue가 닫히거나 명시적으로 deferred 될 때까지 requirements를 먼저 정리한다.
 2. requirements가 확정되기 전에는 architecture / implementation / UI baseline을 새 기준선으로 sync하지 않는다.
 3. requirements 승인 후 architecture / implementation / UI 문서를 같은 기준선으로 맞춘다.
 4. user-facing 작업은 task-level detailed design과 human sync 없이 코드로 먼저 확정하지 않는다.
-5. data-impact 작업은 `reference/artifacts/DOMAIN_CONTEXT.md` 또는 동등한 approved domain foundation reference와 schema impact 판단 없이 `Ready For Code`로 올리지 않는다.
+5. data-impact 작업은 `.agents/artifacts/DOMAIN_CONTEXT.md` 또는 동등한 approved domain foundation reference와 schema impact 판단 없이 `Ready For Code`로 올리지 않는다.
 6. DB 설계가 포함된 data-impact 작업은 테이블명, 컬럼명, 데이터 운영 방식에 대한 사용자 확인 없이 `Ready For Code`로 올리지 않는다.
 7. 작업이 기존 프로그램과 연동되면 사용자에게 기존 프로그램 DB schema 또는 동등한 authoritative schema artifact를 요청하고, naming / data operation / ownership / migration compatibility 분석을 packet에 남기기 전에는 설계를 닫지 않는다.
 8. deploy/test/cutover 작업은 environment topology와 execution target 없이 `Ready For Code`로 올리지 않는다.
@@ -138,11 +139,11 @@
 - repo-local DB truth for hot-state and operational metadata
 - 사람이 읽고 승인할 수 있는 Markdown canonical docs
 - generated state docs
-- PMW read-only summary/detail/artifact viewer/settings
+- CLI-first active context, status, validation, and handoff read surfaces
 - context restoration flow with explicit load order and source trace
 - drift detection and recovery rule
 - domain foundation gate
-- `reference/artifacts/DOMAIN_CONTEXT.md` 기반의 domain foundation artifact template
+- `.agents/artifacts/DOMAIN_CONTEXT.md` 기반의 domain foundation artifact template
 - 기존 프로그램 연동 작업의 DB schema intake, naming/data operation compatibility analysis, user DB design confirmation
 - authoritative source contract
 - `reference/artifacts/AUTHORITATIVE_SOURCE_INTAKE.md` 기반의 authoritative source intake artifact template
@@ -170,7 +171,7 @@
 - active profile과 required evidence를 `artifact_index`의 `task_packet` registration까지 확인하는 profile-aware validator
 
 ## Out Of Scope
-- PMW write enable
+- remote sync or multi-user coordination by default
 - remote sync or multi-user coordination by default
 - 특정 도메인 스키마를 core 기본값으로 고정하는 것
 - 특정 UI 스타일을 core 기본값으로 고정하는 것
@@ -182,7 +183,7 @@
 - `Core`는 기본 활성, `Optional Profile`은 explicit-only, `Project Packet`은 project-specific 실행 전 필수라는 activation rule이 문서화된다.
 - required reading rule이 baseline artifact, active profile, active packet, authoritative source 순서를 포함해 정의된다.
 - `Core`에 넣으면 안 되는 project-specific 항목 예시와 분류 규칙이 정리된다.
-- data-impact 작업은 `reference/artifacts/DOMAIN_CONTEXT.md` 또는 승인된 동등 artifact를 포함한 domain foundation reference와 schema impact 판단 없이 시작되지 않는다.
+- data-impact 작업은 `.agents/artifacts/DOMAIN_CONTEXT.md` 또는 승인된 동등 artifact를 포함한 domain foundation reference와 schema impact 판단 없이 시작되지 않는다.
 - data-impact packet에는 domain foundation reference path와 schema impact classification이 남는다.
 - schema impact classification이 `unknown`이면 planning hold가 유지된다.
 - DB 설계가 포함된 data-impact 작업은 테이블명, 컬럼명, 데이터 운영 방식에 대한 user confirmation 없이는 시작되지 않는다.

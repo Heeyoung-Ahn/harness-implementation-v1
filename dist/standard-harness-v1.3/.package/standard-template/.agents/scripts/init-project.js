@@ -97,7 +97,16 @@ try {
       `- Project slug: ${result.projectSlug}`,
       `- Active profiles: ${result.activeProfiles.length ? result.activeProfiles.join(", ") : "none"}`,
       `- DB path: ${result.dbPath}`,
-      `- Next action: ${result.nextAction}`
+      `- Next action: ${result.nextAction}`,
+      "",
+      "Initialization is complete.",
+      "Do this next:",
+      "- Open START_HERE.md",
+      "- Fill reference/artifacts/PROJECT_STARTER_DOC_PACK.md",
+      "- Run npm run harness:status",
+      "- Run npm run harness:context",
+      "- Close PLN-00 and PLN-01 before syncing architecture / implementation / UI",
+      "- Open the first implementation packet only after PLN-01 is approved"
     ].join("\n") + "\n"
   );
   process.exit(0);

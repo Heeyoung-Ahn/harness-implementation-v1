@@ -31,10 +31,15 @@ test("initializes a copied starter repo and seeds active-context-ready state", (
   assert.equal(packageJson.name, "wbms-budget-suite");
 
   const currentState = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"), "utf8");
+  const taskList = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "TASK_LIST.md"), "utf8");
   const requirements = fs.readFileSync(path.join(repoRoot, ".agents", "artifacts", "REQUIREMENTS.md"), "utf8");
   const readme = fs.readFileSync(path.join(repoRoot, "README.md"), "utf8");
   const implementationPlan = fs.readFileSync(
     path.join(repoRoot, ".agents", "artifacts", "IMPLEMENTATION_PLAN.md"),
+    "utf8"
+  );
+  const architectureGuide = fs.readFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "ARCHITECTURE_GUIDE.md"),
     "utf8"
   );
   const generatedState = fs.readFileSync(
@@ -45,10 +50,15 @@ test("initializes a copied starter repo and seeds active-context-ready state", (
   assert.match(currentState, /Current Stage: kickoff_interview/);
   assert.match(currentState, /WBMS Budget Suite/);
   assert.match(currentState, /START_HERE\.md/);
+  assert.match(currentState, /PROJECT_STARTER_DOC_PACK/);
+  assert.match(taskList, /PROJECT_STARTER_DOC_PACK/);
   assert.match(readme, /START_HERE\.md/);
+  assert.match(result.nextAction, /PROJECT_STARTER_DOC_PACK/);
   assert.match(requirements, /PRF-01 admin grid application profile/);
   assert.match(requirements, /PRF-02 authoritative spreadsheet source profile/);
   assert.match(implementationPlan, /Selected profiles at bootstrap:/);
+  assert.match(architectureGuide, /## Authoring Flow/);
+  assert.doesNotMatch(architectureGuide, /## Active Profiles And Exceptions/);
   assert.match(generatedState, /Release stage: kickoff_interview/);
 
   const store = createOperatingStateStore({
@@ -74,6 +84,24 @@ test("initializes a copied starter repo and seeds active-context-ready state", (
   assert.match(activeContextMarkdown, /# 활성 컨텍스트/);
 });
 
+test("actual standard-template source is already a fresh starter seed", () => {
+  const repoRoot = copyStarterRepo({ reset: false });
+
+  const result = initializeProjectStarter({
+    repoRoot,
+    projectName: "Fresh Source Starter",
+    userGoal: "사용자가 starter source 그대로 kickoff를 시작한다.",
+    opsGoal: "운영자와 AI가 fresh starter 기준으로 재진입한다.",
+    approvalGoal: "PLN-00과 PLN-01을 닫아 첫 구현 lane을 연다.",
+    activeProfiles: [],
+    now: createClock("2026-05-17T04:00:00.000Z")
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.json")), true);
+  assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "artifacts", "VALIDATION_REPORT.json")), false);
+});
+
 test("refuses to reinitialize an already-edited repo without force", () => {
   const repoRoot = copyStarterRepo();
   const currentStatePath = path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md");
@@ -96,11 +124,13 @@ test("refuses to reinitialize an already-edited repo without force", () => {
   );
 });
 
-function copyStarterRepo() {
+function copyStarterRepo({ reset = true } = {}) {
   const sourceRoot = detectStarterSource();
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "standard-harness-init-"));
   fs.cpSync(sourceRoot, repoRoot, { recursive: true });
-  resetCopiedStarterToFreshState(repoRoot);
+  if (reset) {
+    resetCopiedStarterToFreshState(repoRoot);
+  }
   return repoRoot;
 }
 
@@ -184,4 +214,6 @@ function resetCopiedStarterToFreshState(repoRoot) {
   for (const suffix of ["", "-shm", "-wal"]) {
     fs.rmSync(path.join(repoRoot, ".harness", `operating_state.sqlite${suffix}`), { force: true });
   }
+  fs.rmSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.json"), { force: true });
+  fs.rmSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.md"), { force: true });
 }

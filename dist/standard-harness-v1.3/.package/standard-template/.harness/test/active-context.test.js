@@ -18,25 +18,25 @@ test("active context writes compact JSON and Korean Markdown re-entry state with
   store.setReleaseState({
     currentStage: "planning",
     releaseGateState: "open",
-    currentFocus: "DEV-11 PMW-free active context",
-    releaseGoal: "Remove PMW and keep re-entry cheap.",
-    sourceRef: "reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md"
+    currentFocus: "Active context re-entry baseline",
+    releaseGoal: "Keep re-entry cheap and deterministic.",
+    sourceRef: "reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md"
   });
   store.upsertWorkItem({
-    workItemId: "DEV-11",
-    title: "CLI-first PMW decommission",
+    workItemId: "CTX-01",
+    title: "Active context baseline",
     status: "in_progress",
     owner: "developer",
     nextAction: "Implement active context.",
-    sourceRef: "reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md",
+    sourceRef: "reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md",
     metadata: { gateProfile: "release", readyForCode: "approved" }
   });
   store.appendHandoff({
-    handoffId: "handoff-dev-11",
-    handoffSummary: "DEV-11 handed to Developer.",
+    handoffId: "handoff-ctx-01",
+    handoffSummary: "CTX-01 handed to Developer.",
     fromRole: "planner",
     toRole: "developer",
-    sourceRef: "reference/packets/PKT-01_DEV-11_CLI_FIRST_PMW_DECOMMISSION_AND_ACTIVE_CONTEXT.md",
+    sourceRef: "reference/packets/PKT-01_WORK_ITEM_PACKET_TEMPLATE.md",
     payload: { nextFirstAction: "Implement active context." }
   });
   writeGeneratedStateDocs({ store, outputDir: repoRoot });
@@ -46,12 +46,14 @@ test("active context writes compact JSON and Korean Markdown re-entry state with
   const reopened = createOperatingStateStore({ dbPath });
 
   assert.equal(result.ok, true);
-  assert.equal(result.context.activeTask.workItemId, "DEV-11");
+  assert.equal(result.context.activeTask.workItemId, "CTX-01");
   assert.equal(result.context.selectedLane.workflow, ".agents/workflows/dev.md");
   assert.equal(result.context.nextWork.workflow, ".agents/workflows/dev.md");
   assert.equal(result.context.reentryContract.firstRead, ".agents/runtime/ACTIVE_CONTEXT.json");
-  assert.equal(result.context.reentryContract.mustReadNext.includes(".agents/artifacts/CURRENT_STATE.md"), true);
-  assert.equal(result.context.reentryContract.mustReadNext.includes(".agents/artifacts/TASK_LIST.md"), true);
+  assert.equal(result.context.reentryContract.mustReadNext.includes(".agents/artifacts/CURRENT_STATE.md"), false);
+  assert.equal(result.context.reentryContract.mustReadNext.includes(".agents/artifacts/TASK_LIST.md"), false);
+  assert.equal(result.context.nextWork.requiredSsot.includes(".agents/artifacts/IMPLEMENTATION_PLAN.md"), false);
+  assert.equal(result.context.reentryContract.mustReadNext.includes(".agents/artifacts/IMPLEMENTATION_PLAN.md"), false);
   assert.equal(typeof result.context.reentryContract.digest, "string");
   assert.equal(result.context.sources.generatedCurrentState, ".agents/runtime/generated-state-docs/CURRENT_STATE.md");
   assert.equal(fs.existsSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.json")), true);
@@ -63,13 +65,13 @@ test("active context writes compact JSON and Korean Markdown re-entry state with
   assert.match(fs.readFileSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.md"), "utf8"), /## 먼저 다시 읽을 항목/);
 });
 
-test("active context exposes no PMW read-model dependency", () => {
-  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "active-context-no-pmw-"));
+test("active context exposes no deprecated external read-model dependency", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "active-context-no-deprecated-read-model-"));
   const store = createOperatingStateStore({ dbPath: path.join(repoRoot, ".harness", "operating_state.sqlite") });
   store.setReleaseState({
     currentStage: "planning",
     releaseGateState: "open",
-    currentFocus: "No PMW",
+    currentFocus: "No external read model",
     releaseGoal: "Use CLI context.",
     sourceRef: ".agents/artifacts/CURRENT_STATE.md"
   });
@@ -77,7 +79,7 @@ test("active context exposes no PMW read-model dependency", () => {
   const context = buildActiveContext({ store, repoRoot });
   store.close();
 
-  assert.equal(JSON.stringify(context).includes("pmw-read-model"), false);
+  assert.equal(JSON.stringify(context).includes("external-read-model"), false);
   assert.equal(JSON.stringify(context).includes("project-manifest"), false);
 });
 
@@ -210,6 +212,71 @@ test("active context ignores a DB-open work item that canonical TASK_LIST alread
     context.nextWork.action,
     "Planner should choose the next approved lane and open the next packet only after human agreement."
   );
+});
+
+test("active context does not import CURRENT_STATE must-read bullets into canonical AI re-entry routing", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "active-context-must-read-authority-"));
+  fs.mkdirSync(path.join(repoRoot, ".agents", "artifacts"), { recursive: true });
+  fs.mkdirSync(path.join(repoRoot, ".agents", "runtime", "generated-state-docs"), { recursive: true });
+  const store = createOperatingStateStore({
+    dbPath: path.join(repoRoot, ".harness", "operating_state.sqlite"),
+    now: clock("2026-05-16T09:30:00.000Z")
+  });
+
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "PLN-21 authority slice",
+    releaseGoal: "Keep AI re-entry sourced from canonical live state.",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+  store.upsertWorkItem({
+    workItemId: "PLN-21",
+    title: "Authority simplification",
+    status: "in_progress",
+    owner: "developer",
+    nextAction: "Implement slice 1.",
+    sourceRef: "reference/packets/PKT-01_PLN-21.md",
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  store.appendHandoff({
+    handoffId: "pln-21-dev",
+    handoffSummary: "Developer should implement slice 1.",
+    fromRole: "planner",
+    toRole: "developer",
+    sourceRef: "reference/packets/PKT-01_PLN-21.md",
+    payload: {
+      nextFirstAction: "Implement slice 1.",
+      requiredSsot: [
+        ".agents/artifacts/CURRENT_STATE.md",
+        ".agents/artifacts/TASK_LIST.md",
+        ".agents/artifacts/IMPLEMENTATION_PLAN.md",
+        "reference/packets/PKT-01_PLN-21.md"
+      ]
+    }
+  });
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "CURRENT_STATE.md"),
+    [
+      "# Current State",
+      "",
+      "## Must Read Next",
+      "- `.agents/artifacts/REQUIREMENTS.md`",
+      "- `reference/manuals/HARNESS_MANUAL.md`"
+    ].join("\n"),
+    "utf8"
+  );
+
+  const context = buildActiveContext({ store, repoRoot });
+  store.close();
+
+  assert.equal(context.reentryContract.mustReadNext.includes("reference/manuals/HARNESS_MANUAL.md"), false);
+  assert.equal(context.reentryContract.mustReadNext.includes(".agents/artifacts/CURRENT_STATE.md"), false);
+  assert.equal(context.reentryContract.mustReadNext.includes(".agents/artifacts/TASK_LIST.md"), false);
+  assert.equal(context.nextWork.requiredSsot.includes(".agents/artifacts/CURRENT_STATE.md"), false);
+  assert.equal(context.nextWork.requiredSsot.includes(".agents/artifacts/TASK_LIST.md"), false);
+  assert.equal(context.reentryContract.mustReadNext.includes(".agents/artifacts/IMPLEMENTATION_PLAN.md"), true);
 });
 
 function clock(startIso) {

@@ -224,7 +224,7 @@ export async function bootstrapHarnessProject({
     appliedTopLevelPaths: summarizeTopLevelPaths(starterEntries),
     runtimeNodePath,
     initResult,
-    nextAction: "run HARNESS.cmd test and HARNESS.cmd status in the project folder."
+    nextAction: "open START_HERE.md, fill PROJECT_STARTER_DOC_PACK, then run HARNESS.cmd status in the project folder."
   };
 }
 

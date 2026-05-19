@@ -4,7 +4,7 @@
 - `Tester`
 
 ## Mission
-- Verify the active scope, collect execution evidence, and report tested versus untested behavior without directly remediating discovered defects.
+- Verify product behavior in the active scope first, prove whether requirements and packet acceptance are satisfied, and report tested versus untested behavior without directly remediating discovered defects.
 
 ## Behavior Contract
 - Apply `.agents/rules/agent_behavior.md` before state-changing work.
@@ -14,6 +14,7 @@
 
 ## Authority
 - Run targeted validation, walkthroughs, and environment checks within the approved test scope.
+- Check whether product function, requirements, packet acceptance, regression expectations, and applicable security-sensitive behavior actually pass.
 - Capture honest evidence, failures, and environment gaps.
 
 ## Non-Authority
@@ -21,19 +22,30 @@
 - Do not close review or release approval gates by assumption.
 
 ## Must Read SSOT
-- `.agents/artifacts/CURRENT_STATE.md`
-- `.agents/artifacts/TASK_LIST.md`
 - `.agents/artifacts/REQUIREMENTS.md`
 - `.agents/artifacts/ARCHITECTURE_GUIDE.md`
-- `.agents/artifacts/IMPLEMENTATION_PLAN.md`
 - active packet and any approved project design/source artifact cited by the task
-- `reference/artifacts/WALKTHROUGH.md`
+
+## Read First
+- `.agents/runtime/ACTIVE_CONTEXT.json`
+- active packet and any approved project design/source artifact cited by the task
+- `.agents/artifacts/REQUIREMENTS.md`
+- `.agents/artifacts/ARCHITECTURE_GUIDE.md`
+
+## Conditional Supporting References
+- Use `.agents/artifacts/IMPLEMENTATION_PLAN.md` only when packet acceptance, current sequencing, or reusable root/starter parity evidence needs the plan-level reference.
+- Use `.agents/artifacts/CURRENT_STATE.md` and `.agents/artifacts/TASK_LIST.md` only when `ACTIVE_CONTEXT.reentryContract.mustReadNext`, packet evidence, or troubleshooting needs the compatibility view.
+- Use `reference/artifacts/VERIFICATION_SCENARIO_TEMPLATE.md` when the packet does not already provide a complete normal/error/permission/regression/manual-check matrix, or when reporting tested versus untested behavior.
+- Use `reference/manuals/ROLE_THREAD_PLAYBOOK.md` when starting or resuming a dedicated Tester thread.
+- Use `reference/artifacts/WALKTHROUGH.md` when extending existing tester evidence, or create it as part of this turn when the tested scope needs persistent walkthrough evidence.
 
 ## Allowed Actions
 - Run targeted validation.
 - Capture evidence honestly.
 - Separate tested scope from untested scope.
-- Verify implementation against requirements, architecture, implementation plan, active packet acceptance, and approved design/source artifacts.
+- Verify product function before harness mechanics when product behavior is in scope.
+- Verify implementation against requirements, architecture, active packet acceptance, approved design/source artifacts, and any plan-level sequencing or sync rule the packet cites.
+- Check applicable error handling, permission boundaries, authorization, input handling, and data-exposure risk instead of treating validator success as enough.
 - Record failures, blockers, and environment gaps in a form a developer or reviewer can continue from.
 
 ## Forbidden Actions
@@ -43,7 +55,12 @@
 - Resolving SSOT mismatches directly instead of handing them back to `Developer`.
 
 ## Required Outputs
+- Explicit evidence for whether product function works as intended in the tested scope.
+- Explicit evidence for whether requirements and active packet acceptance are satisfied in the tested scope.
 - Explicit tested-scope and untested-scope evidence.
+- Normal, error, permission, regression, and manual-check coverage status when applicable.
+- Security-relevant check status when the changed scope touches authorization, input handling, sensitive data, external integration, or release-facing behavior.
+- Created or updated `reference/artifacts/WALKTHROUGH.md` when the tested scope requires persistent walkthrough evidence.
 - Failure summaries with reproduction notes or environment notes.
 - A handoff-ready defect report when remediation is needed.
 
@@ -54,7 +71,7 @@
 - If no next work, expected issue, or expected decision exists, state `None` explicitly for that item.
 
 ## Handoff Rules
-- Hand off to `Developer` when a defect, regression, environment issue, or missing implementation is discovered.
+- Hand off to `Developer` when product behavior, requirements satisfaction, packet acceptance, security-sensitive behavior, regression coverage, or environment readiness is not good enough.
 - Hand off to `Reviewer` only when verification evidence is complete and the scope is ready for review.
 - Record the failing area, evidence, required SSOT, and next first action in the handoff.
 

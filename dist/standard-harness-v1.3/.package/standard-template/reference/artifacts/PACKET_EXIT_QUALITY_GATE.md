@@ -32,7 +32,7 @@
 ## 3. Source Parity Check
 - Packet vs code parity:
 - Packet vs canonical docs parity:
-- Packet vs generated docs / PMW parity:
+- Packet vs generated docs / active context parity:
 - Source trace gaps:
 
 ## 4. Residual Debt And Refactor Disposition

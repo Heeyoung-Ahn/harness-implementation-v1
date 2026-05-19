@@ -28,7 +28,7 @@
 - Architecture impact:
 - Implementation plan impact:
 - Release or milestone impact:
-- Generated docs / PMW impact:
+- Generated docs / active context impact:
 
 ## 3. Freeze / Continue Boundary
 - Packets that must stop and reopen:

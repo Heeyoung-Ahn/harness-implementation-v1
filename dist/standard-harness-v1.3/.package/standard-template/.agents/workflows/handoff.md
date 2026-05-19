@@ -14,7 +14,7 @@
 - Keep every changed line traceable to the user request, approved packet, or required verification evidence.
 
 ## Authority
-- Record baton state across `CURRENT_STATE.md`, `TASK_LIST.md`, DB hot-state, and Active Context routing surfaces.
+- Record baton state in the operational route, then regenerate Active Context and compatibility views through the approved runtime path.
 - Resolve the next workflow target from approved routing rules and launch the next workflow path.
 
 ## Non-Authority
@@ -23,17 +23,22 @@
 - Do not hide unresolved blockers behind a nominal handoff.
 
 ## Must Read SSOT
-- `.agents/artifacts/CURRENT_STATE.md`
-- `.agents/artifacts/TASK_LIST.md`
+- `.agents/runtime/ACTIVE_CONTEXT.json`
+- latest handoff and active packet when one exists
+
+## Read First
+- `.agents/runtime/ACTIVE_CONTEXT.json`
+
+## Conditional Supporting References
+- Use `.agents/artifacts/CURRENT_STATE.md` and `.agents/artifacts/TASK_LIST.md` when the baton needs compatibility-view wording, route troubleshooting, or generated-view drift checks.
+- Use the active packet and its approved source artifacts when the baton is packet-bound.
+- Use `.agents/artifacts/VALIDATION_REPORT.md`, `reference/artifacts/WALKTHROUGH.md`, `reference/artifacts/REVIEW_REPORT.md`, and `reference/artifacts/PACKET_EXIT_QUALITY_GATE.md` when the handoff crosses implementation, verification, review, or closeout boundaries.
 
 ## Allowed Actions
 - Record what was completed.
 - Record what remains.
 - Record the next first action.
-- Update `.agents/artifacts/CURRENT_STATE.md`:
-  `Next Recommended Agent` and `Latest Handoff Summary`
-- Update `.agents/artifacts/TASK_LIST.md`:
-  `Active Tasks` owner/status/depends-on and `Handoff Log`
+- Update the operational baton state with the approved transition/handoff path, then regenerate `.agents/runtime/ACTIVE_CONTEXT.*` and compatibility views instead of hand-editing generated files.
 - Keep handoff wording explicit in this shape:
   `[from_role -> to_role] completed_scope | remaining_scope | next_first_action`
 - Ensure at least one open task (or explicit `None`) has a concrete `Owner` and `next action`
@@ -45,7 +50,7 @@
 
 ## Required Outputs
 - A structured baton record that identifies completed scope, remaining scope, next first action, next owner, required SSOT, and blockers or risks.
-- Updated current-state and task-list ownership signals that match the baton.
+- Regenerated Active Context and compatibility ownership signals that match the baton when the route changed.
 - A routeable workflow target for CLI and Active Context handoff surfaces.
 
 ## Turn Close Reporting
@@ -56,8 +61,9 @@
 
 ## Execution Routing
 - When handoff is invoked, resolve the target from:
-  1) `CURRENT_STATE.md > Next Recommended Agent`
-  2) first open row in `TASK_LIST.md > Active Tasks` (`Owner`, `Status`, `Depends On`)
+  1) `.agents/runtime/ACTIVE_CONTEXT.json` nextWork owner/workflow
+  2) latest handoff payload
+  3) compatibility `CURRENT_STATE.md` / `TASK_LIST.md` only as fallback route hints
 - Route immediately to the matching workflow and execute its `Must Read SSOT` + `Allowed Actions` steps:
   - planner / maintainer planning -> `.agents/workflows/plan.md`
   - developer / implementer -> `.agents/workflows/dev.md`

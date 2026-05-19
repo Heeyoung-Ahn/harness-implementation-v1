@@ -19,6 +19,7 @@ const IMPLEMENTATION_PLAN_PATH = ".agents/artifacts/IMPLEMENTATION_PLAN.md";
 const PROJECT_PROGRESS_PATH = ".agents/artifacts/PROJECT_PROGRESS.md";
 const PREVENTIVE_MEMORY_PATH = ".agents/artifacts/PREVENTIVE_MEMORY.md";
 const ACTIVE_CONTEXT_SCHEMA_VERSION = "standard-harness-active-context/v2";
+const COMPATIBILITY_FIRST_READ_PATHS = new Set([CURRENT_STATE_PATH, TASK_LIST_PATH]);
 
 export function writeActiveContext({ store, repoRoot = process.cwd(), outputDir = repoRoot, validation = null } = {}) {
   const root = path.resolve(repoRoot);
@@ -96,28 +97,26 @@ export function buildActiveContext({
     latestHandoff,
     includeWorkflowDetails: true
   });
-  const nextWorkflow = handoffExecution.workflow === "manual_selection_required" ? null : handoffExecution.workflow;
+  const nextWorkflow =
+    handoffExecution.routeStatus === "manual_selection_required" ||
+    handoffExecution.routeStatus === "planner_fallback_blocked"
+      ? null
+      : handoffExecution.workflow;
+  const latestHandoffPayload = latestHandoff?.payload ?? {};
   const workflowReadFirst = normalizePathList(handoffExecution.workflowDetails?.readFirst ?? []);
-  const currentStateMustRead = normalizePathList(
-    readSectionBulletList(path.resolve(root, CURRENT_STATE_PATH), "## Must Read Next")
+  const nextRequiredSsot = uniquePathList(
+    stripCompatibilityFirstReadPaths(normalizePathList(latestHandoffPayload.requiredSsot ?? []))
   );
+  const nextDoNotCross = normalizeTextList(latestHandoffPayload.doNotCross ?? []);
   const activePacket = activeTask?.sourceRef ?? releaseState?.sourceRef ?? null;
   const mustReadNext = uniquePathList([
     nextWorkflow,
-    CURRENT_STATE_PATH,
-    TASK_LIST_PATH,
     ...workflowReadFirst,
-    ...currentStateMustRead,
+    ...nextRequiredSsot,
     activePacket,
     VALIDATION_REPORT_JSON
   ]);
-  const sourceTrace = uniquePathList([
-    CURRENT_STATE_PATH,
-    TASK_LIST_PATH,
-    IMPLEMENTATION_PLAN_PATH,
-    activePacket,
-    VALIDATION_REPORT_JSON
-  ]);
+  const sourceTrace = uniquePathList([...nextRequiredSsot, activePacket, VALIDATION_REPORT_JSON]);
   const activeTaskSummary = activeTask
     ? {
         workItemId: activeTask.workItemId,
@@ -163,10 +162,13 @@ export function buildActiveContext({
       workflow: nextWorkflow,
       workflowRouteStatus: handoffExecution.routeStatus,
       resolvedBy: handoffExecution.resolvedBy,
+      requiredSsot: nextRequiredSsot,
+      approvalBoundary: normalizeTextValue(latestHandoffPayload.approvalBoundary),
+      doNotCross: nextDoNotCross,
       action:
         activeTask?.nextAction ??
-        latestHandoff?.payload?.nextFirstAction ??
-        "No active task is recorded. Review CURRENT_STATE and TASK_LIST."
+        latestHandoffPayload.nextFirstAction ??
+        "No active task is recorded. Review IMPLEMENTATION_PLAN and the latest handoff."
     },
     reentryContract,
     blockers: openRisks.map((risk) => ({
@@ -189,8 +191,10 @@ export function buildActiveContext({
           toRole: latestHandoff.toRole,
           summary: latestHandoff.handoffSummary,
           sourceRef: latestHandoff.sourceRef ?? null,
-          nextFirstAction: latestHandoff.payload?.nextFirstAction ?? null,
-          requiredSsot: normalizePathList(latestHandoff.payload?.requiredSsot ?? [])
+          nextFirstAction: normalizeTextValue(latestHandoffPayload.nextFirstAction),
+          requiredSsot: nextRequiredSsot,
+          approvalBoundary: normalizeTextValue(latestHandoffPayload.approvalBoundary),
+          doNotCross: nextDoNotCross
         }
       : null,
     validation: validation ?? null,
@@ -224,7 +228,7 @@ export function buildActiveContext({
   };
 }
 
-function renderActiveContextMarkdown(context) {
+export function renderActiveContextMarkdown(context) {
   const task = context.selectedLane;
   const handoff = context.latestHandoff;
   const validation = context.validation;
@@ -234,6 +238,8 @@ function renderActiveContextMarkdown(context) {
     "## 시작 계약",
     `- 첫 AI 재진입 읽기: ${context.reentryContract.firstRead}`,
     `- 사람 확인용 보조 문서: ${context.reentryContract.fallbackHumanView}`,
+    "- 문서 성격: generated human fallback view; live write authority는 아님",
+    "- 복구 명령: node .harness/runtime/state/dev05-cli.js context --repair",
     `- 다음 workflow: ${context.nextWork.workflow ?? "수동 선택 필요"}`,
     task
       ? `- 선택된 lane: ${task.workItemId} / ${task.status} / 담당 ${task.owner ?? "미지정"}`
@@ -254,6 +260,13 @@ function renderActiveContextMarkdown(context) {
     `- 다음 workflow: ${context.nextWork.workflow ?? "수동 선택 필요"}`,
     `- route 상태: ${context.nextWork.workflowRouteStatus}`,
     `- 다음 행동: ${context.nextWork.action}`,
+    ...(context.nextWork.requiredSsot?.length
+      ? context.nextWork.requiredSsot.map((item) => `- 다음 작업 기준 SSOT: ${item}`)
+      : []),
+    ...(context.nextWork.approvalBoundary ? [`- 승인 경계: ${context.nextWork.approvalBoundary}`] : []),
+    ...(context.nextWork.doNotCross?.length
+      ? context.nextWork.doNotCross.map((item) => `- 넘지 말 것: ${item}`)
+      : []),
     "",
     "## 먼저 다시 읽을 항목",
     ...(context.reentryContract.mustReadNext.length > 0
@@ -273,6 +286,8 @@ function renderActiveContextMarkdown(context) {
       ? `- ${handoff.createdAt}: ${handoff.fromRole} -> ${handoff.toRole} / ${handoff.summary}`
       : "- 기록 없음",
     ...(handoff?.requiredSsot?.length ? handoff.requiredSsot.map((item) => `- 인계 기준 SSOT: ${item}`) : []),
+    ...(handoff?.approvalBoundary ? [`- 인계 승인 경계: ${handoff.approvalBoundary}`] : []),
+    ...(handoff?.doNotCross?.length ? handoff.doNotCross.map((item) => `- 인계 금지선: ${item}`) : []),
     "",
     "## 검증 상태",
     validation
@@ -292,7 +307,7 @@ function renderActiveContextMarkdown(context) {
   return `${lines.join("\n")}\n`;
 }
 
-function resolveValidationSummary({ repoRoot, validation }) {
+export function resolveValidationSummary({ repoRoot, validation }) {
   const inline = summarizeValidation(validation);
   const persisted = readPersistedValidationSummary(repoRoot);
   if (inline && persisted) {
@@ -369,38 +384,12 @@ function summarizeTraceSummary(traceSummary) {
   };
 }
 
-function readSectionBulletList(filePath, heading) {
-  if (!fs.existsSync(filePath)) {
-    return [];
-  }
-  const section = sliceSection(fs.readFileSync(filePath, "utf8"), heading);
-  if (!section) {
-    return [];
-  }
-  return section
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line.startsWith("- "))
-    .map((line) => line.slice(2).trim());
-}
-
-function sliceSection(content, heading) {
-  const start = content.indexOf(heading);
-  if (start === -1) {
-    return null;
-  }
-
-  const afterStart = content.slice(start + heading.length).trimStart();
-  const nextHeadingMatch = afterStart.match(/\n##\s+/);
-  if (!nextHeadingMatch) {
-    return afterStart.trimEnd();
-  }
-
-  return afterStart.slice(0, nextHeadingMatch.index).trimEnd();
-}
-
 function normalizePathList(values) {
   return uniquePathList(values.map(normalizePathValue));
+}
+
+function normalizeTextList(values) {
+  return uniqueTextList((values ?? []).map(normalizeTextValue));
 }
 
 function uniquePathList(values) {
@@ -419,6 +408,22 @@ function uniquePathList(values) {
   return result;
 }
 
+function uniqueTextList(values) {
+  const seen = new Set();
+  const result = [];
+
+  for (const value of values) {
+    const normalized = normalizeTextValue(value);
+    if (!normalized || seen.has(normalized)) {
+      continue;
+    }
+    seen.add(normalized);
+    result.push(normalized);
+  }
+
+  return result;
+}
+
 function normalizePathValue(value) {
   const text = String(value ?? "").trim();
   if (!text) {
@@ -427,6 +432,25 @@ function normalizePathValue(value) {
 
   const backtickMatch = text.match(/^`([^`]+)`$/);
   return backtickMatch ? backtickMatch[1].trim() : text;
+}
+
+function normalizeTextValue(value) {
+  const text = String(value ?? "").trim();
+  return text || null;
+}
+
+function stripCompatibilityFirstReadPaths(values) {
+  const result = [];
+
+  for (const value of values) {
+    const normalized = normalizePathValue(value);
+    if (!normalized || COMPATIBILITY_FIRST_READ_PATHS.has(normalized)) {
+      continue;
+    }
+    result.push(normalized);
+  }
+
+  return uniquePathList(result);
 }
 
 function writeText(targetPath, content) {

@@ -3,22 +3,29 @@ const REMOVABLE_MATCHERS = [
   { kind: "exact", value: ".harness/operating_state.sqlite" },
   { kind: "exact", value: ".harness/operating_state.sqlite-shm" },
   { kind: "exact", value: ".harness/operating_state.sqlite-wal" },
-  { kind: "prefix", value: ".agents/runtime/generated-state-docs/" }
+  { kind: "exact", value: ".agents/artifacts/VALIDATION_REPORT.json" },
+  { kind: "exact", value: ".agents/artifacts/VALIDATION_REPORT.md" },
+  { kind: "exact", value: ".agents/runtime/ACTIVE_CONTEXT.json" },
+  { kind: "exact", value: ".agents/runtime/ACTIVE_CONTEXT.md" },
+  { kind: "prefix", value: ".agents/runtime/agent-traces/" },
+  { kind: "prefix", value: ".agents/runtime/generated-state-docs/" },
+  { kind: "prefix", value: ".agents/runtime/recovery-reports/" },
+  { kind: "prefix", value: ".agents/runtime/reports/" },
+  { kind: "exact", value: "reference/artifacts/DECISION_LOG.md" },
+  { kind: "exact", value: "reference/artifacts/HANDOFF_ARCHIVE.md" },
+  { kind: "exact", value: "reference/artifacts/REVIEW_REPORT.md" },
+  { kind: "exact", value: "reference/artifacts/WALKTHROUGH.md" },
+  { kind: "prefix", value: "reference/artifacts/daily/" },
+  { kind: "exact", value: "reference/legacy/README.md" },
+  { kind: "exact", value: "reference/mockups/README.md" },
+  { kind: "exact", value: "reference/reports/README.md" }
 ];
 
 const CONDITIONAL_MATCHERS = [
   { kind: "exact", value: "README.md" },
   { kind: "exact", value: "START_HERE.md" },
   { kind: "exact", value: "reference/manuals/HARNESS_MANUAL.md" },
-  { kind: "exact", value: "reference/README.md" },
-  { kind: "exact", value: "reference/artifacts/DECISION_LOG.md" },
-  { kind: "exact", value: "reference/artifacts/HANDOFF_ARCHIVE.md" },
-  { kind: "exact", value: "reference/artifacts/PROJECT_HISTORY.md" },
-  { kind: "exact", value: "reference/artifacts/REVIEW_REPORT.md" },
-  { kind: "exact", value: "reference/artifacts/WALKTHROUGH.md" },
-  { kind: "exact", value: "reference/legacy/README.md" },
-  { kind: "exact", value: "reference/mockups/README.md" },
-  { kind: "exact", value: "reference/reports/README.md" }
+  { kind: "exact", value: "reference/README.md" }
 ];
 
 const REQUIRED_MATCHERS = [
@@ -35,7 +42,7 @@ const REQUIRED_MATCHERS = [
 ];
 
 export const STARTER_PAYLOAD_CONTRACT = {
-  version: "ops-13-v1",
+  version: "pln-22-slice-4-v1",
   laneTypes: {
     required: [
       "AGENTS.md",
@@ -53,22 +60,29 @@ export const STARTER_PAYLOAD_CONTRACT = {
       "README.md",
       "START_HERE.md",
       "reference/manuals/HARNESS_MANUAL.md",
-      "reference/README.md",
-      "reference/artifacts/DECISION_LOG.md",
-      "reference/artifacts/HANDOFF_ARCHIVE.md",
-      "reference/artifacts/PROJECT_HISTORY.md",
-      "reference/artifacts/REVIEW_REPORT.md",
-      "reference/artifacts/WALKTHROUGH.md",
-      "reference/legacy/README.md",
-      "reference/mockups/README.md",
-      "reference/reports/README.md"
+      "reference/README.md"
     ],
     removable: [
       "HARNESS_MANUAL.md",
       ".harness/operating_state.sqlite",
       ".harness/operating_state.sqlite-shm",
       ".harness/operating_state.sqlite-wal",
-      ".agents/runtime/generated-state-docs/*"
+      ".agents/artifacts/VALIDATION_REPORT.json",
+      ".agents/artifacts/VALIDATION_REPORT.md",
+      ".agents/runtime/ACTIVE_CONTEXT.json",
+      ".agents/runtime/ACTIVE_CONTEXT.md",
+      ".agents/runtime/agent-traces/*",
+      ".agents/runtime/generated-state-docs/*",
+      ".agents/runtime/recovery-reports/*",
+      ".agents/runtime/reports/*",
+      "reference/artifacts/DECISION_LOG.md",
+      "reference/artifacts/HANDOFF_ARCHIVE.md",
+      "reference/artifacts/REVIEW_REPORT.md",
+      "reference/artifacts/WALKTHROUGH.md",
+      "reference/artifacts/daily/*",
+      "reference/legacy/README.md",
+      "reference/mockups/README.md",
+      "reference/reports/README.md"
     ]
   }
 };
