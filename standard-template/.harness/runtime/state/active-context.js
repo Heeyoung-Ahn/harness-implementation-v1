@@ -88,13 +88,15 @@ export function buildActiveContext({
   const workItems = store.listWorkItems();
   const openWorkItems = prioritizeOpenWorkItems(workItems, { repoRoot: root });
   const activeTask = openWorkItems[0] ?? null;
-  const latestHandoff = store.listRecentHandoffs(1)[0] ?? null;
+  const recentHandoffs = store.listRecentHandoffs(50);
+  const latestHandoff = recentHandoffs[0] ?? null;
+  const routeHandoff = resolveRouteHandoff({ activeTask, recentHandoffs, latestHandoff });
   const openDecisions = store.listDecisions({ status: "open", decisionNeeded: true });
   const openRisks = store.listGateRisks({ status: "open" });
   const handoffExecution = resolveHandoffExecution({
     repoRoot: root,
     workItems,
-    latestHandoff,
+    latestHandoff: routeHandoff,
     includeWorkflowDetails: true
   });
   const nextWorkflow =
@@ -102,7 +104,7 @@ export function buildActiveContext({
     handoffExecution.routeStatus === "planner_fallback_blocked"
       ? null
       : handoffExecution.workflow;
-  const latestHandoffPayload = latestHandoff?.payload ?? {};
+  const latestHandoffPayload = routeHandoff?.payload ?? {};
   const workflowReadFirst = normalizePathList(handoffExecution.workflowDetails?.readFirst ?? []);
   const nextRequiredSsot = uniquePathList(
     stripCompatibilityFirstReadPaths(normalizePathList(latestHandoffPayload.requiredSsot ?? []))
@@ -158,7 +160,7 @@ export function buildActiveContext({
     selectedLane: activeTaskSummary,
     activeTask: activeTaskSummary,
     nextWork: {
-      owner: handoffExecution.owner ?? activeTask?.owner ?? latestHandoff?.toRole ?? "planner",
+      owner: handoffExecution.owner ?? activeTask?.owner ?? routeHandoff?.toRole ?? "planner",
       workflow: nextWorkflow,
       workflowRouteStatus: handoffExecution.routeStatus,
       resolvedBy: handoffExecution.resolvedBy,
@@ -184,13 +186,13 @@ export function buildActiveContext({
       impactSummary: decision.impactSummary,
       sourceRef: decision.sourceRef ?? null
     })),
-    latestHandoff: latestHandoff
+    latestHandoff: routeHandoff
       ? {
-          createdAt: latestHandoff.createdAt,
-          fromRole: latestHandoff.fromRole,
-          toRole: latestHandoff.toRole,
-          summary: latestHandoff.handoffSummary,
-          sourceRef: latestHandoff.sourceRef ?? null,
+          createdAt: routeHandoff.createdAt,
+          fromRole: routeHandoff.fromRole,
+          toRole: routeHandoff.toRole,
+          summary: routeHandoff.handoffSummary,
+          sourceRef: routeHandoff.sourceRef ?? null,
           nextFirstAction: normalizeTextValue(latestHandoffPayload.nextFirstAction),
           requiredSsot: nextRequiredSsot,
           approvalBoundary: normalizeTextValue(latestHandoffPayload.approvalBoundary),
@@ -226,6 +228,31 @@ export function buildActiveContext({
       activePacket
     }
   };
+}
+
+function resolveRouteHandoff({ activeTask, recentHandoffs, latestHandoff }) {
+  if (!activeTask) {
+    return latestHandoff;
+  }
+
+  return recentHandoffs.find((handoff) => handoffMatchesWorkItem(handoff, activeTask)) ?? null;
+}
+
+function handoffMatchesWorkItem(handoff, workItem) {
+  if (!handoff || !workItem) {
+    return false;
+  }
+
+  const payload = handoff.payload ?? {};
+  if (payload.workItemId && payload.workItemId === workItem.workItemId) {
+    return true;
+  }
+
+  if (handoff.sourceRef && workItem.sourceRef && handoff.sourceRef === workItem.sourceRef) {
+    return true;
+  }
+
+  return false;
 }
 
 export function renderActiveContextMarkdown(context) {

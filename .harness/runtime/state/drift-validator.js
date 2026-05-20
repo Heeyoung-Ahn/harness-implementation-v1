@@ -2,7 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { ACTIVE_CONTEXT_JSON, ACTIVE_CONTEXT_MARKDOWN } from "./active-context.js";
-import { AGENT_TRACES_DIR, VALIDATION_REPORT_JSON, resolveGeneratedDocReadPath } from "./harness-paths.js";
+import {
+  AGENT_TRACES_DIR,
+  REVIEW_REPORT_MARKDOWN,
+  VALIDATION_REPORT_JSON,
+  resolveGeneratedDocReadPath
+} from "./harness-paths.js";
 import {
   CURRENT_STATE_DOC,
   TASK_LIST_DOC,
@@ -597,6 +602,8 @@ export function validateGeneratedStateDocs({
   validateActiveProfiles(repoRoot, findings);
   validateProfileAwareContracts(repoRoot, findings);
   validateRegisteredTaskPackets(store, repoRoot, findings);
+  validateActiveProfileUsageContracts({ store, repoRoot, findings });
+  validateReviewReportReferences(repoRoot, findings);
   validateGateProfileContracts(store, repoRoot, findings);
   validateWorkflowContracts(repoRoot, findings);
   validateStarterSync(repoRoot, findings);
@@ -1079,6 +1086,13 @@ function readLabeledBulletValue(sectionContent, label) {
 
 function isMarkdownTableSeparator(cells) {
   return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
+}
+
+function parseTableCells(line) {
+  return line
+    .split("|")
+    .slice(1, -1)
+    .map((cell) => cell.trim());
 }
 
 function normalizeTaskStatus(value) {
@@ -1566,6 +1580,154 @@ function validateRegisteredTaskPackets(store, repoRoot, findings) {
   }
 }
 
+function validateActiveProfileUsageContracts({ store, repoRoot, findings }) {
+  const activeProfiles = readActiveProfileRows(repoRoot);
+  const constrainedProfiles = new Map(
+    [...activeProfiles.entries()].filter(([, profile]) => {
+      const status = normalizeValue(profile.evidenceStatus ?? "");
+      return status && status !== "approved" && status !== "not-needed" && status !== "deferred-with-reason";
+    })
+  );
+  if (constrainedProfiles.size === 0) {
+    return;
+  }
+
+  const packetPaths = new Set([
+    ...store
+      .listArtifacts({ category: TASK_PACKET_ARTIFACT_CATEGORY })
+      .map((artifact) => artifact.path)
+      .filter(Boolean),
+    ...discoverConcreteTaskPacketCandidates(repoRoot)
+  ]);
+
+  for (const packetPath of packetPaths) {
+    const resolvedPacketPath = path.resolve(repoRoot, packetPath);
+    if (!fs.existsSync(resolvedPacketPath)) {
+      continue;
+    }
+
+    const content = fs.readFileSync(resolvedPacketPath, "utf8");
+    const header = parseQuickDecisionHeader(content);
+    if (!header) {
+      continue;
+    }
+
+    const readyForCode = normalizeValue(getHeaderProposed(header, "Ready For Code"));
+    const readyForCodeApproved = readyForCode === "approve" || readyForCode === "approved";
+    if (!readyForCodeApproved) {
+      continue;
+    }
+
+    const profileDependencies = extractProfileIds(
+      getHeaderProposedWithAliases(header, "Active profile dependencies", ["Active profile dependency"])
+    );
+    for (const profileId of profileDependencies) {
+      const profile = constrainedProfiles.get(profileId);
+      if (!profile) {
+        continue;
+      }
+
+      findings.push({
+        code: "active_profile_pending_blocks_ready_for_code",
+        severity: "error",
+        path: ACTIVE_PROFILES_PATH,
+        packetPath,
+        profileId,
+        message:
+          `${packetPath} is marked Ready For Code approved while ${ACTIVE_PROFILES_PATH} ` +
+          `keeps ${profileId} evidence status as ${profile.evidenceStatus || "missing"}.`
+      });
+    }
+  }
+}
+
+function readActiveProfileRows(repoRoot) {
+  const activeProfilesPath = path.resolve(repoRoot, ACTIVE_PROFILES_PATH);
+  if (!fs.existsSync(activeProfilesPath)) {
+    return new Map();
+  }
+
+  const rows = new Map();
+  const content = fs.readFileSync(activeProfilesPath, "utf8");
+  for (const line of content
+    .split("\n")
+    .map((item) => item.trim())
+    .filter((item) => item.startsWith("| PRF-"))) {
+    const cells = parseTableCells(line);
+    const [profileId, activationReason, evidenceArtifacts, evidenceStatus, activatedBy, activatedAt, appliesToPackets] =
+      cells;
+    if (!profileId) {
+      continue;
+    }
+    rows.set(profileId, {
+      profileId,
+      activationReason,
+      evidenceArtifacts,
+      evidenceStatus,
+      activatedBy,
+      activatedAt,
+      appliesToPackets
+    });
+  }
+  return rows;
+}
+
+function validateReviewReportReferences(repoRoot, findings) {
+  const reportPath = path.resolve(repoRoot, REVIEW_REPORT_MARKDOWN);
+  if (!fs.existsSync(reportPath)) {
+    return;
+  }
+
+  const content = fs.readFileSync(reportPath, "utf8");
+  for (const localRef of extractReviewReportLocalRefs(content)) {
+    if (fs.existsSync(path.resolve(repoRoot, localRef))) {
+      continue;
+    }
+
+    findings.push({
+      code: "review_report_source_ref_missing",
+      severity: "error",
+      path: REVIEW_REPORT_MARKDOWN,
+      sourceRef: localRef,
+      message: `${REVIEW_REPORT_MARKDOWN} cites missing local evidence/source reference ${localRef}.`
+    });
+  }
+}
+
+function extractReviewReportLocalRefs(content) {
+  const refs = new Set();
+  const inlineCodeMatcher = /`([^`]+)`/g;
+  for (const line of content.split(/\r?\n/)) {
+    if (!/canonical docs updated/i.test(line)) {
+      continue;
+    }
+    for (const match of line.matchAll(inlineCodeMatcher)) {
+      const ref = normalizeReviewReportLocalRef(match[1]);
+      if (ref) {
+        refs.add(ref);
+      }
+    }
+  }
+  return [...refs];
+}
+
+function normalizeReviewReportLocalRef(value) {
+  const ref = String(value ?? "").trim().replace(/\\/g, "/");
+  if (!ref || ref.includes(" ") || /^[a-z]+:\/\//i.test(ref)) {
+    return null;
+  }
+  if (/^(node|npm|pnpm|yarn|git|npx)(\.cmd)?$/i.test(ref)) {
+    return null;
+  }
+  if (!/\.(md|json|js|mjs|cjs|ts|tsx|jsx|sql|db|sqlite)$/i.test(ref)) {
+    return null;
+  }
+  if (path.isAbsolute(ref)) {
+    return null;
+  }
+  return ref.replace(/^\.\//, "");
+}
+
 function validateGateProfileContracts(store, repoRoot, findings) {
   const activePacketWorkItems = prioritizeOpenWorkItems(store.listWorkItems(), { repoRoot })
     .filter((item) => item.sourceRef?.startsWith(`${TASK_PACKET_DIRECTORY}/`) && item.sourceRef.endsWith(".md"))
@@ -1912,6 +2074,7 @@ function validateTaskPacketEvidence({ artifact, header, fields, content, repoRoo
     getHeaderProposedWithAliases(header, "Active profile dependencies", ["Active profile dependency"])
   );
   const profileEvidenceStatus = normalizeValue(getHeaderProposed(header, "Profile evidence status"));
+  const profileSpecificEvidenceStatus = normalizeValue(getFieldValue(fields, "Profile-specific evidence status"));
   const uxArchetypeStatus = normalizeValue(getHeaderProposed(header, "UX archetype status"));
   const uxDeviationStatus = normalizeValue(getHeaderProposed(header, "UX deviation status"));
   const environmentTopologyStatus = normalizeValue(getHeaderProposed(header, "Environment topology status"));
@@ -1968,6 +2131,24 @@ function validateTaskPacketEvidence({ artifact, header, fields, content, repoRoo
   });
 
   validateTaskPacketLaneTypeContract({ artifact, fields, findings });
+
+  if (
+    hasConcreteValue(getHeaderProposed(header, "Profile evidence status"), { allowUnknown: false }) &&
+    hasConcreteValue(getFieldValue(fields, "Profile-specific evidence status"), { allowUnknown: false }) &&
+    profileEvidenceStatus !== profileSpecificEvidenceStatus
+  ) {
+    findings.push({
+      code: "task_packet_status_contract_mismatch",
+      severity: "error",
+      artifactId: artifact.artifactId,
+      packetPath: artifact.path,
+      headerItem: "Profile evidence status",
+      field: "Profile-specific evidence status",
+      message:
+        `${artifact.path} records Profile evidence status as ${profileEvidenceStatus} in the header ` +
+        `but Profile-specific evidence status as ${profileSpecificEvidenceStatus} in packet evidence.`
+    });
+  }
 
   if (profileDependencies.length > 0) {
     requireTaskPacketField({
@@ -3058,12 +3239,15 @@ function validateActiveContextJson({ store, repoRoot, content, findings }) {
     });
   }
 
-  const latestHandoff = store.listRecentHandoffs(1)[0] ?? null;
   const workItems = store.listWorkItems();
+  const expectedActiveTask = selectActiveWorkItem(workItems, { repoRoot });
+  const recentHandoffs = store.listRecentHandoffs(50);
+  const latestHandoff = recentHandoffs[0] ?? null;
+  const routeHandoff = resolveRouteHandoffForValidation({ activeTask: expectedActiveTask, recentHandoffs, latestHandoff });
   const handoffExecution = resolveHandoffExecution({
     repoRoot,
     workItems,
-    latestHandoff,
+    latestHandoff: routeHandoff,
     includeWorkflowDetails: true
   });
   const expectedWorkflow =
@@ -3071,8 +3255,6 @@ function validateActiveContextJson({ store, repoRoot, content, findings }) {
     handoffExecution.routeStatus === "planner_fallback_blocked"
       ? null
       : handoffExecution.workflow;
-  const expectedActiveTask = selectActiveWorkItem(workItems, { repoRoot });
-
   if ((context.nextWork?.workflow ?? null) !== expectedWorkflow) {
     findings.push({
       code: "active_context_route_mismatch",
@@ -3141,6 +3323,31 @@ function validateActiveContextJson({ store, repoRoot, content, findings }) {
 
   validateActiveContextValidationParity({ context, repoRoot, findings });
   validateActiveWorkItemSemanticTrace({ context, repoRoot, findings });
+}
+
+function resolveRouteHandoffForValidation({ activeTask, recentHandoffs, latestHandoff }) {
+  if (!activeTask) {
+    return latestHandoff;
+  }
+
+  return recentHandoffs.find((handoff) => handoffMatchesWorkItemForValidation(handoff, activeTask)) ?? null;
+}
+
+function handoffMatchesWorkItemForValidation(handoff, workItem) {
+  if (!handoff || !workItem) {
+    return false;
+  }
+
+  const payload = handoff.payload ?? {};
+  if (payload.workItemId && payload.workItemId === workItem.workItemId) {
+    return true;
+  }
+
+  if (handoff.sourceRef && workItem.sourceRef && handoff.sourceRef === workItem.sourceRef) {
+    return true;
+  }
+
+  return false;
 }
 
 function validateActiveContextValidationParity({ context, repoRoot, findings }) {

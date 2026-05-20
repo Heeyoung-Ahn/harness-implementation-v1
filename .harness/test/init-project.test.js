@@ -6,12 +6,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { createOperatingStateStore } from "../runtime/state/operating-state-store.js";
-import { initializeProjectStarter } from "../runtime/state/init-project.js";
+import { initializeProjectStarter, inspectStarterInitializationState } from "../runtime/state/init-project.js";
 
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 
 test("initializes a copied starter repo and seeds active-context-ready state", () => {
   const repoRoot = copyStarterRepo();
+  assert.equal(inspectStarterInitializationState(repoRoot).status, "fresh");
 
   const result = initializeProjectStarter({
     repoRoot,
@@ -82,6 +83,7 @@ test("initializes a copied starter repo and seeds active-context-ready state", (
   assert.equal(activeContext.activeTask.workItemId, "PLN-00");
   assert.equal(activeContext.nextWork.action.includes("PLN-00"), true);
   assert.match(activeContextMarkdown, /# 활성 컨텍스트/);
+  assert.equal(inspectStarterInitializationState(repoRoot).status, "initialized");
 });
 
 test("actual standard-template source is already a fresh starter seed", () => {
@@ -121,6 +123,36 @@ test("refuses to reinitialize an already-edited repo without force", () => {
         approvalGoal: "approval"
       }),
     /does not look like a fresh standard harness starter/
+  );
+});
+
+test("classifies initialized starters before force reinitialization", () => {
+  const repoRoot = copyStarterRepo();
+
+  initializeProjectStarter({
+    repoRoot,
+    projectName: "Already Initialized Repo",
+    userGoal: "goal",
+    opsGoal: "ops",
+    approvalGoal: "approval",
+    now: createClock("2026-05-21T08:00:00.000Z")
+  });
+
+  const state = inspectStarterInitializationState(repoRoot);
+  assert.equal(state.status, "initialized");
+  assert.equal(state.dbExists, true);
+  assert.equal(state.activeContextExists, true);
+
+  assert.throws(
+    () =>
+      initializeProjectStarter({
+        repoRoot,
+        projectName: "Already Initialized Repo",
+        userGoal: "goal",
+        opsGoal: "ops",
+        approvalGoal: "approval"
+      }),
+    /already appears to be initialized/
   );
 });
 

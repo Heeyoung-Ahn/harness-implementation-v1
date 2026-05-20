@@ -486,6 +486,35 @@ export function looksLikeStarterPlaceholder(repoRoot) {
   );
 }
 
+export function inspectStarterInitializationState(repoRoot) {
+  const resolvedRoot = path.resolve(repoRoot);
+  if (looksLikeStarterPlaceholder(resolvedRoot)) {
+    return {
+      status: "fresh",
+      message: "This folder still looks like an uninitialized standard harness starter."
+    };
+  }
+
+  const dbExists = fs.existsSync(path.join(resolvedRoot, ".harness", "operating_state.sqlite"));
+  const activeContextExists = fs.existsSync(path.join(resolvedRoot, ".agents", "runtime", "ACTIVE_CONTEXT.json"));
+  if (dbExists || activeContextExists) {
+    return {
+      status: "initialized",
+      dbExists,
+      activeContextExists,
+      message: "This folder already appears to have completed standard harness initialization."
+    };
+  }
+
+  return {
+    status: "edited",
+    dbExists,
+    activeContextExists,
+    message:
+      "This folder no longer looks like a fresh standard harness starter, but no initialized harness state was detected."
+  };
+}
+
 function ensureStarterLayout(repoRoot) {
   for (const relativePath of REQUIRED_STARTER_FILES) {
     if (!fs.existsSync(path.join(repoRoot, relativePath))) {
@@ -499,9 +528,12 @@ function ensureStarterSafe(repoRoot, { force }) {
     return;
   }
 
-  if (!looksLikeStarterPlaceholder(repoRoot)) {
+  const starterState = inspectStarterInitializationState(repoRoot);
+  if (starterState.status !== "fresh") {
     throw new Error(
-      "The target repo does not look like a fresh standard harness starter. Re-run with --force only if you intentionally want to reinitialize it."
+      starterState.status === "initialized"
+        ? "The standard harness already appears to be initialized. Re-run with --force only if you intentionally want to reset and reinitialize it."
+        : "The target repo does not look like a fresh standard harness starter. Re-run with --force only if you intentionally want to reinitialize it."
     );
   }
 }

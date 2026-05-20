@@ -214,6 +214,61 @@ test("active context ignores a DB-open work item that canonical TASK_LIST alread
   );
 });
 
+test("active context does not mix stale review handoff constraints into the active planning lane", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "active-context-stale-handoff-"));
+  fs.mkdirSync(path.join(repoRoot, ".agents", "artifacts"), { recursive: true });
+  fs.mkdirSync(path.join(repoRoot, ".agents", "runtime", "generated-state-docs"), { recursive: true });
+  const store = createOperatingStateStore({
+    dbPath: path.join(repoRoot, ".harness", "operating_state.sqlite"),
+    now: clock("2026-05-21T09:00:00.000Z")
+  });
+
+  store.setReleaseState({
+    currentStage: "review",
+    releaseGateState: "open",
+    currentFocus: "PKT-01 is under reviewer closeout assessment.",
+    releaseGoal: "Define the first approved project baseline.",
+    sourceRef: "reference/packets/PKT-01_EXPO_INIT_BIBLE_VIEWER.md"
+  });
+  store.upsertWorkItem({
+    workItemId: "PKT-03",
+    title: "Supabase Auth and sync",
+    status: "planning",
+    owner: "planner",
+    nextAction: "Finalize implementation plan and hand off to developer.",
+    sourceRef: "reference/packets/PKT-03_SUPABASE_AUTH_SYNC.md",
+    metadata: { gateProfile: "standard", readyForCode: "draft" }
+  });
+  store.appendHandoff({
+    handoffId: "pkt-01-review",
+    handoffSummary: "Tester verification completed; Reviewer should assess packet exit readiness.",
+    fromRole: "tester",
+    toRole: "reviewer",
+    sourceRef: "reference/packets/PKT-01_EXPO_INIT_BIBLE_VIEWER.md",
+    payload: {
+      nextFirstAction: "Review implementation, evidence, residual debt, and closeout readiness.",
+      requiredSsot: [
+        "reference/packets/PKT-01_EXPO_INIT_BIBLE_VIEWER.md",
+        "reference/artifacts/PACKET_EXIT_QUALITY_GATE.md"
+      ],
+      approvalBoundary: "Assess closeout readiness only.",
+      doNotCross: ["No implementation changes."]
+    }
+  });
+
+  const context = buildActiveContext({ store, repoRoot });
+  store.close();
+
+  assert.equal(context.activeTask.workItemId, "PKT-03");
+  assert.equal(context.nextWork.owner, "planner");
+  assert.equal(context.nextWork.workflow, ".agents/workflows/plan.md");
+  assert.equal(context.nextWork.requiredSsot.includes("reference/packets/PKT-01_EXPO_INIT_BIBLE_VIEWER.md"), false);
+  assert.equal(context.nextWork.approvalBoundary, null);
+  assert.deepEqual(context.nextWork.doNotCross, []);
+  assert.equal(context.latestHandoff, null);
+  assert.equal(context.reentryContract.mustReadNext.includes("reference/packets/PKT-03_SUPABASE_AUTH_SYNC.md"), true);
+});
+
 test("active context does not import CURRENT_STATE must-read bullets into canonical AI re-entry routing", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "active-context-must-read-authority-"));
   fs.mkdirSync(path.join(repoRoot, ".agents", "artifacts"), { recursive: true });

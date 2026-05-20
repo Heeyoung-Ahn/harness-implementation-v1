@@ -531,6 +531,175 @@ test("accepts structured packet-exit metadata without requiring duplicated legac
   store.close();
 });
 
+test("blocks Ready For Code when an active profile declaration is still pending", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-active-profile-pending-blocks-ready-"));
+  seedRepoFiles(repoRoot);
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "ACTIVE_PROFILES.md"),
+    `# Active Profiles
+
+## Active Profile Table
+| Profile ID | Activation reason | Required evidence artifacts | Evidence status | Activated by | Activated at | Applies to packets |
+|---|---|---|---|---|---|---|
+| PRF-08 | Android app profile selected | project profile evidence required | pending | planner | 2026-05-21 | future packets citing PRF-08 |
+`,
+    "utf8"
+  );
+
+  const store = createOperatingStateStore({
+    dbPath: path.join(repoRoot, ".harness", "operating_state.sqlite"),
+    now: createClock("2026-05-21T10:00:00.000Z")
+  });
+
+  store.setReleaseState({
+    currentStage: "planning",
+    releaseGateState: "open",
+    currentFocus: "Android profile pending guard",
+    releaseGoal: "Block approved packets until active profile evidence is approved",
+    sourceRef: ".agents/artifacts/REQUIREMENTS.md"
+  });
+
+  const packetPath = writeConcreteTaskPacketFixture(repoRoot, {
+    fileName: "PKT-01_ANDROID_PROFILE_PENDING_PACKET.md",
+    header: {
+      "Active profile dependencies": "PRF-08",
+      "Profile evidence status": "approved"
+    },
+    fields: {
+      "Active profile references": "reference/profiles/PRF-08_ANDROID_NATIVE_APP_PROFILE.md",
+      "Active profile dependencies": "PRF-08",
+      "Profile-specific evidence status": "approved"
+    }
+  });
+
+  store.upsertArtifact({
+    artifactId: "android-profile-pending-packet",
+    path: packetPath,
+    category: "task_packet",
+    title: "Android profile pending packet",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeActiveContext({ store, repoRoot, outputDir: repoRoot });
+
+  const result = validateGeneratedStateDocs({
+    store,
+    outputDir: repoRoot,
+    repoRoot
+  });
+
+  const codes = new Set(result.findings.map((finding) => finding.code));
+  assert.equal(result.ok, false);
+  assert.equal(codes.has("active_profile_pending_blocks_ready_for_code"), true);
+
+  store.close();
+});
+
+test("detects task packet profile status disagreement between header and evidence fields", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-profile-status-parity-"));
+  seedRepoFiles(repoRoot);
+
+  const store = createOperatingStateStore({
+    dbPath: path.join(repoRoot, ".harness", "operating_state.sqlite"),
+    now: createClock("2026-05-21T10:30:00.000Z")
+  });
+
+  store.setReleaseState({
+    currentStage: "planning",
+    releaseGateState: "open",
+    currentFocus: "Profile status parity",
+    releaseGoal: "Catch packet header/body contradictions",
+    sourceRef: ".agents/artifacts/REQUIREMENTS.md"
+  });
+
+  const packetPath = writeConcreteTaskPacketFixture(repoRoot, {
+    fileName: "PKT-01_PROFILE_STATUS_MISMATCH_PACKET.md",
+    header: {
+      "Profile evidence status": "approved"
+    },
+    fields: {
+      "Profile-specific evidence status": "pending"
+    }
+  });
+
+  store.upsertArtifact({
+    artifactId: "profile-status-mismatch-packet",
+    path: packetPath,
+    category: "task_packet",
+    title: "Profile status mismatch packet",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeActiveContext({ store, repoRoot, outputDir: repoRoot });
+
+  const result = validateGeneratedStateDocs({
+    store,
+    outputDir: repoRoot,
+    repoRoot
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(
+    result.findings.some(
+      (finding) =>
+        finding.code === "task_packet_status_contract_mismatch" &&
+        finding.field === "Profile-specific evidence status"
+    ),
+    true
+  );
+
+  store.close();
+});
+
+test("detects review report references to missing local evidence files", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-review-report-missing-ref-"));
+  seedRepoFiles(repoRoot);
+  fs.writeFileSync(
+    path.join(repoRoot, "reference", "artifacts", "REVIEW_REPORT.md"),
+    [
+      "# Review Report",
+      "",
+      "## Source Parity",
+      "- Canonical docs updated: `walkthrough.md`, `task.md`"
+    ].join("\n"),
+    "utf8"
+  );
+
+  const store = createOperatingStateStore({
+    dbPath: path.join(repoRoot, ".harness", "operating_state.sqlite"),
+    now: createClock("2026-05-21T11:00:00.000Z")
+  });
+
+  store.setReleaseState({
+    currentStage: "review",
+    releaseGateState: "open",
+    currentFocus: "Review evidence source parity",
+    releaseGoal: "Catch missing closeout evidence references",
+    sourceRef: ".agents/artifacts/REQUIREMENTS.md"
+  });
+
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeActiveContext({ store, repoRoot, outputDir: repoRoot });
+
+  const result = validateGeneratedStateDocs({
+    store,
+    outputDir: repoRoot,
+    repoRoot
+  });
+
+  const missingRefs = result.findings.filter((finding) => finding.code === "review_report_source_ref_missing");
+  assert.equal(result.ok, false);
+  assert.equal(missingRefs.length, 2);
+  assert.deepEqual(
+    new Set(missingRefs.map((finding) => finding.sourceRef)),
+    new Set(["walkthrough.md", "task.md"])
+  );
+
+  store.close();
+});
+
 test("accepts supported lane-type declarations when universal minimum metadata is present", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-generated-docs-lane-type-valid-"));
   seedRepoFiles(repoRoot);

@@ -4,6 +4,7 @@ import readline from "node:readline/promises";
 
 import {
   KNOWN_PROFILES,
+  inspectStarterInitializationState,
   initializeProjectStarter,
   normalizeActiveProfiles,
   slugifyProjectName
@@ -47,6 +48,44 @@ if (options.help) {
   process.exit(0);
 }
 
+let forceInitialization = Boolean(options.force);
+const starterState = inspectStarterInitializationState(process.cwd());
+if (!forceInitialization && starterState.status === "initialized") {
+  process.stdout.write(
+    [
+      "Standard harness initialization appears to be already complete.",
+      `- Operating DB present: ${starterState.dbExists ? "yes" : "no"}`,
+      `- Active Context present: ${starterState.activeContextExists ? "yes" : "no"}`,
+      "",
+      "You can exit without changes, or reinitialize with --force if you intentionally want to reset harness state and starter docs.",
+      "Reinitializing a project already in progress can overwrite governance docs and reset handoff / packet state. Product source files are not the target, but the project operating history can be lost."
+    ].join("\n") + "\n"
+  );
+
+  if (options["non-interactive"]) {
+    process.stdout.write("No changes made. Re-run with --force to reinitialize.\n");
+    process.exit(0);
+  }
+
+  const answer = await prompt("Reinitialize now? Type RESET to continue, or press Enter to exit", "");
+  if (answer !== "RESET") {
+    process.stdout.write("No changes made. Initialization exited.\n");
+    process.exit(0);
+  }
+  forceInitialization = true;
+}
+
+if (!forceInitialization && starterState.status === "edited") {
+  process.stderr.write(
+    [
+      starterState.message,
+      "No changes made.",
+      "Re-run with --force only if you intentionally want to reset and reinitialize this folder."
+    ].join("\n") + "\n"
+  );
+  process.exit(1);
+}
+
 const projectName =
   options["project-name"] ??
   (options["non-interactive"] ? defaultProjectName(process.cwd()) : await prompt("Project name", defaultProjectName(process.cwd())));
@@ -87,7 +126,7 @@ try {
     opsGoal,
     approvalGoal,
     activeProfiles: normalizeActiveProfiles(profiles),
-    force: Boolean(options.force)
+    force: forceInitialization
   });
 
   process.stdout.write(
