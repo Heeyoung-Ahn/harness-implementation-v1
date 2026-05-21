@@ -1,5 +1,7 @@
 # Implementation Plan
 
+> AUTHORITATIVE. Human-readable implementation sequencing SSOT. Edit only through an approved packet.
+
 ## Current Plan Summary
 - Keep this file focused on the current and next implementation direction for the copied project.
 - Do not turn this file into a long history log, closed packet catalog, or reusable rulebook.

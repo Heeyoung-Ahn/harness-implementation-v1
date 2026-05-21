@@ -1,5 +1,61 @@
 # Review Report
 
+## 2026-05-22 OPS-29 P1 Closeout Review
+
+- Scope: reviewer closeout for approved `OPS-29` P1 after Developer implementation and Tester verification.
+- Findings:
+  - none inside the approved `OPS-29` P1 boundary
+- Review result:
+  - the approved P1 scope stayed lightweight. The implementation adds an official `DAY_WRAP_TEMPLATE.md`, clearer `context --repair` next-command guidance, short top labels for authoritative/generated/packet surfaces, and a non-gating `PLAN_CHECK_CANDIDATE.md` reference surface.
+  - `context --repair` guidance remains bounded to operator recovery UX. It does not mutate canonical authority and does not add a new validator gate.
+  - document labels clarify authority without changing the truth contract: authoritative docs remain editable only through approved packets, generated fallback docs remain non-authoritative, and packet files remain explicit scope/approval/evidence surfaces.
+  - `plan-check` remains documentation-only in this lane and was not silently promoted into a mandatory command or workflow gate.
+  - root and `standard-template` parity is sufficient for the reusable doc/runtime/test surfaces touched in P1.
+  - Tester evidence is sufficient for the reviewed scope: root targeted `41/41`, `standard-template` targeted `41/41`, root full suite `113/113`, `standard-template` full suite `103/103`, plus clean transition-generated validation and Active Context evidence.
+- Validation:
+  - root targeted: `node --test .harness/test/context-repair.test.js .harness/test/active-context.test.js .harness/test/generated-state-docs.test.js`
+  - `standard-template` targeted: `node --test .harness/test/context-repair.test.js .harness/test/active-context.test.js .harness/test/generated-state-docs.test.js`
+  - root full suite: `npm.cmd test`
+  - `standard-template` full suite: `npm.cmd test`
+  - reviewer checked transition-generated `VALIDATION_REPORT.*` and `ACTIVE_CONTEXT.*` evidence after the `developer -> tester -> reviewer` path
+- Residual risk:
+  - no blocking reviewer finding remains inside the approved `OPS-29` P1 scope.
+  - mobile optional-profile follow-up, preventive-memory linting, mandatory open-question ledger, and broad path normalization remain explicitly deferred outside this packet.
+- Result:
+  - `OPS-29` P1 is approved for reviewer closeout.
+  - `OPS-29` P0/P1 packet scope is fully review-approved.
+  - handoff may proceed to Planner for final packet closeout and no-active-lane hold.
+- Status: done
+
+## 2026-05-22 OPS-29 P0 Closeout Review
+
+- Scope: reviewer closeout for approved `OPS-29` P0 after Developer implementation and Tester verification.
+- Findings:
+  - none inside the approved `OPS-29` P0 boundary
+- Review result:
+  - the approved P0 scope is present in the reusable runtime/operator surface. `harness:sync-state` now wraps validate, validation-report, context, and status in one deterministic operator path ([dev05-tooling.js](/C:/Newface/30%20Github/harness-implementation-v1/.harness/runtime/state/dev05-tooling.js:609)).
+  - status output now separates technical validation from workflow-gate state, which closes the reviewed operator-confusion issue without changing underlying approval boundaries ([dev05-cli.js](/C:/Newface/30%20Github/harness-implementation-v1/.harness/runtime/state/dev05-cli.js:80)).
+  - active profile parsing is now bounded to the first table under `## Active Profile Table`, so candidate tables no longer drift into live active-profile state ([dev05-tooling.js](/C:/Newface/30%20Github/harness-implementation-v1/.harness/runtime/state/dev05-tooling.js:2758)).
+  - ambiguous root progress files are surfaced as warnings only, with canonical authority guidance, which matches the approved "warn, do not ban" boundary ([drift-validator.js](/C:/Newface/30%20Github/harness-implementation-v1/.harness/runtime/state/drift-validator.js:1704)).
+  - root and `standard-template` parity is sufficient for the reusable code, script, and regression surfaces touched in P0.
+  - Tester evidence is sufficient for the reviewed scope: root targeted `80/80`, `standard-template` targeted `80/80`, root full suite `111/111`, `standard-template` full suite `101/101`, plus clean `sync-state`, validator, validation-report, and Active Context evidence.
+- Validation:
+  - root targeted: `node --test .harness/test/dev05-tooling.test.js .harness/test/generated-state-docs.test.js`
+  - `standard-template` targeted: `node --test .harness/test/dev05-tooling.test.js .harness/test/generated-state-docs.test.js`
+  - root full suite: `npm.cmd test`
+  - `standard-template` full suite: `npm.cmd test`
+  - root `node .harness/runtime/state/dev05-cli.js sync-state`
+  - root `node .harness/runtime/state/dev05-cli.js validate`
+  - root `node .harness/runtime/state/dev05-cli.js validation-report`
+- Residual risk:
+  - `OPS-29` P1 remains intentionally unimplemented and unreviewed in this turn. Day-wrap template, repair UX, authority labels, and `plan-check` remain separate follow-up work and must not be treated as implicitly approved.
+  - the new root ambiguity warning is intentionally scoped to `task.md` and `walkthrough.md` only; expanding that warning set would require a separate approval decision if future downstream evidence justifies it.
+- Result:
+  - `OPS-29` P0 is approved for reviewer closeout.
+  - no reviewer remediation is required inside the approved P0 boundary.
+  - the packet should not reopen developer work unless the user explicitly approves P1 or opens a separate follow-up packet.
+- Status: done
+
 ## 2026-05-18 PLN-25 Long-Context Re-entry And Implementation-Plan Rebaseline Closeout
 
 - Scope: reviewer closeout for approved `PLN-25` after Developer implementation and Tester verification.

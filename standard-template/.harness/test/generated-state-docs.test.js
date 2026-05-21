@@ -700,6 +700,97 @@ test("detects review report references to missing local evidence files", () => {
   store.close();
 });
 
+test("warns about root task and walkthrough files without failing validation", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-root-status-warning-"));
+  seedRepoFiles(repoRoot);
+
+  const store = createOperatingStateStore({
+    dbPath: path.join(repoRoot, ".harness", "operating_state.sqlite"),
+    now: createClock("2026-05-22T02:00:00.000Z")
+  });
+
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "Root duplicate status surface warning",
+    releaseGoal: "Warn without blocking when root task/status files can confuse authority",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeActiveContext({ store, repoRoot, outputDir: repoRoot });
+  store.close();
+
+  fs.writeFileSync(path.join(repoRoot, "task.md"), "# Legacy task\n", "utf8");
+  fs.writeFileSync(path.join(repoRoot, "walkthrough.md"), "# Legacy walkthrough\n", "utf8");
+
+  const reopenedStore = createOperatingStateStore({
+    dbPath: path.join(repoRoot, ".harness", "operating_state.sqlite")
+  });
+  const result = validateGeneratedStateDocs({
+    store: reopenedStore,
+    outputDir: repoRoot,
+    repoRoot
+  });
+  reopenedStore.close();
+
+  const warnings = result.findings.filter((finding) => finding.code === "root_status_surface_ambiguous");
+  assert.equal(result.ok, true);
+  assert.equal(warnings.length, 2);
+  assert.deepEqual(new Set(warnings.map((finding) => finding.path.toLowerCase())), new Set(["task.md", "walkthrough.md"]));
+});
+
+test("ignores candidate profile tables outside the Active Profile Table section", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-active-profile-candidate-"));
+  seedRepoFiles(repoRoot);
+
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "ACTIVE_PROFILES.md"),
+    [
+      "# Active Profiles",
+      "",
+      "## Active Profile Table",
+      "| Profile ID | Activation reason | Required evidence artifacts | Evidence status | Activated by | Activated at | Applies to packets |",
+      "|---|---|---|---|---|---|---|",
+      "",
+      "## Candidate Profiles",
+      "| Profile ID | Activation reason | Required evidence artifacts | Evidence status | Activated by | Activated at | Applies to packets |",
+      "|---|---|---|---|---|---|---|",
+      "| PRF-08 | candidate only | - | approved | planner | 2026-05-22T02:10:00.000Z | PKT-01_FLOW-01 |"
+    ].join("\n"),
+    "utf8"
+  );
+
+  const store = createOperatingStateStore({
+    dbPath: path.join(repoRoot, ".harness", "operating_state.sqlite"),
+    now: createClock("2026-05-22T02:10:00.000Z")
+  });
+
+  store.setReleaseState({
+    currentStage: "planning",
+    releaseGateState: "open",
+    currentFocus: "Candidate profile parse boundary",
+    releaseGoal: "Ignore candidate tables in ACTIVE_PROFILES validation",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+
+  writeGeneratedStateDocs({ store, outputDir: repoRoot });
+  writeActiveContext({ store, repoRoot, outputDir: repoRoot });
+
+  const result = validateGeneratedStateDocs({
+    store,
+    outputDir: repoRoot,
+    repoRoot
+  });
+  store.close();
+
+  assert.equal(result.ok, true);
+  assert.equal(
+    result.findings.some((finding) => finding.code === "active_profile_required_evidence_missing"),
+    false
+  );
+});
+
 test("accepts supported lane-type declarations when universal minimum metadata is present", () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-generated-docs-lane-type-valid-"));
   seedRepoFiles(repoRoot);

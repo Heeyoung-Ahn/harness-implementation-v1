@@ -46,6 +46,17 @@ This file keeps thin, durable prevention rules for repeated process or quality i
 
 ## Promotion Candidates
 
+- Candidate ID: OPS-DOWNSTREAM-FRICTION-001
+- Issue Pattern: 실제 downstream 적용 레포에서 state 재생성 순서, validator pass와 workflow gate 혼동, active profile 후보표 파싱, 루트 진행 파일과 harness artifact 정본 혼선, 긴 transition 명령, day wrap / repair UX 부재가 반복적으로 운영 마찰을 만들었다.
+- Why It Matters: 하네스의 안전성은 유지해야 하지만, operator가 매번 같은 순서와 경계를 기억해야 하면 안전 장치 자체가 작업 병목이 되고 다음 agent re-entry 품질도 흔들린다.
+- Proposed Target Layer: core for P0/P1 operator-runtime and documentation improvements; optional profile for mobile SQLite/NetInfo mocking; note-only/deferred for broad preventive-memory linting and mandatory ledgers.
+- Proposed Target Artifact / Follow-Up Item: `reference/packets/PKT-01_OPS-29_DOWNSTREAM_OPERATOR_FRICTION_P0_P1_SEQUENCE.md`
+- Promotion Status: approved
+- Human Review Boundary: user directed Planner on 2026-05-22 to proceed with a P0/P1 packet and sequential implementation plan, while explicitly avoiding over-broad improvement.
+- Linked Follow-Up Item: `OPS-29`
+- Needed Refinement: approve Ready For Code for P0 before implementation; keep P1 lightweight and defer mobile/profile-specific or broad lint/ledger ideas unless separately approved.
+- Source / Evidence: observed downstream operation in `C:\Newface\10 Antigravity\15 ZionPath` and `C:\Newface\10 Antigravity\20 Financial Intelligence`, including root `task.md` drift, validation-vs-gate ambiguity, active-profile candidate parsing risk, ad hoc day wrap, and low-confidence repair guidance.
+
 - Candidate ID: PLANNER-HOLD-CLOSEOUT-001
 - Issue Pattern: reviewer-approved packet을 닫은 뒤 다음 successor lane을 일부러 열지 않으면, canonical docs는 닫혔는데 DB hot-state, generated docs, `ACTIVE_CONTEXT`, `validation-report`가 stale planner-owned open item에 다시 끌려가면서 no-active-lane state를 한 번에 만들지 못한다.
 - Why It Matters: 정상적인 planner hold 상태가 전용 closeout path 없이 남아 있으면 first-read re-entry surface가 stale packet을 다시 active처럼 보이게 만들고, planner closeout이 불필요하게 느려진다.

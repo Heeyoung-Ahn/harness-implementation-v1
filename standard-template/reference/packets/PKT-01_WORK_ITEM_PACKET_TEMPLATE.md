@@ -1,5 +1,7 @@
 # PKT-01 Work Item Packet Template
 
+> PLANNING PACKET. This file is the approved scope, approval boundary, and closeout evidence surface for one work item.
+
 ## Purpose
 이 문서는 한 개의 구현 작업을 코드 착수 전에 다시 닫기 위한 task-level planning/design packet template이다. rough baseline 승인만으로 바로 구현하지 않게 하고, 특히 사용자가 직접 체감하는 `프로그램 기능과 UI/UX`는 인간과 충분히 협의한 뒤 구현하게 만드는 것이 목적이다.
 

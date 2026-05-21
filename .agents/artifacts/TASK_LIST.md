@@ -1,10 +1,10 @@
 # Task List
 
-> Generated compatibility view. Authoritative live routing stays in the operational DB plus `.agents/runtime/ACTIVE_CONTEXT.json`.
+> GENERATED, DO NOT EDIT. Human status summary fallback only. Authoritative live routing stays in the operational DB plus `.agents/runtime/ACTIVE_CONTEXT.json`.
 
 ## Current Release Target
 - Preserve the V1.3 installable standard harness baseline while implementing DEV-11 PMW removal and Active Context replacement under the release gate.
-- Generated At: 2026-05-17T23:20:25.741Z
+- Generated At: 2026-05-21T22:11:21.789Z
 - Active work item count: 0
 
 ## Active Locks
@@ -27,9 +27,10 @@
 ## Completed Tasks
 | Task ID | Title | Completed At | Verification | Notes |
 |---|---|---|---|---|
+| OPS-29 | Downstream operator friction P0/P1 sequence | 2026-05-21 | transition planner -> planner; gate contract | Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold. Keep the reusable baseline on planning hold until a new approved lane is selected. |
 | PLN-25 | Long context re-entry and implementation plan rebaseline | 2026-05-17 | transition planner -> planner; gate contract | Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold. Keep the reusable baseline on planning hold until a new approved lane is selected. |
 | PLN-24 | Destructive artifact retirement / merge approval | 2026-05-17 | transition planner -> planner; gate contract | PLN-24 is closed. Approved destructive retirement / merge execution completed as scan/disposition-driven no-op physical retirement: no holds, day_start wording migrated in root and standard-template, no physical deletion/merge/tombstone required, root/starter evidence passed, and Reviewer approved closeout. Release packaging and downstream mutation remain not approved. No active implementation lane. Keep the reusable baseline on planning hold until the user opens a new approved lane; release packaging and downstream mutation remain separate future approvals. |
-| PLN-23 | Cutover execution approval | 2026-05-17 | transition planner -> planner; gate contract | PLN-23 cutover execution is closed. User-approved root cutover executed as a no-op migration apply, Developer/Tester/Reviewer/Planner evidence is recorded, validation passes, and destructive artifact retirement / merge remains separately gated. No active implementation lane. Open a separate Planner approval packet only if the user explicitly approves destructive artifact retirement / merge after inbound-reference scan and migration/tombstone/exemption handling. |
+| PLN-23 | Cutover execution approval | 2026-05-17 | transition planner -> planner; gate contract | Closed in canonical operational state. No active implementation lane. Open a separate Planner approval packet only if the user explicitly approves destructive artifact retirement / merge after inbound-reference scan and migration/tombstone/exemption handling. |
 | PLN-22 | Operational authority rebuild and harness reset | 2026-05-17 | transition planner -> planner; gate contract | Closed in canonical operational state. No active implementation lane. Open a new Planner approval lane only if the user explicitly approves cutover execution or destructive artifact retirement / merge. |
 | PLN-21 | PLN-21 Operational single-source authority and governance simplification | 2026-05-16 | transition planner -> planner; gate contract | Closed in canonical operational state. Keep the reusable baseline on planning hold until a new approved lane is selected. |
 | PLN-20 | Maintainer / starter boundary and payload separation | 2026-05-16 | transition planner -> planner; gate contract | Closed in canonical operational state. Keep the reusable baseline on planning hold until a new approved lane is selected. |
@@ -98,6 +99,17 @@
 | DEV-04 | PMW read surface | - | transition unknown -> Codex; gate unknown | Closed in canonical operational state. Closed after browser verification passed at http://127.0.0.1:4173. |
 
 ## Handoff Log
+- 2026-05-21: [planner -> planner] [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.
+- 2026-05-21: [reviewer -> planner] [reviewer -> planner] Reviewer approved OPS-29 P0/P1 closeout; Planner should record packet closeout and return the reusable baseline to no-active-lane hold.
+- 2026-05-21: [tester -> reviewer] [tester -> reviewer] Tester verification completed; Reviewer should assess packet exit readiness.
+- 2026-05-21: [developer -> tester] [developer -> tester] Developer implementation completed; Tester should verify the approved scope.
+- 2026-05-21: [planner -> developer] [planner -> developer] Planning approved; implementation can proceed.
+- 2026-05-21: [planner -> planner] [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.
+- 2026-05-21: [reviewer -> planner] [reviewer -> planner] Reviewer approved OPS-29 P0 closeout; Planner should record the closeout and wait for explicit user approval before opening any P1 follow-up.
+- 2026-05-21: [tester -> reviewer] [tester -> reviewer] Tester verification completed; Reviewer should assess packet exit readiness.
+- 2026-05-21: [developer -> tester] [developer -> tester] Developer implementation completed; Tester should verify the approved scope.
+- 2026-05-21: [planner -> developer] [planner -> developer] Planning approved; implementation can proceed.
+- 2026-05-21: [planner -> planner] [planner -> planner] Opened OPS-29 as the selected Planner packet for bounded downstream operator-friction improvements.
 - 2026-05-17: [planner -> planner] [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.
 - 2026-05-17: [reviewer -> planner] [reviewer -> planner] Packet exit approved; Planner should choose or refine the next lane.
 - 2026-05-17: [tester -> reviewer] [tester -> reviewer] Tester verification completed; Reviewer should assess packet exit readiness.
@@ -107,14 +119,3 @@
 - 2026-05-17: [planner -> developer] [planner -> developer] PLN-25 detailed agreement is approved; Developer may implement the long-context re-entry and Implementation Plan rebaseline scope.
 - 2026-05-17: [planner -> planner] [planner -> planner] Opened PLN-25 to rebaseline long-context AI re-entry and make IMPLEMENTATION_PLAN.md a human-readable implementation plan only.
 - 2026-05-17: [planner -> planner] [planner -> planner] PLN-24 is closed. Approved destructive retirement / merge execution completed as scan/disposition-driven no-op physical retirement: no holds, day_start wording migrated in root and standard-template, no physical deletion/merge/tombstone required, root/starter evidence passed, and Reviewer approved closeout. Release packaging and downstream mutation remain not approved.
-- 2026-05-17: [reviewer -> planner] [reviewer -> planner] PLN-24 Reviewer closeout approved. No findings inside the approved boundary; scan/disposition evidence has no holds, old day_start live-truth wording is migrated in root and standard-template, physical deletion/merge was correctly no-op after exemptions, root/starter evidence is clean, and release packaging/downstream mutation remain out of scope.
-- 2026-05-17: [tester -> reviewer] [tester -> reviewer] PLN-24 Tester verification passed. Disposition evidence classifies all references with no holds, confirms two day_start migrations, no physical deletion or merge, no release packaging or downstream mutation, and root/starter targeted tests, validators, validation reports, contexts, and cutover-preflight all pass.
-- 2026-05-17: [developer -> tester] [developer -> tester] PLN-24 Developer execution completed. Same-turn inbound-reference scan classified all candidates with no holds, migrated day_start live-truth wording in root and standard-template, performed no physical deletion or merge because candidates are retained exemptions or already excluded starter runtime outputs, and root/starter tests, validators, validation reports, context, and preflight passed.
-- 2026-05-17: [planner -> developer] [planner -> developer] PLN-24 execution approved by user. Developer may execute only the approved root-first destructive retirement / merge lane after same-turn inbound-reference scan, disposition table, rollback proof, and freshness gate pass with no hold items. Release packaging and downstream mutation remain not approved.
-- 2026-05-17: [planner -> planner] [planner -> planner] PLN-24 scan and disposition criteria are approved by the user; Ready For Code and destructive artifact retirement / merge execution remain on hold pending explicit execution approval.
-- 2026-05-17: [planner -> planner] [planner -> planner] Open a Planner approval packet for final destructive artifact retirement / merge, including inbound-reference scan criteria and migration/tombstone/exemption disposition gates. Execution remains unapproved.
-- 2026-05-17: [planner -> planner] [planner -> planner] PLN-23 cutover execution is closed. User-approved root cutover executed as a no-op migration apply, Developer/Tester/Reviewer/Planner evidence is recorded, validation passes, and destructive artifact retirement / merge remains separately gated.
-- 2026-05-17: [reviewer -> planner] [reviewer -> planner] PLN-23 Reviewer closeout approved. No findings inside the approved cutover boundary; root-only migration-apply was a no-op, root/starter evidence is clean, rollback/preflight proof is sufficient, and destructive artifact retirement / merge remains gated.
-- 2026-05-17: [tester -> reviewer] [tester -> reviewer] PLN-23 Tester verification passed. Root and standard-template targeted/full suites passed, validators/reports/context/preflight remained clean, root cutover applied 0 changes, and no destructive artifact retirement / merge occurred.
-- 2026-05-17: [developer -> tester] [developer -> tester] PLN-23 approved root cutover command path executed. Freshness gate passed, migration-apply applied 0 changes, cutover report was written, and no destructive artifact retirement / merge occurred.
-- 2026-05-17: [planner -> developer] [planner -> developer] PLN-23 cutover execution approved by user; Developer may execute only the root cutover lane after the freshness gate passes. Destructive artifact retirement / merge remains not approved.

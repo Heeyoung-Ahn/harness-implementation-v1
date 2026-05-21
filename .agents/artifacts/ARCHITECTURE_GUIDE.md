@@ -1,5 +1,7 @@
 # Architecture Guide
 
+> AUTHORITATIVE. Project architecture SSOT. Edit only through an approved packet.
+
 ## Purpose
 이 문서는 `REQUIREMENTS.md` 확정 후에 작성하는 downstream project technical architecture SSOT다.
 

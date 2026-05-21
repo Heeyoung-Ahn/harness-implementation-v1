@@ -10,6 +10,7 @@ import {
   explainCurrentBlockers,
   recommendNextAction,
   resolveHandoff,
+  runStateSync,
   runTransition,
   runDoctor,
   runCutoverPreflight,
@@ -32,6 +33,7 @@ const commands = {
   explain: () => explainCurrentBlockers({ repoRoot, outputDir, dbPath }),
   "validation-report": () => writeValidationReport({ repoRoot, outputDir, dbPath }),
   context: () => writeContext({ repoRoot, outputDir, dbPath, args: process.argv.slice(3) }),
+  "sync-state": () => runStateSync({ repoRoot, outputDir, dbPath }),
   transition: () => runTransition({ repoRoot, outputDir, dbPath, args: process.argv.slice(3) }),
   "migration-preview": () => buildMigrationPreview({ repoRoot, dbPath }),
   "migration-apply": () => applyMigration({ repoRoot, dbPath }),
@@ -41,7 +43,7 @@ const commands = {
 
 if (!command || !commands[command]) {
   process.stderr.write(
-    "Usage: node .harness/runtime/state/dev05-cli.js <validate|doctor|status|next|handoff|explain|validation-report|context|transition|migration-preview|migration-apply|cutover-preflight|cutover-report>\n"
+    "Usage: node .harness/runtime/state/dev05-cli.js <validate|doctor|status|next|handoff|explain|validation-report|context|sync-state|transition|migration-preview|migration-apply|cutover-preflight|cutover-report>\n"
   );
   process.exit(1);
 }
@@ -51,7 +53,7 @@ process.stdout.write(`${formatResult(result)}\n`);
 process.exit(result.ok === false || result.cutoverReady === false ? 1 : 0);
 
 function formatResult(result) {
-  if (["doctor", "status", "next", "handoff", "explain", "validation-report", "context", "context --repair", "transition"].includes(result.command)) {
+  if (["doctor", "status", "next", "handoff", "explain", "validation-report", "context", "context --repair", "sync-state", "transition"].includes(result.command)) {
     return `${formatHumanSummary(result)}\n\n${JSON.stringify(result, null, 2)}`;
   }
 
@@ -85,7 +87,8 @@ function formatHumanSummary(result) {
       `- Next owner: ${result.nextOwner ?? "unassigned"}`,
       `- Open blockers: ${result.openBlockers}`,
       `- Open decisions: ${result.openDecisions}`,
-      `- Validation: ${result.validation.ok ? "pass" : "fail"} (${result.validation.blockingFindingCount} blocker(s))`,
+      `- Technical validation: ${result.technicalValidation.ok ? "pass" : "fail"} (${result.technicalValidation.blockingFindingCount} blocker(s); runtime validation ready: ${result.technicalValidation.runtimeValidationReady ? "yes" : "no"})`,
+      `- Workflow gate: ${result.workflowGate.status}, ${result.workflowGate.detail}`,
       `- Next action: ${result.nextAction}`
     ].join("\n");
   }
@@ -164,6 +167,21 @@ function formatHumanSummary(result) {
       `- Regenerated: ${result.report.regeneratedArtifacts.length}`,
       `- Authority mutation: ${result.report.authorityMutation ? "yes" : "no"}`,
       `- DB mutation: ${result.report.dbMutation}`,
+      `- Next action: ${result.nextAction}`
+    ].join("\n");
+  }
+
+  if (result.command === "sync-state") {
+    return [
+      "Harness Sync State",
+      `- Result: ${result.ok ? "pass" : "fail"}`,
+      `- Validate: ${result.steps[0].ok ? "pass" : "fail"}`,
+      `- Validation report: ${result.steps[1].ok ? result.steps[1].gateDecision : "fail"}`,
+      `- Context: ${result.steps[2].ok ? "pass" : "fail"}`,
+      `- Status: ${result.steps[3].ok ? "pass" : "fail"}`,
+      `- Technical validation: ${result.technicalValidation.ok ? "pass" : "fail"} (${result.technicalValidation.blockingFindingCount} blocker(s); runtime validation ready: ${result.technicalValidation.runtimeValidationReady ? "yes" : "no"})`,
+      `- Workflow gate: ${result.workflowGate.status}, ${result.workflowGate.detail}`,
+      `- Next command: ${result.nextCommand ?? "none"}`,
       `- Next action: ${result.nextAction}`
     ].join("\n");
   }

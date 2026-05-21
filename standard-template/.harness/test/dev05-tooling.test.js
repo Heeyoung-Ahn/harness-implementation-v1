@@ -11,6 +11,7 @@ import {
   recommendNextAction,
   resolveHandoff,
   runPlannerPacketOpen,
+  runStateSync,
   runTransition,
   runCutoverPreflight,
   runValidator,
@@ -970,6 +971,181 @@ test("transition blocks planner-to-developer before Ready For Code approval", ()
 
   assert.equal(preview.ok, false);
   assert.match(preview.errors.join("\n"), /Ready For Code approved/);
+});
+
+test("buildHarnessStatus separates technical validation from workflow gate approval state", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-status-gate-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_FLOW-01_STATUS_GATE_TEST.md";
+  writeOpsPacket(repoRoot, packetPath, {
+    gateProfile: "contract",
+    includeManifest: true,
+    readyForCode: "pending"
+  });
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-22T01:00:00.000Z") });
+  store.setReleaseState({
+    currentStage: "planning",
+    releaseGateState: "open",
+    currentFocus: "FLOW-01 approval split",
+    releaseGoal: "Separate technical validation from workflow approval state",
+    sourceRef: packetPath
+  });
+  store.upsertWorkItem({
+    workItemId: "FLOW-01",
+    title: "Workflow gate split",
+    status: "planning",
+    nextAction: "Approve FLOW-01 Ready For Code.",
+    owner: "planner",
+    sourceRef: packetPath,
+    metadata: { gateProfile: "contract", readyForCode: "pending" }
+  });
+  store.upsertArtifact({
+    artifactId: "PKT-01_FLOW-01_STATUS_GATE_TEST",
+    path: packetPath,
+    category: "task_packet",
+    title: "FLOW-01 status gate split packet",
+    sourceRef: packetPath
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const status = buildHarnessStatus({ repoRoot, dbPath, outputDir: repoRoot });
+  assert.equal(status.ok, true);
+  assert.equal(status.technicalValidation.ok, true);
+  assert.equal(status.technicalValidation.runtimeValidationReady, true);
+  assert.equal(status.workflowGate.status, "blocked");
+  assert.match(status.workflowGate.detail, /Ready For Code approval/);
+});
+
+test("buildHarnessStatus reads only the first Active Profile Table", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-active-profile-first-table-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+
+  fs.writeFileSync(
+    path.join(repoRoot, ".agents", "artifacts", "ACTIVE_PROFILES.md"),
+    [
+      "# Active Profiles",
+      "",
+      "## Active Profile Table",
+      "| Profile ID | Activation reason | Required evidence artifacts | Evidence status | Activated by | Activated at | Applies to packets |",
+      "|---|---|---|---|---|---|---|",
+      "",
+      "## Candidate Profiles",
+      "| Profile ID | Activation reason | Required evidence artifacts | Evidence status | Activated by | Activated at | Applies to packets |",
+      "|---|---|---|---|---|---|---|",
+      "| PRF-08 | candidate only | - | approved | planner | 2026-05-22T01:05:00.000Z | PKT-01_FLOW-01 |"
+    ].join("\n"),
+    "utf8"
+  );
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-22T01:05:00.000Z") });
+  store.setReleaseState({
+    currentStage: "planning",
+    releaseGateState: "open",
+    currentFocus: "FLOW-01 active profile parse boundary",
+    releaseGoal: "Ignore candidate profile tables in status output",
+    sourceRef: ".agents/artifacts/IMPLEMENTATION_PLAN.md"
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const status = buildHarnessStatus({ repoRoot, dbPath, outputDir: repoRoot });
+  assert.equal(status.activeProfiles.status, "empty");
+  assert.equal(status.activeProfiles.profiles.length, 0);
+});
+
+test("transition infers named handoff from work-item and target-owner positional shorthand", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-transition-positional-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_FLOW-01_TRANSITION_POSITIONAL_TEST.md";
+  writeOpsPacket(repoRoot, packetPath, { gateProfile: "contract", includeManifest: true });
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-22T01:10:00.000Z") });
+  store.setReleaseState({
+    currentStage: "planning",
+    releaseGateState: "open",
+    currentFocus: "FLOW-01 positional transition shorthand",
+    releaseGoal: "Allow work-item and target-owner shorthand",
+    sourceRef: packetPath
+  });
+  store.upsertWorkItem({
+    workItemId: "FLOW-01",
+    title: "Transition shorthand",
+    status: "planning",
+    nextAction: "Implement the approved packet scope and hand off to Tester.",
+    owner: "planner",
+    sourceRef: packetPath,
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  store.upsertArtifact({
+    artifactId: "PKT-01_FLOW-01_TRANSITION_POSITIONAL_TEST",
+    path: packetPath,
+    category: "task_packet",
+    title: "FLOW-01 positional transition packet",
+    sourceRef: packetPath
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const preview = runTransition({
+    repoRoot,
+    dbPath,
+    outputDir: repoRoot,
+    args: ["FLOW-01", "developer"]
+  });
+  assert.equal(preview.ok, true);
+  assert.equal(preview.transition, "planner-to-developer");
+  assert.equal(preview.workItemId, "FLOW-01");
+  assert.equal(preview.fromOwner, "planner");
+  assert.equal(preview.toOwner, "developer");
+});
+
+test("runStateSync executes validate, validation-report, context, and status in order", () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dev05-sync-state-"));
+  seedStandardRepo(repoRoot);
+  const dbPath = path.join(repoRoot, ".harness", "operating_state.sqlite");
+  const packetPath = "reference/packets/PKT-01_FLOW-01_SYNC_STATE_TEST.md";
+  writeOpsPacket(repoRoot, packetPath, { gateProfile: "contract", includeManifest: true });
+
+  const store = createOperatingStateStore({ dbPath, now: createClock("2026-05-22T01:15:00.000Z") });
+  store.setReleaseState({
+    currentStage: "implementation",
+    releaseGateState: "open",
+    currentFocus: "FLOW-01 sync-state",
+    releaseGoal: "Wrap the standard state regeneration sequence",
+    sourceRef: packetPath
+  });
+  store.upsertWorkItem({
+    workItemId: "FLOW-01",
+    title: "Sync state wrapper",
+    status: "in_progress",
+    nextAction: "Implement the approved packet scope and hand off to Tester.",
+    owner: "developer",
+    sourceRef: packetPath,
+    metadata: { gateProfile: "contract", readyForCode: "approved" }
+  });
+  store.upsertArtifact({
+    artifactId: "PKT-01_FLOW-01_SYNC_STATE_TEST",
+    path: packetPath,
+    category: "task_packet",
+    title: "FLOW-01 sync-state packet",
+    sourceRef: packetPath
+  });
+  writeStateSurfaces({ store, repoRoot });
+  store.close();
+
+  const result = runStateSync({ repoRoot, dbPath, outputDir: repoRoot });
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.steps.map((step) => step.name), ["validate", "validation-report", "context", "status"]);
+  assert.equal(result.validationReport.gateDecision, "pass");
+  assert.equal(result.technicalValidation.ok, true);
+  assert.equal(result.workflowGate.status, "open");
+  assert.equal(fs.existsSync(result.context.jsonPath), true);
+  assert.equal(fs.existsSync(result.context.markdownPath), true);
 });
 
 test("transition keeps live Ready For Code state from work-item metadata when packet header is stale", () => {

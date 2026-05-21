@@ -188,7 +188,7 @@ export function buildCompatibilityCurrentStateDoc(
   return [
     "# Current State",
     "",
-    "> Generated compatibility view. Human fallback only. Use `.agents/runtime/ACTIVE_CONTEXT.json` and `harness:context` as the first re-entry surface.",
+    "> GENERATED, DO NOT EDIT. Human status summary fallback only. Use `.agents/runtime/ACTIVE_CONTEXT.json` and `harness:context` as the first re-entry surface.",
     "",
     "## Snapshot",
     `- Current Stage: ${releaseState?.currentStage ?? "unknown"}`,
@@ -240,7 +240,7 @@ export function buildCompatibilityTaskListDoc(
   return [
     "# Task List",
     "",
-    "> Generated compatibility view. Authoritative live routing stays in the operational DB plus `.agents/runtime/ACTIVE_CONTEXT.json`.",
+    "> GENERATED, DO NOT EDIT. Human status summary fallback only. Authoritative live routing stays in the operational DB plus `.agents/runtime/ACTIVE_CONTEXT.json`.",
     "",
     "## Current Release Target",
     `- ${releaseState?.releaseGoal ?? releaseState?.currentFocus ?? "No current release target has been recorded."}`,

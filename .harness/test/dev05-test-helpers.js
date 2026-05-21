@@ -127,7 +127,10 @@ export function writeStateSurfaces({
 
 export function seedStarterRepo(repoRoot) {
   const starterRoot = detectStarterRoot();
-  fs.cpSync(starterRoot, repoRoot, { recursive: true });
+  fs.cpSync(starterRoot, repoRoot, {
+    recursive: true,
+    filter: (src) => !path.normalize(src).split(path.sep).some((part) => part === "node_modules" || part === ".git" || part === ".expo")
+  });
   resetCopiedStarterToFreshState(repoRoot);
 }
 
@@ -329,7 +332,39 @@ function resetCopiedStarterToFreshState(repoRoot) {
     "# Task List\n\n## Active Tasks\n| Task ID | Title | Scope | Owner | Status | Priority | Depends On | Verification |\n|---|---|---|---|---|---|---|---|\n| BOOT-00 | Initialize copied starter | starter bootstrap | project operator | starter_pending | P0 | `INIT_STANDARD_HARNESS.cmd` or `npm run harness:init` | generated docs and validation guidance |\n- Run `INIT_STANDARD_HARNESS.cmd` or `npm run harness:init` before real work begins.\n",
     "utf8"
   );
+  removeCopiedStarterRuntimeArtifacts(repoRoot);
+}
+
+function removeCopiedStarterRuntimeArtifacts(repoRoot) {
   for (const suffix of ["", "-shm", "-wal"]) {
     fs.rmSync(path.join(repoRoot, ".harness", `operating_state.sqlite${suffix}`), { force: true });
+  }
+  fs.rmSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.json"), { force: true });
+  fs.rmSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.md"), { force: true });
+  fs.rmSync(path.join(repoRoot, ".agents", "artifacts", "VALIDATION_REPORT.json"), { force: true });
+  fs.rmSync(path.join(repoRoot, ".agents", "artifacts", "VALIDATION_REPORT.md"), { force: true });
+
+  for (const relativeDir of [
+    path.join(".agents", "runtime", "generated-state-docs"),
+    path.join(".agents", "runtime", "agent-traces")
+  ]) {
+    const targetDir = path.join(repoRoot, relativeDir);
+    if (!fs.existsSync(targetDir)) {
+      continue;
+    }
+    for (const entry of fs.readdirSync(targetDir)) {
+      fs.rmSync(path.join(targetDir, entry), { recursive: true, force: true });
+    }
+  }
+
+  const packetsDir = path.join(repoRoot, "reference", "packets");
+  if (!fs.existsSync(packetsDir)) {
+    return;
+  }
+  for (const entry of fs.readdirSync(packetsDir)) {
+    if (entry === "README.md" || entry.endsWith("_TEMPLATE.md")) {
+      continue;
+    }
+    fs.rmSync(path.join(packetsDir, entry), { recursive: true, force: true });
   }
 }

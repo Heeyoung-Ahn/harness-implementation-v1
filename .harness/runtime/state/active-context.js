@@ -262,10 +262,11 @@ export function renderActiveContextMarkdown(context) {
   const lines = [
     "# 활성 컨텍스트",
     "",
+    "> GENERATED, DO NOT EDIT. 사람 확인용 human fallback view이며 live write authority는 아니다.",
+    "",
     "## 시작 계약",
     `- 첫 AI 재진입 읽기: ${context.reentryContract.firstRead}`,
     `- 사람 확인용 보조 문서: ${context.reentryContract.fallbackHumanView}`,
-    "- 문서 성격: generated human fallback view; live write authority는 아님",
     "- 복구 명령: node .harness/runtime/state/dev05-cli.js context --repair",
     `- 다음 workflow: ${context.nextWork.workflow ?? "수동 선택 필요"}`,
     task

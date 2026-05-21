@@ -21,6 +21,7 @@
     "harness:explain": "node .harness/runtime/state/dev05-cli.js explain",
     "harness:validation-report": "node .harness/runtime/state/dev05-cli.js validation-report",
     "harness:context": "node .harness/runtime/state/dev05-cli.js context",
+    "harness:sync-state": "node .harness/runtime/state/dev05-cli.js sync-state",
     "harness:transition": "node .harness/runtime/state/dev05-cli.js transition",
     "package:release": "node packaging/build-release-package.js",
     "package:windows-exe": "node packaging/build-windows-exe-installers.js",

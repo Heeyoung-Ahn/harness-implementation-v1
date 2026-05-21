@@ -793,9 +793,9 @@ cloud에서 오래 걸리는 후보 작업을 돌렸을 때 로컬 정본으로 
 - 관련 아티팩트: `.harness/operating_state.sqlite`, `.agents/artifacts/*`, `.agents/runtime/*`
 
 ### `npm run harness:status`
-- 목적: 현재 단계, 현재 focus, 다음 action을 짧게 본다.
+- 목적: 현재 단계와 다음 action을 짧게 보되, 기술 검증 상태와 workflow gate 상태를 분리해서 본다.
 - 언제 쓰나: 하루 시작, 중단 후 복귀, handoff 직후.
-- 기대 출력: 현재 stage, focus, next action 요약이 나온다.
+- 기대 출력: 현재 stage/focus/next action과 함께 `Technical validation`, `Workflow gate`가 별도 줄로 나온다.
 - 실패 시 첫 대응: `harness:init`이 끝났는지, `ACTIVE_CONTEXT.*`와 DB 상태가 비어 있지 않은지 확인한다. 필요하면 `CURRENT_STATE.md`를 compatibility view로 확인한다.
 - 관련 아티팩트: `ACTIVE_CONTEXT.*`, `CURRENT_STATE.md`
 
@@ -810,8 +810,15 @@ cloud에서 오래 걸리는 후보 작업을 돌렸을 때 로컬 정본으로 
 - 목적: AI용 JSON과 사람용 Markdown active context를 생성 또는 갱신한다.
 - 언제 쓰나: init 직후, handoff 직후, closeout 직후, stale 의심 시.
 - 기대 출력: `ACTIVE_CONTEXT.json`과 `ACTIVE_CONTEXT.md`가 최신 상태로 생성된다.
-- 실패 시 첫 대응: `.harness/operating_state.sqlite` 존재 여부와 validator 오류를 먼저 확인한다.
+- 실패 시 첫 대응: `.harness/operating_state.sqlite` 존재 여부와 validator 오류를 먼저 확인한다. generated surface가 빠졌거나 low-confidence recovery가 필요하면 `node .harness/runtime/state/dev05-cli.js context --repair`로 복구 경로와 다음 명령 제안을 본다.
 - 관련 아티팩트: `.agents/runtime/ACTIVE_CONTEXT.json`, `.md`
+
+### `npm run harness:sync-state`
+- 목적: 평소 복구/마감/handoff 직전에 필요한 상태 동기화를 한 번에 실행한다.
+- 언제 쓰나: generated state를 한 번에 다시 맞추고 싶을 때, normal wrap/handoff recovery를 짧게 끝내고 싶을 때.
+- 기대 출력: validator, validation-report, active context, status가 정해진 순서로 다시 맞춰지고 마지막에 `Technical validation`, `Workflow gate`, next action 요약이 나온다.
+- 실패 시 첫 대응: 실패한 하위 단계와 next command를 먼저 확인한다. missing file이나 stale 상태가 남으면 `context --repair`로 recovery report와 구체 복구 명령을 확인한다.
+- 관련 아티팩트: `VALIDATION_REPORT.*`, `ACTIVE_CONTEXT.*`, `CURRENT_STATE.md`, `TASK_LIST.md`
 
 ### `npm run harness:doctor`
 - 목적: 하네스 운영 상태를 빠르게 진단한다.
@@ -927,11 +934,13 @@ cloud에서 오래 걸리는 후보 작업을 돌렸을 때 로컬 정본으로 
 - implementation/verification/review day: owning workflow가 요구하는 `harness:validate`, `harness:validation-report`, walkthrough, review evidence를 확인한다.
 3. `Current Work`와 `Next Work`를 기록해 다음 workflow와 첫 action을 분명히 남긴다.
 문서 참조: 모든 `.agents/workflows/*.md`의 Turn Close Reporting, `.agents/rules/HARNESS_OPERATING_CONTRACT.md`
-4. next owner, next first action, required SSOT, do-not-cross가 분명할 때만 day wrap을 끝낸다.
+4. human-facing day wrap이 필요하면 `reference/planning/DAY_WRAP_TEMPLATE.md`를 써서 `Technical validation`, `Workflow gate`, active context freshness를 같이 남긴다.
+문서 참조: `reference/planning/DAY_WRAP_TEMPLATE.md`
+5. next owner, next first action, required SSOT, do-not-cross가 분명할 때만 day wrap을 끝낸다.
 문서 참조: `.agents/workflows/handoff.md`, latest handoff, `.agents/runtime/ACTIVE_CONTEXT.*`
-5. 반복 friction이 명확한 trigger/rule/check method로 재사용 가능할 때만 `PREVENTIVE_MEMORY.md`에 남긴다.
+6. 반복 friction이 명확한 trigger/rule/check method로 재사용 가능할 때만 `PREVENTIVE_MEMORY.md`에 남긴다.
 문서 참조: `.agents/artifacts/PREVENTIVE_MEMORY.md`
-6. human-facing 하루 메모가 진짜 필요할 때만 `reference/artifacts/daily/*`를 만든다.
+7. human-facing 하루 메모가 진짜 필요할 때만 `reference/artifacts/daily/*`를 만든다.
 
 효율 규칙:
 - 하루 마감은 별도 회고 문서를 매일 강제하는 절차가 아니다.
@@ -1064,7 +1073,9 @@ CLOUD_LOCAL_MERGE_PLAYBOOK 기준으로 cloud에서 할 범위, 로컬에 남길
 
 ### Q. `ACTIVE_CONTEXT`가 오래된 상태처럼 보인다
 - 먼저 최신 handoff와 `npm run harness:status` / `npm run harness:next` 결과가 실제 상태와 맞는지 본다.
-- 그 다음 `npm run harness:context`를 다시 실행한다.
+- 보통은 `npm run harness:sync-state`를 먼저 실행해 validator, report, context, status를 순서대로 다시 맞춘다.
+- 그래도 generated surface가 빠졌거나 복구 신뢰도가 낮아 보이면 `node .harness/runtime/state/dev05-cli.js context --repair`를 실행해 recovery report와 구체 next command를 확인한다.
+- 그 다음에도 단순 refresh만 필요하면 `npm run harness:context`를 다시 실행한다.
 - 필요하면 `CURRENT_STATE.md`와 `TASK_LIST.md`를 compatibility view로 대조한다.
 
 ### Q. copied starter에 `ACTIVE_CONTEXT.json`이나 `.md`가 없다
@@ -1078,6 +1089,18 @@ CLOUD_LOCAL_MERGE_PLAYBOOK 기준으로 cloud에서 할 범위, 로컬에 남길
 - 가장 위 finding부터 읽는다.
 - 보통 missing evidence, stale generated state, packet registration, profile evidence 누락 중 하나다.
 - generated file을 직접 고치지 말고 정본 문서와 packet을 먼저 본다.
+
+### Q. 루트에 `task.md`나 `walkthrough.md`가 있는데 왜 경고가 뜨나
+- 이 경고는 root 문서가 canonical harness authority와 경쟁할 수 있을 때만 띄우는 warning이다.
+- live authority는 packet, `.agents/artifacts/*`, DB hot-state, `ACTIVE_CONTEXT.*` 쪽에 있고 root `task.md` / `walkthrough.md`는 정본이 아니다.
+- 경고가 떴다고 즉시 실패하는 것은 아니지만, 운영자가 그 파일을 현재 state truth처럼 읽고 있지 않은지 먼저 확인해야 한다.
+- 계속 쓸 메모라면 packet이나 적절한 reference 위치로 옮기고, historical note면 authority와 혼동되지 않게 분리한다.
+
+### Q. 문서 상단의 `AUTHORITATIVE`, `GENERATED, DO NOT EDIT`, `HUMAN STATUS SUMMARY`, `PACKET` 라벨은 어떻게 읽나
+- `AUTHORITATIVE`: 승인된 정본이다. 수동 편집 authority가 여기 있다.
+- `GENERATED, DO NOT EDIT`: 파생 출력이다. 직접 고치지 말고 정본과 state를 맞춘 뒤 재생성한다.
+- `HUMAN STATUS SUMMARY`: 사람이 빨리 읽으라고 만든 요약이다. live routing authority를 대신하지 않는다.
+- `PACKET`: 특정 작업 범위, acceptance, approval boundary를 닫는 작업 단위 문서다.
 
 ### Q. 어떤 profile을 켜야 할지 모르겠다
 - 현재 shipped baseline에서 바로 쓰는 승인 catalog는 `PRF-01`부터 `PRF-09`까지다.

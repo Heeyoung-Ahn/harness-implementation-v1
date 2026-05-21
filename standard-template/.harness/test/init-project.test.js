@@ -159,7 +159,10 @@ test("classifies initialized starters before force reinitialization", () => {
 function copyStarterRepo({ reset = true } = {}) {
   const sourceRoot = detectStarterSource();
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "standard-harness-init-"));
-  fs.cpSync(sourceRoot, repoRoot, { recursive: true });
+  fs.cpSync(sourceRoot, repoRoot, {
+    recursive: true,
+    filter: (src) => !path.normalize(src).split(path.sep).some((part) => part === "node_modules" || part === ".git" || part === ".expo")
+  });
   if (reset) {
     resetCopiedStarterToFreshState(repoRoot);
   }
@@ -243,9 +246,39 @@ function resetCopiedStarterToFreshState(repoRoot) {
 `,
     "utf8"
   );
+  removeCopiedStarterRuntimeArtifacts(repoRoot);
+}
+
+function removeCopiedStarterRuntimeArtifacts(repoRoot) {
   for (const suffix of ["", "-shm", "-wal"]) {
     fs.rmSync(path.join(repoRoot, ".harness", `operating_state.sqlite${suffix}`), { force: true });
   }
   fs.rmSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.json"), { force: true });
   fs.rmSync(path.join(repoRoot, ".agents", "runtime", "ACTIVE_CONTEXT.md"), { force: true });
+  fs.rmSync(path.join(repoRoot, ".agents", "artifacts", "VALIDATION_REPORT.json"), { force: true });
+  fs.rmSync(path.join(repoRoot, ".agents", "artifacts", "VALIDATION_REPORT.md"), { force: true });
+
+  for (const relativeDir of [
+    path.join(".agents", "runtime", "generated-state-docs"),
+    path.join(".agents", "runtime", "agent-traces")
+  ]) {
+    const targetDir = path.join(repoRoot, relativeDir);
+    if (!fs.existsSync(targetDir)) {
+      continue;
+    }
+    for (const entry of fs.readdirSync(targetDir)) {
+      fs.rmSync(path.join(targetDir, entry), { recursive: true, force: true });
+    }
+  }
+
+  const packetsDir = path.join(repoRoot, "reference", "packets");
+  if (!fs.existsSync(packetsDir)) {
+    return;
+  }
+  for (const entry of fs.readdirSync(packetsDir)) {
+    if (entry === "README.md" || entry.endsWith("_TEMPLATE.md")) {
+      continue;
+    }
+    fs.rmSync(path.join(packetsDir, entry), { recursive: true, force: true });
+  }
 }

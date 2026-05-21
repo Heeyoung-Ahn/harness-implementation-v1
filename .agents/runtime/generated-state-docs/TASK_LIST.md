@@ -1,10 +1,10 @@
 # TASK_LIST
 
 ## Technical Facts
-- Open work items: 69
+- Open work items: 70
 - Open blocked or at-risk items: 0
 - Recent handoffs captured: 10
-- Generated at: 2026-05-17T23:20:25.741Z
+- Generated at: 2026-05-21T22:11:21.789Z
 
 ## Blocked / At Risk Summary
 - 0 open blocker or risks require attention.
@@ -18,6 +18,7 @@
 ## Work Item Detail
 | ID | Title | Status | Next Action |
 |---|---|---|---|
+| OPS-29 | Downstream operator friction P0/P1 sequence | closed | Keep the reusable baseline on planning hold until a new approved lane is selected. |
 | PLN-25 | Long context re-entry and implementation plan rebaseline | closed | Keep the reusable baseline on planning hold until a new approved lane is selected. |
 | PLN-24 | Destructive artifact retirement / merge approval | closed | No active implementation lane. Keep the reusable baseline on planning hold until the user opens a new approved lane; release packaging and downstream mutation remain separate future approvals. |
 | PLN-23 | Cutover execution approval | closed | No active implementation lane. Open a separate Planner approval packet only if the user explicitly approves destructive artifact retirement / merge after inbound-reference scan and migration/tombstone/exemption handling. |
@@ -89,18 +90,18 @@
 | DEV-04 | PMW read surface | done | Closed after browser verification passed at http://127.0.0.1:4173. |
 
 ## Handoff Log
-- 2026-05-17T23:20:25.741Z: [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.
-- 2026-05-17T23:20:18.726Z: [reviewer -> planner] Packet exit approved; Planner should choose or refine the next lane.
-- 2026-05-17T23:19:47.107Z: [tester -> reviewer] Tester verification completed; Reviewer should assess packet exit readiness.
-- 2026-05-17T23:19:14.169Z: [developer -> tester] Developer implementation completed; Tester should verify the approved scope.
-- 2026-05-17T22:49:58.460Z: [planner -> developer] PLN-25 Ready For Code is explicitly approved; Developer may implement the long-context re-entry and Implementation Plan rebaseline scope.
-- 2026-05-17T22:37:45.547Z: [developer -> planner] PLN-25 detailed agreement is recorded, but Ready For Code remains on hold pending explicit user approval; implementation must not start yet.
-- 2026-05-17T22:32:28.678Z: [planner -> developer] PLN-25 detailed agreement is approved; Developer may implement the long-context re-entry and Implementation Plan rebaseline scope.
-- 2026-05-17T22:21:03.052Z: [planner -> planner] Opened PLN-25 to rebaseline long-context AI re-entry and make IMPLEMENTATION_PLAN.md a human-readable implementation plan only.
-- 2026-05-17T02:46:47.488Z: [planner -> planner] PLN-24 is closed. Approved destructive retirement / merge execution completed as scan/disposition-driven no-op physical retirement: no holds, day_start wording migrated in root and standard-template, no physical deletion/merge/tombstone required, root/starter evidence passed, and Reviewer approved closeout. Release packaging and downstream mutation remain not approved.
-- 2026-05-17T02:45:44.047Z: [reviewer -> planner] PLN-24 Reviewer closeout approved. No findings inside the approved boundary; scan/disposition evidence has no holds, old day_start live-truth wording is migrated in root and standard-template, physical deletion/merge was correctly no-op after exemptions, root/starter evidence is clean, and release packaging/downstream mutation remain out of scope.
+- 2026-05-21T22:11:21.789Z: [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.
+- 2026-05-21T22:10:44.160Z: [reviewer -> planner] Reviewer approved OPS-29 P0/P1 closeout; Planner should record packet closeout and return the reusable baseline to no-active-lane hold.
+- 2026-05-21T22:10:02.772Z: [tester -> reviewer] Tester verification completed; Reviewer should assess packet exit readiness.
+- 2026-05-21T22:09:24.723Z: [developer -> tester] Developer implementation completed; Tester should verify the approved scope.
+- 2026-05-21T22:08:23.248Z: [planner -> developer] Planning approved; implementation can proceed.
+- 2026-05-21T21:57:55.995Z: [planner -> planner] Planner recorded packet closeout and placed the reusable baseline on no-active-lane hold.
+- 2026-05-21T21:57:11.954Z: [reviewer -> planner] Reviewer approved OPS-29 P0 closeout; Planner should record the closeout and wait for explicit user approval before opening any P1 follow-up.
+- 2026-05-21T21:50:38.478Z: [tester -> reviewer] Tester verification completed; Reviewer should assess packet exit readiness.
+- 2026-05-21T21:45:43.115Z: [developer -> tester] Developer implementation completed; Tester should verify the approved scope.
+- 2026-05-21T21:21:53.167Z: [planner -> developer] Planning approved; implementation can proceed.
 
 ## Generation Metadata
 - Generated docs: CURRENT_STATE.md, TASK_LIST.md
-- Source revision: 2026-05-17T23:20:25.741Z
+- Source revision: 2026-05-21T22:11:21.789Z
 - Sync status: fresh at generation time

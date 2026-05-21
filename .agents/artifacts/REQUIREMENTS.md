@@ -1,5 +1,7 @@
 # Requirements
 
+> AUTHORITATIVE. Governance requirements SSOT. Edit only through an approved packet.
+
 ## Summary
 이 프로젝트의 목표는 하네스가 스스로 유지·개선 가능한 운영 구조를 가지면서, 최종사용자가 CLI와 Korean Active Context 문서만으로 현재 판단 지점과 다음 행동을 빠르게 이해할 수 있게 하는 것이다. `.agents/artifacts/REQUIREMENTS.md`는 전체 문서 중 가장 사용자 친화적인 기준 문서로 유지한다.
 

@@ -2,6 +2,79 @@
 
 Use this artifact to record verification evidence and manual test results.
 
+## 2026-05-22 OPS-29 P1 Tester Verification
+
+- Scope: tester verification for approved `OPS-29` P1 after the `developer -> tester` handoff.
+- Environment: local maintainer workspace on Windows PowerShell.
+- Tested scope:
+  - official `DAY_WRAP_TEMPLATE.md` placement in root and `standard-template` reference/planning surfaces
+  - `context --repair` next-action guidance with concrete rerun and migration commands
+  - short top labels for authoritative docs, generated human fallback docs, and packet surfaces
+  - non-gating `PLAN_CHECK_CANDIDATE.md` reference surface without adding a new validator or workflow gate
+  - root / `standard-template` parity for reusable runtime, doc, and test surfaces touched by P1
+- Evidence:
+  - root targeted regression:
+    - `node --test .harness/test/context-repair.test.js .harness/test/active-context.test.js .harness/test/generated-state-docs.test.js`: `41/41 pass`
+  - `standard-template` targeted regression:
+    - `node --test .harness/test/context-repair.test.js .harness/test/active-context.test.js .harness/test/generated-state-docs.test.js`: `41/41 pass`
+  - root full suite:
+    - `npm.cmd test`: `113/113 pass`
+  - `standard-template` full suite:
+    - `npm.cmd test`: `103/103 pass`
+  - root state/validation evidence:
+    - `node .harness/runtime/state/dev05-cli.js transition --transition developer-to-tester --work-item OPS-29 --apply`: pass
+    - transition output regenerated `VALIDATION_REPORT.*` and `ACTIVE_CONTEXT.*` with `gateDecision: pass` and `findingCount: 0`
+  - P1 acceptance evidence:
+    - `reference/planning/DAY_WRAP_TEMPLATE.md` and `standard-template/reference/planning/DAY_WRAP_TEMPLATE.md` now provide the official day-wrap structure
+    - `context --repair` now suggests specific follow-up commands for low-confidence and migration-pending recovery paths
+    - authoritative docs and packet templates now expose short top labels without changing underlying authority rules
+    - generated fallback docs now clearly say `GENERATED, DO NOT EDIT`
+    - `PLAN_CHECK_CANDIDATE.md` stays documentation-only and does not create a new blocking gate
+- Untested scope:
+  - no new validator gate, no new workflow route, and no mobile optional-profile follow-up work were tested because they remain outside the approved P1 boundary.
+- Result: tester verification passed for `OPS-29` P1. No tester-discovered remediation item remains inside the approved scope.
+- Handoff:
+  - Reviewer should inspect whether P1 stayed lightweight, preserved root / `standard-template` parity, and avoided silently promoting `plan-check` into a mandatory gate.
+
+## 2026-05-22 OPS-29 P0 Tester Verification
+
+- Scope: tester verification for approved `OPS-29` P0 after the `developer -> tester` handoff.
+- Environment: local maintainer workspace on Windows PowerShell.
+- Tested scope:
+  - single-command state regeneration via `harness:sync-state`
+  - status output split between technical validation and workflow gate state
+  - active profile parsing boundary limited to the first table under `## Active Profile Table`
+  - warning-only handling for ambiguous root progress files such as `task.md` and `walkthrough.md`
+  - positional shorthand support for transition usage while preserving `--apply` guardrails
+  - root / `standard-template` parity for reusable runtime, script, and regression surfaces
+- Evidence:
+  - root targeted regression:
+    - `node --test .harness/test/dev05-tooling.test.js .harness/test/generated-state-docs.test.js`: `80/80 pass`
+  - `standard-template` targeted regression:
+    - `node --test .harness/test/dev05-tooling.test.js .harness/test/generated-state-docs.test.js`: `80/80 pass`
+  - root full suite:
+    - `npm.cmd test`: `111/111 pass`
+  - `standard-template` full suite:
+    - `npm.cmd test`: `101/101 pass`
+  - root state/validator evidence:
+    - `node .harness/runtime/state/dev05-cli.js sync-state`: pass
+    - `node .harness/runtime/state/dev05-cli.js validate`: `ok: true`, findings `[]`
+    - `node .harness/runtime/state/dev05-cli.js validation-report`: gate decision `pass`, findings `[]`
+    - `node .harness/runtime/state/dev05-cli.js status`: `Technical validation: pass`, `Workflow gate: open, tester verification in progress`
+    - `node .harness/runtime/state/dev05-cli.js context`: active task `OPS-29`, owner `tester`, workflow `.agents/workflows/test.md`
+  - packet acceptance evidence:
+    - operators now have a single state-sync command for routine wrap/handoff recovery
+    - technical validation pass and workflow-gate state are visible as separate status lines
+    - candidate profile tables are no longer treated as active profiles
+    - ambiguous root progress files produce warnings rather than silently competing with canonical harness authority
+    - positional transition shorthand works without expanding the mutating authority boundary
+- Untested scope:
+  - `OPS-29` P1 items remain intentionally out of scope for this P0 tester turn.
+  - deferred optional-profile follow-ups such as mobile SQLite / NetInfo mocking, preventive-memory linting, and open-question ledger work were not tested because they are outside the approved core packet scope.
+- Result: tester verification passed for `OPS-29` P0. No tester-discovered remediation item remains inside the approved scope.
+- Handoff:
+  - Reviewer should inspect P0 closeout readiness, evidence sufficiency, root / `standard-template` parity, and whether the packet still preserves the bounded "core only, no optional mobile profile" decision.
+
 ## 2026-05-18 PLN-25 Long-Context Re-entry And Implementation-Plan Rebaseline Tester Verification
 
 - Scope: tester verification for approved `PLN-25` after the `developer -> tester` handoff.

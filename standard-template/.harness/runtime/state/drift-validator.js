@@ -598,6 +598,7 @@ export function validateGeneratedStateDocs({
   validateFreshness(store, findings);
   validateHarnessOwnedPaths(repoRoot, findings);
   validateStructuredTaskTruth(repoRoot, findings);
+  validateRootStatusSurfaceWarnings(repoRoot, findings);
   validateDerivedOperationalSurfaceConflicts({ store, repoRoot, findings });
   validateActiveProfiles(repoRoot, findings);
   validateProfileAwareContracts(repoRoot, findings);
@@ -1095,6 +1096,35 @@ function parseTableCells(line) {
     .map((cell) => cell.trim());
 }
 
+function readFirstMarkdownTableBodyLines(sectionContent) {
+  if (typeof sectionContent !== "string" || sectionContent.trim().length === 0) {
+    return [];
+  }
+
+  const lines = sectionContent
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const headerIndex = lines.findIndex((line, index) =>
+    line.startsWith("|") &&
+    lines[index + 1] &&
+    /^\|(?:\s*:?-{3,}:?\s*\|)+\s*$/.test(lines[index + 1])
+  );
+  if (headerIndex === -1) {
+    return [];
+  }
+
+  const rows = [];
+  for (let index = headerIndex + 2; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (!line.startsWith("|")) {
+      break;
+    }
+    rows.push(line);
+  }
+  return rows;
+}
+
 function normalizeTaskStatus(value) {
   return normalizeValue(value ?? "").replace(/[_-]/g, " ");
 }
@@ -1116,6 +1146,7 @@ function validateActiveProfiles(repoRoot, findings) {
   }
 
   const content = fs.readFileSync(activeProfilesPath, "utf8");
+  const sectionContent = sliceSection(content, "## Active Profile Table") ?? content;
   const requiredColumns = [
     "Profile ID",
     "Activation reason",
@@ -1139,7 +1170,7 @@ function validateActiveProfiles(repoRoot, findings) {
     });
   }
 
-  for (const line of content.split("\n").map((item) => item.trim()).filter((item) => item.startsWith("| PRF-"))) {
+  for (const line of readFirstMarkdownTableBodyLines(sectionContent).filter((item) => item.startsWith("| PRF-"))) {
     const cells = line.split("|").slice(1, -1).map((cell) => cell.trim());
     const [profileId, , evidenceArtifacts, evidenceStatus] = cells;
     const profile = OPTIONAL_PROFILE_REQUIREMENTS.find((item) => item.profileId === profileId);
@@ -1649,10 +1680,8 @@ function readActiveProfileRows(repoRoot) {
 
   const rows = new Map();
   const content = fs.readFileSync(activeProfilesPath, "utf8");
-  for (const line of content
-    .split("\n")
-    .map((item) => item.trim())
-    .filter((item) => item.startsWith("| PRF-"))) {
+  const sectionContent = sliceSection(content, "## Active Profile Table") ?? content;
+  for (const line of readFirstMarkdownTableBodyLines(sectionContent).filter((item) => item.startsWith("| PRF-"))) {
     const cells = parseTableCells(line);
     const [profileId, activationReason, evidenceArtifacts, evidenceStatus, activatedBy, activatedAt, appliesToPackets] =
       cells;
@@ -1670,6 +1699,24 @@ function readActiveProfileRows(repoRoot) {
     });
   }
   return rows;
+}
+
+function validateRootStatusSurfaceWarnings(repoRoot, findings) {
+  const repoEntries = fs.existsSync(repoRoot) ? fs.readdirSync(repoRoot, { withFileTypes: true }) : [];
+  const canonicalSurfaceGuidance =
+    "Treat .agents/artifacts/TASK_LIST.md, .agents/artifacts/CURRENT_STATE.md, and the active packet as canonical harness authority.";
+  for (const filename of ["task.md", "walkthrough.md"]) {
+    const entry = repoEntries.find((item) => item.isFile() && item.name.toLowerCase() === filename);
+    if (!entry) {
+      continue;
+    }
+    findings.push({
+      code: "root_status_surface_ambiguous",
+      severity: "warning",
+      path: entry.name,
+      message: `${entry.name} exists at the repository root and can be mistaken for live harness task/state authority. ${canonicalSurfaceGuidance}`
+    });
+  }
 }
 
 function validateReviewReportReferences(repoRoot, findings) {

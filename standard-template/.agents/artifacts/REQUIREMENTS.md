@@ -1,5 +1,7 @@
 # Requirements
 
+> AUTHORITATIVE. Governance requirements SSOT. Edit only through an approved packet.
+
 ## Status
 - Draft
 

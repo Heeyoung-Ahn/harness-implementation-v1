@@ -256,6 +256,22 @@ export function buildHarnessStatus({ repoRoot = process.cwd(), outputDir = repoR
     const blockers = store.listGateRisks({ status: "open" });
     const decisions = store.listDecisions({ status: "open", decisionNeeded: true });
     const activeProfiles = readActiveProfileSummary(repoRoot);
+    const technicalValidation = summarizeValidation(validation);
+    const assignmentReadyForCode = primaryWorkItem
+      ? normalizeReadyForCodeState(primaryWorkItem.metadata?.readyForCode) ??
+        readPacketReadyForCode(repoRoot, primaryWorkItem.sourceRef)
+      : null;
+    const workflowGate = summarizeWorkflowGate({
+      releaseState,
+      assignment: primaryWorkItem
+        ? {
+            owner: primaryWorkItem.owner ?? "unassigned",
+            status: primaryWorkItem.status,
+            readyForCode: assignmentReadyForCode
+          }
+        : null,
+      openDecisions: decisions.length
+    });
     return {
       ok: validation.ok,
       command: "status",
@@ -273,12 +289,15 @@ export function buildHarnessStatus({ repoRoot = process.cwd(), outputDir = repoR
             title: primaryWorkItem.title,
             status: primaryWorkItem.status,
             owner: primaryWorkItem.owner ?? "unassigned",
+            readyForCode: assignmentReadyForCode,
             nextAction: primaryWorkItem.nextAction ?? "not recorded"
           }
         : null,
       handoff: handoff.handoff,
       nextOwner: handoff.owner,
-      validation: summarizeValidation(validation),
+      workflowGate,
+      technicalValidation,
+      validation: technicalValidation,
       nextAction: recommendNextActionFromState(store, validation, repoRoot)
     };
   });
@@ -587,6 +606,77 @@ export function writeValidationReport({ repoRoot = process.cwd(), outputDir = re
   };
 }
 
+export function runStateSync({ repoRoot = process.cwd(), outputDir = repoRoot, dbPath = DEFAULT_DB_PATH } = {}) {
+  const initialValidation = runValidator({ repoRoot, outputDir, dbPath });
+  const validationReport = writeValidationReport({ repoRoot, outputDir, dbPath });
+  const context = withStore({ dbPath, repoRoot }, (store) => {
+    const contextResult = writeActiveContext({
+      store,
+      repoRoot,
+      outputDir,
+      validation: validationReport.report
+    });
+    return {
+      ok: true,
+      command: "context",
+      jsonPath: contextResult.jsonPath,
+      markdownPath: contextResult.markdownPath,
+      context: contextResult.context
+    };
+  });
+  const status = buildHarnessStatus({ repoRoot, outputDir, dbPath });
+  const failedStep =
+    (!initialValidation.ok && "validate") ||
+    (!validationReport.ok && "validation-report") ||
+    (!context.ok && "context") ||
+    (!status.ok && "status") ||
+    null;
+
+  return {
+    ok: status.ok,
+    command: "sync-state",
+    failedStep,
+    nextCommand: failedStep ? `npm run harness:${failedStep}` : null,
+    nextAction: status.nextAction,
+    technicalValidation: status.technicalValidation,
+    workflowGate: status.workflowGate,
+    steps: [
+      {
+        name: "validate",
+        ok: initialValidation.ok,
+        findingCount: initialValidation.findings.length
+      },
+      {
+        name: "validation-report",
+        ok: validationReport.ok,
+        gateDecision: validationReport.report.gateDecision
+      },
+      {
+        name: "context",
+        ok: context.ok,
+        jsonPath: context.jsonPath,
+        markdownPath: context.markdownPath
+      },
+      {
+        name: "status",
+        ok: status.ok,
+        workflowGate: status.workflowGate,
+        technicalValidation: status.technicalValidation
+      }
+    ],
+    validationReport: {
+      markdownPath: validationReport.markdownPath,
+      jsonPath: validationReport.jsonPath,
+      gateDecision: validationReport.report.gateDecision
+    },
+    context: {
+      jsonPath: context.jsonPath,
+      markdownPath: context.markdownPath
+    },
+    status
+  };
+}
+
 export function runTransition({
   repoRoot = process.cwd(),
   outputDir = repoRoot,
@@ -754,7 +844,7 @@ export function runPlannerPacketOpen({
 }
 
 function parseTransitionArgs(args) {
-  const options = { apply: false };
+  const options = { apply: false, positionals: [] };
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
     if (arg === "--apply") {
@@ -762,9 +852,7 @@ function parseTransitionArgs(args) {
       continue;
     }
     if (!arg.startsWith("--")) {
-      if (!options.transition) {
-        options.transition = arg;
-      }
+      options.positionals.push(arg);
       continue;
     }
 
@@ -777,6 +865,18 @@ function parseTransitionArgs(args) {
     options[key] = next;
     index += 1;
   }
+  const [first, second, third] = options.positionals;
+  if (first) {
+    if (isNamedTransition(first)) {
+      options.transition ??= first;
+      options.workItem ??= second;
+    } else {
+      options.workItem ??= first;
+      options.to ??= second;
+      options.from ??= third;
+    }
+  }
+  delete options.positionals;
   return options;
 }
 
@@ -942,7 +1042,6 @@ function buildPlannerPacketOpenPlan({ store, repoRoot, options }) {
 
 function buildTransitionPlan({ store, repoRoot, options }) {
   const baseTransitionDefaults = transitionDefaultsFor(options.transition);
-  const transition = options.transition ?? baseTransitionDefaults.transition;
   const workItemId = options.workItem ?? options.workItemId;
   const errors = [];
   const workItem = workItemId ? store.getWorkItem(workItemId) : null;
@@ -950,10 +1049,11 @@ function buildTransitionPlan({ store, repoRoot, options }) {
   const initialFromOwner = normalizeOwner(options.from ?? baseTransitionDefaults.from ?? workItem?.owner);
   const initialToOwner = normalizeOwner(options.to ?? baseTransitionDefaults.to);
   const transitionDefaults = resolveTransitionDefaults({
-    transition,
+    transition: options.transition,
     fromOwner: initialFromOwner,
     toOwner: initialToOwner
   });
+  const transition = options.transition ?? transitionDefaults.transition ?? baseTransitionDefaults.transition;
   const fromOwner = normalizeOwner(options.from ?? transitionDefaults.from ?? workItem?.owner);
   const toOwner = normalizeOwner(options.to ?? transitionDefaults.to);
   const status = options.status ?? transitionDefaults.status ?? workItem?.status ?? "in_progress";
@@ -1169,7 +1269,7 @@ function transitionDefaultsFor(transition = "custom") {
 }
 
 function resolveTransitionDefaults({ transition, fromOwner, toOwner }) {
-  const namedDefaults = transitionDefaultsFor(transition);
+  const namedDefaults = transition ? transitionDefaultsFor(transition) : {};
   if (transition && transition !== "custom") {
     return namedDefaults;
   }
@@ -1178,7 +1278,7 @@ function resolveTransitionDefaults({ transition, fromOwner, toOwner }) {
   return {
     ...inferredDefaults,
     ...namedDefaults,
-    transition: transition ?? namedDefaults.transition ?? "custom"
+    transition: transition ?? inferredDefaults.transition ?? namedDefaults.transition ?? "custom"
   };
 }
 
@@ -1369,7 +1469,7 @@ function readPacketGateProfile(repoRoot, sourceRef) {
 
 function readPacketReadyForCode(repoRoot, sourceRef) {
   const value = normalizePacketHeaderValue(readPacketHeaderValue(repoRoot, sourceRef, "Ready For Code"));
-  return value === "approved" || value === "approve" ? "approved" : value;
+  return value === "approved" || value === "approve" ? "approved" : value || null;
 }
 
 function normalizeReadyForCodeState(value) {
@@ -2496,8 +2596,57 @@ function summarizeValidation(validation) {
   return {
     ok: validation.ok,
     cutoverReady: validation.cutoverReady,
+    runtimeValidationReady: validation.cutoverReady,
     findingCount: validation.findings.length,
     blockingFindingCount: validation.findings.filter((finding) => finding.severity === "error").length
+  };
+}
+
+function summarizeWorkflowGate({ releaseState, assignment, openDecisions = 0 }) {
+  if (!assignment) {
+    if (releaseState?.currentStage === "planning") {
+      return {
+        status: "blocked",
+        detail: "awaiting next approved lane selection"
+      };
+    }
+    return {
+      status: "open",
+      detail: "no active assignment is recorded"
+    };
+  }
+
+  if (openDecisions > 0) {
+    return {
+      status: "blocked",
+      detail: `awaiting ${openDecisions} open decision(s)`
+    };
+  }
+
+  const normalizedStatus = String(assignment.status ?? "").trim().toLowerCase().replace(/[_-]/g, " ");
+  if (assignment.owner === "planner" && normalizedStatus === "planning") {
+    if (assignment.readyForCode !== "approved") {
+      return {
+        status: "blocked",
+        detail: "awaiting Ready For Code approval"
+      };
+    }
+    return {
+      status: "open",
+      detail: "planner-approved implementation handoff is ready"
+    };
+  }
+
+  const ownerDetail = {
+    developer: "implementation in progress",
+    tester: "tester verification in progress",
+    reviewer: "reviewer closeout in progress",
+    planner: "planner routing in progress"
+  };
+
+  return {
+    status: "open",
+    detail: ownerDetail[assignment.owner] ?? `${assignment.owner} owns the active lane`
   };
 }
 
@@ -2586,6 +2735,9 @@ function recoveryForFinding(finding) {
   if (code.includes("optional_profile") || code.includes("active_profile")) {
     return "Complete active profile references/evidence before Ready For Code.";
   }
+  if (code.includes("root_status_surface")) {
+    return "Rename or isolate root status/progress docs, or treat .agents/artifacts/* plus the active packet as authority.";
+  }
   if (code.includes("sync")) {
     return "Synchronize the reusable root change into standard-template.";
   }
@@ -2603,9 +2755,9 @@ function readActiveProfileSummary(repoRoot) {
   }
 
   const content = fs.readFileSync(activeProfilePath, "utf8");
-  const profiles = content
-    .split("\n")
-    .filter((line) => line.trim().startsWith("| PRF-"))
+  const sectionContent = readPacketSection(content, "## Active Profile Table") ?? content;
+  const profiles = readFirstMarkdownTableBodyLines(sectionContent)
+    .filter((line) => line.startsWith("| PRF-"))
     .map((line) => {
       const cells = line.split("|").slice(1, -1).map((cell) => cell.trim());
       return {
@@ -2621,6 +2773,40 @@ function readActiveProfileSummary(repoRoot) {
     status: profiles.length > 0 ? "declared" : "empty",
     profiles
   };
+}
+
+function readFirstMarkdownTableBodyLines(sectionContent) {
+  if (typeof sectionContent !== "string" || sectionContent.trim().length === 0) {
+    return [];
+  }
+
+  const lines = sectionContent
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const headerIndex = lines.findIndex((line, index) =>
+    line.startsWith("|") &&
+    lines[index + 1] &&
+    /^\|(?:\s*:?-{3,}:?\s*\|)+\s*$/.test(lines[index + 1])
+  );
+  if (headerIndex === -1) {
+    return [];
+  }
+
+  const rows = [];
+  for (let index = headerIndex + 2; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (!line.startsWith("|")) {
+      break;
+    }
+    rows.push(line);
+  }
+  return rows;
+}
+
+function isNamedTransition(value) {
+  const defaults = transitionDefaultsFor(value);
+  return defaults.transition === value && Boolean(defaults.to);
 }
 
 function buildSecurityReviewSummary({ store, repoRoot, findings = [] }) {

@@ -6,7 +6,7 @@ import os from "node:os";
 import path from "node:path";
 
 import { ACTIVE_CONTEXT_JSON, ACTIVE_CONTEXT_MARKDOWN, writeActiveContext } from "../runtime/state/active-context.js";
-import { runContextRepair } from "../runtime/state/context-repair.js";
+import { resolveRepairNextAction, runContextRepair } from "../runtime/state/context-repair.js";
 import { writeGeneratedStateDocs } from "../runtime/state/generate-state-docs.js";
 import { RECOVERY_REPORTS_DIR } from "../runtime/state/harness-paths.js";
 import { createOperatingStateStore } from "../runtime/state/operating-state-store.js";
@@ -87,6 +87,32 @@ test("context --repair CLI prints operator summary and writes persistent JSON re
   assert.match(result.stdout, /- Confidence: High/);
   assert.match(result.stdout, /- DB mutation: none/);
   assert.ok(fs.existsSync(path.join(repoRoot, RECOVERY_REPORTS_DIR, "latest-context-repair.json")));
+});
+
+test("context repair suggests rerunning validation-report and context for low confidence", () => {
+  const nextAction = resolveRepairNextAction({
+    confidence: "Low",
+    validation: {
+      findings: [{ code: "source_ref_unresolved", severity: "error" }]
+    }
+  });
+
+  assert.match(nextAction, /validation-report/);
+  assert.match(nextAction, /context/);
+  assert.match(nextAction, /manual maintainer action is required/i);
+});
+
+test("context repair suggests migration-apply when migration changes remain", () => {
+  const nextAction = resolveRepairNextAction({
+    confidence: "Medium",
+    validation: {
+      findings: [{ code: "migration_change_pending", severity: "error" }]
+    }
+  });
+
+  assert.match(nextAction, /migration-apply/);
+  assert.match(nextAction, /validation-report/);
+  assert.match(nextAction, /context/);
 });
 
 function seedRepoFiles(repoRoot) {

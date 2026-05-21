@@ -79,7 +79,10 @@ export function runContextRepair({
       regeneratedArtifacts,
       notModifiedArtifacts: AUTHORITY_NOT_MODIFIED,
       validationStatus: resolveValidationStatus(afterValidation),
-      requiredNextAction: requiredNextActionForConfidence(confidence),
+      requiredNextAction: resolveRepairNextAction({
+        confidence,
+        validation: afterValidation.result
+      }),
       authorityMutation: false,
       dbMutation: "none"
     };
@@ -218,17 +221,22 @@ function resolveValidationStatus(validationAttempt) {
   return validationAttempt.result?.ok ? "clean" : "failed";
 }
 
-function requiredNextActionForConfidence(confidence) {
+export function resolveRepairNextAction({ confidence, validation = null } = {}) {
+  const findings = Array.isArray(validation?.findings) ? validation.findings : [];
+  const findingCodes = new Set(findings.map((finding) => finding?.code).filter(Boolean));
+  if (findingCodes.has("migration_change_pending")) {
+    return "Run `node .harness/runtime/state/dev05-cli.js migration-apply`, then rerun `node .harness/runtime/state/dev05-cli.js validation-report` and `node .harness/runtime/state/dev05-cli.js context`.";
+  }
   if (confidence === "High") {
     return "Continue normal workflow.";
   }
   if (confidence === "Medium") {
-    return "Reference the timestamped recovery report in packet evidence before closeout.";
+    return "Run `node .harness/runtime/state/dev05-cli.js validation-report` and `node .harness/runtime/state/dev05-cli.js context`, then reference the timestamped recovery report in packet evidence before closeout.";
   }
   if (confidence === "Low") {
-    return "Hold for Planner or maintainer reconciliation before implementation or closeout continues.";
+    return "Run `node .harness/runtime/state/dev05-cli.js validation-report` and `node .harness/runtime/state/dev05-cli.js context`; if low-confidence findings remain, manual maintainer action is required before implementation or closeout continues.";
   }
-  return "Stop and request human or Planner decision before implementation or closeout continues.";
+  return "Manual maintainer action required. Repair canonical packet/approval state first, then rerun `node .harness/runtime/state/dev05-cli.js validation-report` and `node .harness/runtime/state/dev05-cli.js context` before implementation or closeout continues.";
 }
 
 function validateSafely({ store, repoRoot, outputDir }) {
